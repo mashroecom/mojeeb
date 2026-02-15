@@ -567,7 +567,7 @@ export default function BulkEmailPage() {
 
           {/* Pagination */}
           {!isLoading && (
-            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={t('pagination.previous')} nextLabel={t('pagination.next')} />
+            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
           )}
         </>
       )}

@@ -29,6 +29,17 @@ import notificationSettingsRoutes from './notificationSettings.routes';
 import orgDefaultsRoutes from './orgDefaults.routes';
 import landingPageRoutes from './landingPage.routes';
 import dlqRoutes from './dlq.routes';
+import adminAgentsRoutes from './agents.routes';
+import adminChannelsRoutes from './channels.routes';
+import adminConversationsRoutes from './conversations.routes';
+import adminLeadsRoutes from './leads.routes';
+import adminKnowledgeBasesRoutes from './knowledgeBases.routes';
+import adminApiKeysRoutes from './apiKeys.routes';
+import adminInvoicesRoutes from './invoices.routes';
+import adminWebhooksRoutes from './webhooks.routes';
+import ratingsRoutes from './ratings.routes';
+import adminMessageTemplatesRoutes from './messageTemplates.routes';
+import adminTagsRoutes from './tags.routes';
 
 const router: Router = Router();
 
@@ -63,5 +74,16 @@ router.use('/notification-settings', notificationSettingsRoutes);
 router.use('/org-defaults', orgDefaultsRoutes);
 router.use('/landing-page', landingPageRoutes);
 router.use('/dlq', dlqRoutes);
+router.use('/agents', adminAgentsRoutes);
+router.use('/channels', adminChannelsRoutes);
+router.use('/conversations', adminConversationsRoutes);
+router.use('/leads', adminLeadsRoutes);
+router.use('/knowledge-bases', adminKnowledgeBasesRoutes);
+router.use('/api-keys', adminApiKeysRoutes);
+router.use('/invoices', adminInvoicesRoutes);
+router.use('/webhooks', adminWebhooksRoutes);
+router.use('/ratings', ratingsRoutes);
+router.use('/message-templates-admin', adminMessageTemplatesRoutes);
+router.use('/tags', adminTagsRoutes);
 
 export default router;

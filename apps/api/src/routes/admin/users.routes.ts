@@ -10,6 +10,7 @@ import { prisma } from '../../config/database';
 import { config } from '../../config';
 import { emailService } from '../../services/email.service';
 import { NotFoundError } from '../../utils/errors';
+import argon2 from 'argon2';
 
 const bulkUserIdsSchema = z.object({
   userIds: z.array(z.string().min(1)).min(1).max(100),
@@ -24,6 +25,7 @@ const updateProfileSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
   email: z.string().email().optional(),
+  newPassword: z.string().min(8).max(100).optional(),
 });
 
 const router: Router = Router();
@@ -55,6 +57,29 @@ router.post(
       await auditLogService.log({
         userId: req.user!.userId,
         action: 'USERS_BULK_SUSPENDED',
+        targetType: 'User',
+        targetId: userIds.join(','),
+      });
+
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// POST /bulk-delete - Bulk delete users
+router.post(
+  '/bulk-delete',
+  validate({ body: bulkUserIdsSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userIds } = req.body as z.infer<typeof bulkUserIdsSchema>;
+      const data = await adminService.bulkDeleteUsers(userIds);
+
+      await auditLogService.log({
+        userId: req.user!.userId,
+        action: 'USERS_BULK_DELETED',
         targetType: 'User',
         targetId: userIds.join(','),
       });
@@ -286,18 +311,25 @@ router.patch(
         }
       }
 
+      // Build update data, handle password separately
+      const { newPassword, ...profileUpdates } = updates;
+      const data: Record<string, unknown> = { ...profileUpdates };
+      if (newPassword) {
+        data.passwordHash = await argon2.hash(newPassword);
+      }
+
       const updated = await prisma.user.update({
         where: { id: userId },
-        data: updates,
+        data,
         select: { id: true, firstName: true, lastName: true, email: true },
       });
 
       auditLogService.log({
         userId: req.user!.userId,
-        action: 'USER_PROFILE_UPDATED',
+        action: newPassword ? 'USER_PASSWORD_CHANGED' : 'USER_PROFILE_UPDATED',
         targetType: 'User',
         targetId: userId,
-        metadata: updates,
+        metadata: { ...profileUpdates, passwordChanged: !!newPassword },
       }).catch(() => {});
 
       res.json({ success: true, data: updated });

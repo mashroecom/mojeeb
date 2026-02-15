@@ -4,6 +4,7 @@ import { useState, useMemo, Fragment } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDateTime } from '@/lib/dateFormat';
 import { useAdminErrorLogs, useCleanupErrorLogs } from '@/hooks/useAdmin';
+import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import {
   AlertTriangle,
@@ -14,6 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Download,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -124,6 +126,18 @@ export default function ErrorLogsPage() {
   const entries: ErrorLogEntry[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
 
+  function handleExport() {
+    if (!entries.length) return;
+    const rows = entries.map((entry) => ({
+      Level: entry.level,
+      Message: entry.message,
+      Source: entry.source || '',
+      Path: entry.path || '',
+      Time: fmtDateTime(entry.createdAt, locale),
+    }));
+    exportToCsv('admin-error-logs', rows);
+  }
+
   function updateFilter<T>(setter: (v: T) => void) {
     return (value: T) => {
       setter(value);
@@ -150,13 +164,23 @@ export default function ErrorLogsPage() {
           <h1 className="text-2xl font-bold">{t('title')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
         </div>
-        <button
-          onClick={() => setShowCleanup(!showCleanup)}
-          className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-        >
-          <Trash2 className="h-4 w-4" />
-          {t('cleanup')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            disabled={!entries.length}
+            className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="h-4 w-4" />
+            {tc('export')}
+          </button>
+          <button
+            onClick={() => setShowCleanup(!showCleanup)}
+            className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+          >
+            <Trash2 className="h-4 w-4" />
+            {t('cleanup')}
+          </button>
+        </div>
       </div>
 
       {/* Cleanup Panel */}

@@ -11,6 +11,7 @@ import {
 import { useToastStore } from '@/hooks/useToast';
 import { PLAN_COLORS, STATUS_COLORS, INVOICE_STATUS_COLORS } from '@/lib/admin-constants';
 import { cn } from '@/lib/utils';
+import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import {
   CreditCard,
@@ -23,6 +24,7 @@ import {
   Calendar,
   Receipt,
   BarChart3,
+  Download,
 } from 'lucide-react';
 
 type PlanFilter = '' | 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
@@ -233,6 +235,22 @@ export default function SubscriptionsPage() {
     );
   }
 
+  function handleExport() {
+    if (!subscriptions.length) return;
+    const rows = subscriptions.map((sub: any) => ({
+      Organization: sub.org?.name ?? '',
+      Plan: sub.plan,
+      Status: sub.status,
+      'Messages Used': sub.messagesUsed ?? 0,
+      'Messages Limit': sub.messagesLimit ?? 0,
+      'Agents Used': sub.agentsUsed ?? 0,
+      'Agents Limit': sub.agentsLimit ?? 0,
+      'Period Start': fmtDate(sub.currentPeriodStart, locale),
+      'Period End': fmtDate(sub.currentPeriodEnd, locale),
+    }));
+    exportToCsv('admin-subscriptions', rows);
+  }
+
   const planOptions: { value: PlanFilter; label: string }[] = [
     { value: '', label: t('all') },
     { value: 'FREE', label: 'Free' },
@@ -300,6 +318,14 @@ export default function SubscriptionsPage() {
             ))}
           </select>
         </div>
+        <button
+          onClick={handleExport}
+          disabled={!subscriptions.length}
+          className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Download className="h-4 w-4" />
+          {tc('export')}
+        </button>
       </div>
 
       {/* Content */}

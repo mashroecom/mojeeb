@@ -20,6 +20,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
+import { IconPicker } from '@/components/admin/IconPicker';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -474,13 +475,10 @@ export default function LandingPageCmsPage() {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="sm:col-span-2">
-                    <label className="text-xs font-medium text-muted-foreground">{t('icon')}</label>
-                    <input
-                      type="text"
+                    <IconPicker
+                      label={t('icon')}
                       value={feature.icon}
-                      onChange={(e) => updateFeature(index, 'icon', e.target.value)}
-                      placeholder="MessageSquare"
-                      className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                      onChange={(iconName) => updateFeature(index, 'icon', iconName)}
                     />
                   </div>
                   <div>

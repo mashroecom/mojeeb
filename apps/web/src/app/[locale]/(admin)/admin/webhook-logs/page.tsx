@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, useEffect, Fragment } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDateTime } from '@/lib/dateFormat';
 import { useAdminWebhookLogs, useAdminWebhookLogStats } from '@/hooks/useAdmin';
+import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import {
   Webhook,
@@ -16,6 +17,8 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Download,
+  Search,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -93,6 +96,16 @@ export default function WebhookLogsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const params = useMemo(
     () => ({
@@ -102,8 +115,9 @@ export default function WebhookLogsPage() {
       ...(event && { event }),
       ...(startDate && { startDate }),
       ...(endDate && { endDate }),
+      ...(debouncedSearch && { search: debouncedSearch }),
     }),
-    [page, successFilter, event, startDate, endDate],
+    [page, successFilter, event, startDate, endDate, debouncedSearch],
   );
 
   const { data, isLoading, isError, refetch } = useAdminWebhookLogs(params);
@@ -112,6 +126,20 @@ export default function WebhookLogsPage() {
   const entries: WebhookLogEntry[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
   const statsData = stats as WebhookLogStats | undefined;
+
+  function handleExport() {
+    if (!entries.length) return;
+    const rows = entries.map((entry) => ({
+      'Webhook URL': entry.webhookUrl,
+      Event: entry.event,
+      Status: entry.success ? 'Success' : 'Failed',
+      'Status Code': entry.statusCode ?? '',
+      'Duration (ms)': entry.duration ?? '',
+      Attempt: entry.attempt,
+      Time: fmtDateTime(entry.createdAt, locale),
+    }));
+    exportToCsv('admin-webhook-logs', rows);
+  }
 
   function updateFilter<T>(setter: (v: T) => void) {
     return (value: T) => {
@@ -123,9 +151,19 @@ export default function WebhookLogsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+        </div>
+        <button
+          onClick={handleExport}
+          disabled={!entries.length}
+          className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        >
+          <Download className="h-4 w-4" />
+          {tc('export')}
+        </button>
       </div>
 
       {/* Stats Bar */}
@@ -181,7 +219,22 @@ export default function WebhookLogsPage() {
           <Filter className="h-4 w-4" />
           {t('filters')}
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {/* Search by URL */}
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
+              <Search className="inline h-3 w-3 me-1" />
+              {t('searchUrl')}
+            </label>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('searchUrlPlaceholder')}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            />
+          </div>
+
           {/* Status */}
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">{t('status')}</label>

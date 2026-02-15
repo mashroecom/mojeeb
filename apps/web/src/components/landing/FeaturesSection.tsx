@@ -3,20 +3,17 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { MessageSquare, Heart, GitBranch, UserCheck, BarChart3, Clock } from 'lucide-react';
 import { useLandingPageContent, parseLandingFeatures, type LandingFeature } from '@/hooks/useLandingPage';
+import { ICON_MAP } from '@/components/admin/IconPicker';
 
 const featureIcons: Record<string, typeof MessageSquare> = {
+  ...ICON_MAP,
+  // Legacy key aliases (used by default features)
   multichannel: MessageSquare,
-  MessageSquare: MessageSquare,
   emotion: Heart,
-  Heart: Heart,
   routing: GitBranch,
-  GitBranch: GitBranch,
   leads: UserCheck,
-  UserCheck: UserCheck,
   analytics: BarChart3,
-  BarChart3: BarChart3,
   availability: Clock,
-  Clock: Clock,
 };
 
 const DEFAULT_FEATURE_KEYS = ['multichannel', 'emotion', 'routing', 'leads', 'analytics', 'availability'] as const;

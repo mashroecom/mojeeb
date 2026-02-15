@@ -1,7 +1,18 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import { adminService } from '../../services/admin.service';
 import { auditLogService } from '../../services/auditLog.service';
+import { validate } from '../../middleware/validate';
+
+const updateSubscriptionSchema = z.object({
+  plan: z.enum(['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE']).optional(),
+  status: z.enum(['ACTIVE', 'PAST_DUE', 'CANCELED', 'TRIALING']).optional(),
+  messagesLimit: z.number().int().min(0).max(10000000).optional(),
+  agentsLimit: z.number().int().min(0).max(10000).optional(),
+  integrationsLimit: z.number().int().min(0).max(10000).optional(),
+  cancelAtPeriodEnd: z.boolean().optional(),
+});
 
 const router: Router = Router();
 
@@ -32,7 +43,7 @@ router.get('/:subscriptionId', async (req: Request, res: Response, next: NextFun
 });
 
 // PATCH /:subscriptionId - Update subscription limits
-router.patch('/:subscriptionId', async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/:subscriptionId', validate({ body: updateSubscriptionSchema }), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { subscriptionId } = req.params as { subscriptionId: string };
     const data = await adminService.updateSubscription(subscriptionId, req.body);

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDateShort, fmtDate } from '@/lib/dateFormat';
 import {
@@ -35,14 +36,18 @@ function StatSkeleton() {
   );
 }
 
+const GROUP_BY_OPTIONS = ['day', 'week', 'month'] as const;
+type GroupBy = (typeof GROUP_BY_OPTIONS)[number];
+
 export default function AdminAnalyticsPage() {
   const t = useTranslations('admin.analytics');
   const tOverview = useTranslations('admin.overview');
   const tCommon = useTranslations('admin.common');
   const locale = useLocale();
+  const [groupBy, setGroupBy] = useState<GroupBy>('day');
 
   const { data: overview, isLoading: loadingOverview, error: overviewError } = useAdminOverview();
-  const { data: growth, isLoading: loadingGrowth } = useAdminGrowth();
+  const { data: growth, isLoading: loadingGrowth } = useAdminGrowth({ groupBy });
   const { data: revenue, isLoading: loadingRevenue } = useAdminRevenue();
 
   // Stat cards (same 6 as overview page)
@@ -167,6 +172,22 @@ export default function AdminAnalyticsPage() {
         <div className="flex items-center gap-2 mb-6">
           <TrendingUp className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-lg font-semibold">{t('growth')}</h2>
+          <div className="ms-auto flex rounded-lg border bg-muted/30 overflow-hidden">
+            {GROUP_BY_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setGroupBy(opt)}
+                className={cn(
+                  'px-3 py-1.5 text-xs font-medium transition-colors',
+                  groupBy === opt
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                )}
+              >
+                {t(opt)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {loadingGrowth ? (

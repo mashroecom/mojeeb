@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDateTime } from '@/lib/dateFormat';
 import { useAdminLoginActivity, useAdminLoginActivityStats } from '@/hooks/useAdmin';
+import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import {
   Activity,
@@ -13,6 +14,7 @@ import {
   XCircle,
   Globe,
   TrendingUp,
+  Download,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -100,6 +102,19 @@ export default function LoginActivityPage() {
   const entries: LoginEntry[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
 
+  function handleExport() {
+    if (!entries.length) return;
+    const rows = entries.map((entry) => ({
+      Email: entry.email,
+      User: entry.userName || '',
+      Status: entry.success ? 'Success' : 'Failed',
+      IP: entry.ip,
+      'User Agent': entry.userAgent,
+      Time: fmtDateTime(entry.createdAt, locale),
+    }));
+    exportToCsv('admin-login-activity', rows);
+  }
+
   function updateFilter<T>(setter: (v: T) => void) {
     return (value: T) => {
       setter(value);
@@ -110,9 +125,19 @@ export default function LoginActivityPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+        </div>
+        <button
+          onClick={handleExport}
+          disabled={!entries.length}
+          className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        >
+          <Download className="h-4 w-4" />
+          {tc('export')}
+        </button>
       </div>
 
       {/* Stats Bar */}
@@ -164,7 +189,7 @@ export default function LoginActivityPage() {
       <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
           <Filter className="h-4 w-4" />
-          Filters
+          {t('filters')}
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {/* Email */}
@@ -215,7 +240,7 @@ export default function LoginActivityPage() {
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">
               <Calendar className="inline h-3 w-3 me-1" />
-              Start Date
+              {t('startDate')}
             </label>
             <input
               type="date"
@@ -229,7 +254,7 @@ export default function LoginActivityPage() {
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">
               <Calendar className="inline h-3 w-3 me-1" />
-              End Date
+              {t('endDate')}
             </label>
             <input
               type="date"

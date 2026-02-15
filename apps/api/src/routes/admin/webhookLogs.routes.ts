@@ -14,6 +14,7 @@ const listQuerySchema = z.object({
   success: z.enum(['true', 'false']).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  search: z.string().optional(),
 });
 
 // GET / — list webhook logs paginated with filters
@@ -22,7 +23,7 @@ router.get(
   validate({ query: listQuerySchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { page, limit, webhookId, event, success, startDate, endDate } =
+      const { page, limit, webhookId, event, success, startDate, endDate, search } =
         (req as any).validatedQuery;
 
       const where: Record<string, unknown> = {};
@@ -30,6 +31,9 @@ router.get(
       if (webhookId) where.webhookId = webhookId;
       if (event) where.event = event;
       if (success !== undefined) where.success = success === 'true';
+      if (search) {
+        where.webhook = { url: { contains: search, mode: 'insensitive' } };
+      }
       if (startDate || endDate) {
         where.createdAt = {
           ...(startDate ? { gte: new Date(startDate) } : {}),

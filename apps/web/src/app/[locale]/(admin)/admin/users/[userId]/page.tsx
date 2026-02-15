@@ -24,6 +24,8 @@ import {
   useAdminUserApiKeys,
   useAdminUserConversations,
   useAdminUserLeads,
+  useAdminUserNotifications,
+  useAdminUserActions,
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
@@ -58,6 +60,8 @@ import {
   BadgeCheck,
   Users2,
   Briefcase,
+  Bell,
+  Activity,
 } from 'lucide-react';
 
 
@@ -87,11 +91,14 @@ export default function AdminUserDetailPage() {
   const [editFirstName, setEditFirstName] = useState('');
   const [editLastName, setEditLastName] = useState('');
   const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
-  const [activeTab, setActiveTab] = useState<'orgs' | 'logins' | 'sessions' | 'audit' | 'apikeys' | 'conversations' | 'leads'>('orgs');
+  const [activeTab, setActiveTab] = useState<'orgs' | 'logins' | 'sessions' | 'audit' | 'apikeys' | 'conversations' | 'leads' | 'notifications' | 'useractions'>('orgs');
   const [loginPage, setLoginPage] = useState(1);
+  const [notificationsPage, setNotificationsPage] = useState(1);
+  const [userActionsPage, setUserActionsPage] = useState(1);
   const [sessionPage, setSessionPage] = useState(1);
   const [auditPage, setAuditPage] = useState(1);
   const [apiKeysPage, setApiKeysPage] = useState(1);
@@ -118,12 +125,15 @@ export default function AdminUserDetailPage() {
   const apiKeysQuery = useAdminUserApiKeys(userId as string, apiKeysPage);
   const conversationsQuery = useAdminUserConversations(userId as string, conversationsPage);
   const leadsQuery = useAdminUserLeads(userId as string, leadsPage);
+  const notificationsQuery = useAdminUserNotifications(userId as string, notificationsPage);
+  const userActionsQuery = useAdminUserActions(userId as string, userActionsPage);
 
   function openEditModal() {
     if (!user) return;
     setEditFirstName(user.firstName || '');
     setEditLastName(user.lastName || '');
     setEditEmail(user.email || '');
+    setEditPassword('');
     setShowEditModal(true);
   }
 
@@ -218,7 +228,8 @@ export default function AdminUserDetailPage() {
                 )}
               </div>
 
-              <h2 className="text-lg font-semibold">
+              <p className="text-xs text-muted-foreground font-mono select-all">{user.id}</p>
+              <h2 className="text-lg font-semibold mt-1">
                 {user.firstName} {user.lastName}
               </h2>
 
@@ -527,6 +538,8 @@ export default function AdminUserDetailPage() {
                 { key: 'apikeys' as const, label: t('userDetail.apiKeys'), icon: Key },
                 { key: 'conversations' as const, label: t('userDetail.conversations'), icon: MessageSquare },
                 { key: 'leads' as const, label: t('userDetail.leads'), icon: Users2 },
+                { key: 'notifications' as const, label: t('userDetail.notifications'), icon: Bell },
+                { key: 'useractions' as const, label: t('userDetail.userActions'), icon: Activity },
               ]).map((tab) => (
                 <button
                   key={tab.key}
@@ -654,6 +667,17 @@ export default function AdminUserDetailPage() {
                                   <span className="text-red-500">({item.failReason})</span>
                                 )}
                               </div>
+                              {(item.country || item.city) && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  <Globe className="w-3 h-3 inline mr-1" />
+                                  {[item.city, item.country].filter(Boolean).join(', ') || t('userDetail.unknownLocation')}
+                                </p>
+                              )}
+                              {item.userAgent && (
+                                <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs" title={item.userAgent}>
+                                  {item.userAgent.substring(0, 60)}...
+                                </p>
+                              )}
                             </div>
                           </div>
                           <span className="text-xs text-muted-foreground">
@@ -1003,6 +1027,84 @@ export default function AdminUserDetailPage() {
                   )}
                 </div>
               )}
+
+              {/* Notifications Tab */}
+              {activeTab === 'notifications' && (
+                <div className="space-y-3">
+                  {notificationsQuery.isLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+                  ) : !notificationsQuery.data?.notifications?.length ? (
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">{t('userDetail.noNotifications')}</p>
+                  ) : (
+                    <>
+                      {notificationsQuery.data.notifications.map((notif: any) => (
+                        <div key={notif.id} className={cn('flex items-center justify-between p-4 rounded-xl border', notif.isRead ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800')}>
+                          <div className="flex items-center gap-3">
+                            <Bell className={cn('w-5 h-5', notif.isRead ? 'text-gray-400' : 'text-blue-600 dark:text-blue-400')} />
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">{notif.title}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{notif.body}</p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                {notif.type} · {notif.organization?.name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right text-sm">
+                            <span className={cn('px-2 py-1 rounded-full text-xs font-medium', notif.isRead ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300')}>
+                              {notif.isRead ? t('userDetail.read') : t('userDetail.unread')}
+                            </span>
+                            <p className="text-gray-400 dark:text-gray-500 mt-1">{fmtDateTime(notif.createdAt, locale)}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {notificationsQuery.data.totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-4 pt-2">
+                          <button onClick={() => setNotificationsPage(p => Math.max(1, p - 1))} disabled={notificationsPage === 1} className="text-sm text-blue-600 disabled:text-gray-400">Previous</button>
+                          <span className="text-sm text-gray-500">{notificationsPage} / {notificationsQuery.data.totalPages}</span>
+                          <button onClick={() => setNotificationsPage(p => p + 1)} disabled={notificationsPage >= notificationsQuery.data.totalPages} className="text-sm text-blue-600 disabled:text-gray-400">Next</button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* User Actions Tab */}
+              {activeTab === 'useractions' && (
+                <div className="space-y-3">
+                  {userActionsQuery.isLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+                  ) : !userActionsQuery.data?.logs?.length ? (
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">{t('userDetail.noUserActions')}</p>
+                  ) : (
+                    <>
+                      {userActionsQuery.data.logs.map((log: any) => (
+                        <div key={log.id} className="flex items-center justify-between p-4 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800">
+                          <div className="flex items-center gap-3">
+                            <Activity className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">{log.action}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {t('userDetail.target')}: {log.targetType} ({log.targetId?.substring(0, 12)}...)
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right text-sm">
+                            <p className="text-gray-400 dark:text-gray-500">{fmtDateTime(log.createdAt, locale)}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {userActionsQuery.data.totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-4 pt-2">
+                          <button onClick={() => setUserActionsPage(p => Math.max(1, p - 1))} disabled={userActionsPage === 1} className="text-sm text-blue-600 disabled:text-gray-400">Previous</button>
+                          <span className="text-sm text-gray-500">{userActionsPage} / {userActionsQuery.data.totalPages}</span>
+                          <button onClick={() => setUserActionsPage(p => p + 1)} disabled={userActionsPage >= userActionsQuery.data.totalPages} className="text-sm text-blue-600 disabled:text-gray-400">Next</button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1068,6 +1170,16 @@ export default function AdminUserDetailPage() {
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('userActions.newPassword')}</label>
+                <input
+                  type="password"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  placeholder={t('userActions.newPasswordPlaceholder')}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   onClick={() => setShowEditModal(false)}
@@ -1081,6 +1193,7 @@ export default function AdminUserDetailPage() {
                     if (editFirstName !== user.firstName) updates.firstName = editFirstName;
                     if (editLastName !== user.lastName) updates.lastName = editLastName;
                     if (editEmail !== user.email) updates.email = editEmail;
+                    if (editPassword) updates.newPassword = editPassword;
                     if (Object.keys(updates).length === 0) {
                       setShowEditModal(false);
                       return;

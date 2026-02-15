@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { AdminConfirmDialog } from '@/components/admin/AdminConfirmDialog';
+import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { fmtDateTime } from '@/lib/dateFormat';
 import {
@@ -18,6 +19,7 @@ import {
   XCircle,
   Users,
   CalendarPlus,
+  Download,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -119,6 +121,19 @@ export default function SessionsPage() {
   const entries: SessionEntry[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
 
+  function handleExport() {
+    if (!entries.length) return;
+    const rows = entries.map((entry) => ({
+      Email: entry.userEmail,
+      User: entry.userName || '',
+      IP: entry.ip,
+      Device: parseUA(entry.userAgent),
+      'Created At': fmtDateTime(entry.createdAt, locale),
+      'Expires At': fmtDateTime(entry.expiresAt, locale),
+    }));
+    exportToCsv('admin-sessions', rows);
+  }
+
   const handleSearch = () => {
     setEmail(searchInput.trim());
     setPage(1);
@@ -161,9 +176,19 @@ export default function SessionsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+        </div>
+        <button
+          onClick={handleExport}
+          disabled={!entries.length}
+          className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        >
+          <Download className="h-4 w-4" />
+          {tc('export')}
+        </button>
       </div>
 
       {/* Stats Bar */}

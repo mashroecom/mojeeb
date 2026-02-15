@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDate } from '@/lib/dateFormat';
 import {
@@ -10,12 +10,15 @@ import {
 } from '@/hooks/useAdmin';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { cn } from '@/lib/utils';
+import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import {
   Presentation,
   Trash2,
   ChevronDown,
   ChevronUp,
+  Download,
+  Search,
 } from 'lucide-react';
 
 type StatusFilter = '' | 'NEW' | 'CONTACTED' | 'SCHEDULED' | 'COMPLETED' | 'REJECTED';
@@ -38,11 +41,22 @@ export default function DemoRequestsPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const { data, isLoading, error } = useAdminDemoRequests({
     page,
     limit: 10,
     status: statusFilter || undefined,
+    search: debouncedSearch || undefined,
   });
   const updateDemoRequest = useUpdateDemoRequest();
   const deleteDemoRequest = useDeleteDemoRequest();
@@ -50,6 +64,20 @@ export default function DemoRequestsPage() {
 
   const requests = data?.data ?? [];
   const pagination = data?.pagination;
+
+  function handleExport() {
+    if (!requests.length) return;
+    const rows = requests.map((req: any) => ({
+      Name: req.name || '',
+      Email: req.email || '',
+      Phone: req.phone || '',
+      Company: req.company || '',
+      Status: req.status,
+      Message: req.message || '',
+      Date: fmtDate(req.createdAt, locale),
+    }));
+    exportToCsv('admin-demo-requests', rows);
+  }
 
   function handleStatusChange(id: string, status: string) {
     updateDemoRequest.mutate({ id, status });
@@ -105,8 +133,28 @@ export default function DemoRequestsPage() {
     <>
       <div>
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <button
+            onClick={handleExport}
+            disabled={!requests.length}
+            className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="h-4 w-4" />
+            {tc('export')}
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="relative mb-4">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            className="w-full rounded-lg border bg-card ps-9 pe-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+          />
         </div>
 
         {/* Status Tabs */}

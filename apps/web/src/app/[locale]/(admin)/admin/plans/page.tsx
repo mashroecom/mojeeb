@@ -169,7 +169,7 @@ export default function PlansPage() {
                   {plan.isPopular && !isEditing && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 dark:bg-purple-900/30 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:text-purple-400">
                       <Star className="h-3 w-3 fill-current" />
-                      Popular
+                      {t('popularBadge')}
                     </span>
                   )}
                   {isEditing ? (

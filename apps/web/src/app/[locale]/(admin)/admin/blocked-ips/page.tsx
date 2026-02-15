@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { AdminConfirmDialog } from '@/components/admin/AdminConfirmDialog';
+import { exportToCsv } from '@/lib/exportCsv';
 import { fmtDateTime } from '@/lib/dateFormat';
 import { useAdminBlockedIPs, useBlockIP, useUnblockIP } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
@@ -13,6 +14,7 @@ import {
   X,
   Loader2,
   Trash2,
+  Download,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -77,6 +79,19 @@ export default function BlockedIPsPage() {
   const entries: BlockedIP[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
 
+  function handleExport() {
+    if (!entries.length) return;
+    const rows = entries.map((entry) => ({
+      IP: entry.ip,
+      Reason: entry.reason || '',
+      'Blocked By': entry.blockedByName || entry.blockedByEmail || '',
+      Type: entry.isAuto ? 'Auto' : 'Manual',
+      'Expires At': entry.expiresAt ? fmtDateTime(entry.expiresAt, locale) : 'Never',
+      'Created At': fmtDateTime(entry.createdAt, locale),
+    }));
+    exportToCsv('admin-blocked-ips', rows);
+  }
+
   const handleBlock = async () => {
     if (!formIP.trim()) return;
     try {
@@ -120,13 +135,23 @@ export default function BlockedIPsPage() {
           <h1 className="text-2xl font-bold">{t('title')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors shrink-0"
-        >
-          {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          {t('blockIP')}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={handleExport}
+            disabled={!entries.length}
+            className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="h-4 w-4" />
+            {tc('export')}
+          </button>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+          >
+            {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {t('blockIP')}
+          </button>
+        </div>
       </div>
 
       {/* Block IP Form */}

@@ -1,6 +1,14 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import { adminService } from '../../services/admin.service';
+import { validate } from '../../middleware/validate';
+
+const growthQuerySchema = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  groupBy: z.enum(['day', 'week', 'month']).optional(),
+});
 
 const router: Router = Router();
 
@@ -15,7 +23,7 @@ router.get('/overview', async (_req: Request, res: Response, next: NextFunction)
 });
 
 // GET /growth - Growth metrics
-router.get('/growth', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/growth', validate({ query: growthQuerySchema }), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const startDate = req.query.startDate as string | undefined;
     const endDate = req.query.endDate as string | undefined;

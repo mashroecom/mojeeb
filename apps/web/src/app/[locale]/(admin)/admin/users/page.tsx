@@ -9,6 +9,7 @@ import {
   useDeleteUser,
   useBulkSuspendUsers,
   useBulkUnsuspendUsers,
+  useBulkDeleteUsers,
 } from '@/hooks/useAdmin';
 import { cn } from '@/lib/utils';
 import { exportToCsv } from '@/lib/exportCsv';
@@ -71,6 +72,7 @@ export default function AdminUsersPage() {
   const deleteUser = useDeleteUser();
   const bulkSuspend = useBulkSuspendUsers();
   const bulkUnsuspend = useBulkUnsuspendUsers();
+  const bulkDelete = useBulkDeleteUsers();
 
   const users = data?.users ?? [];
   const totalPages = data?.totalPages ?? 1;
@@ -144,6 +146,21 @@ export default function AdminUsersPage() {
       variant: 'default',
       onConfirm: () => {
         bulkUnsuspend.mutate(ids, {
+          onSuccess: () => { setSelectedIds(new Set()); },
+        });
+      },
+    });
+  }
+
+  function handleBulkDelete() {
+    const ids = Array.from(selectedIds);
+    setConfirmDialog({
+      open: true,
+      title: t('bulkDelete', { count: ids.length }),
+      message: t('confirmBulkDelete', { count: ids.length }),
+      variant: 'danger',
+      onConfirm: () => {
+        bulkDelete.mutate(ids, {
           onSuccess: () => { setSelectedIds(new Set()); },
         });
       },
@@ -403,6 +420,14 @@ export default function AdminUsersPage() {
           >
             <UserCheck className="h-3.5 w-3.5" />
             {t('bulkUnsuspend', { count: selectedIds.size })}
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            disabled={bulkDelete.isPending}
+            className="inline-flex items-center gap-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {t('bulkDelete', { count: selectedIds.size })}
           </button>
           <button
             onClick={clearSelection}

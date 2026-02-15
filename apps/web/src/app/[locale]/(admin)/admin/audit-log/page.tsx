@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { fmtDateTime } from '@/lib/dateFormat';
 import { useAdminAuditLog } from '@/hooks/useAdmin';
 import { cn } from '@/lib/utils';
+import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import {
   ScrollText,
@@ -13,6 +14,7 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
+  Download,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -235,6 +237,20 @@ export default function AuditLogPage() {
   const entries: AuditLogEntry[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
 
+  function handleExport() {
+    if (!entries.length) return;
+    const rows = entries.map((entry) => ({
+      User: entry.userName || entry.userEmail || entry.userId,
+      Email: entry.userEmail || '',
+      Action: entry.action,
+      'Target Type': entry.targetType,
+      'Target ID': entry.targetId,
+      Date: fmtDateTime(entry.createdAt, locale),
+      Details: entry.metadata ? JSON.stringify(entry.metadata) : '',
+    }));
+    exportToCsv('admin-audit-log', rows);
+  }
+
   // Reset to page 1 when filters change
   function updateFilter<T>(setter: (v: T) => void) {
     return (value: T) => {
@@ -247,7 +263,17 @@ export default function AuditLogPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">{t('title')}</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
+        <button
+          onClick={handleExport}
+          disabled={!entries.length}
+          className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Download className="h-4 w-4" />
+          {tc('export')}
+        </button>
+      </div>
 
       {/* Filters */}
       <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">

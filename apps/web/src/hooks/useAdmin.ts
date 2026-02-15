@@ -49,6 +49,37 @@ export const adminKeys = {
   orgDefaults: ['admin', 'org-defaults'] as const,
   landingPage: ['admin', 'landing-page'] as const,
   dlq: (params?: Record<string, unknown>) => ['admin', 'dlq', params] as const,
+  // New admin entities
+  agents: (params?: Record<string, unknown>) => ['admin', 'agents', params] as const,
+  agentDetail: (id: string) => ['admin', 'agents', id] as const,
+  agentStats: ['admin', 'agents-stats'] as const,
+  channels: (params?: Record<string, unknown>) => ['admin', 'channels', params] as const,
+  channelDetail: (id: string) => ['admin', 'channels', id] as const,
+  channelStats: ['admin', 'channels-stats'] as const,
+  conversations: (params?: Record<string, unknown>) => ['admin', 'conversations', params] as const,
+  conversationDetail: (id: string) => ['admin', 'conversations', id] as const,
+  conversationStats: ['admin', 'conversations-stats'] as const,
+  leads: (params?: Record<string, unknown>) => ['admin', 'leads', params] as const,
+  leadDetail: (id: string) => ['admin', 'leads', id] as const,
+  leadStats: ['admin', 'leads-stats'] as const,
+  knowledgeBases: (params?: Record<string, unknown>) => ['admin', 'knowledge-bases', params] as const,
+  knowledgeBaseDetail: (id: string) => ['admin', 'knowledge-bases', id] as const,
+  knowledgeBaseStats: ['admin', 'knowledge-bases-stats'] as const,
+  apiKeys: (params?: Record<string, unknown>) => ['admin', 'api-keys', params] as const,
+  apiKeyStats: ['admin', 'api-keys-stats'] as const,
+  invoices: (params?: Record<string, unknown>) => ['admin', 'invoices', params] as const,
+  invoiceDetail: (id: string) => ['admin', 'invoices', id] as const,
+  invoiceStats: ['admin', 'invoices-stats'] as const,
+  webhooks: (params?: Record<string, unknown>) => ['admin', 'webhooks', params] as const,
+  webhookDetail: (id: string) => ['admin', 'webhooks', id] as const,
+  webhookStats: ['admin', 'webhooks-stats'] as const,
+  // Ratings / CSAT
+  ratings: (params?: Record<string, unknown>) => ['admin', 'ratings', params] as const,
+  ratingStats: ['admin', 'rating-stats'] as const,
+  // Message Templates (admin)
+  messageTemplatesAdmin: (params?: Record<string, unknown>) => ['admin', 'message-templates-admin', params] as const,
+  // Tags (admin)
+  tagsAdmin: (params?: Record<string, unknown>) => ['admin', 'tags-admin', params] as const,
 };
 
 // Platform Overview (auto-refresh every 30 seconds)
@@ -64,13 +95,14 @@ export function useAdminOverview() {
 }
 
 // Platform Growth
-export function useAdminGrowth(params?: { startDate?: string; endDate?: string }) {
+export function useAdminGrowth(params?: { startDate?: string; endDate?: string; groupBy?: string }) {
   return useQuery({
     queryKey: adminKeys.growth(params),
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       if (params?.startDate) searchParams.set('startDate', params.startDate);
       if (params?.endDate) searchParams.set('endDate', params.endDate);
+      if (params?.groupBy) searchParams.set('groupBy', params.groupBy);
       const query = searchParams.toString();
       const { data } = await api.get(`/admin/analytics/growth${query ? `?${query}` : ''}`);
       return data.data;
@@ -141,6 +173,22 @@ export function useAdminUserLeads(userId: string, page = 1, limit = 10) {
   });
 }
 
+export function useAdminUserNotifications(userId: string, page = 1, limit = 10) {
+  return useQuery({
+    queryKey: ['admin', 'users', userId, 'notifications', page, limit],
+    queryFn: () => api.get(`/admin/users/${userId}/notifications?page=${page}&limit=${limit}`).then(r => r.data.data),
+    enabled: !!userId,
+  });
+}
+
+export function useAdminUserActions(userId: string, page = 1, limit = 10) {
+  return useQuery({
+    queryKey: ['admin', 'users', userId, 'actions', page, limit],
+    queryFn: () => api.get(`/admin/audit-log?userId=${userId}&page=${page}&limit=${limit}`).then(r => r.data.data),
+    enabled: !!userId,
+  });
+}
+
 export function useToggleUserSuspension() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -172,6 +220,19 @@ export function useBulkSuspendUsers() {
   return useMutation({
     mutationFn: async (userIds: string[]) => {
       const { data } = await api.post('/admin/users/bulk-suspend', { userIds });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+  });
+}
+
+export function useBulkDeleteUsers() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (userIds: string[]) => {
+      const { data } = await api.post('/admin/users/bulk-delete', { userIds });
       return data.data;
     },
     onSuccess: () => {
@@ -346,7 +407,7 @@ export function useSystemDbStats() {
 }
 
 // Demo Requests
-export function useAdminDemoRequests(params: { page: number; limit: number; status?: string }) {
+export function useAdminDemoRequests(params: { page: number; limit: number; status?: string; search?: string }) {
   return useQuery({
     queryKey: adminKeys.demoRequests(params),
     queryFn: async () => {
@@ -355,6 +416,7 @@ export function useAdminDemoRequests(params: { page: number; limit: number; stat
         limit: String(params.limit),
       });
       if (params.status) searchParams.set('status', params.status);
+      if (params.search) searchParams.set('search', params.search);
       const { data } = await api.get(`/admin/demo-requests?${searchParams}`);
       return data.data;
     },
@@ -388,7 +450,7 @@ export function useDeleteDemoRequest() {
 }
 
 // Contact Messages
-export function useAdminContactMessages(params: { page: number; limit: number; status?: string }) {
+export function useAdminContactMessages(params: { page: number; limit: number; status?: string; search?: string }) {
   return useQuery({
     queryKey: adminKeys.contactMessages(params),
     queryFn: async () => {
@@ -397,6 +459,7 @@ export function useAdminContactMessages(params: { page: number; limit: number; s
         limit: String(params.limit),
       });
       if (params.status) searchParams.set('status', params.status);
+      if (params.search) searchParams.set('search', params.search);
       const { data } = await api.get(`/admin/contact-messages?${searchParams}`);
       return data.data;
     },
@@ -659,7 +722,7 @@ export function useImpersonateUser() {
 export function useUpdateUserProfile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ userId, ...updates }: { userId: string; firstName?: string; lastName?: string; email?: string }) => {
+    mutationFn: async ({ userId, ...updates }: { userId: string; firstName?: string; lastName?: string; email?: string; newPassword?: string }) => {
       const { data } = await api.patch(`/admin/users/${userId}/profile`, updates);
       return data.data;
     },
@@ -953,7 +1016,7 @@ export function useCleanupErrorLogs() {
 }
 
 // ===== Webhook Logs =====
-export function useAdminWebhookLogs(params: { page: number; limit: number; webhookId?: string; event?: string; success?: string; startDate?: string; endDate?: string }) {
+export function useAdminWebhookLogs(params: { page: number; limit: number; webhookId?: string; event?: string; success?: string; startDate?: string; endDate?: string; search?: string }) {
   return useQuery({
     queryKey: adminKeys.webhookLogs(params),
     queryFn: async () => {
@@ -963,6 +1026,7 @@ export function useAdminWebhookLogs(params: { page: number; limit: number; webho
       if (params.success) searchParams.set('success', params.success);
       if (params.startDate) searchParams.set('startDate', params.startDate);
       if (params.endDate) searchParams.set('endDate', params.endDate);
+      if (params.search) searchParams.set('search', params.search);
       const { data } = await api.get(`/admin/webhook-logs?${searchParams}`);
       return data.data;
     },
@@ -1368,6 +1432,601 @@ export function useDiscardDLQJob() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'dlq'] });
+    },
+  });
+}
+
+// ===== Admin Agents =====
+export function useAdminAgents(params: { page: number; limit: number; search?: string; orgId?: string; provider?: string; status?: string }) {
+  return useQuery({
+    queryKey: adminKeys.agents(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.search) sp.set('search', params.search);
+      if (params.orgId) sp.set('orgId', params.orgId);
+      if (params.provider) sp.set('provider', params.provider);
+      if (params.status) sp.set('status', params.status);
+      const { data } = await api.get(`/admin/agents?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminAgentDetail(agentId: string) {
+  return useQuery({
+    queryKey: adminKeys.agentDetail(agentId),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/agents/${agentId}`);
+      return data.data;
+    },
+    enabled: !!agentId,
+  });
+}
+
+export function useAdminAgentStats() {
+  return useQuery({
+    queryKey: adminKeys.agentStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/agents/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useUpdateAdminAgent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ agentId, ...body }: { agentId: string; [key: string]: unknown }) => {
+      const { data } = await api.patch(`/admin/agents/${agentId}`, body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'agents'] });
+    },
+  });
+}
+
+export function useDeleteAdminAgent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (agentId: string) => {
+      const { data } = await api.delete(`/admin/agents/${agentId}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'agents'] });
+    },
+  });
+}
+
+// ===== Admin Channels =====
+export function useAdminChannels(params: { page: number; limit: number; search?: string; orgId?: string; type?: string; status?: string }) {
+  return useQuery({
+    queryKey: adminKeys.channels(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.search) sp.set('search', params.search);
+      if (params.orgId) sp.set('orgId', params.orgId);
+      if (params.type) sp.set('type', params.type);
+      if (params.status) sp.set('status', params.status);
+      const { data } = await api.get(`/admin/channels?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminChannelDetail(channelId: string) {
+  return useQuery({
+    queryKey: adminKeys.channelDetail(channelId),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/channels/${channelId}`);
+      return data.data;
+    },
+    enabled: !!channelId,
+  });
+}
+
+export function useAdminChannelStats() {
+  return useQuery({
+    queryKey: adminKeys.channelStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/channels/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useUpdateAdminChannel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ channelId, ...body }: { channelId: string; [key: string]: unknown }) => {
+      const { data } = await api.patch(`/admin/channels/${channelId}`, body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'channels'] });
+    },
+  });
+}
+
+export function useDeleteAdminChannel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (channelId: string) => {
+      const { data } = await api.delete(`/admin/channels/${channelId}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'channels'] });
+    },
+  });
+}
+
+// ===== Admin Conversations =====
+export function useAdminConversations(params: { page: number; limit: number; search?: string; orgId?: string; channelId?: string; status?: string; startDate?: string; endDate?: string }) {
+  return useQuery({
+    queryKey: adminKeys.conversations(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.search) sp.set('search', params.search);
+      if (params.orgId) sp.set('orgId', params.orgId);
+      if (params.channelId) sp.set('channelId', params.channelId);
+      if (params.status) sp.set('status', params.status);
+      if (params.startDate) sp.set('startDate', params.startDate);
+      if (params.endDate) sp.set('endDate', params.endDate);
+      const { data } = await api.get(`/admin/conversations?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminConversationDetail(conversationId: string) {
+  return useQuery({
+    queryKey: adminKeys.conversationDetail(conversationId),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/conversations/${conversationId}`);
+      return data.data;
+    },
+    enabled: !!conversationId,
+  });
+}
+
+export function useAdminConversationStats() {
+  return useQuery({
+    queryKey: adminKeys.conversationStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/conversations/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useBulkUpdateConversationStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversationIds, status }: { conversationIds: string[]; status: string }) => {
+      const { data } = await api.post('/admin/conversations/bulk-status', { conversationIds, status });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'conversations'] });
+    },
+  });
+}
+
+export function useUpdateAdminConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversationId, ...body }: { conversationId: string; [key: string]: unknown }) => {
+      const { data } = await api.patch(`/admin/conversations/${conversationId}`, body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'conversations'] });
+    },
+  });
+}
+
+// ===== Admin Leads =====
+export function useAdminLeads(params: { page: number; limit: number; search?: string; orgId?: string; status?: string }) {
+  return useQuery({
+    queryKey: adminKeys.leads(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.search) sp.set('search', params.search);
+      if (params.orgId) sp.set('orgId', params.orgId);
+      if (params.status) sp.set('status', params.status);
+      const { data } = await api.get(`/admin/leads?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminLeadDetail(leadId: string) {
+  return useQuery({
+    queryKey: adminKeys.leadDetail(leadId),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/leads/${leadId}`);
+      return data.data;
+    },
+    enabled: !!leadId,
+  });
+}
+
+export function useAdminLeadStats() {
+  return useQuery({
+    queryKey: adminKeys.leadStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/leads/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useBulkUpdateLeadStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ leadIds, status }: { leadIds: string[]; status: string }) => {
+      const { data } = await api.post('/admin/leads/bulk-status', { leadIds, status });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'leads'] });
+    },
+  });
+}
+
+export function useBulkDeleteLeads() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (leadIds: string[]) => {
+      const { data } = await api.post('/admin/leads/bulk-delete', { leadIds });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'leads'] });
+    },
+  });
+}
+
+export function useUpdateAdminLead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ leadId, ...body }: { leadId: string; [key: string]: unknown }) => {
+      const { data } = await api.patch(`/admin/leads/${leadId}`, body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'leads'] });
+    },
+  });
+}
+
+export function useDeleteAdminLead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (leadId: string) => {
+      const { data } = await api.delete(`/admin/leads/${leadId}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'leads'] });
+    },
+  });
+}
+
+// ===== Admin Knowledge Bases =====
+export function useAdminKnowledgeBases(params: { page: number; limit: number; search?: string; orgId?: string }) {
+  return useQuery({
+    queryKey: adminKeys.knowledgeBases(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.search) sp.set('search', params.search);
+      if (params.orgId) sp.set('orgId', params.orgId);
+      const { data } = await api.get(`/admin/knowledge-bases?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminKnowledgeBaseDetail(kbId: string) {
+  return useQuery({
+    queryKey: adminKeys.knowledgeBaseDetail(kbId),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/knowledge-bases/${kbId}`);
+      return data.data;
+    },
+    enabled: !!kbId,
+  });
+}
+
+export function useAdminKnowledgeBaseStats() {
+  return useQuery({
+    queryKey: adminKeys.knowledgeBaseStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/knowledge-bases/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useDeleteAdminKnowledgeBase() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (kbId: string) => {
+      const { data } = await api.delete(`/admin/knowledge-bases/${kbId}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'knowledge-bases'] });
+    },
+  });
+}
+
+// ===== Admin API Keys =====
+export function useAdminApiKeys(params: { page: number; limit: number; search?: string; orgId?: string; status?: string }) {
+  return useQuery({
+    queryKey: adminKeys.apiKeys(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.search) sp.set('search', params.search);
+      if (params.orgId) sp.set('orgId', params.orgId);
+      if (params.status) sp.set('status', params.status);
+      const { data } = await api.get(`/admin/api-keys?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminApiKeyStats() {
+  return useQuery({
+    queryKey: adminKeys.apiKeyStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/api-keys/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useRevokeAdminApiKey() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (keyId: string) => {
+      const { data } = await api.patch(`/admin/api-keys/${keyId}/revoke`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'api-keys'] });
+    },
+  });
+}
+
+export function useDeleteAdminApiKey() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (keyId: string) => {
+      const { data } = await api.delete(`/admin/api-keys/${keyId}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'api-keys'] });
+    },
+  });
+}
+
+// ===== Admin Invoices =====
+export function useAdminInvoices(params: { page: number; limit: number; orgId?: string; status?: string; startDate?: string; endDate?: string }) {
+  return useQuery({
+    queryKey: adminKeys.invoices(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.orgId) sp.set('orgId', params.orgId);
+      if (params.status) sp.set('status', params.status);
+      if (params.startDate) sp.set('startDate', params.startDate);
+      if (params.endDate) sp.set('endDate', params.endDate);
+      const { data } = await api.get(`/admin/invoices?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminInvoiceDetail(invoiceId: string) {
+  return useQuery({
+    queryKey: adminKeys.invoiceDetail(invoiceId),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/invoices/${invoiceId}`);
+      return data.data;
+    },
+    enabled: !!invoiceId,
+  });
+}
+
+export function useAdminInvoiceStats() {
+  return useQuery({
+    queryKey: adminKeys.invoiceStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/invoices/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useUpdateAdminInvoice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ invoiceId, ...body }: { invoiceId: string; status: string }) => {
+      const { data } = await api.patch(`/admin/invoices/${invoiceId}`, body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'invoices'] });
+    },
+  });
+}
+
+// ===== Admin Webhooks =====
+export function useAdminWebhooks(params: { page: number; limit: number; orgId?: string; status?: string }) {
+  return useQuery({
+    queryKey: adminKeys.webhooks(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.orgId) sp.set('orgId', params.orgId);
+      if (params.status) sp.set('status', params.status);
+      const { data } = await api.get(`/admin/webhooks?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminWebhookDetail(webhookId: string) {
+  return useQuery({
+    queryKey: adminKeys.webhookDetail(webhookId),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/webhooks/${webhookId}`);
+      return data.data;
+    },
+    enabled: !!webhookId,
+  });
+}
+
+export function useAdminWebhookStats() {
+  return useQuery({
+    queryKey: adminKeys.webhookStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/webhooks/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useUpdateAdminWebhook() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ webhookId, ...body }: { webhookId: string; [key: string]: unknown }) => {
+      const { data } = await api.patch(`/admin/webhooks/${webhookId}`, body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'webhooks'] });
+    },
+  });
+}
+
+export function useDeleteAdminWebhook() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (webhookId: string) => {
+      const { data } = await api.delete(`/admin/webhooks/${webhookId}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'webhooks'] });
+    },
+  });
+}
+
+// ===== Bulk Unsuspend Orgs =====
+export function useBulkUnsuspendOrgs() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (orgIds: string[]) => {
+      const { data } = await api.post('/admin/organizations/bulk-unsuspend', { orgIds });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'organizations'] });
+    },
+  });
+}
+
+// ===== Update Organization Profile =====
+export function useUpdateAdminOrg() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orgId, ...body }: { orgId: string; [key: string]: unknown }) => {
+      const { data } = await api.patch(`/admin/organizations/${orgId}`, body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'organizations'] });
+    },
+  });
+}
+
+// ===== Admin Ratings / CSAT =====
+export function useAdminRatings(params: { page: number; limit: number; rating?: number; startDate?: string; endDate?: string }) {
+  return useQuery({
+    queryKey: adminKeys.ratings(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.rating) sp.set('rating', String(params.rating));
+      if (params.startDate) sp.set('startDate', params.startDate);
+      if (params.endDate) sp.set('endDate', params.endDate);
+      const { data } = await api.get(`/admin/ratings?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminRatingStats() {
+  return useQuery({
+    queryKey: adminKeys.ratingStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/ratings/stats');
+      return data.data;
+    },
+  });
+}
+
+// ===== Admin Message Templates =====
+export function useAdminMessageTemplates(params: { page: number; limit: number; search?: string; category?: string }) {
+  return useQuery({
+    queryKey: adminKeys.messageTemplatesAdmin(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.search) sp.set('search', params.search);
+      if (params.category) sp.set('category', params.category);
+      const { data } = await api.get(`/admin/message-templates-admin?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useDeleteMessageTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete(`/admin/message-templates-admin/${id}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'message-templates-admin'] });
+    },
+  });
+}
+
+// ===== Admin Tags =====
+export function useAdminTags(params: { page: number; limit: number; search?: string }) {
+  return useQuery({
+    queryKey: adminKeys.tagsAdmin(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      if (params.search) sp.set('search', params.search);
+      const { data } = await api.get(`/admin/tags?${sp}`);
+      return data.data;
+    },
+  });
+}
+
+export function useDeleteTag() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete(`/admin/tags/${id}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'tags-admin'] });
     },
   });
 }

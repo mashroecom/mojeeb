@@ -48,6 +48,15 @@ import {
   Globe,
   Bell,
   ArchiveX,
+  Bot,
+  UserPlus,
+  BookOpen,
+  Key,
+  Receipt,
+  Database,
+  Star,
+  MessageSquareText,
+  Tag,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -103,6 +112,18 @@ const allItems: Record<string, SidebarItem> = {
   files:                 { key: 'files',                 href: '/admin/files',               icon: FolderOpen },
   notifications:         { key: 'notifications',         href: '/admin/notifications',       icon: Bell },
   dlq:                   { key: 'dlq',                   href: '/admin/dlq',                 icon: ArchiveX },
+  // Platform Data
+  adminAgents:           { key: 'adminAgents',           href: '/admin/agents',              icon: Bot },
+  adminChannels:         { key: 'adminChannels',         href: '/admin/channels',            icon: Radio },
+  adminConversations:    { key: 'adminConversations',    href: '/admin/conversations',       icon: MessageSquare },
+  adminLeads:            { key: 'adminLeads',            href: '/admin/leads',               icon: UserPlus },
+  adminKnowledgeBases:   { key: 'adminKnowledgeBases',   href: '/admin/knowledge-bases',     icon: BookOpen },
+  adminApiKeys:          { key: 'adminApiKeys',          href: '/admin/api-keys',            icon: Key },
+  adminInvoices:         { key: 'adminInvoices',         href: '/admin/invoices',            icon: Receipt },
+  adminWebhooks:         { key: 'adminWebhooks',         href: '/admin/webhooks',            icon: Webhook },
+  csatAnalytics:         { key: 'csatAnalytics',         href: '/admin/csat-analytics',      icon: Star },
+  messageTemplates:      { key: 'messageTemplates',      href: '/admin/message-templates',   icon: MessageSquareText },
+  adminTags:             { key: 'adminTags',             href: '/admin/tags',                icon: Tag },
 };
 
 // ---------------------------------------------------------------------------
@@ -121,6 +142,24 @@ const sidebarGroups: SidebarGroup[] = [
     icon: Users,
     collapsible: true,
     items: [allItems.users, allItems.organizations, allItems.subscriptions],
+  },
+  {
+    key: 'platformData',
+    icon: Database,
+    collapsible: true,
+    items: [
+      allItems.adminAgents,
+      allItems.adminChannels,
+      allItems.adminConversations,
+      allItems.adminLeads,
+      allItems.adminKnowledgeBases,
+      allItems.adminApiKeys,
+      allItems.adminInvoices,
+      allItems.adminWebhooks,
+      allItems.csatAnalytics,
+      allItems.messageTemplates,
+      allItems.adminTags,
+    ],
   },
   {
     key: 'contentAndComms',

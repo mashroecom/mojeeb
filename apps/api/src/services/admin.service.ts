@@ -37,7 +37,7 @@ export class AdminService {
   }
 
   async getPlatformGrowth(params: { startDate?: string; endDate?: string; groupBy?: string }) {
-    const { startDate, endDate } = params;
+    const { startDate, endDate, groupBy = 'day' } = params;
     const dateFilter: Record<string, unknown> = {};
     if (startDate) dateFilter.gte = new Date(startDate);
     if (endDate) dateFilter.lte = new Date(endDate);
@@ -62,21 +62,36 @@ export class AdminService {
       }),
     ]);
 
-    // Group by day
-    const dailyMap = new Map<string, { users: number; orgs: number; conversations: number }>();
+    // Compute bucket key based on groupBy
+    function bucketKey(date: Date): string {
+      const iso = date.toISOString().split('T')[0]!;
+      if (groupBy === 'week') {
+        const d = new Date(iso);
+        const day = d.getUTCDay();
+        const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1);
+        d.setUTCDate(diff);
+        return d.toISOString().split('T')[0]!;
+      }
+      if (groupBy === 'month') {
+        return iso.slice(0, 7);
+      }
+      return iso;
+    }
 
-    const addToDay = (date: Date, key: 'users' | 'orgs' | 'conversations') => {
-      const day = date.toISOString().split('T')[0]!;
-      const entry = dailyMap.get(day) || { users: 0, orgs: 0, conversations: 0 };
+    const bucketMap = new Map<string, { users: number; organizations: number; conversations: number }>();
+
+    const addToBucket = (date: Date, key: 'users' | 'organizations' | 'conversations') => {
+      const bk = bucketKey(date);
+      const entry = bucketMap.get(bk) || { users: 0, organizations: 0, conversations: 0 };
       entry[key]++;
-      dailyMap.set(day, entry);
+      bucketMap.set(bk, entry);
     };
 
-    users.forEach((u) => addToDay(u.createdAt, 'users'));
-    orgs.forEach((o) => addToDay(o.createdAt, 'orgs'));
-    conversations.forEach((c) => addToDay(c.createdAt, 'conversations'));
+    users.forEach((u) => addToBucket(u.createdAt, 'users'));
+    orgs.forEach((o) => addToBucket(o.createdAt, 'organizations'));
+    conversations.forEach((c) => addToBucket(c.createdAt, 'conversations'));
 
-    const growth = Array.from(dailyMap.entries())
+    const growth = Array.from(bucketMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, data]) => ({ date, ...data }));
 
@@ -214,6 +229,13 @@ export class AdminService {
     return { count: result.count };
   }
 
+  async bulkDeleteUsers(userIds: string[]) {
+    const result = await prisma.user.deleteMany({
+      where: { id: { in: userIds } },
+    });
+    return { count: result.count };
+  }
+
   // ========================
   // ORGANIZATIONS MANAGEMENT
   // ========================
@@ -337,6 +359,14 @@ export class AdminService {
     const result = await prisma.organization.updateMany({
       where: { id: { in: orgIds }, suspendedAt: null },
       data: { suspendedAt: new Date() },
+    });
+    return { count: result.count };
+  }
+
+  async bulkUnsuspendOrgs(orgIds: string[]) {
+    const result = await prisma.organization.updateMany({
+      where: { id: { in: orgIds }, suspendedAt: { not: null } },
+      data: { suspendedAt: null },
     });
     return { count: result.count };
   }
