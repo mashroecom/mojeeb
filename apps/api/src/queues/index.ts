@@ -32,6 +32,16 @@ export const webhookQueue = new Queue('webhook-dispatch', {
   },
 });
 
+export const emailQueue = new Queue('transactional-email', {
+  ...defaultOpts,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: 'exponential' as const, delay: 5000 },
+    removeOnComplete: { count: 500 },
+    removeOnFail: { count: 2000 },
+  },
+});
+
 export const bulkEmailQueue = new Queue('bulk-email', {
   ...defaultOpts,
   defaultJobOptions: {

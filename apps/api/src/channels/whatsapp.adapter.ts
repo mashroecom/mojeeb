@@ -63,7 +63,10 @@ export class WhatsAppAdapter extends ChannelAdapter {
               senderName: change.value?.contacts?.[0]?.profile?.name,
               content: msg.text?.body || msg.caption || '',
               contentType: this.mapContentType(msg.type),
-              timestamp: new Date(parseInt(msg.timestamp) * 1000),
+              timestamp: (() => {
+                const ts = parseInt(msg.timestamp, 10);
+                return isNaN(ts) ? new Date() : new Date(ts * 1000);
+              })(),
               rawPayload: msg,
             });
           }
@@ -84,6 +87,13 @@ export class WhatsAppAdapter extends ChannelAdapter {
       const phoneNumberId = credentials.phoneNumberId;
       const accessToken = credentials.accessToken;
 
+      if (!phoneNumberId || !accessToken) {
+        return { externalId: '', success: false, error: 'Missing WhatsApp credentials (phoneNumberId or accessToken)' };
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(
         `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
         {
@@ -98,10 +108,18 @@ export class WhatsAppAdapter extends ChannelAdapter {
             type: 'text',
             text: { body: message.content },
           }),
+          signal: controller.signal,
         }
       );
 
-      const data = (await response.json()) as any;
+      clearTimeout(timeout);
+
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        return { externalId: '', success: false, error: 'Invalid response format from WhatsApp API' };
+      }
 
       return {
         externalId: data.messages?.[0]?.id || '',

@@ -132,7 +132,11 @@ export class AnthropicProvider extends AIProvider {
     if (jsonStr.startsWith('```')) {
       jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
     }
-    return JSON.parse(jsonStr) as T;
+    try {
+      return JSON.parse(jsonStr) as T;
+    } catch (parseErr) {
+      throw new Error('Failed to parse Anthropic response as JSON');
+    }
   }
 
   async generateEmbedding(text: string): Promise<number[]> {
@@ -142,6 +146,9 @@ export class AnthropicProvider extends AIProvider {
       model: 'text-embedding-3-small',
       input: text,
     });
-    return response.data[0]!.embedding;
+    if (!response.data[0]?.embedding) {
+      throw new Error('No embedding returned from OpenAI API');
+    }
+    return response.data[0].embedding;
   }
 }

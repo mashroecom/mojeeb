@@ -60,7 +60,7 @@ describe('validate middleware', () => {
       expect(req.body.extra).toBeUndefined();
     });
 
-    it('should return 400 when the body is invalid', () => {
+    it('should return 400 with validation details when the body is invalid', () => {
       const req = mockReq({ body: { name: '', email: 'not-an-email' } });
       const res = mockRes();
       const next = vi.fn();
@@ -112,14 +112,15 @@ describe('validate middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should set validatedQuery on the request when valid', () => {
+    it('should replace req.query with parsed/coerced data', () => {
       const req = mockReq({ query: { page: '2', limit: '25' } });
       const res = mockRes();
       const next = vi.fn();
 
       validate({ query: querySchema })(req, res, next);
 
-      expect((req as any).validatedQuery).toEqual({ page: 2, limit: 25 });
+      // The middleware replaces req.query with the parsed result
+      expect(req.query).toEqual({ page: 2, limit: 25 });
     });
 
     it('should return 400 when query is invalid', () => {
@@ -161,15 +162,16 @@ describe('validate middleware', () => {
       expect(next).toHaveBeenCalledOnce();
     });
 
-    it('should set validatedParams on the request when valid', () => {
+    it('should replace req.params with parsed data', () => {
       const uuid = '550e8400-e29b-41d4-a716-446655440000';
-      const req = mockReq({ params: { id: uuid } });
+      const req = mockReq({ params: { id: uuid, extra: 'ignored' } });
       const res = mockRes();
       const next = vi.fn();
 
       validate({ params: paramsSchema })(req, res, next);
 
-      expect((req as any).validatedParams).toEqual({ id: uuid });
+      // The middleware replaces req.params with the parsed result (extra stripped)
+      expect(req.params).toEqual({ id: uuid });
     });
 
     it('should return 400 when params are invalid', () => {
@@ -192,7 +194,7 @@ describe('validate middleware', () => {
   });
 
   // -----------------------------------------------------------------------
-  // Multiple schemas
+  // Multiple schemas combined
   // -----------------------------------------------------------------------
   describe('multiple schemas combined', () => {
     const bodySchema = z.object({ name: z.string().min(1) });
@@ -211,7 +213,7 @@ describe('validate middleware', () => {
       expect(next).toHaveBeenCalledOnce();
     });
 
-    it('should return errors for all failing schemas', () => {
+    it('should return errors for all failing schemas at once', () => {
       const req = mockReq({
         body: {},
         params: { id: 'bad' },

@@ -59,6 +59,62 @@ router.get('/stats', async (_req: Request, res: Response, next: NextFunction) =>
   }
 });
 
+// GET /health - Knowledge base health overview
+router.get('/health', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const [totalKBs, totalDocs, byEmbeddingStatus] = await Promise.all([
+      prisma.knowledgeBase.count(),
+      prisma.kBDocument.count(),
+      prisma.kBDocument.groupBy({ by: ['embeddingStatus'], _count: true }),
+    ]);
+
+    const statusMap: Record<string, number> = {};
+    for (const s of byEmbeddingStatus) {
+      statusMap[s.embeddingStatus] = s._count;
+    }
+
+    const completed = statusMap['COMPLETED'] ?? 0;
+    const failed = statusMap['FAILED'] ?? 0;
+    const pending = statusMap['PENDING'] ?? 0;
+    const processing = statusMap['PROCESSING'] ?? 0;
+    const completedPct = totalDocs > 0 ? Number(((completed / totalDocs) * 100).toFixed(1)) : 0;
+
+    // KBs that have at least one failed document
+    const kbsWithFailures = await prisma.kBDocument.groupBy({
+      by: ['knowledgeBaseId'],
+      where: { embeddingStatus: 'FAILED' },
+      _count: true,
+    });
+
+    const failedKbIds = kbsWithFailures.map((f) => f.knowledgeBaseId);
+    const failedKbs = failedKbIds.length
+      ? await prisma.knowledgeBase.findMany({
+          where: { id: { in: failedKbIds } },
+          select: { id: true, name: true, org: { select: { id: true, name: true } } },
+        })
+      : [];
+
+    const kbsWithFailedDocs = failedKbs.map((kb) => {
+      const entry = kbsWithFailures.find((f) => f.knowledgeBaseId === kb.id);
+      return { ...kb, failedCount: entry?._count ?? 0 };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalKBs,
+        totalDocuments: totalDocs,
+        embeddingStatus: { pending, processing, completed, failed },
+        completedPct,
+        failedEmbeddings: failed,
+        kbsWithFailedDocs,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /:kbId - Knowledge base detail
 router.get('/:kbId', async (req: Request, res: Response, next: NextFunction) => {
   try {

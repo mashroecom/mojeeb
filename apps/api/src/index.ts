@@ -5,7 +5,7 @@ import { logger } from './config/logger';
 import { prisma } from './config/database';
 import { redis } from './config/redis';
 import { setupWebSocket, getIO } from './websocket';
-import { inboundQueue, aiQueue, outboundQueue, analyticsQueue, webhookQueue, bulkEmailQueue, deadLetterQueue } from './queues';
+import { inboundQueue, aiQueue, outboundQueue, analyticsQueue, webhookQueue, bulkEmailQueue, emailQueue, deadLetterQueue } from './queues';
 
 // Import workers (named exports for graceful shutdown)
 import { inboundWorker } from './queues/workers/inbound.worker';
@@ -14,6 +14,7 @@ import { outboundWorker } from './queues/workers/outbound.worker';
 import { analyticsWorker } from './queues/workers/analytics.worker';
 import webhookWorker from './queues/workers/webhook.worker';
 import { bulkEmailWorker } from './queues/workers/bulkEmail.worker';
+import { emailWorker } from './queues/workers/email.worker';
 
 async function main() {
   // Test database connection
@@ -22,6 +23,15 @@ async function main() {
     logger.info('Database connected');
   } catch (err) {
     logger.error({ err }, 'Failed to connect to database');
+    process.exit(1);
+  }
+
+  // Test Redis connection
+  try {
+    await redis.ping();
+    logger.info('Redis connected');
+  } catch (err) {
+    logger.error({ err }, 'Failed to connect to Redis');
     process.exit(1);
   }
 
@@ -40,8 +50,18 @@ async function main() {
   });
 
   // Graceful shutdown
+  let isShuttingDown = false;
   const shutdown = async (signal: string) => {
+    if (isShuttingDown) return; // Prevent double shutdown
+    isShuttingDown = true;
     logger.info(`${signal} received, shutting down gracefully`);
+
+    // Force exit after 15 seconds to prevent hanging
+    const forceTimer = setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 15000);
+    forceTimer.unref(); // Don't keep process alive just for this timer
 
     // 1. Close Socket.IO (stop accepting new connections, disconnect existing)
     try {
@@ -52,41 +72,42 @@ async function main() {
       // getIO throws if not initialized — safe to ignore
     }
 
-    httpServer.close(async () => {
-      // 2. Close BullMQ workers gracefully (finish in-progress jobs)
-      await Promise.allSettled([
-        inboundWorker.close(),
-        aiWorker.close(),
-        outboundWorker.close(),
-        analyticsWorker.close(),
-        webhookWorker.close(),
-        bulkEmailWorker.close(),
-      ]);
-      logger.info('Queue workers closed');
-
-      // 3. Close BullMQ queues (release Redis connections)
-      await Promise.allSettled([
-        inboundQueue.close(),
-        aiQueue.close(),
-        outboundQueue.close(),
-        analyticsQueue.close(),
-        webhookQueue.close(),
-        bulkEmailQueue.close(),
-        deadLetterQueue.close(),
-      ]);
-      logger.info('Queues closed');
-
-      // 4. Disconnect database and Redis
-      await prisma.$disconnect();
-      await redis.quit();
-      logger.info('Server closed');
-      process.exit(0);
+    // 2. Stop accepting new HTTP connections and wait for in-flight requests
+    await new Promise<void>((resolve) => {
+      httpServer.close(() => resolve());
     });
+    logger.info('HTTP server closed');
 
-    setTimeout(() => {
-      logger.error('Forced shutdown after timeout');
-      process.exit(1);
-    }, 10000);
+    // 3. Close BullMQ workers gracefully (finish in-progress jobs)
+    await Promise.allSettled([
+      inboundWorker.close(),
+      aiWorker.close(),
+      outboundWorker.close(),
+      analyticsWorker.close(),
+      webhookWorker.close(),
+      bulkEmailWorker.close(),
+      emailWorker.close(),
+    ]);
+    logger.info('Queue workers closed');
+
+    // 4. Close BullMQ queues (release Redis connections)
+    await Promise.allSettled([
+      inboundQueue.close(),
+      aiQueue.close(),
+      outboundQueue.close(),
+      analyticsQueue.close(),
+      webhookQueue.close(),
+      bulkEmailQueue.close(),
+      emailQueue.close(),
+      deadLetterQueue.close(),
+    ]);
+    logger.info('Queues closed');
+
+    // 5. Disconnect database and Redis
+    await prisma.$disconnect();
+    await redis.quit();
+    logger.info('Server closed');
+    process.exit(0);
   };
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));

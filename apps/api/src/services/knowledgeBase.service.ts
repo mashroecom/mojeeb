@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { prisma } from '../config/database';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { getAIProvider } from '../ai/index';
@@ -93,7 +94,15 @@ export class KnowledgeBaseService {
   private async parsePDF(base64Data: string): Promise<string> {
     try {
       const buffer = Buffer.from(base64Data, 'base64');
-      const result = await (pdfParse as any)(buffer);
+
+      // Timeout PDF parsing to prevent DoS via malicious PDFs
+      const result = await Promise.race([
+        (pdfParse as any)(buffer),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('PDF parsing timed out')), 30000),
+        ),
+      ]);
+
       return result.text;
     } catch (err) {
       logger.error({ err }, 'PDF parsing failed');

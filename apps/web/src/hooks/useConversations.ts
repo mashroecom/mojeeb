@@ -107,7 +107,7 @@ export function useConversations(params?: ConversationsParams) {
       return data;
     },
     enabled: !!orgId,
-    refetchInterval: 10000,
+    refetchInterval: 30000, // Reduced frequency — real-time updates come via WebSocket
   });
 }
 
@@ -153,7 +153,7 @@ export function useMessages(convId: string, params?: MessagesParams) {
       return page < totalPages ? page + 1 : undefined;
     },
     enabled: !!orgId && !!convId,
-    refetchInterval: 5000,
+    refetchInterval: 15000, // Fallback polling — primary updates via WebSocket
   });
 }
 

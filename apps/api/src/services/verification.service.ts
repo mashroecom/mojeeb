@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import argon2 from 'argon2';
 import { prisma } from '../config/database';
-import { emailService } from './email.service';
+import { emailQueue } from '../queues';
 import { logger } from '../config/logger';
 import { BadRequestError, NotFoundError } from '../utils/errors';
 
@@ -101,7 +101,7 @@ export class VerificationService {
 
     // Create new token and send email
     const token = await this.createEmailVerificationToken(userId);
-    await emailService.sendEmailVerification(user.email, token);
+    await emailQueue.add('verification', { type: 'verification', to: user.email, verifyToken: token });
   }
 
   /**
@@ -146,7 +146,7 @@ export class VerificationService {
       },
     });
 
-    await emailService.sendPasswordResetEmail(user.email, token);
+    await emailQueue.add('passwordReset', { type: 'passwordReset', to: user.email, resetToken: token });
   }
 
   /**

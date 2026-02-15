@@ -10,7 +10,7 @@ import type { JwtPayload } from '../middleware/auth';
 import { slugify } from '@mojeeb/shared-utils';
 import { SubscriptionPlan } from '@mojeeb/shared-types';
 import { planConfigService } from './planConfig.service';
-import { emailService } from './email.service';
+import { emailQueue } from '../queues';
 import { verificationService } from './verification.service';
 import { logger } from '../config/logger';
 import { adminNotificationService } from './adminNotification.service';
@@ -286,11 +286,18 @@ export class AuthService {
       throw new UnauthorizedError('Refresh token expired');
     }
 
-    // Rotate refresh token
-    const newTokens = await this.generateTokens(session.user.id, session.user.email);
+    // Verify the user account is still valid
+    if (session.user.suspendedAt) {
+      await prisma.session.delete({ where: { id: session.id } });
+      throw new UnauthorizedError('Account has been suspended');
+    }
 
-    // Delete old session
-    await prisma.session.delete({ where: { id: session.id } });
+    // Rotate refresh token atomically — delete old + create new in a transaction
+    // to prevent race conditions with concurrent refresh requests
+    const newTokens = await prisma.$transaction(async (tx) => {
+      await tx.session.delete({ where: { id: session.id } });
+      return this.generateTokensInTx(tx, session.user.id, session.user.email);
+    });
 
     return { tokens: newTokens };
   }
@@ -388,7 +395,7 @@ export class AuthService {
     });
 
     // Send welcome email (non-blocking)
-    emailService.sendWelcomeEmail(user.email, user.firstName).catch(err => logger.warn({ err }, 'Background task failed'));
+    emailQueue.add('welcome', { type: 'welcome', to: user.email, firstName: user.firstName }).catch(err => logger.warn({ err }, 'Failed to queue welcome email'));
   }
 
   async getProfile(userId: string) {
@@ -608,6 +615,11 @@ export class AuthService {
   }
 
   private async generateTokens(userId: string, email: string) {
+    return this.generateTokensInTx(prisma, userId, email);
+  }
+
+  /** Generate tokens using a specific Prisma client (or transaction). */
+  private async generateTokensInTx(tx: typeof prisma, userId: string, email: string) {
     const jti = crypto.randomUUID();
     const payload: JwtPayload = { userId, email, jti };
 
@@ -618,7 +630,7 @@ export class AuthService {
     const refreshToken = crypto.randomBytes(40).toString('hex');
 
     // Store refresh token in session
-    await prisma.session.create({
+    await tx.session.create({
       data: {
         userId,
         refreshToken,

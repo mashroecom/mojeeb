@@ -5,10 +5,18 @@
  */
 
 const COOKIE_NAME = 'accessToken';
-const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+const MAX_AGE = 60 * 60 * 24; // 1 day (aligned closer to JWT access expiry window)
 
 export function setAuthCookie(token: string) {
-  document.cookie = `${COOKIE_NAME}=${token}; path=/; max-age=${MAX_AGE}; SameSite=Lax`;
+  const isSecure = window.location.protocol === 'https:';
+  const flags = [
+    `${COOKIE_NAME}=${token}`,
+    'path=/',
+    `max-age=${MAX_AGE}`,
+    'SameSite=Strict',
+    ...(isSecure ? ['Secure'] : []),
+  ];
+  document.cookie = flags.join('; ');
 }
 
 export function clearAuthCookie() {

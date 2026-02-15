@@ -25,7 +25,7 @@ export function validate(schemas: ValidationSchemas) {
       if (!result.success) {
         errors.query = result.error.flatten();
       } else {
-        (req as any).validatedQuery = result.data;
+        (req as any).query = result.data;
       }
     }
 
@@ -34,7 +34,7 @@ export function validate(schemas: ValidationSchemas) {
       if (!result.success) {
         errors.params = result.error.flatten();
       } else {
-        (req as any).validatedParams = result.data;
+        (req as any).params = result.data;
       }
     }
 

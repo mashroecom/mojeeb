@@ -149,7 +149,12 @@ export class OpenAIProvider extends AIProvider {
       responseBody: content,
     }, `OpenAI [${response.model}] ${usage?.prompt_tokens}in/${usage?.completion_tokens}out = ${usage?.total_tokens}tok (${durationMs}ms)`);
 
-    return JSON.parse(content) as T;
+    try {
+      return JSON.parse(content) as T;
+    } catch (parseErr) {
+      logger.error({ parseErr, content: content.slice(0, 500) }, 'Failed to parse OpenAI JSON response');
+      throw new Error('Failed to parse AI response as JSON');
+    }
   }
 
   async generateEmbedding(text: string): Promise<number[]> {
@@ -172,6 +177,9 @@ export class OpenAIProvider extends AIProvider {
       durationMs,
     }, `OpenAI [embedding] ${response.usage?.total_tokens}tok (${durationMs}ms)`);
 
-    return response.data[0]!.embedding;
+    if (!response.data[0]?.embedding) {
+      throw new Error('No embedding returned from OpenAI API');
+    }
+    return response.data[0].embedding;
   }
 }

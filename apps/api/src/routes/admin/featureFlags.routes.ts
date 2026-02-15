@@ -19,6 +19,11 @@ const createFlagSchema = z.object({
 const updateFlagSchema = z.object({
   enabled: z.boolean().optional(),
   description: z.string().optional(),
+  metadata: z.object({
+    rolloutPercentage: z.number().min(0).max(100).optional(),
+    targetOrgs: z.array(z.string()).optional(),
+    targetUsers: z.array(z.string()).optional(),
+  }).optional(),
 });
 
 // GET / - List all feature flags
@@ -65,9 +70,9 @@ router.patch(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { key } = req.params as { key: string };
-      const { enabled, description } = req.body;
+      const { enabled, description, metadata } = req.body;
 
-      const flag = await featureFlagService.update(key, { enabled, description });
+      const flag = await featureFlagService.update(key, { enabled, description, metadata });
 
       await auditLogService.log({
         userId: req.user!.userId,

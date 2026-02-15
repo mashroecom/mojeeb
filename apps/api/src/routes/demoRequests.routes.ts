@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { prisma } from '../config/database';
-import { emailService } from '../services/email.service';
+import { emailQueue } from '../queues';
 import { logger } from '../config/logger';
 
 const router: Router = Router();
@@ -41,10 +41,10 @@ router.post('/', demoLimiter, async (req, res, next) => {
       data: { name, email, phone, company, message },
     });
 
-    // Send notification email (fire & forget)
-    emailService
-      .sendDemoRequestNotification({ name, email, phone, company, message })
-      .catch((err) => logger.warn({ err }, 'Failed to send demo request notification email'));
+    // Queue notification email
+    emailQueue
+      .add('demoRequest', { type: 'demoRequest', name, email, phone, company, message })
+      .catch((err) => logger.warn({ err }, 'Failed to queue demo request notification email'));
 
     res.status(201).json({ success: true, data: { id: demoRequest.id } });
   } catch (err) {

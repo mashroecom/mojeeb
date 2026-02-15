@@ -3,6 +3,16 @@ import { config } from '../config';
 import { logger } from '../config/logger';
 import { configService } from './config.service';
 
+/** Escape HTML entities to prevent XSS in email templates. */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Cached Resend client that is recreated when the API key changes
 let cachedResend: Resend | null = config.email.resendApiKey ? new Resend(config.email.resendApiKey) : null;
 let cachedResendApiKey: string = config.email.resendApiKey;
@@ -201,7 +211,7 @@ export class EmailService {
 
           <!-- English -->
           <div style="margin-bottom: 32px;">
-            <h2 style="color: #1f2937; font-size: 20px;">Welcome, ${firstName}!</h2>
+            <h2 style="color: #1f2937; font-size: 20px;">Welcome, ${escapeHtml(firstName)}!</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
               Your email has been verified successfully. You're all set to start using Mojeeb AI Customer Support.
             </p>
@@ -219,7 +229,7 @@ export class EmailService {
 
           <!-- Arabic -->
           <div dir="rtl" style="text-align: right;">
-            <h2 style="color: #1f2937; font-size: 20px;">مرحباً، ${firstName}!</h2>
+            <h2 style="color: #1f2937; font-size: 20px;">مرحباً، ${escapeHtml(firstName)}!</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.8;">
               تم تأكيد بريدك الإلكتروني بنجاح. أنت الآن جاهز لبدء استخدام موجيب لدعم العملاء بالذكاء الاصطناعي.
             </p>
@@ -267,11 +277,11 @@ export class EmailService {
           </div>
           <h2 style="color: #1f2937; font-size: 20px;">New Demo Call Request</h2>
           <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
-            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Name</td><td style="padding: 8px; font-size: 14px; font-weight: 600;">${data.name}</td></tr>
-            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Email</td><td style="padding: 8px; font-size: 14px;">${data.email}</td></tr>
-            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Phone</td><td style="padding: 8px; font-size: 14px;" dir="ltr">${data.phone}</td></tr>
-            ${data.company ? `<tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Company</td><td style="padding: 8px; font-size: 14px;">${data.company}</td></tr>` : ''}
-            ${data.message ? `<tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Message</td><td style="padding: 8px; font-size: 14px;">${data.message}</td></tr>` : ''}
+            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Name</td><td style="padding: 8px; font-size: 14px; font-weight: 600;">${escapeHtml(data.name)}</td></tr>
+            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Email</td><td style="padding: 8px; font-size: 14px;">${escapeHtml(data.email)}</td></tr>
+            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Phone</td><td style="padding: 8px; font-size: 14px;" dir="ltr">${escapeHtml(data.phone)}</td></tr>
+            ${data.company ? `<tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Company</td><td style="padding: 8px; font-size: 14px;">${escapeHtml(data.company)}</td></tr>` : ''}
+            ${data.message ? `<tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Message</td><td style="padding: 8px; font-size: 14px;">${escapeHtml(data.message)}</td></tr>` : ''}
           </table>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
           <p style="color: #9ca3af; font-size: 11px; text-align: center;">Mojeeb AI Customer Support Platform</p>
@@ -290,12 +300,12 @@ export class EmailService {
             <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
           </div>
           <div style="margin-bottom: 32px;">
-            <h2 style="color: #1f2937; font-size: 20px;">Thank you, ${data.name}!</h2>
+            <h2 style="color: #1f2937; font-size: 20px;">Thank you, ${escapeHtml(data.name)}!</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">We've received your demo request. Our team will contact you within 24 hours to schedule a call.</p>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
           <div dir="rtl" style="text-align: right;">
-            <h2 style="color: #1f2937; font-size: 20px;">شكراً لك، ${data.name}!</h2>
+            <h2 style="color: #1f2937; font-size: 20px;">شكراً لك، ${escapeHtml(data.name)}!</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.8;">لقد استلمنا طلبك للعرض التوضيحي. سيتواصل معك فريقنا خلال 24 ساعة لتحديد موعد المكالمة.</p>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
@@ -328,12 +338,12 @@ export class EmailService {
           </div>
           <h2 style="color: #1f2937; font-size: 20px;">New Contact Message</h2>
           <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
-            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Name</td><td style="padding: 8px; font-size: 14px; font-weight: 600;">${data.name}</td></tr>
-            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Email</td><td style="padding: 8px; font-size: 14px;">${data.email}</td></tr>
-            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Subject</td><td style="padding: 8px; font-size: 14px; font-weight: 600;">${data.subject}</td></tr>
+            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Name</td><td style="padding: 8px; font-size: 14px; font-weight: 600;">${escapeHtml(data.name)}</td></tr>
+            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Email</td><td style="padding: 8px; font-size: 14px;">${escapeHtml(data.email)}</td></tr>
+            <tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Subject</td><td style="padding: 8px; font-size: 14px; font-weight: 600;">${escapeHtml(data.subject)}</td></tr>
           </table>
           <div style="margin-top: 16px; padding: 16px; background: #f9fafb; border-radius: 8px;">
-            <p style="color: #1f2937; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${data.message}</p>
+            <p style="color: #1f2937; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(data.message)}</p>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
           <p style="color: #9ca3af; font-size: 11px; text-align: center;">Mojeeb AI Customer Support Platform</p>
@@ -352,12 +362,12 @@ export class EmailService {
             <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
           </div>
           <div style="margin-bottom: 32px;">
-            <h2 style="color: #1f2937; font-size: 20px;">Thank you, ${data.name}!</h2>
+            <h2 style="color: #1f2937; font-size: 20px;">Thank you, ${escapeHtml(data.name)}!</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">We've received your message and will get back to you as soon as possible.</p>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
           <div dir="rtl" style="text-align: right;">
-            <h2 style="color: #1f2937; font-size: 20px;">شكراً لك، ${data.name}!</h2>
+            <h2 style="color: #1f2937; font-size: 20px;">شكراً لك، ${escapeHtml(data.name)}!</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.8;">لقد استلمنا رسالتك وسنرد عليك في أقرب وقت ممكن.</p>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
@@ -384,8 +394,8 @@ export class EmailService {
             <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
           </div>
           <div style="margin-bottom: 32px;">
-            ${firstName ? `<p style="color: #1f2937; font-size: 16px; font-weight: 600;">Hi ${firstName},</p>` : ''}
-            <div style="color: #4b5563; font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${body}</div>
+            ${firstName ? `<p style="color: #1f2937; font-size: 16px; font-weight: 600;">Hi ${escapeHtml(firstName)},</p>` : ''}
+            <div style="color: #4b5563; font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(body)}</div>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
           <p style="color: #9ca3af; font-size: 11px; text-align: center;">Mojeeb AI Customer Support Platform</p>

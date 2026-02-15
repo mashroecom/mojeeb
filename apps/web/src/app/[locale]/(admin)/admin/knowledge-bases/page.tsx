@@ -7,6 +7,7 @@ import {
   useAdminKnowledgeBases,
   useAdminKnowledgeBaseStats,
   useDeleteAdminKnowledgeBase,
+  useAdminKBHealth,
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { AdminConfirmDialog } from '@/components/admin/AdminConfirmDialog';

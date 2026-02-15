@@ -63,14 +63,19 @@ COPY --from=builder /app/apps/api ./apps/api
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/prisma ./prisma
 
-# Create non-root user for security
+# Copy entrypoint (runs migrations then starts server) and ensure it's executable
+COPY --from=builder /app/scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
+RUN chmod +x ./scripts/docker-entrypoint.sh
+
+# Create uploads directory
+RUN mkdir -p ./apps/api/uploads
+
+# Create non-root user for security and grant ownership
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 appuser
+    adduser --system --uid 1001 appuser && \
+    chown -R appuser:nodejs ./apps/api/uploads
 USER appuser
 
 EXPOSE 4000
-
-# Copy entrypoint (runs migrations then starts server)
-COPY --from=builder /app/scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
 
 CMD ["sh", "scripts/docker-entrypoint.sh"]

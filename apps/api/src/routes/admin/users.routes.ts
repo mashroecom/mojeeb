@@ -8,7 +8,7 @@ import { auditLogService } from '../../services/auditLog.service';
 import { validate } from '../../middleware/validate';
 import { prisma } from '../../config/database';
 import { config } from '../../config';
-import { emailService } from '../../services/email.service';
+import { emailQueue } from '../../queues';
 import { NotFoundError } from '../../utils/errors';
 import argon2 from 'argon2';
 
@@ -208,7 +208,7 @@ router.post('/:userId/reset-password', async (req: Request, res: Response, next:
       data: { resetPasswordToken: resetToken, resetPasswordExpires: expires },
     });
 
-    await emailService.sendPasswordResetEmail(user.email, resetToken);
+    await emailQueue.add('passwordReset', { type: 'passwordReset', to: user.email, resetToken });
 
     auditLogService.log({
       userId: req.user!.userId,
@@ -235,7 +235,7 @@ router.post(
       const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true, firstName: true } });
       if (!user) throw new NotFoundError('User not found');
 
-      await emailService.sendCustomEmail(user.email, subject, emailBody, user.firstName);
+      await emailQueue.add('custom', { type: 'custom', to: user.email, subject, body: emailBody, firstName: user.firstName });
 
       auditLogService.log({
         userId: req.user!.userId,

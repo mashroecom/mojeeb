@@ -51,29 +51,31 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
   }
 }
 
-export function orgContext(req: Request, _res: Response, next: NextFunction) {
+export async function orgContext(req: Request, _res: Response, next: NextFunction) {
   const orgId = (req.params as { orgId?: string }).orgId;
   if (!orgId || !req.user) {
     return next();
   }
 
-  prisma.orgMembership
-    .findUnique({
+  try {
+    const membership = await prisma.orgMembership.findUnique({
       where: {
         userId_orgId: {
           userId: req.user.userId,
           orgId,
         },
       },
-    })
-    .then((membership) => {
-      if (!membership) {
-        throw new ForbiddenError('Not a member of this organization');
-      }
-      req.org = { id: orgId, role: membership.role };
-      next();
-    })
-    .catch(next);
+    });
+
+    if (!membership) {
+      return next(new ForbiddenError('Not a member of this organization'));
+    }
+
+    req.org = { id: orgId, role: membership.role };
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
 
 export function requireRole(...roles: string[]) {

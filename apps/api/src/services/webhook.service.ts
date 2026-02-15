@@ -13,6 +13,34 @@ const VALID_EVENTS = [
   'lead.updated',
 ] as const;
 
+/** Block webhook URLs pointing to private/internal networks (SSRF prevention). */
+function isPrivateUrl(urlStr: string): boolean {
+  try {
+    const parsed = new URL(urlStr);
+    const hostname = parsed.hostname;
+    // Block localhost, loopback, link-local, and private IP ranges
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname === '0.0.0.0' ||
+      hostname.endsWith('.local') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('169.254.') ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
+      // AWS/cloud metadata endpoints
+      hostname === '169.254.169.254' ||
+      hostname === 'metadata.google.internal'
+    ) {
+      return true;
+    }
+    return false;
+  } catch {
+    return true; // Reject malformed URLs
+  }
+}
+
 export class WebhookService {
   async list(orgId: string) {
     return prisma.webhook.findMany({
@@ -32,6 +60,10 @@ export class WebhookService {
   async create(orgId: string, data: { url: string; events: string[] }) {
     if (!data.url || !data.url.startsWith('https://')) {
       throw new BadRequestError('Webhook URL must use HTTPS');
+    }
+
+    if (isPrivateUrl(data.url)) {
+      throw new BadRequestError('Webhook URL cannot point to private or internal networks');
     }
 
     const invalidEvents = data.events.filter(
@@ -66,6 +98,10 @@ export class WebhookService {
 
     if (data.url && !data.url.startsWith('https://')) {
       throw new BadRequestError('Webhook URL must use HTTPS');
+    }
+
+    if (data.url && isPrivateUrl(data.url)) {
+      throw new BadRequestError('Webhook URL cannot point to private or internal networks');
     }
 
     if (data.events) {

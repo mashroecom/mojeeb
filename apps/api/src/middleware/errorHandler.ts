@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { Prisma } from '@prisma/client';
 import { AppError } from '../utils/errors';
 import { logger } from '../config/logger';
 import { errorLogService } from '../services/errorLog.service';
@@ -12,23 +13,32 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
     });
   }
 
-  // Prisma known errors
-  if (err.constructor.name === 'PrismaClientKnownRequestError') {
-    const prismaErr = err as unknown as { code: string; meta?: { target?: string[] } };
-    if (prismaErr.code === 'P2002') {
+  // Prisma known errors — use proper instanceof check
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === 'P2002') {
+      const target = (err.meta?.target as string[]) || [];
       return res.status(409).json({
         success: false,
-        error: `Duplicate value for ${prismaErr.meta?.target?.join(', ') || 'field'}`,
+        error: `Duplicate value for ${target.join(', ') || 'field'}`,
         code: 'DUPLICATE',
       });
     }
-    if (prismaErr.code === 'P2025') {
+    if (err.code === 'P2025') {
       return res.status(404).json({
         success: false,
         error: 'Record not found',
         code: 'NOT_FOUND',
       });
     }
+  }
+
+  // Prisma validation errors
+  if (err instanceof Prisma.PrismaClientValidationError) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid database query',
+      code: 'VALIDATION_ERROR',
+    });
   }
 
   // Unexpected errors

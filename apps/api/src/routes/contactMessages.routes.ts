@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { prisma } from '../config/database';
-import { emailService } from '../services/email.service';
+import { emailQueue } from '../queues';
 import { logger } from '../config/logger';
 
 const router: Router = Router();
@@ -40,9 +40,9 @@ router.post('/', contactLimiter, async (req, res, next) => {
       data: { name, email, subject, message },
     });
 
-    // Send email notification (fire & forget)
-    emailService.sendContactNotification({ name, email, subject, message }).catch((err) => {
-      logger.warn({ err }, 'Failed to send contact notification email');
+    // Queue email notification
+    emailQueue.add('contact', { type: 'contact', name, email, subject, message }).catch((err) => {
+      logger.warn({ err }, 'Failed to queue contact notification email');
     });
 
     res.status(201).json({ success: true, data: { id: contact.id } });

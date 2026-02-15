@@ -5,11 +5,18 @@ const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16; // 128 bits
 const AUTH_TAG_LENGTH = 16; // 128 bits
 
+// Cache the key buffer at module level to avoid re-deriving on every call
+let cachedKeyBuffer: Buffer | null = null;
+
 /**
  * Derive the 32-byte key buffer from the hex-encoded config value.
+ * Cached after first call for performance.
  */
 function getKeyBuffer(): Buffer {
-  return Buffer.from(config.encryption.key, 'hex');
+  if (!cachedKeyBuffer) {
+    cachedKeyBuffer = Buffer.from(config.encryption.key, 'hex');
+  }
+  return cachedKeyBuffer;
 }
 
 /**

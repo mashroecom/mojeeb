@@ -342,7 +342,6 @@ model Message {
   @@index([conversationId, createdAt])
   @@index([externalId])
   @@index([humanAgentId])
-  @@index([role])
   @@map("messages")
 }
 
@@ -460,6 +459,8 @@ model Lead {
   @@index([orgId, createdAt])
   @@index([conversationId])
   @@index([assignedTo])
+  @@index([orgId, email])
+  @@index([orgId, phone])
   @@map("leads")
 }
 

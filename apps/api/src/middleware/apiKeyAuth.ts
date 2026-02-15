@@ -7,43 +7,48 @@ import { UnauthorizedError, ForbiddenError } from '../utils/errors';
  * Authenticate requests using an API key passed via X-API-Key header.
  * Sets req.org and req.user (minimal) on success.
  */
-export function apiKeyAuth(req: Request, _res: Response, next: NextFunction) {
+export async function apiKeyAuth(req: Request, _res: Response, next: NextFunction) {
   const apiKey = req.headers['x-api-key'] as string | undefined;
   if (!apiKey) {
     return next(new UnauthorizedError('Missing X-API-Key header'));
   }
 
-  const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
+  try {
+    const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
 
-  prisma.apiKey
-    .findFirst({
+    const record = await prisma.apiKey.findFirst({
       where: { keyHash, revokedAt: null },
       include: { org: { select: { id: true } } },
-    })
-    .then(async (record) => {
-      if (!record) {
-        throw new UnauthorizedError('Invalid API key');
-      }
+    });
 
-      if (record.expiresAt && record.expiresAt < new Date()) {
-        throw new UnauthorizedError('API key has expired');
-      }
+    if (!record) {
+      return next(new UnauthorizedError('Invalid API key'));
+    }
 
-      // Set org context
-      req.org = { id: record.orgId, role: 'API_KEY' };
-      req.user = { userId: record.userId, email: '' };
+    if (!record.userId) {
+      return next(new UnauthorizedError('Invalid API key record'));
+    }
 
-      // Update last used timestamp (fire-and-forget)
-      prisma.apiKey
-        .update({ where: { id: record.id }, data: { lastUsedAt: new Date() } })
-        .catch(() => {});
+    if (record.expiresAt && record.expiresAt < new Date()) {
+      return next(new UnauthorizedError('API key has expired'));
+    }
 
-      // Store scopes on request for downstream checks
-      (req as any).apiKeyScopes = record.scopes;
+    // Set org context
+    req.org = { id: record.orgId, role: 'API_KEY' };
+    req.user = { userId: record.userId, email: '' };
 
-      next();
-    })
-    .catch(next);
+    // Update last used timestamp (fire-and-forget)
+    prisma.apiKey
+      .update({ where: { id: record.id }, data: { lastUsedAt: new Date() } })
+      .catch(() => {});
+
+    // Store scopes on request for downstream checks
+    (req as any).apiKeyScopes = record.scopes;
+
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
 
 /**

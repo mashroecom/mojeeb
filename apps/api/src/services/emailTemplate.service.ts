@@ -8,9 +8,15 @@ const CACHE_TTL = 300; // 5 minutes
 export class EmailTemplateService {
   async getByKey(key: string) {
     // Try Redis cache first
-    const cached = await redis.get(`${CACHE_PREFIX}${key}`);
-    if (cached) {
-      return JSON.parse(cached);
+    try {
+      const cached = await redis.get(`${CACHE_PREFIX}${key}`);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (err) {
+      // Corrupted cache entry — delete it and fall through to DB
+      logger.warn({ err, key }, 'Failed to parse cached email template, clearing');
+      await redis.del(`${CACHE_PREFIX}${key}`).catch(() => {});
     }
 
     const template = await prisma.emailTemplate.findUnique({ where: { key } });

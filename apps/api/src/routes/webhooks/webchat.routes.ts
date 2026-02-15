@@ -1,5 +1,5 @@
 import path from 'path';
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { prisma } from '../../config/database';
 import { logger } from '../../config/logger';
@@ -57,7 +57,7 @@ const upload = multer({
  * Middleware: Validate that the channelId exists, is active, and is a WEBCHAT channel.
  * Attaches the channel to req for downstream handlers.
  */
-async function validateChannel(req: Request, res: Response, next: Function) {
+async function validateChannel(req: Request, res: Response, next: NextFunction) {
   const channelId = req.params.channelId as string;
 
   if (!channelId) {
