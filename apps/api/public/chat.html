@@ -1,0 +1,2497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mojeeb Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    background: #ffffff;
+    color: #1f2937;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.rtl {
+    direction: rtl;
+    font-family: 'Noto Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  /* ── Header ── */
+  .mj-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    color: #fff;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  .mj-header-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mj-agent-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    font-weight: 600;
+    flex-shrink: 0;
+    color: #fff;
+    user-select: none;
+  }
+
+  .mj-agent-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .mj-agent-name {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .mj-agent-status {
+    font-size: 12px;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    line-height: 1.3;
+  }
+
+  .mj-status-dot {
+    width: 7px;
+    height: 7px;
+    background: #34d399;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .mj-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+    color: #fff;
+  }
+
+  .mj-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .mj-close-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  /* ── Messages Container ── */
+  .mj-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #f9fafb;
+    scroll-behavior: smooth;
+  }
+
+  .mj-messages::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .mj-messages::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .mj-messages::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
+  .mj-messages::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+
+  /* Firefox thin scrollbar */
+  .mj-messages {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+
+  /* ── Message Bubbles ── */
+  .mj-msg {
+    max-width: 82%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.5;
+    animation: mj-fade-in 0.25s ease forwards;
+    opacity: 0;
+    position: relative;
+  }
+
+  @keyframes mj-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* LTR layout */
+  body:not(.rtl) .mj-msg-customer {
+    align-self: flex-end;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  body:not(.rtl) .mj-msg-agent {
+    align-self: flex-start;
+    background: #fff;
+    color: #1f2937;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  body:not(.rtl) .mj-msg-customer .mj-msg-time {
+    text-align: right;
+  }
+
+  body:not(.rtl) .mj-msg-agent .mj-msg-time {
+    text-align: left;
+  }
+
+  /* RTL layout */
+  body.rtl .mj-msg-customer {
+    align-self: flex-start;
+    color: #fff;
+    border-bottom-left-radius: 4px;
+  }
+
+  body.rtl .mj-msg-agent {
+    align-self: flex-end;
+    background: #fff;
+    color: #1f2937;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  body.rtl .mj-msg-customer .mj-msg-time {
+    text-align: left;
+  }
+
+  body.rtl .mj-msg-agent .mj-msg-time {
+    text-align: right;
+  }
+
+  /* System messages */
+  .mj-msg-system {
+    align-self: center;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 12px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 90%;
+    padding: 8px 14px;
+  }
+
+  .mj-msg-time {
+    font-size: 11px;
+    opacity: 0.55;
+    margin-top: 4px;
+  }
+
+  /* ── Message Text Formatting ── */
+  .mj-msg-text a {
+    text-decoration: underline;
+    word-break: break-all;
+  }
+
+  .mj-msg-customer .mj-msg-text a {
+    color: #fff;
+  }
+
+  .mj-msg-agent .mj-msg-text a {
+    color: var(--primary);
+  }
+
+  .mj-msg-text strong {
+    font-weight: 600;
+  }
+
+  /* ── Message Grouping ── */
+  .mj-msg.mj-grouped {
+    margin-top: -4px;
+  }
+
+  .mj-msg.mj-grouped .mj-msg-time {
+    display: none;
+  }
+
+  /* ── Date Separator ── */
+  .mj-date-sep {
+    align-self: center;
+    font-size: 11px;
+    color: #9ca3af;
+    padding: 4px 12px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    margin: 8px 0;
+    user-select: none;
+  }
+
+  /* ── Scroll-to-bottom Button ── */
+  .mj-scroll-btn {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+  }
+
+  .mj-scroll-btn.mj-visible {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+
+  .mj-scroll-btn:hover {
+    background: #f9fafb;
+  }
+
+  .mj-scroll-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: #6b7280;
+  }
+
+  /* ── Greeting ── */
+  .mj-greeting {
+    background: #fff;
+    color: #1f2937;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+    animation: mj-fade-in 0.3s ease forwards;
+    opacity: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  body:not(.rtl) .mj-greeting {
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+
+  body.rtl .mj-greeting {
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+
+  /* ── Typing Indicator ── */
+  .mj-typing {
+    display: none;
+    gap: 5px;
+    align-items: center;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    animation: mj-fade-in 0.2s ease forwards;
+    opacity: 0;
+  }
+
+  body:not(.rtl) .mj-typing {
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+
+  body.rtl .mj-typing {
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+
+  .mj-typing.mj-visible {
+    display: flex;
+  }
+
+  .mj-typing-dot {
+    width: 7px;
+    height: 7px;
+    background: #9ca3af;
+    border-radius: 50%;
+    animation: mj-typing-bounce 1.4s infinite ease-in-out both;
+  }
+
+  .mj-typing-dot:nth-child(1) { animation-delay: -0.32s; }
+  .mj-typing-dot:nth-child(2) { animation-delay: -0.16s; }
+  .mj-typing-dot:nth-child(3) { animation-delay: 0s; }
+
+  @keyframes mj-typing-bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ── Input Area ── */
+  .mj-input-area {
+    padding: 10px 14px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    flex-shrink: 0;
+    background: #fff;
+  }
+
+  .mj-input {
+    flex: 1;
+    border: 1px solid #d1d5db;
+    border-radius: 22px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    resize: none;
+    max-height: 100px;
+    min-height: 42px;
+    line-height: 1.4;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    direction: inherit;
+    background: #f9fafb;
+    color: #1f2937;
+    overflow-y: auto;
+  }
+
+  .mj-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+    background: #fff;
+  }
+
+  .mj-input::placeholder {
+    color: #9ca3af;
+  }
+
+  .mj-send-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.15s ease, transform 0.1s ease, background 0.15s ease;
+  }
+
+  .mj-send-btn:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+
+  .mj-send-btn:active:not(:disabled) {
+    transform: scale(0.92);
+  }
+
+  .mj-send-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .mj-send-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: #fff;
+  }
+
+  body.rtl .mj-send-btn svg {
+    transform: rotate(180deg);
+  }
+
+  /* ── Powered By ── */
+  .mj-powered {
+    text-align: center;
+    padding: 7px 10px;
+    font-size: 11px;
+    color: #9ca3af;
+    background: #fff;
+    border-top: 1px solid #f3f4f6;
+    flex-shrink: 0;
+  }
+
+  .mj-powered a {
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .mj-powered a:hover {
+    text-decoration: underline;
+  }
+
+  /* ── Empty State ── */
+  .mj-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .mj-empty-state svg {
+    width: 48px;
+    height: 48px;
+    fill: #d1d5db;
+  }
+
+  .mj-empty-state p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ── CSAT Rating ── */
+  .mj-rating {
+    align-self: center;
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px 24px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    animation: mj-fade-in 0.3s ease forwards;
+    opacity: 0;
+    margin: 12px 0;
+  }
+
+  .mj-rating-title {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 12px;
+  }
+
+  .mj-rating-stars {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .mj-rating-star {
+    font-size: 32px;
+    cursor: pointer;
+    transition: transform 0.2s, filter 0.2s;
+    background: none;
+    border: none;
+    padding: 4px;
+    line-height: 1;
+    filter: grayscale(100%) opacity(0.35);
+  }
+
+  .mj-rating-star:hover,
+  .mj-rating-star.mj-star-active {
+    filter: none;
+    transform: scale(1.25);
+  }
+
+  .mj-rating-thanks {
+    font-size: 14px;
+    color: #10b981;
+    font-weight: 600;
+  }
+
+  /* ── File Attachment ── */
+  .mj-attach-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .mj-attach-btn:hover {
+    color: #6b7280;
+  }
+
+  .mj-attach-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  /* ── File/Image Messages ── */
+  .mj-msg-image {
+    max-width: 100%;
+    border-radius: 12px;
+    margin-bottom: 4px;
+    cursor: pointer;
+  }
+
+  .mj-msg-file {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    margin-bottom: 4px;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .mj-msg-customer .mj-msg-file {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .mj-msg-file-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  .mj-msg-file-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .mj-msg-file-name {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mj-msg-file-size {
+    font-size: 11px;
+    opacity: 0.7;
+  }
+
+  /* ── Upload Progress ── */
+  .mj-upload-progress {
+    width: 100%;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+
+  .mj-upload-progress-bar {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+  }
+
+  /* ── Header Buttons Group ── */
+  .mj-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .mj-header-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+    color: #fff;
+  }
+
+  .mj-header-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .mj-header-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  /* ── Conversation List Overlay ── */
+  .mj-conv-list {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #f9fafb;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .mj-conv-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--primary);
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .mj-conv-list-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .mj-conv-list-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: #fff;
+    transition: background 0.15s;
+  }
+
+  .mj-conv-list-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .mj-conv-list-close svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  .mj-new-conv-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: calc(100% - 32px);
+    margin: 12px 16px 8px;
+    padding: 10px 14px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+
+  .mj-new-conv-btn:hover {
+    opacity: 0.88;
+  }
+
+  .mj-new-conv-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    flex-shrink: 0;
+  }
+
+  .mj-conv-list-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+
+  .mj-conv-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+    transition: background 0.12s;
+    background: #fff;
+    border: none;
+    width: 100%;
+    text-align: start;
+    font-family: inherit;
+  }
+
+  .mj-conv-item:hover {
+    background: #f0f1f3;
+  }
+
+  .mj-conv-item-active {
+    background: #ede9fe;
+  }
+
+  .mj-conv-item-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--primary);
+    opacity: 0.12;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .mj-conv-item-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--primary);
+    position: absolute;
+  }
+
+  .mj-conv-item-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mj-conv-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .mj-conv-item-status {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .mj-conv-item-status-active { background: #d1fae5; color: #065f46; }
+  .mj-conv-item-status-waiting { background: #fef3c7; color: #92400e; }
+  .mj-conv-item-status-resolved { background: #e5e7eb; color: #6b7280; }
+  .mj-conv-item-status-closed { background: #e5e7eb; color: #9ca3af; }
+
+  .mj-conv-item-date {
+    font-size: 11px;
+    color: #9ca3af;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .mj-conv-item-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+
+  .mj-conv-item-preview {
+    font-size: 13px;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+
+  .mj-conv-list-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .mj-conv-list-empty svg {
+    width: 40px;
+    height: 40px;
+    fill: #d1d5db;
+  }
+
+  .mj-conv-list-empty p {
+    font-size: 13px;
+  }
+
+  /* ── Copy Message Button ── */
+  .mj-msg-copy {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    background: rgba(0, 0, 0, 0.06);
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    z-index: 2;
+  }
+
+  body.rtl .mj-msg-copy {
+    right: auto;
+    left: 4px;
+  }
+
+  .mj-msg:hover .mj-msg-copy {
+    opacity: 0.7;
+  }
+
+  .mj-msg-copy:hover {
+    opacity: 1 !important;
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .mj-msg-copy svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
+  .mj-msg-customer .mj-msg-copy {
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .mj-msg-customer .mj-msg-copy:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .mj-msg-copy-tooltip {
+    position: absolute;
+    top: -26px;
+    right: 0;
+    background: #1f2937;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: mj-fade-in 0.15s ease forwards;
+  }
+
+  body.rtl .mj-msg-copy-tooltip {
+    right: auto;
+    left: 0;
+  }
+
+  /* ── Failed Message + Retry ── */
+  .mj-msg-failed {
+    border: 2px solid #ef4444 !important;
+  }
+
+  .mj-msg-retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    padding: 3px 10px;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .mj-msg-retry:hover {
+    background: #fee2e2;
+  }
+
+  .mj-msg-retry svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+  }
+
+</style>
+<script src="https://cdn.socket.io/4.8.3/socket.io.min.js" integrity="sha384-kzavj5fiMwLKzzD1f8S7TeoVIEi7uKHvbTA3ueZkrzYq75pNQUiUi6Dy98Q3fxb0" crossorigin="anonymous"></script>
+</head>
+<body>
+  <!-- Header -->
+  <div class="mj-header" id="header">
+    <div class="mj-header-info">
+      <div class="mj-agent-avatar" id="agentAvatar"></div>
+      <div class="mj-agent-details">
+        <div class="mj-agent-name" id="agentNameEl"></div>
+        <div class="mj-agent-status">
+          <span class="mj-status-dot"></span>
+          <span id="statusText"></span>
+        </div>
+      </div>
+    </div>
+    <div class="mj-header-actions">
+      <button class="mj-header-btn" id="menuBtn" aria-label="Menu">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      </button>
+      <button class="mj-header-btn" id="newConvBtn" aria-label="New conversation" title="New conversation">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      </button>
+      <button class="mj-close-btn" id="closeBtn" aria-label="Close chat">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Conversation List Overlay -->
+  <div class="mj-conv-list" id="convListView" style="display:none">
+    <div class="mj-conv-list-header">
+      <span class="mj-conv-list-title" id="convListTitle">Conversations</span>
+      <button class="mj-conv-list-close" id="convListCloseBtn" aria-label="Close list">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <button class="mj-new-conv-btn" id="newConvListBtn">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      <span id="newConvListText">New Conversation</span>
+    </button>
+    <div class="mj-conv-list-items" id="convListItems"></div>
+  </div>
+
+  <!-- Messages -->
+  <div style="position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column;">
+    <div class="mj-messages" id="messagesContainer">
+      <div class="mj-typing" id="typingIndicator">
+        <span class="mj-typing-dot"></span>
+        <span class="mj-typing-dot"></span>
+        <span class="mj-typing-dot"></span>
+      </div>
+    </div>
+    <button class="mj-scroll-btn" id="scrollBtn" aria-label="Scroll to bottom">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+    </button>
+  </div>
+
+  <!-- Input -->
+  <div class="mj-input-area">
+    <button class="mj-attach-btn" id="attachBtn" aria-label="Attach file">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+    </button>
+    <input type="file" id="fileInput" style="display:none" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt">
+    <textarea class="mj-input" id="messageInput" rows="1" maxlength="4000"></textarea>
+    <button class="mj-send-btn" id="sendBtn" aria-label="Send" disabled>
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+
+  <!-- Powered By -->
+  <div class="mj-powered" id="poweredBy"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ─── Constants ──────────────────────────────────────────
+  var STORAGE_KEY = 'mojeeb_visitor_id';
+  var CONVERSATION_KEY_PREFIX = 'mojeeb_conv_';
+  var POLL_INTERVAL = 3000;
+  var TYPING_TIMEOUT = 30000;
+  var MAX_MESSAGE_LENGTH = 4000;
+
+  // ─── Parse Query Parameters ─────────────────────────────
+  var params = new URLSearchParams(window.location.search);
+
+  var config = {
+    channelId:    params.get('channelId') || '',
+    primaryColor: decodeURIComponent(params.get('primaryColor') || '#6366f1'),
+    direction:    params.get('direction') || 'ltr',
+    agentName:    decodeURIComponent(params.get('agentName') || 'Support'),
+    greeting:     params.get('greeting') ? decodeURIComponent(params.get('greeting')) : '',
+    visitorId:    params.get('visitorId') || '',
+    parentUrl:    params.get('parentUrl') || '',
+    deviceType:   params.get('deviceType') || 'desktop',
+    apiBase:      params.get('apiBase') || window.location.origin,
+    frontendUrl:  params.get('frontendUrl') || 'https://mojeeb.app'
+  };
+
+  // ─── State ──────────────────────────────────────────────
+  var state = {
+    conversationId: null,
+    visitorId: '',
+    messages: [],
+    knownMessageIds: {},
+    pollTimer: null,
+    isTyping: false,
+    typingTimer: null,
+    isSending: false,
+    lastCustomerMessageTime: 0,
+    lastRenderedRole: null,
+    lastRenderedDate: null,
+    userScrolledUp: false,
+    csatShown: false,
+    csatTimer: null,
+    lastAgentMessageTime: 0,
+    socket: null,
+    socketConnected: false,
+    forceNewConversation: false,
+    conversationStatus: null
+  };
+
+  // ─── PostMessage Origin (Fix: avoid wildcard '*') ─────
+  var parentOrigin = (function() {
+    try {
+      var url = new URL(config.parentUrl || '');
+      return url.origin;
+    } catch(e) {
+      return window.location.origin;
+    }
+  })();
+
+  // ─── Temp Message Element Tracking ────────────────────
+  // Stores { el: HTMLElement, content: string } for each temp message
+  var tempMessageElements = {};
+
+  // ─── Displayed Message Deduplication ──────────────────
+  var displayedMessageIds = {};
+
+  // ─── DOM References ─────────────────────────────────────
+  var $header          = document.getElementById('header');
+  var $agentAvatar     = document.getElementById('agentAvatar');
+  var $agentNameEl     = document.getElementById('agentNameEl');
+  var $statusText      = document.getElementById('statusText');
+  var $closeBtn        = document.getElementById('closeBtn');
+  var $messagesContainer = document.getElementById('messagesContainer');
+  var $typingIndicator = document.getElementById('typingIndicator');
+  var $messageInput    = document.getElementById('messageInput');
+  var $sendBtn         = document.getElementById('sendBtn');
+  var $poweredBy       = document.getElementById('poweredBy');
+  var $scrollBtn       = document.getElementById('scrollBtn');
+  var $attachBtn       = document.getElementById('attachBtn');
+  var $fileInput       = document.getElementById('fileInput');
+  var $menuBtn         = document.getElementById('menuBtn');
+  var $newConvBtn      = document.getElementById('newConvBtn');
+  var $convListView    = document.getElementById('convListView');
+  var $convListCloseBtn = document.getElementById('convListCloseBtn');
+  var $convListItems   = document.getElementById('convListItems');
+  var $newConvListBtn  = document.getElementById('newConvListBtn');
+  var $convListTitle   = document.getElementById('convListTitle');
+  var $newConvListText = document.getElementById('newConvListText');
+
+  // ─── UUID Generator ─────────────────────────────────────
+  function generateId() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = (Math.random() * 16) | 0;
+      var v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  // ─── Visitor ID Management ──────────────────────────────
+  function getVisitorId() {
+    // 1. Use query param if provided
+    if (config.visitorId) return config.visitorId;
+
+    // 2. Try localStorage
+    try {
+      var stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) return stored;
+
+      var id = generateId();
+      localStorage.setItem(STORAGE_KEY, id);
+      return id;
+    } catch (e) {
+      // localStorage may be blocked in iframe
+      return generateId();
+    }
+  }
+
+  function getStoredConversationId() {
+    try {
+      return localStorage.getItem(CONVERSATION_KEY_PREFIX + config.channelId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function storeConversationId(conversationId) {
+    try {
+      localStorage.setItem(CONVERSATION_KEY_PREFIX + config.channelId, conversationId);
+    } catch (e) {
+      // Silently fail
+    }
+  }
+
+  // ─── HTML Escaping (XSS Protection) ────────────────────
+  function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // ─── Message Formatter ────────────────────────────────
+  function formatMessage(text) {
+    // 1. Escape HTML first (XSS protection)
+    var s = escapeHtml(text);
+
+    // 2. Convert URLs to clickable links
+    s = s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+
+    // 3. Convert **bold** to <strong> (fallback if AI leaks markdown)
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // 4. Strip remaining stray single asterisks used as bullets (* item)
+    s = s.replace(/^\* /gm, '• ');
+
+    return s;
+  }
+
+  // ─── Time Formatting ────────────────────────────────────
+  function formatTime(dateStr) {
+    try {
+      var d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function getDateKey(dateStr) {
+    try {
+      var d = new Date(dateStr);
+      return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function formatDateLabel(dateStr) {
+    var isRtl = config.direction === 'rtl';
+    try {
+      var d = new Date(dateStr);
+      var now = new Date();
+      var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      var msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      var diff = (today - msgDate) / 86400000;
+
+      if (diff === 0) return isRtl ? 'اليوم' : 'Today';
+      if (diff === 1) return isRtl ? 'أمس' : 'Yesterday';
+      return d.toLocaleDateString(isRtl ? 'ar' : 'en', { day: 'numeric', month: 'short' });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function insertDateSeparator(dateStr) {
+    var dateKey = getDateKey(dateStr);
+    if (dateKey && dateKey !== state.lastRenderedDate) {
+      state.lastRenderedDate = dateKey;
+      var sep = document.createElement('div');
+      sep.className = 'mj-date-sep';
+      sep.textContent = formatDateLabel(dateStr);
+      $messagesContainer.insertBefore(sep, $typingIndicator);
+    }
+  }
+
+  // ─── CSS Variable Setup ─────────────────────────────────
+  function applyTheme() {
+    var root = document.documentElement;
+    root.style.setProperty('--primary', config.primaryColor);
+
+    // Compute a lighter version for focus rings
+    var lightColor = config.primaryColor + '22';
+    root.style.setProperty('--primary-light', lightColor);
+
+    // Apply to header
+    $header.style.background = config.primaryColor;
+
+    // Apply to dynamic elements that use primary color
+    var style = document.createElement('style');
+    style.textContent = '.mj-msg-customer { background: ' + config.primaryColor + '; }';
+    document.head.appendChild(style);
+  }
+
+  // ─── Direction Setup ────────────────────────────────────
+  function applyDirection() {
+    var isRtl = config.direction === 'rtl';
+
+    if (isRtl) {
+      document.body.classList.add('rtl');
+      document.documentElement.lang = 'ar';
+      document.documentElement.dir = 'rtl';
+    }
+
+    // Set placeholder
+    $messageInput.placeholder = isRtl ? 'اكتب رسالتك...' : 'Type a message...';
+
+    // Set status text
+    $statusText.textContent = isRtl ? 'متصل' : 'Online';
+
+    // Set powered by
+    var poweredText = isRtl ? 'مدعوم من' : 'Powered by';
+    $poweredBy.innerHTML = poweredText + ' <a href="' + config.frontendUrl + '" target="_blank" rel="noopener noreferrer">Mojeeb</a>';
+  }
+
+  // ─── Header Setup ───────────────────────────────────────
+  function setupHeader() {
+    var initial = (config.agentName || 'S').charAt(0).toUpperCase();
+    $agentAvatar.textContent = initial;
+    $agentNameEl.textContent = config.agentName;
+  }
+
+  // ─── Greeting Setup ─────────────────────────────────────
+  function showGreeting() {
+    if (!config.greeting) return;
+
+    var greetingEl = document.createElement('div');
+    greetingEl.className = 'mj-greeting';
+    greetingEl.textContent = config.greeting;
+    $messagesContainer.insertBefore(greetingEl, $typingIndicator);
+  }
+
+  // ─── API Client ─────────────────────────────────────────
+  function apiUrl(path) {
+    var base = config.apiBase.replace(/\/+$/, '');
+    return base + '/api/v1/webchat/' + config.channelId + path;
+  }
+
+  function apiSendMessage(message) {
+    var payload = {
+      visitorId: state.visitorId,
+      message: message
+    };
+    if (state.forceNewConversation) {
+      payload.forceNew = true;
+    }
+    return fetch(apiUrl('/conversations'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(res) {
+      if (!res.ok) throw new Error('Send failed: ' + res.status);
+      return res.json();
+    }).then(function(json) {
+      state.forceNewConversation = false;
+      return json.data;
+    });
+  }
+
+  function apiGetMessages(conversationId) {
+    return fetch(apiUrl('/conversations/' + conversationId + '/messages?limit=50'))
+      .then(function(res) {
+        if (!res.ok) throw new Error('Messages fetch failed: ' + res.status);
+        return res.json();
+      }).then(function(json) {
+        return json.data;
+      });
+  }
+
+  function apiGetConversationByVisitor() {
+    return fetch(apiUrl('/conversations/by-visitor/' + state.visitorId))
+      .then(function(res) {
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error('Conversation fetch failed: ' + res.status);
+        return res.json();
+      }).then(function(json) {
+        return json ? json.data : null;
+      });
+  }
+
+  function apiGetConversationList() {
+    return fetch(apiUrl('/conversations/visitor/' + state.visitorId + '/list'))
+      .then(function(res) {
+        if (!res.ok) throw new Error('Conversation list fetch failed: ' + res.status);
+        return res.json();
+      }).then(function(json) {
+        return json.data;
+      });
+  }
+
+  // ─── Socket.IO Connection ──────────────────────────────
+  function connectSocket() {
+    if (typeof io === 'undefined') return; // Socket.IO not loaded
+
+    try {
+      state.socket = io(config.apiBase + '/webchat', {
+        path: '/ws',
+        auth: {
+          channelId: config.channelId,
+          visitorId: state.visitorId
+        },
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 2000,
+        reconnectionAttempts: 10
+      });
+
+      state.socket.on('connect', function() {
+        state.socketConnected = true;
+        // Slow down polling when socket is connected (fallback only)
+        if (state.pollTimer) {
+          stopPolling();
+          state.pollTimer = setInterval(function() { pollMessages(); }, 15000);
+        }
+        // Join conversation room if we have one
+        if (state.conversationId) {
+          state.socket.emit('join:conversation', state.conversationId);
+        }
+      });
+
+      state.socket.on('disconnect', function() {
+        state.socketConnected = false;
+        // Speed up polling when disconnected
+        if (state.pollTimer) {
+          stopPolling();
+          startPolling();
+        }
+      });
+
+      // Listen for new messages via WebSocket
+      state.socket.on('message:new', function(data) {
+        if (!data || !data.messageId) return;
+        if (state.knownMessageIds[data.messageId]) return;
+
+        // Skip customer messages (we already show them optimistically)
+        if (data.role === 'CUSTOMER') {
+          // Map temp ID to real ID using tracked elements
+          var matchedTempId = null;
+          var matchedTempEntry = null;
+          var tempKeys = Object.keys(tempMessageElements);
+          for (var ti = 0; ti < tempKeys.length; ti++) {
+            var candidateEntry = tempMessageElements[tempKeys[ti]];
+            if (candidateEntry && candidateEntry.content === data.content && (Date.now() - candidateEntry.ts) < 10000) {
+              matchedTempId = tempKeys[ti];
+              matchedTempEntry = candidateEntry;
+              break;
+            }
+          }
+          if (matchedTempEntry) {
+            delete state.knownMessageIds[matchedTempId];
+            delete tempMessageElements[matchedTempId];
+            state.knownMessageIds[data.messageId] = true;
+            displayedMessageIds[data.messageId] = true;
+            matchedTempEntry.el.setAttribute('data-msg-id', data.messageId);
+          }
+          return;
+        }
+
+        // Add agent/system message
+        var msg = {
+          id: data.messageId,
+          role: data.role,
+          content: data.content,
+          contentType: data.contentType || 'TEXT',
+          createdAt: data.createdAt,
+          metadata: data.metadata || null
+        };
+
+        addMessageToUI(msg);
+        state.messages.push(msg);
+
+        if (msg.role === 'AI_AGENT' || msg.role === 'HUMAN_AGENT') {
+          hideTyping();
+          state.lastAgentMessageTime = Date.now();
+          resetCSATTimer();
+
+          try {
+            window.parent.postMessage({ type: 'newMessage', messageContent: msg.content }, parentOrigin);
+          } catch (e) {}
+        }
+
+        if (!state.userScrolledUp) scrollToBottom();
+      });
+
+      // Listen for conversation status changes (handoff, return to AI, resolve)
+      state.socket.on('conversation:updated', function(data) {
+        if (!data || !data.conversationId) return;
+        if (data.conversationId !== state.conversationId) return;
+        if (data.status) {
+          state.conversationStatus = data.status;
+          // If handed off, hide any active typing indicator
+          if (data.status === 'HANDED_OFF') {
+            hideTyping();
+          }
+        }
+      });
+
+    } catch (e) {
+      console.warn('[Mojeeb Chat] Socket.IO initialization failed, falling back to polling:', e);
+    }
+  }
+
+  function joinConversationRoom(conversationId) {
+    if (state.socket && state.socketConnected) {
+      state.socket.emit('join:conversation', conversationId);
+    }
+  }
+
+  // ─── File Upload ──────────────────────────────────────
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function handleFileUpload(file) {
+    if (!file) return;
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      var sizeError = config.direction === 'rtl'
+        ? 'الملف كبير جداً. الحد الأقصى 10 ميجابايت.'
+        : 'File is too large. Maximum size is 10MB.';
+      addSystemMessage(sizeError);
+      return;
+    }
+
+    // Show optimistic message
+    var tempId = 'temp_file_' + Date.now();
+    var isImage = file.type.startsWith('image/');
+
+    var tempMsg = {
+      id: tempId,
+      role: 'CUSTOMER',
+      content: file.name,
+      contentType: isImage ? 'IMAGE' : 'DOCUMENT',
+      createdAt: new Date().toISOString(),
+      _file: file,
+      _isUploading: true
+    };
+    addMessageToUI(tempMsg);
+    // Track temp element for later ID mapping (store content for dedup)
+    var tempFileEl = $messagesContainer.querySelector('[data-msg-id="' + tempId + '"]');
+    if (tempFileEl) tempMessageElements[tempId] = { el: tempFileEl, content: file.name, ts: Date.now() };
+    // Auto-cleanup temp message after 30 seconds
+    setTimeout(function() { delete tempMessageElements[tempId]; }, 30000);
+
+    // Upload via FormData
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('visitorId', state.visitorId);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', apiUrl('/upload'), true);
+    xhr.timeout = 30000; // 30 second timeout for file uploads
+
+    // Progress
+    var progressBar = $messagesContainer.querySelector('[data-msg-id="' + tempId + '"] .mj-upload-progress-bar');
+
+    xhr.upload.addEventListener('progress', function(e) {
+      if (e.lengthComputable && progressBar) {
+        var pct = Math.round((e.loaded / e.total) * 100);
+        progressBar.style.width = pct + '%';
+      }
+    });
+
+    xhr.onload = function() {
+      // Remove progress bar
+      var msgEl = $messagesContainer.querySelector('[data-msg-id="' + tempId + '"]');
+      var pBar = msgEl ? msgEl.querySelector('.mj-upload-progress') : null;
+      if (pBar) pBar.remove();
+
+      if (xhr.status === 200) {
+        var res = JSON.parse(xhr.responseText);
+        if (res.success && res.data) {
+          state.conversationId = res.data.conversationId;
+          storeConversationId(res.data.conversationId);
+          joinConversationRoom(res.data.conversationId);
+
+          // Update temp entry content to fileUrl so dedup matches the server message
+          if (tempMessageElements[tempId]) {
+            tempMessageElements[tempId].content = res.data.fileUrl;
+          }
+
+          // Show typing only if conversation is not handed off to human
+          if (state.conversationStatus !== 'HANDED_OFF') {
+            showTyping();
+          }
+
+          if (!state.pollTimer) startPolling();
+        }
+      } else {
+        var uploadError = config.direction === 'rtl'
+          ? 'فشل رفع الملف. حاول مرة أخرى.'
+          : 'Failed to upload file. Please try again.';
+        addSystemMessage(uploadError);
+      }
+    };
+
+    xhr.onerror = function() {
+      var netError = config.direction === 'rtl'
+        ? 'خطأ في الاتصال. حاول مرة أخرى.'
+        : 'Connection error. Please try again.';
+      addSystemMessage(netError);
+    };
+
+    xhr.ontimeout = function() {
+      var timeoutMsg = config.direction === 'rtl'
+        ? 'انتهت مهلة رفع الملف. حاول مرة أخرى.'
+        : 'Upload timed out. Please try again.';
+      addSystemMessage(timeoutMsg);
+    };
+
+    xhr.send(formData);
+  }
+
+  // ─── Message Rendering ─────────────────────────────────
+  function addMessageToUI(msg) {
+    // Deduplication: prevent duplicate messages from socket+polling overlap
+    if (displayedMessageIds[msg.id]) return;
+    if (state.knownMessageIds[msg.id]) return;
+    state.knownMessageIds[msg.id] = true;
+    displayedMessageIds[msg.id] = true;
+
+    // Date separator
+    if (msg.createdAt) insertDateSeparator(msg.createdAt);
+
+    var msgRole = msg.role === 'CUSTOMER' ? 'customer' : (msg.role === 'SYSTEM' ? 'system' : 'agent');
+    var cssClass = 'mj-msg mj-msg-' + msgRole;
+
+    // Grouping: consecutive same-role messages
+    var isGrouped = state.lastRenderedRole === msgRole && msgRole !== 'system';
+    if (isGrouped) cssClass += ' mj-grouped';
+    state.lastRenderedRole = msgRole;
+
+    // Un-hide the previous message's time if it was grouped and now role changed
+    // (already handled by CSS — only grouped messages hide time)
+
+    var div = document.createElement('div');
+    div.className = cssClass;
+    div.setAttribute('data-msg-id', msg.id);
+
+    var contentType = msg.contentType || 'TEXT';
+    var meta = msg.metadata || (msg._file ? { fileName: msg._file.name, fileSize: msg._file.size, mimeType: msg._file.type } : null);
+    var fileUrl = meta && meta.fileUrl ? config.apiBase + meta.fileUrl : null;
+
+    if (contentType === 'IMAGE') {
+      // Image preview
+      var imgSrc = fileUrl || (msg._file ? URL.createObjectURL(msg._file) : null);
+      if (imgSrc) {
+        var img = document.createElement('img');
+        img.className = 'mj-msg-image';
+        img.src = imgSrc;
+        img.alt = msg.content || 'Image';
+        img.loading = 'lazy';
+        img.addEventListener('click', function() {
+          window.open(imgSrc, '_blank');
+        });
+        div.appendChild(img);
+      }
+    } else if (contentType === 'DOCUMENT' || contentType === 'VIDEO' || contentType === 'AUDIO') {
+      // File attachment
+      var fileLink = document.createElement('a');
+      fileLink.className = 'mj-msg-file';
+      fileLink.href = fileUrl || '#';
+      if (fileUrl) {
+        fileLink.target = '_blank';
+        fileLink.rel = 'noopener noreferrer';
+      }
+
+      var iconSvg = '<svg class="mj-msg-file-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>';
+      fileLink.innerHTML = iconSvg;
+
+      var fileInfo = document.createElement('div');
+      fileInfo.className = 'mj-msg-file-info';
+      var fileName = document.createElement('div');
+      fileName.className = 'mj-msg-file-name';
+      fileName.textContent = (meta && meta.fileName) || msg.content || 'File';
+      fileInfo.appendChild(fileName);
+      if (meta && meta.fileSize) {
+        var fileSize = document.createElement('div');
+        fileSize.className = 'mj-msg-file-size';
+        fileSize.textContent = formatFileSize(meta.fileSize);
+        fileInfo.appendChild(fileSize);
+      }
+      fileLink.appendChild(fileInfo);
+      div.appendChild(fileLink);
+    } else {
+      // Regular text message
+      var textEl = document.createElement('div');
+      textEl.className = 'mj-msg-text';
+      textEl.innerHTML = formatMessage(msg.content);
+      div.appendChild(textEl);
+    }
+
+    // Copy button (for non-system messages with content)
+    if (msgRole !== 'system' && msg.content) {
+      var copyBtn = document.createElement('button');
+      copyBtn.className = 'mj-msg-copy';
+      copyBtn.setAttribute('aria-label', 'Copy');
+      copyBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+      // For images, copy the image blob; for files, copy the URL; for text, copy the text
+      if (contentType === 'IMAGE') {
+        var imgUrl = fileUrl || (msg.content.startsWith('/uploads/') ? config.apiBase + msg.content : null);
+        (function(url, btn) {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (url) {
+              copyImageToClipboard(url, btn);
+            } else {
+              copyMessageContent(msg.content, btn);
+            }
+          });
+        })(imgUrl, copyBtn);
+      } else {
+        var copyContent = (contentType === 'DOCUMENT' || contentType === 'VIDEO' || contentType === 'AUDIO')
+          ? (fileUrl || msg.content)
+          : msg.content;
+        (function(content, btn) {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            copyMessageContent(content, btn);
+          });
+        })(copyContent, copyBtn);
+      }
+      div.appendChild(copyBtn);
+    }
+
+    // Upload progress bar (for uploading files)
+    if (msg._isUploading) {
+      var progressWrap = document.createElement('div');
+      progressWrap.className = 'mj-upload-progress';
+      var progressBar = document.createElement('div');
+      progressBar.className = 'mj-upload-progress-bar';
+      progressWrap.appendChild(progressBar);
+      div.appendChild(progressWrap);
+    }
+
+    var timeEl = document.createElement('div');
+    timeEl.className = 'mj-msg-time';
+    timeEl.textContent = formatTime(msg.createdAt);
+    div.appendChild(timeEl);
+
+    $messagesContainer.insertBefore(div, $typingIndicator);
+
+    if (!state.userScrolledUp) scrollToBottom();
+  }
+
+  function addSystemMessage(text) {
+    addMessageToUI({
+      id: 'sys_' + Date.now() + '_' + Math.random(),
+      role: 'SYSTEM',
+      content: text,
+      contentType: 'TEXT',
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  // ─── Typing Indicator ──────────────────────────────────
+  function showTyping() {
+    state.isTyping = true;
+    $typingIndicator.classList.add('mj-visible');
+    scrollToBottom();
+
+    if (state.typingTimer) {
+      clearTimeout(state.typingTimer);
+    }
+
+    state.typingTimer = setTimeout(function() {
+      hideTyping();
+    }, TYPING_TIMEOUT);
+  }
+
+  function hideTyping() {
+    state.isTyping = false;
+    $typingIndicator.classList.remove('mj-visible');
+    if (state.typingTimer) {
+      clearTimeout(state.typingTimer);
+      state.typingTimer = null;
+    }
+  }
+
+  // ─── Scroll ─────────────────────────────────────────────
+  function scrollToBottom() {
+    state.userScrolledUp = false;
+    $scrollBtn.classList.remove('mj-visible');
+    requestAnimationFrame(function() {
+      $messagesContainer.scrollTop = $messagesContainer.scrollHeight;
+    });
+  }
+
+  // ─── CSAT Rating ──────────────────────────────────────
+  function showCSATRating() {
+    if (state.csatShown || !state.conversationId) return;
+    state.csatShown = true;
+
+    var ratingEl = document.createElement('div');
+    ratingEl.className = 'mj-rating';
+
+    var title = document.createElement('div');
+    title.className = 'mj-rating-title';
+    title.textContent = config.direction === 'rtl' ? '\u0643\u064A\u0641 \u062A\u0642\u064A\u0651\u0645 \u062A\u062C\u0631\u0628\u062A\u0643\u061F' : 'How was your experience?';
+    ratingEl.appendChild(title);
+
+    var starsContainer = document.createElement('div');
+    starsContainer.className = 'mj-rating-stars';
+
+    var starButtons = [];
+    for (var i = 1; i <= 5; i++) {
+      (function(rating) {
+        var star = document.createElement('button');
+        star.className = 'mj-rating-star';
+        star.textContent = '\u2B50';
+        star.setAttribute('aria-label', rating + ' stars');
+        star.addEventListener('mouseenter', function() {
+          for (var j = 0; j < starButtons.length; j++) {
+            starButtons[j].classList.toggle('mj-star-active', j < rating);
+          }
+        });
+        star.addEventListener('click', function() {
+          submitRating(rating, ratingEl);
+        });
+        starButtons.push(star);
+        starsContainer.appendChild(star);
+      })(i);
+    }
+    starsContainer.addEventListener('mouseleave', function() {
+      for (var j = 0; j < starButtons.length; j++) {
+        starButtons[j].classList.remove('mj-star-active');
+      }
+    });
+
+    ratingEl.appendChild(starsContainer);
+    $messagesContainer.insertBefore(ratingEl, $typingIndicator);
+    scrollToBottom();
+  }
+
+  function submitRating(rating, ratingEl) {
+    // Replace stars with thank you
+    ratingEl.innerHTML = '';
+    var thanks = document.createElement('div');
+    thanks.className = 'mj-rating-thanks';
+    thanks.textContent = config.direction === 'rtl' ? '\u0634\u0643\u0631\u0627\u064B \u0644\u062A\u0642\u064A\u064A\u0645\u0643! \u2B50' : 'Thanks for your feedback! \u2B50';
+    ratingEl.appendChild(thanks);
+
+    // Send rating to API
+    fetch(apiUrl('/conversations/' + state.conversationId + '/rate'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rating: rating,
+        customerId: state.visitorId,
+      })
+    }).catch(function() {
+      // Silently fail
+    });
+  }
+
+  function resetCSATTimer() {
+    if (state.csatTimer) clearTimeout(state.csatTimer);
+    if (state.csatShown) return;
+
+    state.csatTimer = setTimeout(function() {
+      if (state.lastAgentMessageTime > 0 && !state.csatShown) {
+        showCSATRating();
+      }
+    }, 120000); // 2 minutes
+  }
+
+  function checkScrollPosition() {
+    var el = $messagesContainer;
+    var distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    state.userScrolledUp = distFromBottom > 80;
+    if (state.userScrolledUp) {
+      $scrollBtn.classList.add('mj-visible');
+    } else {
+      $scrollBtn.classList.remove('mj-visible');
+    }
+  }
+
+  // ─── Polling ────────────────────────────────────────────
+  function startPolling() {
+    if (state.pollTimer) return;
+
+    pollMessages();
+    state.pollTimer = setInterval(function() {
+      pollMessages();
+    }, POLL_INTERVAL);
+  }
+
+  function stopPolling() {
+    if (state.pollTimer) {
+      clearInterval(state.pollTimer);
+      state.pollTimer = null;
+    }
+  }
+
+  function pollMessages() {
+    if (!state.conversationId) {
+      // Try to find the conversation by visitor
+      apiGetConversationByVisitor().then(function(result) {
+        if (result && result.conversation) {
+          state.conversationId = result.conversation.id;
+          storeConversationId(result.conversation.id);
+          // Now that we have the ID, fetch messages immediately
+          fetchAndRenderMessages();
+        }
+      }).catch(function() {
+        // Silently retry next cycle
+      });
+      return;
+    }
+
+    fetchAndRenderMessages();
+  }
+
+  function fetchAndRenderMessages() {
+    if (!state.conversationId) return;
+
+    apiGetMessages(state.conversationId).then(function(result) {
+      if (!result || !result.messages) return;
+
+      var hasNewAgentMessage = false;
+
+      result.messages.forEach(function(msg) {
+        if (state.knownMessageIds[msg.id]) return;
+
+        // Handle optimistic customer messages: skip server echo of recent messages
+        if (msg.role === 'CUSTOMER') {
+          var isRecent = Date.now() - new Date(msg.createdAt).getTime() < 15000;
+          if (isRecent) {
+            // Find matching temp message using tracked content
+            var pollMatchedId = null;
+            var pollMatchedEntry = null;
+            var pollTempKeys = Object.keys(tempMessageElements);
+            for (var pti = 0; pti < pollTempKeys.length; pti++) {
+              var pCandidateEntry = tempMessageElements[pollTempKeys[pti]];
+              if (pCandidateEntry && pCandidateEntry.content === msg.content && (Date.now() - pCandidateEntry.ts) < 10000) {
+                pollMatchedId = pollTempKeys[pti];
+                pollMatchedEntry = pCandidateEntry;
+                break;
+              }
+            }
+            if (pollMatchedEntry) {
+              // Replace temp ID with real ID
+              delete state.knownMessageIds[pollMatchedId];
+              delete tempMessageElements[pollMatchedId];
+              state.knownMessageIds[msg.id] = true;
+              displayedMessageIds[msg.id] = true;
+              pollMatchedEntry.el.setAttribute('data-msg-id', msg.id);
+              return;
+            }
+          }
+        }
+
+        // Use addMessageToUI for rendering (handles file/image types)
+        addMessageToUI(msg);
+        state.messages.push(msg);
+
+        if (msg.role === 'AI_AGENT' || msg.role === 'HUMAN_AGENT') {
+          hasNewAgentMessage = true;
+          state.lastAgentMessageTime = Date.now();
+          resetCSATTimer();
+
+          // Notify parent of new agent message
+          try {
+            window.parent.postMessage({
+              type: 'newMessage',
+              messageContent: msg.content
+            }, parentOrigin);
+          } catch (e) {
+            // Silently fail
+          }
+        }
+      });
+
+      if (hasNewAgentMessage) {
+        hideTyping();
+        scrollToBottom();
+      }
+    }).catch(function() {
+      // Silently fail, retry on next poll
+    });
+  }
+
+  // ─── Conversation List ──────────────────────────────────
+  function formatRelativeDate(dateStr) {
+    if (!dateStr) return '';
+    var isRtl = config.direction === 'rtl';
+    try {
+      var d = new Date(dateStr);
+      var now = new Date();
+      var diffMs = now - d;
+      var diffMin = Math.floor(diffMs / 60000);
+      var diffHours = Math.floor(diffMin / 60);
+      var diffDays = Math.floor(diffHours / 24);
+
+      if (diffMin < 1) return isRtl ? 'الآن' : 'now';
+      if (diffMin < 60) return isRtl ? diffMin + ' د' : diffMin + 'm';
+      if (diffHours < 24) return isRtl ? diffHours + ' س' : diffHours + 'h';
+      if (diffDays < 7) return isRtl ? diffDays + ' ي' : diffDays + 'd';
+      return d.toLocaleDateString(isRtl ? 'ar' : 'en', { day: 'numeric', month: 'short' });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function getStatusClass(status) {
+    switch (status) {
+      case 'ACTIVE': case 'WAITING': return 'mj-conv-item-status-active';
+      case 'HANDED_OFF': return 'mj-conv-item-status-waiting';
+      case 'RESOLVED': return 'mj-conv-item-status-resolved';
+      default: return 'mj-conv-item-status-closed';
+    }
+  }
+
+  function showConversationList() {
+    var isRtl = config.direction === 'rtl';
+    $convListTitle.textContent = isRtl ? 'المحادثات' : 'Conversations';
+    $newConvListText.textContent = isRtl ? 'محادثة جديدة' : 'New Conversation';
+    $convListItems.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">' + (isRtl ? 'جاري التحميل...' : 'Loading...') + '</div>';
+    $convListView.style.display = 'flex';
+
+    apiGetConversationList().then(function(result) {
+      $convListItems.innerHTML = '';
+      if (!result || !result.conversations || result.conversations.length === 0) {
+        $convListItems.innerHTML = '<div class="mj-conv-list-empty"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg><p>' + (isRtl ? 'لا توجد محادثات بعد' : 'No conversations yet') + '</p></div>';
+        return;
+      }
+
+      var total = result.conversations.length;
+      result.conversations.forEach(function(conv, index) {
+        var convNumber = total - index;
+        var btn = document.createElement('button');
+        btn.className = 'mj-conv-item' + (conv.id === state.conversationId ? ' mj-conv-item-active' : '');
+        btn.addEventListener('click', function() {
+          switchToConversation(conv.id, conv.status);
+        });
+
+        var icon = document.createElement('div');
+        icon.className = 'mj-conv-item-icon';
+        icon.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>';
+        btn.appendChild(icon);
+
+        var body = document.createElement('div');
+        body.className = 'mj-conv-item-body';
+
+        var titleRow = document.createElement('div');
+        titleRow.className = 'mj-conv-item-title';
+        titleRow.textContent = (isRtl ? 'محادثة #' : 'Conversation #') + convNumber;
+        body.appendChild(titleRow);
+
+        var topRow = document.createElement('div');
+        topRow.className = 'mj-conv-item-top';
+
+        var statusBadge = document.createElement('span');
+        statusBadge.className = 'mj-conv-item-status ' + getStatusClass(conv.status);
+        statusBadge.textContent = conv.status;
+        topRow.appendChild(statusBadge);
+
+        var dateSpan = document.createElement('span');
+        dateSpan.className = 'mj-conv-item-date';
+        dateSpan.textContent = formatRelativeDate(conv.lastMessageAt || conv.createdAt);
+        topRow.appendChild(dateSpan);
+
+        body.appendChild(topRow);
+
+        if (conv.preview) {
+          var preview = document.createElement('div');
+          preview.className = 'mj-conv-item-preview';
+          preview.textContent = conv.preview;
+          body.appendChild(preview);
+        }
+
+        btn.appendChild(body);
+        $convListItems.appendChild(btn);
+      });
+    }).catch(function() {
+      var isRtl2 = config.direction === 'rtl';
+      $convListItems.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;font-size:13px;">' + (isRtl2 ? 'فشل تحميل المحادثات' : 'Failed to load conversations') + '</div>';
+    });
+  }
+
+  function hideConversationList() {
+    $convListView.style.display = 'none';
+  }
+
+  function startNewConversation() {
+    // Clear current conversation state
+    state.conversationId = null;
+    state.messages = [];
+    state.knownMessageIds = {};
+    state.lastRenderedRole = null;
+    state.lastRenderedDate = null;
+    displayedMessageIds = {};
+    tempMessageElements = {};
+    state.csatShown = false;
+    state.lastAgentMessageTime = 0;
+    state.lastCustomerMessageTime = 0;
+    state.forceNewConversation = true;
+    state.conversationStatus = null;
+
+    if (state.csatTimer) clearTimeout(state.csatTimer);
+
+    // Stop current polling
+    stopPolling();
+
+    // Clear the message area
+    var children = Array.prototype.slice.call($messagesContainer.children);
+    children.forEach(function(child) {
+      if (child !== $typingIndicator) {
+        child.remove();
+      }
+    });
+    hideTyping();
+
+    // Show greeting
+    showGreeting();
+
+    // Hide conversation list
+    hideConversationList();
+
+    // Focus input
+    $messageInput.focus();
+  }
+
+  function switchToConversation(conversationId, status) {
+    if (conversationId === state.conversationId) {
+      hideConversationList();
+      return;
+    }
+
+    // Clear current state
+    state.conversationId = conversationId;
+    state.conversationStatus = status || null;
+    state.messages = [];
+    state.knownMessageIds = {};
+    state.lastRenderedRole = null;
+    state.lastRenderedDate = null;
+    displayedMessageIds = {};
+    tempMessageElements = {};
+    state.csatShown = false;
+    state.lastAgentMessageTime = 0;
+    if (state.csatTimer) { clearTimeout(state.csatTimer); state.csatTimer = null; }
+
+    stopPolling();
+
+    // Clear the message area
+    var children = Array.prototype.slice.call($messagesContainer.children);
+    children.forEach(function(child) {
+      if (child !== $typingIndicator) {
+        child.remove();
+      }
+    });
+    hideTyping();
+
+    // Store and join
+    storeConversationId(conversationId);
+    joinConversationRoom(conversationId);
+
+    // Load messages
+    apiGetMessages(conversationId).then(function(msgResult) {
+      if (msgResult && msgResult.messages) {
+        var lastAgentMsg = null;
+        msgResult.messages.forEach(function(msg) {
+          addMessageToUI(msg);
+          state.messages.push(msg);
+          if (msg.role === 'AI_AGENT' || msg.role === 'HUMAN_AGENT') {
+            lastAgentMsg = msg;
+          }
+        });
+      }
+      startPolling();
+    }).catch(function() {
+      startPolling();
+    });
+
+    // Hide list
+    hideConversationList();
+
+    // Focus input
+    $messageInput.focus();
+  }
+
+  // ─── Copy Message ────────────────────────────────────────
+  function copyImageToClipboard(imageUrl, copyBtn) {
+    fetch(imageUrl)
+      .then(function(res) { return res.blob(); })
+      .then(function(blob) {
+        // Clipboard API requires image/png, convert if needed
+        if (blob.type === 'image/png') {
+          return navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+        }
+        // Convert to PNG via canvas
+        return new Promise(function(resolve, reject) {
+          var img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = function() {
+            var canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            canvas.toBlob(function(pngBlob) {
+              if (pngBlob) {
+                navigator.clipboard.write([
+                  new ClipboardItem({ 'image/png': pngBlob })
+                ]).then(resolve).catch(reject);
+              } else {
+                reject(new Error('Failed to convert image'));
+              }
+            }, 'image/png');
+          };
+          img.onerror = reject;
+          img.src = imageUrl;
+        });
+      })
+      .then(function() {
+        var tooltip = document.createElement('span');
+        tooltip.className = 'mj-msg-copy-tooltip';
+        tooltip.textContent = '\u2713';
+        copyBtn.style.position = 'relative';
+        copyBtn.appendChild(tooltip);
+        setTimeout(function() { if (tooltip.parentNode) tooltip.remove(); }, 1500);
+      })
+      .catch(function() {
+        // Fallback: copy the URL
+        copyMessageContent(imageUrl, copyBtn);
+      });
+  }
+
+  function copyMessageContent(content, copyBtn) {
+    navigator.clipboard.writeText(content).then(function() {
+      // Show tooltip
+      var tooltip = document.createElement('span');
+      tooltip.className = 'mj-msg-copy-tooltip';
+      tooltip.textContent = '\u2713';
+      copyBtn.style.position = 'relative';
+      copyBtn.appendChild(tooltip);
+      setTimeout(function() {
+        if (tooltip.parentNode) tooltip.remove();
+      }, 1500);
+    }).catch(function() {
+      // Fallback: noop
+    });
+  }
+
+  // ─── Send Message ───────────────────────────────────────
+  function handleSend() {
+    var message = $messageInput.value.trim();
+    if (!message || state.isSending) return;
+
+    state.isSending = true;
+
+    // Clear input
+    $messageInput.value = '';
+    $messageInput.style.height = 'auto';
+    $sendBtn.disabled = true;
+
+    // Optimistic UI: show message immediately with temp ID
+    var tempId = 'temp_' + Date.now() + '_' + Math.random();
+    var tempMsg = {
+      id: tempId,
+      role: 'CUSTOMER',
+      content: message,
+      contentType: 'TEXT',
+      createdAt: new Date().toISOString()
+    };
+    addMessageToUI(tempMsg);
+    // Track temp element for later ID mapping (store content for dedup)
+    var tempEl = $messagesContainer.querySelector('[data-msg-id="' + tempId + '"]');
+    if (tempEl) tempMessageElements[tempId] = { el: tempEl, content: message, ts: Date.now() };
+    // Auto-cleanup temp message after 30 seconds
+    setTimeout(function() { delete tempMessageElements[tempId]; }, 30000);
+    state.lastCustomerMessageTime = Date.now();
+
+    // Show typing indicator only if conversation is not handed off to human
+    if (state.conversationStatus !== 'HANDED_OFF') {
+      showTyping();
+    }
+
+    apiSendMessage(message).then(function(result) {
+      state.isSending = false;
+
+      if (result.conversationId) {
+        state.conversationId = result.conversationId;
+        storeConversationId(result.conversationId);
+        joinConversationRoom(result.conversationId);
+      }
+
+      // Update conversation status from API response
+      if (result.status) {
+        state.conversationStatus = result.status;
+        // Hide typing if conversation turns out to be handed off
+        if (result.status === 'HANDED_OFF') {
+          hideTyping();
+        }
+      }
+
+      // Start polling if not already
+      if (!state.pollTimer) {
+        startPolling();
+      }
+    }).catch(function(err) {
+      state.isSending = false;
+      hideTyping();
+
+      // Mark the optimistic message as failed
+      var msgEl = $messagesContainer.querySelector('[data-msg-id="' + tempId + '"]');
+      if (msgEl) {
+        msgEl.classList.add('mj-msg-failed');
+
+        // Add retry button
+        var retryBtn = document.createElement('button');
+        retryBtn.className = 'mj-msg-retry';
+        retryBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>' +
+          '<span>' + (config.direction === 'rtl' ? 'إعادة المحاولة' : 'Retry') + '</span>';
+        (function(content, failedEl, retryButton) {
+          retryButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // Remove failed state and the message element
+            failedEl.classList.remove('mj-msg-failed');
+            retryButton.remove();
+            var oldId = failedEl.getAttribute('data-msg-id');
+            delete state.knownMessageIds[oldId];
+            failedEl.remove();
+            // Re-send the message
+            $messageInput.value = content;
+            handleSend();
+          });
+        })(message, msgEl, retryBtn);
+        msgEl.appendChild(retryBtn);
+      }
+    });
+  }
+
+  // ─── Input Auto-Resize ─────────────────────────────────
+  function autoResize() {
+    $messageInput.style.height = 'auto';
+    var scrollH = $messageInput.scrollHeight;
+    $messageInput.style.height = Math.min(scrollH, 100) + 'px';
+
+    $sendBtn.disabled = !$messageInput.value.trim();
+  }
+
+  // ─── Event Binding ──────────────────────────────────────
+  function bindEvents() {
+    // Close button
+    $closeBtn.addEventListener('click', function() {
+      try {
+        window.parent.postMessage({ type: 'closeWidget' }, parentOrigin);
+      } catch (e) {
+        // Silently fail
+      }
+    });
+
+    // Send button
+    $sendBtn.addEventListener('click', function() {
+      handleSend();
+    });
+
+    // Input events
+    $messageInput.addEventListener('input', autoResize);
+
+    $messageInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if ($messageInput.value.trim()) {
+          handleSend();
+        }
+      }
+    });
+
+    // Focus input when clicking messages area (if empty)
+    $messagesContainer.addEventListener('click', function(e) {
+      if (e.target === $messagesContainer) {
+        $messageInput.focus();
+      }
+    });
+
+    // Scroll detection for scroll-to-bottom button
+    $messagesContainer.addEventListener('scroll', checkScrollPosition);
+
+    // Scroll-to-bottom button
+    $scrollBtn.addEventListener('click', function() {
+      scrollToBottom();
+    });
+
+    // Mobile: re-scroll when keyboard opens (input focus)
+    $messageInput.addEventListener('focus', function() {
+      setTimeout(function() { scrollToBottom(); }, 300);
+    });
+
+    // File attachment
+    $attachBtn.addEventListener('click', function() {
+      $fileInput.click();
+    });
+
+    $fileInput.addEventListener('change', function() {
+      if ($fileInput.files && $fileInput.files[0]) {
+        handleFileUpload($fileInput.files[0]);
+        $fileInput.value = ''; // Reset for re-upload
+      }
+    });
+
+    // Conversation list: menu button toggles list
+    $menuBtn.addEventListener('click', function() {
+      if ($convListView.style.display === 'none') {
+        showConversationList();
+      } else {
+        hideConversationList();
+      }
+    });
+
+    // Conversation list: close button
+    $convListCloseBtn.addEventListener('click', function() {
+      hideConversationList();
+    });
+
+    // New conversation button (header)
+    $newConvBtn.addEventListener('click', function() {
+      startNewConversation();
+    });
+
+    // New conversation button (inside list)
+    $newConvListBtn.addEventListener('click', function() {
+      startNewConversation();
+    });
+  }
+
+  // ─── Conversation Restoration ───────────────────────────
+  function restoreConversation() {
+    apiGetConversationByVisitor().then(function(result) {
+      if (result && result.conversation) {
+        state.conversationId = result.conversation.id;
+        state.conversationStatus = result.conversation.status || null;
+        storeConversationId(result.conversation.id);
+        joinConversationRoom(result.conversation.id);
+
+        // Load existing messages
+        return apiGetMessages(result.conversation.id).then(function(msgResult) {
+          if (msgResult && msgResult.messages) {
+            var lastAgentMsg = null;
+            msgResult.messages.forEach(function(msg) {
+              addMessageToUI(msg);
+              state.messages.push(msg);
+              if (msg.role === 'AI_AGENT' || msg.role === 'HUMAN_AGENT') {
+                lastAgentMsg = msg;
+              }
+            });
+          }
+
+          // Start polling for new messages
+          startPolling();
+        });
+      }
+    }).catch(function() {
+      // Could not restore, start fresh (greeting already shown)
+    });
+  }
+
+  // ─── Initialize ─────────────────────────────────────────
+  function init() {
+    if (!config.channelId) {
+      console.error('[Mojeeb Chat] channelId is required');
+      return;
+    }
+
+    // Setup visitor ID
+    state.visitorId = getVisitorId();
+
+    // Apply theming and direction
+    applyTheme();
+    applyDirection();
+    setupHeader();
+
+    // Show greeting message
+    showGreeting();
+
+    // Connect Socket.IO for real-time messages
+    connectSocket();
+
+    // Bind events
+    bindEvents();
+
+    // Try to restore existing conversation
+    restoreConversation();
+
+    // Focus input after a brief delay
+    setTimeout(function() {
+      $messageInput.focus();
+    }, 300);
+  }
+
+  // ─── Start ──────────────────────────────────────────────
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

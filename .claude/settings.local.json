@@ -1,0 +1,48 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:mojeeb.app)",
+      "Bash(node --version:*)",
+      "Bash(npm:*)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(pnpm init:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(find:*)",
+      "Bash(pnpm dev)",
+      "mcp__chrome-devtools__list_pages",
+      "Bash(netstat:*)",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__list_console_messages",
+      "Bash(ls:*)",
+      "Bash(taskkill:*)",
+      "Bash(cat:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(pnpm build:*)",
+      "Bash(gh pr list:*)"
+    ]
+  },
+  "inputs": [
+    {
+      "id": "api_token",
+      "type": "promptString",
+      "description": "Enter your Hostinger API token (required)"
+    }
+  ],
+  "servers": {
+    "hostinger-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "hostinger-api-mcp@latest"
+      ],
+      "env": {
+        "API_TOKEN": "5RfnuSIgEUHxys8vVnWeuB7zRFXV9OaoPlKYM2CU4de86541"
+      }
+    }
+  }
+}

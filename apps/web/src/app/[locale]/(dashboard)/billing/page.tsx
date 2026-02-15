@@ -1,0 +1,597 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useSubscription, useInvoices, usePlans } from '@/hooks/useSubscription';
+import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useAuthStore } from '@/stores/authStore';
+import { useLocale } from 'next-intl';
+import { fmtDate } from '@/lib/dateFormat';
+import { api } from '@/lib/api';
+import {
+  MessageSquare,
+  Bot,
+  Check,
+  Crown,
+  Loader2,
+  FileText,
+  Download,
+  Eye,
+  AlertTriangle,
+  X,
+  Zap,
+  Calendar,
+} from 'lucide-react';
+
+export default function BillingPage() {
+  const t = useTranslations('dashboard.billing');
+  const locale = useLocale();
+  const isAr = locale === 'ar';
+  const { data: subscription, isLoading, refetch } = useSubscription();
+  const { data: invoices, isLoading: loadingInvoices, refetch: refetchInvoices } = useInvoices();
+  const { data: planConfigs } = usePlans();
+  const orgId = useAuthStore((s) => s.organization?.id);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const { confirmProps, confirm } = useConfirmDialog();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
+  // Handle return from Kashier checkout
+  const confirmingRef = useRef(false);
+  useEffect(() => {
+    const paymentStatus = searchParams.get('paymentStatus');
+    const status = searchParams.get('status');
+    const merchantOrderId = searchParams.get('merchantOrderId');
+
+    if (confirmingRef.current || !orgId) return;
+
+    if (paymentStatus === 'SUCCESS' && merchantOrderId) {
+      // Confirm payment via API
+      confirmingRef.current = true;
+      api
+        .post(`/organizations/${orgId}/subscription/confirm-payment`, {
+          merchantOrderId,
+          paymentStatus,
+          transactionId: searchParams.get('transactionId') ?? '',
+          amount: searchParams.get('amount') ?? '',
+          currency: searchParams.get('currency') ?? 'USD',
+          signature: searchParams.get('signature') ?? '',
+        })
+        .then(() => {
+          setStatusMessage({ type: 'success', text: t('upgradeSuccess') });
+          refetch();
+          refetchInvoices();
+        })
+        .catch((err: any) => {
+          const message = err?.response?.data?.error || t('upgradeFailed');
+          setStatusMessage({ type: 'error', text: message });
+        })
+        .finally(() => {
+          confirmingRef.current = false;
+          router.replace('/billing');
+        });
+    } else if (status === 'failed') {
+      setStatusMessage({ type: 'error', text: t('upgradeFailed') });
+      router.replace('/billing');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, orgId]);
+
+  // Auto-dismiss status message after 5 seconds
+  useEffect(() => {
+    if (statusMessage) {
+      const timer = setTimeout(() => setStatusMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
+
+  async function handleUpgrade(plan: string) {
+    if (!orgId) return;
+    setCheckoutLoading(plan);
+    setStatusMessage(null);
+
+    try {
+      const { data } = await api.post(`/organizations/${orgId}/subscription/checkout`, { plan });
+      const checkoutUrl = data.data.checkoutUrl;
+      // Redirect to Kashier checkout
+      window.location.href = checkoutUrl;
+    } catch (err: any) {
+      const message = err?.response?.data?.error || t('upgradeFailed');
+      setStatusMessage({ type: 'error', text: message });
+      setCheckoutLoading(null);
+    }
+  }
+
+  async function doCancelSubscription(immediate: boolean) {
+    if (!orgId || !subscription) return;
+    const periodEnd = fmtDate(subscription.currentPeriodEnd, locale);
+
+    setCancelLoading(true);
+    setStatusMessage(null);
+    try {
+      await api.post(`/organizations/${orgId}/subscription/cancel`, { immediate });
+      setStatusMessage({
+        type: 'success',
+        text: immediate ? t('canceled') : t('canceledAtPeriodEnd', { date: periodEnd }),
+      });
+      refetch();
+    } catch (err: any) {
+      const message = err?.response?.data?.error || t('upgradeFailed');
+      setStatusMessage({ type: 'error', text: message });
+    } finally {
+      setCancelLoading(false);
+    }
+  }
+
+  function handleCancel() {
+    if (!orgId || !subscription) return;
+    setShowCancelDialog(true);
+  }
+
+  function planDisplayName(plan: string): string {
+    const cfg = planConfigs?.find((p) => p.plan === plan);
+    if (cfg) return isAr ? (cfg.displayNameAr || cfg.displayName) : cfg.displayName;
+    const map: Record<string, string> = {
+      FREE: t('free'),
+      STARTER: t('starter'),
+      PROFESSIONAL: t('professional'),
+    };
+    return map[plan] ?? plan;
+  }
+
+  function parseFeatures(featuresStr: string): string[] {
+    try { return JSON.parse(featuresStr); } catch { return []; }
+  }
+
+  const [downloadingInvoice, setDownloadingInvoice] = useState<string | null>(null);
+  const [viewingInvoice, setViewingInvoice] = useState<string | null>(null);
+
+  async function fetchInvoicePdf(invoiceId: string): Promise<Blob | null> {
+    if (!orgId) return null;
+    const token = localStorage.getItem('accessToken');
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+    const resp = await fetch(
+      `${baseUrl}/organizations/${orgId}/subscription/invoices/${invoiceId}/pdf`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!resp.ok) throw new Error('Failed to fetch PDF');
+    return resp.blob();
+  }
+
+  async function handleDownloadInvoice(invoiceId: string) {
+    setDownloadingInvoice(invoiceId);
+    try {
+      const blob = await fetchInvoicePdf(invoiceId);
+      if (!blob) return;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoiceId.slice(-8)}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setStatusMessage({ type: 'error', text: t('downloadFailed') });
+    } finally {
+      setDownloadingInvoice(null);
+    }
+  }
+
+  async function handleViewInvoice(invoiceId: string) {
+    setViewingInvoice(invoiceId);
+    try {
+      const blob = await fetchInvoicePdf(invoiceId);
+      if (!blob) return;
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch {
+      setStatusMessage({ type: 'error', text: t('downloadFailed') });
+    } finally {
+      setViewingInvoice(null);
+    }
+  }
+
+  function usagePercentage(used: number, limit: number): number {
+    if (limit === 0) return 0;
+    return Math.min(100, Math.round((used / limit) * 100));
+  }
+
+  function usageColor(percentage: number): string {
+    if (percentage >= 90) return 'bg-red-500';
+    if (percentage >= 70) return 'bg-yellow-500';
+    return 'bg-primary';
+  }
+
+  function statusText(status: string): string {
+    try {
+      return t(`status.${status}`);
+    } catch {
+      return status;
+    }
+  }
+
+  const usageItems = subscription
+    ? [
+        {
+          label: t('messages'),
+          icon: MessageSquare,
+          used: subscription.messagesUsed,
+          limit: subscription.messagesLimit,
+          color: 'text-blue-600',
+          bg: 'bg-blue-100',
+        },
+        {
+          label: t('agents'),
+          icon: Bot,
+          used: subscription.agentsUsed,
+          limit: subscription.agentsLimit,
+          color: 'text-purple-600',
+          bg: 'bg-purple-100',
+        },
+      ]
+    : [];
+
+  const plans = (planConfigs ?? []).map((cfg) => ({
+    key: cfg.plan,
+    name: isAr ? (cfg.displayNameAr || cfg.displayName) : cfg.displayName,
+    price: cfg.monthlyPrice === 0
+      ? (isAr ? 'مجاني' : 'Free')
+      : `$${cfg.monthlyPrice}`,
+    popular: cfg.isPopular,
+    features: parseFeatures(isAr ? cfg.featuresAr : cfg.features),
+  }));
+
+  return (
+    <>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+      </div>
+
+      {/* Status message banner */}
+      {statusMessage && (
+        <div
+          className={`mb-6 rounded-lg px-4 py-3 text-sm font-medium ${
+            statusMessage.type === 'success'
+              ? 'bg-green-50 text-green-700 border border-green-200'
+              : 'bg-red-50 text-red-700 border border-red-200'
+          }`}
+        >
+          {statusMessage.text}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="space-y-6 animate-pulse">
+          <div className="h-40 rounded-xl bg-muted" />
+          <div className="h-48 rounded-xl bg-muted" />
+          <div className="h-64 rounded-xl bg-muted" />
+        </div>
+      ) : (
+        <>
+          {/* Current Plan Card */}
+          {subscription && (
+            <div className="rounded-xl border bg-card p-6 shadow-sm mb-6">
+              <div className="flex items-start gap-4">
+                <div className="rounded-lg bg-primary/10 p-2.5">
+                  <Crown className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h2 className="text-lg font-semibold">{t('currentPlan')}</h2>
+                    <span className="rounded-full bg-primary/10 px-3 py-0.5 text-sm font-medium text-primary">
+                      {planDisplayName(subscription.plan)}
+                    </span>
+                    <span
+                      className={`rounded-full px-3 py-0.5 text-xs font-medium ${
+                        subscription.status === 'ACTIVE'
+                          ? 'bg-green-100 text-green-700'
+                          : subscription.status === 'PAST_DUE'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      {statusText(subscription.status)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t('period')}: {fmtDate(subscription.currentPeriodStart, locale)} —{' '}
+                    {fmtDate(subscription.currentPeriodEnd, locale)}
+                  </p>
+
+                  {/* Cancel subscription button (only for paid plans) */}
+                  {subscription.plan !== 'FREE' && (
+                    <button
+                      onClick={handleCancel}
+                      disabled={cancelLoading}
+                      className="mt-3 inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {cancelLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {t('cancelSubscription')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Usage Section */}
+          {subscription && (
+            <div className="rounded-xl border bg-card p-6 shadow-sm mb-6">
+              <h2 className="text-lg font-semibold mb-4">{t('usage')}</h2>
+              <div className="space-y-5">
+                {usageItems.map((item) => {
+                  const pct = usagePercentage(item.used, item.limit);
+                  return (
+                    <div key={item.label}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className={`rounded-lg p-1.5 ${item.bg}`}>
+                            <item.icon className={`h-4 w-4 ${item.color}`} />
+                          </div>
+                          <span className="text-sm font-medium">{item.label}</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {item.used} {t('of')} {item.limit}
+                        </span>
+                      </div>
+                      <div className="h-2.5 w-full rounded-full bg-muted">
+                        <div
+                          className={`h-2.5 rounded-full transition-all ${usageColor(pct)}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      {pct >= 90 && (
+                        <p className="text-xs text-red-600 mt-1">
+                          {pct}% {t('used')}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Available Plans */}
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-semibold mb-4">{t('availablePlans')}</h2>
+            <div className={`grid grid-cols-1 gap-4 ${plans.length === 4 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+              {plans.map((plan) => {
+                const isCurrent = subscription?.plan === plan.key;
+                const isUpgrade = plan.key !== 'FREE' && !isCurrent;
+                const isLoading = checkoutLoading === plan.key;
+
+                return (
+                  <div
+                    key={plan.key}
+                    className={`rounded-xl border p-5 transition-shadow ${
+                      plan.popular ? 'border-primary shadow-md' : ''
+                    } ${isCurrent ? 'bg-primary/5' : ''}`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold">{plan.name}</h3>
+                      {isCurrent && (
+                        <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
+                          {t('currentPlanBadge')}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mb-4">
+                      <span className="text-3xl font-bold">{plan.price}</span>
+                      {plan.key !== 'FREE' && (
+                        <span className="text-sm text-muted-foreground">{t('perMonth')}</span>
+                      )}
+                    </div>
+                    <ul className="space-y-2 mb-5">
+                      {plan.features.map((feature) => (
+                        <li key={feature} className="flex items-center gap-2 text-sm">
+                          <Check className="h-4 w-4 text-green-600 shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    {isCurrent ? (
+                      <button
+                        disabled
+                        className="w-full rounded-lg bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed"
+                      >
+                        {t('currentPlanBadge')}
+                      </button>
+                    ) : isUpgrade ? (
+                      <button
+                        onClick={() => handleUpgrade(plan.key)}
+                        disabled={isLoading || checkoutLoading !== null}
+                        className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                      >
+                        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {t('upgrade')}
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="w-full rounded-lg bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed"
+                      >
+                        {t('free')}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Invoice History */}
+          <div className="rounded-xl border bg-card p-6 shadow-sm mt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="rounded-lg bg-muted p-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <h2 className="text-lg font-semibold">{t('invoiceHistory')}</h2>
+            </div>
+            {loadingInvoices ? (
+              <div className="space-y-3 animate-pulse">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-10 rounded bg-muted" />
+                ))}
+              </div>
+            ) : invoices && invoices.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-muted-foreground">
+                      <th className="text-start pb-3 font-medium">{t('invoiceDate')}</th>
+                      <th className="text-start pb-3 font-medium">{t('invoiceAmount')}</th>
+                      <th className="text-start pb-3 font-medium">{t('invoiceStatus')}</th>
+                      <th className="text-start pb-3 font-medium">{t('invoiceDueDate')}</th>
+                      <th className="text-start pb-3 font-medium"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {invoices.map((invoice) => (
+                      <tr key={invoice.id} className="hover:bg-muted/50 transition-colors">
+                        <td className="py-3">
+                          {fmtDate(invoice.createdAt, locale)}
+                        </td>
+                        <td className="py-3 font-medium">
+                          {invoice.currency} {Number(invoice.amount).toFixed(2)}
+                        </td>
+                        <td className="py-3">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                              invoice.status === 'PAID'
+                                ? 'bg-green-100 text-green-700'
+                                : invoice.status === 'PENDING'
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : invoice.status === 'FAILED'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {invoice.status}
+                          </span>
+                        </td>
+                        <td className="py-3 text-muted-foreground">
+                          {fmtDate(invoice.dueDate, locale)}
+                        </td>
+                        <td className="py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleViewInvoice(invoice.id)}
+                              disabled={viewingInvoice === invoice.id}
+                              className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
+                            >
+                              {viewingInvoice === invoice.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Eye className="h-3.5 w-3.5" />
+                              )}
+                              {t('viewInvoice')}
+                            </button>
+                            <button
+                              onClick={() => handleDownloadInvoice(invoice.id)}
+                              disabled={downloadingInvoice === invoice.id}
+                              className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
+                            >
+                              {downloadingInvoice === invoice.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Download className="h-3.5 w-3.5" />
+                              )}
+                              {t('downloadInvoice')}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                {t('noInvoices')}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+    <ConfirmDialog {...confirmProps} />
+    {/* Cancel Subscription Dialog */}
+    {showCancelDialog && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        onClick={(e) => { if (e.target === e.currentTarget) setShowCancelDialog(false); }}
+      >
+        <div className="mx-4 w-full max-w-lg animate-in fade-in zoom-in-95 rounded-xl border bg-card p-6 shadow-lg">
+          {/* Header */}
+          <div className="flex items-start gap-3 mb-5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold">{t('cancelDialogTitle')}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{t('cancelDialogMessage')}</p>
+            </div>
+            <button onClick={() => setShowCancelDialog(false)} className="rounded-lg p-1 hover:bg-muted transition-colors">
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </div>
+
+          {/* Options */}
+          <div className="space-y-3 mb-5">
+            {/* Cancel at period end */}
+            <button
+              onClick={() => { setShowCancelDialog(false); doCancelSubscription(false); }}
+              disabled={cancelLoading}
+              className="w-full flex items-start gap-3 rounded-xl border-2 border-muted p-4 text-start hover:border-primary hover:bg-primary/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30 mt-0.5">
+                <Calendar className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <span className="text-sm font-semibold">{t('cancelAtEnd')}</span>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t('cancelAtEndDesc', { date: subscription ? fmtDate(subscription.currentPeriodEnd, locale) : '' })}
+                </p>
+              </div>
+            </button>
+
+            {/* Cancel now */}
+            <button
+              onClick={() => { setShowCancelDialog(false); doCancelSubscription(true); }}
+              disabled={cancelLoading}
+              className="w-full flex items-start gap-3 rounded-xl border-2 border-muted p-4 text-start hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30 mt-0.5">
+                <Zap className="h-4.5 w-4.5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-red-600 dark:text-red-400">{t('cancelNow')}</span>
+                <p className="text-xs text-muted-foreground mt-0.5">{t('cancelNowDesc')}</p>
+              </div>
+            </button>
+          </div>
+
+          {/* Keep subscription */}
+          <button
+            onClick={() => setShowCancelDialog(false)}
+            className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            {t('keepSubscription')}
+          </button>
+        </div>
+      </div>
+    )}
+    </>
+  );
+}

@@ -1,0 +1,76 @@
+# ============================================
+# Stage 1: Install dependencies
+# ============================================
+FROM node:20-alpine AS deps
+RUN corepack enable && corepack prepare pnpm@10.29.1 --activate
+WORKDIR /app
+
+# Copy workspace configuration
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+
+# Copy package.json for each workspace package
+COPY apps/api/package.json apps/api/
+COPY packages/shared-types/package.json packages/shared-types/
+COPY packages/shared-utils/package.json packages/shared-utils/
+COPY packages/eslint-config/package.json packages/eslint-config/
+
+# Install all dependencies (frozen lockfile for reproducibility)
+RUN pnpm install --frozen-lockfile
+
+# ============================================
+# Stage 2: Build
+# ============================================
+FROM node:20-alpine AS builder
+RUN corepack enable && corepack prepare pnpm@10.29.1 --activate
+WORKDIR /app
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deps /app/packages/shared-types/node_modules ./packages/shared-types/node_modules
+COPY --from=deps /app/packages/shared-utils/node_modules ./packages/shared-utils/node_modules
+COPY --from=deps /app/packages/eslint-config/ ./packages/eslint-config/
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build shared packages first (turbo respects dependency order)
+RUN pnpm --filter @mojeeb/shared-types build
+RUN pnpm --filter @mojeeb/shared-utils build
+
+# Build the API
+RUN pnpm --filter @mojeeb/api build
+
+# ============================================
+# Stage 3: Production runner
+# ============================================
+FROM node:20-alpine AS runner
+RUN corepack enable && corepack prepare pnpm@10.29.1 --activate
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy the full built workspace (includes node_modules, dist, prisma client)
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /app/turbo.json ./turbo.json
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api ./apps/api
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/prisma ./prisma
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 appuser
+USER appuser
+
+EXPOSE 4000
+
+# Copy entrypoint (runs migrations then starts server)
+COPY --from=builder /app/scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
+
+CMD ["sh", "scripts/docker-entrypoint.sh"]

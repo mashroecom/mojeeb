@@ -1,0 +1,203 @@
+import { prisma } from '../config/database';
+import { NotFoundError } from '../utils/errors';
+
+export class ConversationService {
+  async list(orgId: string, params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    channelId?: string;
+    search?: string;
+  }) {
+    const page = Math.max(params.page || 1, 1);
+    const limit = Math.min(Math.max(params.limit || 20, 1), 100);
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = { orgId };
+    if (params.status) where.status = params.status;
+    if (params.channelId) where.channelId = params.channelId;
+
+    if (params.search) {
+      where.OR = [
+        { customerName: { contains: params.search, mode: 'insensitive' } },
+        { summary: { contains: params.search, mode: 'insensitive' } },
+        { customerEmail: { contains: params.search, mode: 'insensitive' } },
+        { customerPhone: { contains: params.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [conversations, total] = await Promise.all([
+      prisma.conversation.findMany({
+        where,
+        orderBy: { lastMessageAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          channel: { select: { type: true, name: true } },
+          agent: { select: { name: true } },
+          messages: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { content: true, role: true, createdAt: true },
+          },
+          tags: { include: { tag: true } },
+          ratings: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { rating: true },
+          },
+        },
+      }),
+      prisma.conversation.count({ where }),
+    ]);
+
+    return {
+      conversations,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async getById(orgId: string, conversationId: string) {
+    const conversation = await prisma.conversation.findFirst({
+      where: { id: conversationId, orgId },
+      include: {
+        channel: true,
+        agent: true,
+        leads: true,
+        tags: { include: { tag: true } },
+      },
+    });
+    if (!conversation) throw new NotFoundError('Conversation not found');
+    return conversation;
+  }
+
+  async getMessages(conversationId: string, params: {
+    page?: number;
+    limit?: number;
+  }) {
+    const page = Math.max(params.page || 1, 1);
+    const limit = Math.min(Math.max(params.limit || 50, 1), 100);
+    const skip = (page - 1) * limit;
+
+    const [messages, total] = await Promise.all([
+      prisma.message.findMany({
+        where: { conversationId },
+        orderBy: { createdAt: 'asc' },
+        skip,
+        take: limit,
+      }),
+      prisma.message.count({ where: { conversationId } }),
+    ]);
+
+    return {
+      messages,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async sendHumanMessage(conversationId: string, userId: string, content: string) {
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+    if (!conversation) throw new NotFoundError('Conversation not found');
+
+    const message = await prisma.message.create({
+      data: {
+        conversationId,
+        role: 'HUMAN_AGENT',
+        content,
+        contentType: 'TEXT',
+        humanAgentId: userId,
+      },
+    });
+
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        messageCount: { increment: 1 },
+        lastMessageAt: new Date(),
+        status: 'ACTIVE',
+      },
+    });
+
+    return message;
+  }
+
+  async handoff(conversationId: string, userId: string) {
+    const result = await prisma.conversation.updateMany({
+      where: { id: conversationId, status: { in: ['ACTIVE', 'WAITING'] } },
+      data: {
+        status: 'HANDED_OFF',
+        assignedToHuman: userId,
+      },
+    });
+    if (result.count === 0) {
+      throw new NotFoundError('Conversation not found or already handed off');
+    }
+    return prisma.conversation.findUnique({ where: { id: conversationId } });
+  }
+
+  async resolve(conversationId: string) {
+    return prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        status: 'RESOLVED',
+        resolvedAt: new Date(),
+      },
+    });
+  }
+
+  async returnToAI(conversationId: string) {
+    return prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        status: 'ACTIVE',
+        assignedToHuman: null,
+      },
+    });
+  }
+
+  async archive(orgId: string, conversationId: string) {
+    const conversation = await prisma.conversation.findFirst({
+      where: { id: conversationId, orgId },
+    });
+    if (!conversation) throw new NotFoundError('Conversation not found');
+
+    return prisma.conversation.update({
+      where: { id: conversationId },
+      data: { status: 'ARCHIVED' },
+    });
+  }
+
+  async bulkArchive(orgId: string, conversationIds: string[]) {
+    const result = await prisma.conversation.updateMany({
+      where: {
+        id: { in: conversationIds },
+        orgId,
+      },
+      data: { status: 'ARCHIVED' },
+    });
+
+    return { archivedCount: result.count };
+  }
+
+  async delete(orgId: string, conversationId: string) {
+    const conversation = await prisma.conversation.findFirst({
+      where: { id: conversationId, orgId },
+    });
+    if (!conversation) throw new NotFoundError('Conversation not found');
+
+    await prisma.$transaction([
+      prisma.conversationTag.deleteMany({ where: { conversationId } }),
+      prisma.conversationRating.deleteMany({ where: { conversationId } }),
+      prisma.conversationNote.deleteMany({ where: { conversationId } }),
+      prisma.message.deleteMany({ where: { conversationId } }),
+      prisma.lead.deleteMany({ where: { conversationId } }),
+      prisma.conversation.delete({ where: { id: conversationId } }),
+    ]);
+
+    return conversation;
+  }
+}
+
+export const conversationService = new ConversationService();

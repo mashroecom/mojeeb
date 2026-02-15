@@ -1,0 +1,264 @@
+تم كتابة الخطة الشاملة. ملخص سريع:
+
+المنصة تتكون من:
+
+Monorepo بـ Turborepo + pnpm مع تطبيقين (Next.js frontend + Express backend)
+قاعدة بيانات PostgreSQL مع pgvector للبحث الذكي + Redis للقوائم والتخزين المؤقت
+نظام AI يدعم OpenAI و Claude عبر Provider Pattern
+4 قوائم BullMQ: رسائل واردة، معالجة AI، رسائل صادرة، تحليلات
+Channel Adapters لـ WhatsApp, Messenger, Instagram
+واجهة عربي/إنجليزي كاملة مع RTL عبر next-intl + Tailwind logical properties
+6 مراحل تنفيذ من الأساسات إلى الميزات المتقدمة
+Claude’s Plan
+Mojeeb - AI Customer Support Platform
+Context
+بناء منصة دعم عملاء مدعومة بالذكاء الاصطناعي مشابهة لـ mojeeb.app، موجهة للشرق الأوسط. المنصة تتضمن دردشة ذكية متعددة القنوات (WhatsApp, Messenger, Instagram)، كشف المشاعر، توجيه ذكي، استخراج عملاء محتملين، تحليلات، واشتراكات مدفوعة.
+
+Tech Stack
+Frontend: Next.js (App Router) + Tailwind CSS + shadcn/ui
+Backend: Node.js + Express
+Database: PostgreSQL (Prisma ORM) + Redis (BullMQ, caching, sessions)
+AI: OpenAI + Claude (Anthropic) - provider pattern
+Payments: Kashier
+i18n: Arabic (RTL) + English (LTR) via next-intl
+Monorepo: Turborepo + pnpm
+Real-time: Socket.IO + Redis adapter
+Containerization: Docker Compose
+Project Structure (Monorepo)
+
+d:\mojeeb\
+├── apps/
+│   ├── api/                    # Express backend
+│   │   └── src/
+│   │       ├── index.ts        # Entry point
+│   │       ├── app.ts          # Express config
+│   │       ├── config/         # DB, Redis, logger, CORS
+│   │       ├── middleware/     # auth, rateLimiter, validate, errorHandler
+│   │       ├── routes/         # REST API routes + webhooks/
+│   │       ├── controllers/    # Route handlers
+│   │       ├── services/       # Business logic
+│   │       ├── ai/             # AI providers + pipelines + prompts
+│   │       ├── channels/       # Channel adapters (WhatsApp, Messenger, etc.)
+│   │       ├── queues/         # BullMQ queues + workers
+│   │       ├── websocket/      # Socket.IO setup + handlers
+│   │       └── utils/          # Errors, pagination, crypto
+│   └── web/                    # Next.js frontend
+│       └── src/
+│           ├── app/[locale]/   # Locale-based routing
+│           │   ├── (marketing)/ # Landing, pricing, features
+│           │   ├── (auth)/      # Login, register, forgot-password
+│           │   └── (dashboard)/ # Dashboard pages
+│           ├── components/     # UI components (ui/, layout/, landing/, chat/, etc.)
+│           ├── hooks/          # useAuth, useSocket, useConversation
+│           ├── stores/         # Zustand (authStore, chatStore, uiStore)
+│           ├── lib/            # API client, socket, utils
+│           ├── i18n/           # next-intl config
+│           └── messages/       # en.json, ar.json
+├── packages/
+│   ├── shared-types/           # TypeScript types shared across apps
+│   ├── shared-utils/           # Zod schemas, constants, formatters
+│   └── eslint-config/          # Shared ESLint config
+├── prisma/
+│   ├── schema.prisma           # Full database schema
+│   ├── migrations/
+│   └── seed.ts
+├── docker/
+│   ├── docker-compose.yml      # PostgreSQL (pgvector), Redis, API, Web
+│   ├── Dockerfile.api
+│   └── Dockerfile.web
+├── turbo.json
+├── pnpm-workspace.yaml
+└── .env.example
+Database Schema (Key Models)
+Model	Purpose
+User	Auth, profile, sessions
+Organization	Multi-tenant business accounts
+OrgMembership	User-org relationship with roles (OWNER/ADMIN/MEMBER)
+Agent	AI agent config (provider, model, prompt, behavior settings)
+KnowledgeBase + KBDocument + KBChunk	RAG system with pgvector embeddings
+Channel	Platform integrations (WhatsApp/Messenger/Instagram/Webchat)
+Conversation	Customer conversations with status, emotion, summary
+Message	Individual messages with role, delivery status, AI metadata
+Lead	Extracted leads with confidence scores
+Subscription + Invoice	Kashier billing (FREE/STARTER/PROFESSIONAL/ENTERPRISE)
+ApiKey	Hashed API keys with scopes
+AnalyticsEvent	Event-based analytics for dashboards
+Full Prisma schema includes all relations, indexes, and enums.
+
+Backend Architecture
+API Routes (/api/v1/)
+Auth: register, login, refresh, logout, forgot/reset password, verify email
+Organizations: CRUD + invite/manage members
+Agents: CRUD + test endpoint
+Channels: CRUD + agent assignment
+Conversations: list (filterable), detail, handoff, resolve
+Messages: list (paginated), send as human agent
+Knowledge Base: CRUD + document upload/manage
+Leads: list, update status, export CSV
+Analytics: overview, conversations, emotions, response time, agents
+Subscriptions: checkout, change plan, cancel, invoices, usage
+API Keys: create, list, revoke
+Webhooks: WhatsApp, Messenger, Instagram, Kashier (signature-verified)
+Auth Flow
+JWT (RS256) access tokens (15min) + refresh tokens (7d, hashed in DB)
+Backend issues tokens, frontend uses NextAuth v5 Credentials Provider
+Org context middleware injects membership/role from JWT
+Queue System (BullMQ + Redis)
+inbound-messages: Parse channel payload → store message → trigger AI
+ai-processing: Generate response, detect emotion, extract leads, routing decision
+outbound-messages: Send via channel adapter with retry (3 attempts, exponential backoff)
+analytics: Async event processing and counter updates
+AI Architecture
+Provider Pattern: Abstract AIProvider base class with OpenAIProvider and AnthropicProvider
+Factory: getAIProvider(agent.aiProvider) returns correct implementation
+Pipelines:
+ResponsePipeline: Context building → KB retrieval (pgvector) → AI generation → parallel analysis
+EmotionPipeline: Detect emotion from message + context (JSON structured output)
+RoutingPipeline: Rule-based checks first, then AI decision for ambiguous cases
+LeadPipeline: Extract contact info, interests, intent from conversation
+Channel Adapter Pattern
+Abstract ChannelAdapter with: verifyWebhook(), parseInbound(), sendMessage(), markAsRead()
+Implementations: WhatsAppAdapter, MessengerAdapter, InstagramAdapter, WebchatAdapter
+All Meta channels share webhook verification pattern (HMAC SHA-256)
+WebSocket (Socket.IO)
+/dashboard namespace: conversation events, notifications
+/chat namespace: live messages, typing indicators
+Redis adapter for horizontal scaling
+Frontend Architecture
+i18n + RTL
+next-intl with locale-based routing (/ar/..., /en/...)
+Arabic as default locale
+Root layout sets dir="rtl" or dir="ltr" based on locale
+Tailwind logical properties (ms-*, me-*, ps-*, pe-*) instead of ml-*/mr-*
+Fonts: IBM Plex Sans Arabic + Inter
+State Management
+Server state: @tanstack/react-query (API data, caching, pagination)
+Real-time state: zustand chatStore (WebSocket messages, typing)
+UI state: zustand uiStore (sidebar, modals, theme)
+Auth state: NextAuth v5 session
+Key Pages
+Landing: Hero + DemoChat + SocialProof + Features + Pricing + CTA + FAQ
+Dashboard Overview: Stats cards, recent conversations, quick actions
+Conversations: Split-pane (list + chat window + AI insights sidebar)
+Agents: Card grid, create/edit form, test chat
+Knowledge Base: Document list, drag-drop upload, processing status
+Channels: Integration cards, setup wizards
+Leads: Filterable table, status management, CSV export
+Analytics: Charts (recharts) - volume, emotions, response time, funnel
+Billing: Plan display, usage meters, Kashier checkout, invoice history
+Settings: Org profile, team management, API keys
+Security
+JWT verification middleware + org context middleware
+Rate limiting (express-rate-limit + Redis store): 100/15min API, 10/15min auth
+Zod validation + DOMPurify sanitization on all inputs
+Channel credential encryption (AES-256-GCM)
+Webhook signature verification (HMAC SHA-256) for Meta + Kashier
+API keys: SHA-256 hashed, shown once, prefix for display
+Helmet.js for HTTP headers, CORS whitelist, Prisma parameterized queries
+Implementation Phases
+Phase 1: Foundation
+Monorepo setup (Turborepo + pnpm + TypeScript + ESLint + Prettier)
+Backend: Express app, middleware stack, Prisma schema + migration, Redis
+Auth: Register, login, JWT, refresh tokens, email verification, password reset
+Frontend: Next.js + Tailwind + shadcn/ui + next-intl (AR/EN + RTL) + fonts
+Auth pages (login, register, forgot password) + NextAuth integration
+Dashboard shell (sidebar + topbar layout)
+Docker Compose (pgvector PostgreSQL, Redis, API, Web)
+Phase 2: Core Chat Engine
+AI service abstraction (OpenAI + Anthropic providers)
+BullMQ queues + workers (inbound, AI, outbound, analytics)
+Agent CRUD (backend + frontend)
+Conversation + Message system with webchat adapter
+WebSocket integration (Socket.IO + real-time updates)
+Knowledge Base basic (text upload, chunking, embedding, vector search)
+Phase 3: Dashboard & Analytics
+Dashboard overview page (stats, recent conversations)
+Conversation management UI (split-pane, filters, infinite scroll)
+Analytics backend (aggregation queries, Redis counters)
+Analytics frontend (recharts - line, bar, pie, funnel)
+Organization settings + team management
+Phase 4: Channel Integrations
+Channel adapter framework + credential encryption
+WhatsApp Cloud API (webhook, inbound/outbound, setup wizard)
+Facebook Messenger (webhook, page subscription, messaging)
+Instagram Messaging (business account, messaging, media)
+Channel management UI (cards, wizards, health monitoring)
+Phase 5: Payments & Subscriptions
+Kashier API integration (checkout, subscriptions, webhooks)
+Subscription management (tiers, usage tracking, enforcement)
+Billing UI (plan display, usage meters, invoices, upgrade flow)
+Usage limits enforcement (messages, agents, channels per tier)
+Phase 6: Advanced Features & Polish
+Emotion detection pipeline (AR/EN prompts, badges, analytics)
+Lead extraction (prompts, management UI, export, funnel analytics)
+Smart routing (rule-based + AI, handoff flow, agent availability)
+Landing page (all sections, animations, mobile responsive, SEO)
+API Keys for Professional tier + external API endpoints
+Knowledge Base enhancements (PDF, URL scraping, FAQ format)
+Testing (Playwright E2E, Supertest API, unit tests) + Sentry error tracking
+Key Packages
+Category	Package
+Monorepo	turbo, pnpm
+ORM	prisma
+Queue	bullmq
+WebSocket	socket.io, @socket.io/redis-adapter
+Validation	zod
+AI	openai, @anthropic-ai/sdk
+State	zustand, @tanstack/react-query
+i18n	next-intl
+UI	shadcn/ui, tailwindcss, tailwindcss-rtl
+Charts	recharts
+Auth	next-auth@5, jsonwebtoken, argon2
+Rate Limit	express-rate-limit, rate-limit-redis
+Logging	pino
+Email	resend or nodemailer
+PDF	pdf-parse
+Scraping	cheerio
+Verification Plan
+After Each Phase:
+Phase 1: Register/login flow works, AR/EN switching with correct RTL, Docker stack starts
+Phase 2: Create agent → send message via webchat → receive AI response → see in dashboard (real-time)
+Phase 3: View conversation history, filter/search, analytics charts render with data
+Phase 4: Send WhatsApp message → AI responds → visible in dashboard
+Phase 5: Sign up (free) → hit message limit → upgrade via Kashier → limit increased
+Phase 6: Emotion badge shows on angry message, lead extracted and visible, human handoff works
+End-to-End Test:
+Open landing page in Arabic → switch to English → navigate pricing
+Register new account → verify email → login
+Create organization → create AI agent with custom prompt
+Upload knowledge base document → wait for embedding
+Connect WhatsApp channel (test mode)
+Customer sends WhatsApp message → AI responds using KB context
+Emotion detected as "frustrated" → automatic handoff to human agent
+Human agent replies from dashboard → customer receives on WhatsApp
+Lead extracted and visible in leads page
+Check analytics dashboard for updated charts
+Upgrade subscription via Kashier → verify increased limits
+User approved the plan
+تم اعتماد الخطة. لنبدأ التنفيذ بالمرحلة الأولى (Foundation). سأقسم العمل إلى مهام محددة.
+
+Update Todos
+
+Initialize monorepo (pnpm workspace + Turborepo + TypeScript configs)
+
+Create shared packages (shared-types, shared-utils, eslint-config)
+
+Setup Express backend foundation (app, config, middleware)
+
+Create Prisma schema with all models and run migration
+
+Setup Redis configuration
+
+Implement authentication system (JWT, register, login, refresh)
+
+Setup Next.js frontend with Tailwind + shadcn/ui
+
+Configure i18n (next-intl) with Arabic/English + RTL support
+
+Create auth pages (login, register, forgot-password)
+
+Build dashboard shell layout (sidebar + topbar)
+
+Create Docker Compose configuration
+
+Create .env.example with all environment variables

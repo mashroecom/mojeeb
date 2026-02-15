@@ -1,0 +1,41 @@
+{
+  "name": "mojeeb",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-powered customer support platform",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:backup": "bash scripts/backup-db.sh",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "clean": "turbo clean && rimraf node_modules"
+  },
+  "packageManager": "pnpm@10.29.1",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "argon2",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "msgpackr-extract"
+    ]
+  },
+  "devDependencies": {
+    "prisma": "6.19.2",
+    "turbo": "^2.8.3"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.2"
+  }
+}

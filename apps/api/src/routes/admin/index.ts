@@ -1,0 +1,67 @@
+import { Router } from 'express';
+import { authenticate } from '../../middleware/auth';
+import { requireSuperAdmin } from '../../middleware/adminAuth';
+import usersRoutes from './users.routes';
+import organizationsRoutes from './organizations.routes';
+import analyticsRoutes from './analytics.routes';
+import subscriptionsRoutes from './subscriptions.routes';
+import systemRoutes from './system.routes';
+import demoRequestsRoutes from './demoRequests.routes';
+import contactMessagesRoutes from './contactMessages.routes';
+import announcementsRoutes from './announcements.routes';
+import auditLogRoutes from './auditLog.routes';
+import siteSettingsRoutes from './siteSettings.routes';
+import plansRoutes from './plans.routes';
+import configRoutes from './config.routes';
+import loginActivityRoutes from './loginActivity.routes';
+import ipBlockRoutes from './ipBlock.routes';
+import sessionsRoutes from './sessions.routes';
+import featureFlagRoutes from './featureFlags.routes';
+import adminNotificationRoutes from './adminNotifications.routes';
+import errorLogRoutes from './errorLogs.routes';
+import webhookLogRoutes from './webhookLogs.routes';
+import reportsRoutes from './reports.routes';
+import emailTemplateRoutes from './emailTemplates.routes';
+import filesRoutes from './files.routes';
+import bulkEmailRoutes from './bulkEmail.routes';
+import securitySettingsRoutes from './securitySettings.routes';
+import notificationSettingsRoutes from './notificationSettings.routes';
+import orgDefaultsRoutes from './orgDefaults.routes';
+import landingPageRoutes from './landingPage.routes';
+import dlqRoutes from './dlq.routes';
+
+const router: Router = Router();
+
+// All admin routes require authentication + super admin check
+router.use(authenticate, requireSuperAdmin);
+
+router.use('/users', usersRoutes);
+router.use('/organizations', organizationsRoutes);
+router.use('/analytics', analyticsRoutes);
+router.use('/subscriptions', subscriptionsRoutes);
+router.use('/system', systemRoutes);
+router.use('/demo-requests', demoRequestsRoutes);
+router.use('/contact-messages', contactMessagesRoutes);
+router.use('/announcements', announcementsRoutes);
+router.use('/audit-log', auditLogRoutes);
+router.use('/site-settings', siteSettingsRoutes);
+router.use('/plans', plansRoutes);
+router.use('/config', configRoutes);
+router.use('/login-activity', loginActivityRoutes);
+router.use('/blocked-ips', ipBlockRoutes);
+router.use('/sessions', sessionsRoutes);
+router.use('/feature-flags', featureFlagRoutes);
+router.use('/notifications', adminNotificationRoutes);
+router.use('/error-logs', errorLogRoutes);
+router.use('/webhook-logs', webhookLogRoutes);
+router.use('/reports', reportsRoutes);
+router.use('/email-templates', emailTemplateRoutes);
+router.use('/files', filesRoutes);
+router.use('/bulk-email', bulkEmailRoutes);
+router.use('/security-settings', securitySettingsRoutes);
+router.use('/notification-settings', notificationSettingsRoutes);
+router.use('/org-defaults', orgDefaultsRoutes);
+router.use('/landing-page', landingPageRoutes);
+router.use('/dlq', dlqRoutes);
+
+export default router;
