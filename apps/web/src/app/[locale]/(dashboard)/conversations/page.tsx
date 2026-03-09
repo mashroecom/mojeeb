@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { MessageSquare, Loader2, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { exportToCsv } from '@/lib/exportCsv';
 import {
   useConversations,
   useConversation,
