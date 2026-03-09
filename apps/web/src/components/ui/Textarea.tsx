@@ -48,6 +48,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             <p
               id={textareaId ? `${textareaId}-error` : undefined}
               className="text-xs text-destructive"
+              aria-live="polite"
             >
               {error}
             </p>
