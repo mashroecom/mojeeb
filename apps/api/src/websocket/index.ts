@@ -45,20 +45,29 @@ setInterval(() => {
 const SAFE_ID = /^[a-zA-Z0-9_-]{10,50}$/;
 
 // ── Online presence tracking ──────────────────────────────
-const onlineUsers = new Map<string, Set<string>>(); // orgId -> Set of userIds
-
-function setUserOnline(orgId: string, userId: string) {
-  if (!onlineUsers.has(orgId)) onlineUsers.set(orgId, new Set());
-  onlineUsers.get(orgId)!.add(userId);
+async function setUserOnline(orgId: string, userId: string) {
+  try {
+    await redis.sadd(`online:${orgId}`, userId);
+  } catch (err) {
+    logger.error({ err, orgId, userId }, 'Failed to set user online');
+  }
 }
 
-function setUserOffline(orgId: string, userId: string) {
-  onlineUsers.get(orgId)?.delete(userId);
-  if (onlineUsers.get(orgId)?.size === 0) onlineUsers.delete(orgId);
+async function setUserOffline(orgId: string, userId: string) {
+  try {
+    await redis.srem(`online:${orgId}`, userId);
+  } catch (err) {
+    logger.error({ err, orgId, userId }, 'Failed to set user offline');
+  }
 }
 
-function getOnlineUsers(orgId: string): string[] {
-  return Array.from(onlineUsers.get(orgId) || []);
+async function getOnlineUsers(orgId: string): Promise<string[]> {
+  try {
+    return await redis.smembers(`online:${orgId}`);
+  } catch (err) {
+    logger.error({ err, orgId }, 'Failed to get online users');
+    return [];
+  }
 }
 
 export function setupWebSocket(httpServer: HttpServer) {
@@ -123,6 +132,7 @@ export function setupWebSocket(httpServer: HttpServer) {
 
   io.on('connection', (socket) => {
     const userId = socket.data.user?.userId;
+    socket.data.onlineOrgs = new Set<string>(); // Track which orgs user is online in
     logger.info({ userId }, 'WebSocket client connected');
 
     socket.on('join:org', async (orgId: string) => {
@@ -141,27 +151,30 @@ export function setupWebSocket(httpServer: HttpServer) {
       }
     });
 
-    socket.on('presence:online', (orgId: string) => {
+    socket.on('presence:online', async (orgId: string) => {
       if (typeof orgId !== 'string' || !SAFE_ID.test(orgId)) return;
-      setUserOnline(orgId, userId);
+      await setUserOnline(orgId, userId);
+      socket.data.onlineOrgs.add(orgId);
       socket.to(`org:${orgId}`).emit('presence:update', {
         userId,
         status: 'online',
       });
     });
 
-    socket.on('presence:offline', (orgId: string) => {
+    socket.on('presence:offline', async (orgId: string) => {
       if (typeof orgId !== 'string' || !SAFE_ID.test(orgId)) return;
-      setUserOffline(orgId, userId);
+      await setUserOffline(orgId, userId);
+      socket.data.onlineOrgs.delete(orgId);
       socket.to(`org:${orgId}`).emit('presence:update', {
         userId,
         status: 'offline',
       });
     });
 
-    socket.on('presence:list', (orgId: string) => {
+    socket.on('presence:list', async (orgId: string) => {
       if (typeof orgId !== 'string' || !SAFE_ID.test(orgId)) return;
-      socket.emit('presence:list', getOnlineUsers(orgId));
+      const users = await getOnlineUsers(orgId);
+      socket.emit('presence:list', users);
     });
 
     socket.on('join:conversation', async (conversationId: string) => {
@@ -208,13 +221,13 @@ export function setupWebSocket(httpServer: HttpServer) {
       });
     });
 
-    socket.on('disconnect', () => {
-      // Clean up presence from all orgs
-      for (const [orgId, users] of onlineUsers) {
-        if (users.has(userId)) {
-          users.delete(userId);
+    socket.on('disconnect', async () => {
+      // Clean up presence from all orgs user was online in
+      const onlineOrgs = socket.data.onlineOrgs as Set<string>;
+      if (onlineOrgs) {
+        for (const orgId of onlineOrgs) {
+          await setUserOffline(orgId, userId);
           io.to(`org:${orgId}`).emit('presence:update', { userId, status: 'offline' });
-          if (users.size === 0) onlineUsers.delete(orgId);
         }
       }
       logger.info({ userId }, 'WebSocket client disconnected');
