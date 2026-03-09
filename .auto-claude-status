@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "003-add-conversation-tagging-ui-to-dashboard",
+  "spec": "049-stripe-paypal-payment-gateway-integration",
   "state": "building",
   "subtasks": {
-    "completed": 2,
-    "total": 5,
+    "completed": 1,
+    "total": 20,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Frontend Implementation",
+    "current": "Database Schema & Types",
     "id": null,
-    "total": 5
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 4,
-    "started_at": "2026-03-09T16:05:38.909827"
+    "number": 3,
+    "started_at": "2026-03-09T18:53:18.998097"
   },
-  "last_update": "2026-03-09T16:16:13.451873"
+  "last_update": "2026-03-09T19:03:28.565869"
 }
