@@ -139,7 +139,7 @@ const updateSchema = z.object({
   footerLinks: z.any().optional(),
   footerText: z.string().optional(),
   footerTextAr: z.string().optional(),
-  customCss: z.string().nullable().optional(),
+  customCss: z.string().max(50000).nullable().optional(),
 
   // SEO
   seoMetaTitle: z.string().optional(),
