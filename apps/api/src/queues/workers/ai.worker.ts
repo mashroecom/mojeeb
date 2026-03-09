@@ -7,6 +7,7 @@ import { moveToDeadLetterQueue } from '../dlq';
 import { responsePipeline } from '../../ai/pipelines/response.pipeline';
 import { summaryPipeline } from '../../ai/pipelines/summary.pipeline';
 import { emitToOrg, emitToConversation } from '../../websocket/index';
+import { webhookService } from '../../services/webhook.service';
 
 interface AIJobData {
   conversationId: string;
@@ -187,7 +188,7 @@ export const aiWorker = new Worker(
 
     // Handle lead extraction
     if (result.lead) {
-      await prisma.lead.create({
+      const lead = await prisma.lead.create({
         data: {
           orgId: data.orgId,
           conversationId: data.conversationId,
@@ -203,6 +204,8 @@ export const aiWorker = new Worker(
           source: data.channelType,
         },
       });
+
+      await webhookService.dispatch(data.orgId, 'lead.created', lead);
 
       await analyticsQueue.add('track-event', {
         orgId: data.orgId,
