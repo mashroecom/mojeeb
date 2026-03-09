@@ -1,4 +1,5 @@
 import { prisma } from '../config/database';
+import { sanitizeCss } from '../utils/cssSanitizer';
 
 export class LandingPageService {
   async get() {
@@ -18,6 +19,11 @@ export class LandingPageService {
   async update(data: Record<string, unknown>) {
     // Remove id and updatedAt from update data
     const { id, updatedAt, ...updateData } = data as any;
+
+    // Sanitize customCss if present to prevent CSS injection attacks
+    if (updateData.customCss !== undefined && updateData.customCss !== null) {
+      updateData.customCss = sanitizeCss(updateData.customCss as string);
+    }
 
     const content = await prisma.landingPageContent.upsert({
       where: { id: 'singleton' },
