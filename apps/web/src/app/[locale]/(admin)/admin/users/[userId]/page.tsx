@@ -29,26 +29,22 @@ import {
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
+import { UserProfileCard } from './_components/UserProfileCard';
 import {
   ArrowLeft,
   Loader2,
   UserCheck,
   UserX,
   Trash2,
-  Mail,
-  Calendar,
   Building2,
   MessageSquare,
   Shield,
   ShieldOff,
-  User,
   KeyRound,
   Send,
   UserCog,
   X,
   CheckCircle2,
-  XCircle,
-  Clock,
   Key,
   Bot,
   Globe,
@@ -59,7 +55,6 @@ import {
   History,
   BadgeCheck,
   Users2,
-  Briefcase,
   Bell,
   Activity,
 } from 'lucide-react';
@@ -213,110 +208,11 @@ export default function AdminUserDetailPage() {
         {/* Left column: Profile Card */}
         <div className="lg:col-span-1 space-y-6">
           {/* Profile Info */}
+          <UserProfileCard user={user} isSuspended={isSuspended} />
+
+          {/* Actions */}
           <div className="rounded-lg border bg-card p-6">
-            <div className="flex flex-col items-center text-center">
-              {/* Avatar */}
-              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={`${user.firstName} ${user.lastName}`}
-                    className="h-20 w-20 rounded-full object-cover"
-                  />
-                ) : (
-                  <User className="h-10 w-10 text-primary" />
-                )}
-              </div>
-
-              <p className="text-xs text-muted-foreground font-mono select-all">{user.id}</p>
-              <h2 className="text-lg font-semibold mt-1">
-                {user.firstName} {user.lastName}
-              </h2>
-
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-                <Mail className="h-3.5 w-3.5" />
-                {user.email}
-              </div>
-
-              {/* Badges */}
-              <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
-                {/* Status badge */}
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                    isSuspended
-                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                      : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                  )}
-                >
-                  {isSuspended ? (
-                    <UserX className="h-3 w-3" />
-                  ) : (
-                    <UserCheck className="h-3 w-3" />
-                  )}
-                  {isSuspended ? t('users.suspended') : t('users.active')}
-                </span>
-
-                {/* Super Admin badge */}
-                {user.isSuperAdmin && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-0.5 text-xs font-medium">
-                    <Shield className="h-3 w-3" />
-                    {t('userDetail.superAdmin')}
-                  </span>
-                )}
-
-                {/* Email verified badge */}
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                    user.emailVerified
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                      : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-                  )}
-                >
-                  {user.emailVerified ? (
-                    <CheckCircle2 className="h-3 w-3" />
-                  ) : (
-                    <XCircle className="h-3 w-3" />
-                  )}
-                  {user.emailVerified
-                    ? t('userDetail.emailVerified')
-                    : t('userDetail.emailNotVerified')}
-                </span>
-              </div>
-            </div>
-
-            {/* Info rows */}
-            <div className="mt-5 pt-5 border-t space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
-                  {t('userDetail.joined')}
-                </span>
-                <span className="font-medium">{fmtDate(user.createdAt, locale)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5" />
-                  {t('userDetail.lastLogin')}
-                </span>
-                <span className="font-medium">{user.lastLoginAt ? fmtDateTime(user.lastLoginAt, locale) : '—'}</span>
-              </div>
-              {isSuspended && (
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-red-500">
-                    <UserX className="h-3.5 w-3.5" />
-                    {t('userDetail.suspendedAt')}
-                  </span>
-                  <span className="font-medium text-red-500">
-                    {user.suspendedAt ? fmtDate(user.suspendedAt, locale) : '—'}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col gap-2 mt-5 pt-5 border-t">
+            <div className="flex flex-col gap-2">
               {/* Edit Profile */}
               <button
                 onClick={openEditModal}
