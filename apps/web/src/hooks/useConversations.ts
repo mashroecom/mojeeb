@@ -35,6 +35,7 @@ export interface Conversation {
   } | null;
   messages?: { content: string; role: string; createdAt: string }[];
   ratings?: { rating: number }[];
+  tags?: Array<{ id: string; tag: { id: string; name: string; color: string } }>;
   lastMessageAt: string | null;
   createdAt: string;
 }

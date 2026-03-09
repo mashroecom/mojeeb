@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Filter,
   X,
+  Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChannels } from '@/hooks/useChannels';
@@ -51,6 +52,7 @@ interface ConversationListProps {
   isFetching: boolean;
   onRefresh: () => void;
   onSelect: (id: string) => void;
+  onExport: () => void;
 }
 
 const STATUS_TABS: { key: StatusFilter; labelKey: string }[] = [
@@ -89,6 +91,7 @@ export const ConversationList = React.memo(function ConversationList({
   isFetching,
   onRefresh,
   onSelect,
+  onExport,
 }: ConversationListProps) {
   const t = useTranslations('dashboard.conversations');
   const tc = useTranslations('common');
@@ -147,6 +150,14 @@ export const ConversationList = React.memo(function ConversationList({
                 isFetching && 'animate-spin',
               )}
             />
+          </button>
+          <button
+            onClick={onExport}
+            disabled={conversations.length === 0}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-muted disabled:opacity-50"
+            title={t('export')}
+          >
+            <Download className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
       </div>
@@ -410,6 +421,21 @@ export const ConversationList = React.memo(function ConversationList({
                         {t(CATEGORY_TRANSLATION_KEY[conv.category] || 'categoryOther')}
                       </span>
                     )}
+
+                    {/* Tags */}
+                    {conv.tags?.map((conversationTag) => (
+                      <span
+                        key={conversationTag.id}
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium border"
+                        style={{
+                          backgroundColor: conversationTag.tag.color + '20',
+                          color: conversationTag.tag.color,
+                          borderColor: conversationTag.tag.color + '40',
+                        }}
+                      >
+                        {conversationTag.tag.name}
+                      </span>
+                    ))}
 
                     {/* Rating */}
                     {rating && (

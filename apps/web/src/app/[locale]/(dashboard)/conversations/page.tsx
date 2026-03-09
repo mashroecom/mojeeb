@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { Loader2, MessagesSquare } from 'lucide-react';
+import { Loader2, MessagesSquare, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/useToast';
+import { exportToCsv } from '@/lib/exportCsv';
+import { fmtDateTime } from '@/lib/dateFormat';
 import {
   useConversations,
   useConversation,
@@ -33,6 +35,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 export default function ConversationsPage() {
   const t = useTranslations('dashboard.conversations');
   const tc = useTranslations('common');
+  const locale = useLocale();
 
   // ---- URL query param for deep-linking ----
   const searchParams = useSearchParams();
@@ -240,6 +243,19 @@ export default function ConversationsPage() {
     [selectedConversationId, uploadFile],
   );
 
+  function handleExport() {
+    if (!conversations.length) return;
+    const rows = conversations.map((conv) => ({
+      customerName: conv.customerName ?? '',
+      channel: conv.channel?.name ?? '',
+      status: conv.status,
+      messageCount: conv.messages?.length ?? 0,
+      emotion: conv.lastEmotion ?? '',
+      lastMessageAt: fmtDateTime(conv.lastMessageAt, locale),
+    }));
+    exportToCsv('conversations', rows);
+  }
+
   // =====================================================================
   // RENDER
   // =====================================================================
@@ -270,6 +286,7 @@ export default function ConversationsPage() {
           isFetching={conversationsQuery.isFetching}
           onRefresh={() => conversationsQuery.refetch()}
           onSelect={handleSelectConversation}
+          onExport={handleExport}
         />
 
         {/* CENTER PANEL - Chat Window */}

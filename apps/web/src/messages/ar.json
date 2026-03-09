@@ -573,7 +573,15 @@
       "filters": "فلاتر",
       "clearFilters": "مسح الفلاتر",
       "escalationReason": "السبب",
-      "tabInsertHint": "Tab أو Enter للإدراج"
+      "tabInsertHint": "Tab أو Enter للإدراج",
+      "tags": "علامات",
+      "addTag": "إضافة علامة",
+      "removeTag": "إزالة علامة",
+      "createTag": "إنشاء علامة",
+      "tagNamePlaceholder": "اسم العلامة...",
+      "tagColor": "اللون",
+      "noTags": "لا توجد علامات بعد",
+      "noAvailableTags": "لا توجد علامات متاحة"
     },
     "messageTemplates": {
       "title": "قوالب الرسائل",

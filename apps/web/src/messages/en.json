@@ -624,7 +624,15 @@
       "filters": "Filters",
       "clearFilters": "Clear filters",
       "escalationReason": "Reason",
-      "tabInsertHint": "Tab or Enter to insert"
+      "tabInsertHint": "Tab or Enter to insert",
+      "tags": "Tags",
+      "addTag": "Add Tag",
+      "removeTag": "Remove Tag",
+      "createTag": "Create Tag",
+      "tagNamePlaceholder": "Tag name...",
+      "tagColor": "Color",
+      "noTags": "No tags yet",
+      "noAvailableTags": "No available tags"
     },
     "messageTemplates": {
       "title": "Message Templates",
