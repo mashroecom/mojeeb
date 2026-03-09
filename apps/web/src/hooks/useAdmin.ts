@@ -74,6 +74,7 @@ export const adminKeys = {
   ratingStats: ['admin', 'rating-stats'] as const,
   // Message Templates (admin)
   messageTemplatesAdmin: (params?: Record<string, unknown>) => ['admin', 'message-templates-admin', params] as const,
+  messageTemplateAnalytics: ['admin', 'message-template-analytics'] as const,
   // Tags (admin)
   tagsAdmin: (params?: Record<string, unknown>) => ['admin', 'tags-admin', params] as const,
   // Message Analytics
@@ -1992,6 +1993,32 @@ export function useAdminMessageTemplates(params: { page: number; limit: number; 
   });
 }
 
+export function useCreateMessageTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { title: string; content: string; category?: string; shortcut?: string; orgId?: string }) => {
+      const { data } = await api.post('/admin/message-templates-admin', body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'message-templates-admin'] });
+    },
+  });
+}
+
+export function useUpdateMessageTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...body }: { id: string; title?: string; content?: string; category?: string; shortcut?: string; orgId?: string }) => {
+      const { data } = await api.patch(`/admin/message-templates-admin/${id}`, body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'message-templates-admin'] });
+    },
+  });
+}
+
 export function useDeleteMessageTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -2001,6 +2028,16 @@ export function useDeleteMessageTemplate() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'message-templates-admin'] });
+    },
+  });
+}
+
+export function useAdminMessageTemplateAnalytics() {
+  return useQuery({
+    queryKey: adminKeys.messageTemplateAnalytics,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/message-templates/analytics');
+      return data.data;
     },
   });
 }

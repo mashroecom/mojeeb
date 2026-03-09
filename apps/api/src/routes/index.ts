@@ -22,6 +22,7 @@ import conversationNotesRoutes from './conversationNotes.routes';
 import messageTemplateRoutes from './messageTemplates.routes';
 import customersRoutes from './customers.routes';
 import filesRoutes from './files.routes';
+import templatesRoutes from './templates.routes';
 import adminRoutes from './admin';
 import publicRoutes from './public.routes';
 import setupRoutes from './setup.routes';
@@ -134,6 +135,9 @@ router.use('/setup', setupRoutes);
 
 // Announcements routes (authenticated, user-facing)
 router.use('/announcements', authenticate, announcementsRoutes);
+
+// Templates routes (requires authentication)
+router.use('/templates', templatesRoutes);
 
 // Super Admin routes (requires authentication + super admin)
 router.use('/admin', adminRoutes);

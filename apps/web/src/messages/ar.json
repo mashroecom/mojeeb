@@ -3306,6 +3306,8 @@
     "messageTemplates": {
       "title": "قوالب الرسائل",
       "search": "البحث في القوالب...",
+      "create": "إنشاء قالب",
+      "edit": "تعديل القالب",
       "templateTitle": "العنوان",
       "category": "الفئة",
       "allCategories": "الكل",
@@ -3324,9 +3326,19 @@
       "category_sales": "مبيعات",
       "category_billing": "فوترة",
       "category_followup": "متابعة",
+      "uncategorized": "غير مصنف",
+      "analytics": {
+        "totalTemplates": "إجمالي القوالب",
+        "activeTemplates": "القوالب النشطة",
+        "sharedTemplates": "القوالب المشتركة",
+        "mostUsed": "القوالب الأكثر استخداماً",
+        "byCategory": "حسب الفئة"
+      },
       "toasts": {
+        "created": "تم إنشاء القالب بنجاح",
+        "updated": "تم تحديث القالب بنجاح",
         "deleted": "تم حذف القالب بنجاح",
-        "error": "فشل في حذف القالب"
+        "error": "فشل في تنفيذ الإجراء"
       }
     },
     "tags": {
@@ -3556,6 +3568,7 @@
       "noDataFound": "لا توجد بيانات.",
       "close": "إغلاق",
       "refresh": "تحديث",
+      "uses": "استخدام",
       "notifications": "الإشعارات",
       "viewAll": "عرض الكل",
       "noNotifications": "لا توجد إشعارات",

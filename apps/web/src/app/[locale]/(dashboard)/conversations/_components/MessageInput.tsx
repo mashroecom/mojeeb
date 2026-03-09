@@ -4,6 +4,9 @@ import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Send, ImagePlus, Loader2, FileText, Zap } from 'lucide-react';
 import { useMessageTemplates, type MessageTemplate } from '@/hooks/useMessageTemplates';
+import { TemplatePicker, type Template } from '@/components/templates/TemplatePicker';
+import { Dialog } from '@/components/ui/Dialog';
+import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
 
 interface MessageInputProps {
@@ -15,6 +18,8 @@ interface MessageInputProps {
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isSending: boolean;
   isUploading: boolean;
+  conversationId?: string | null;
+  customerName?: string | null;
 }
 
 export function MessageInput({
@@ -26,6 +31,8 @@ export function MessageInput({
   onFileUpload,
   isSending,
   isUploading,
+  conversationId,
+  customerName,
 }: MessageInputProps) {
   const t = useTranslations('dashboard.conversations');
   const locale = useLocale();
@@ -34,6 +41,7 @@ export function MessageInput({
   const [showTemplates, setShowTemplates] = useState(false);
   const [slashFilter, setSlashFilter] = useState<string | null>(null);
   const { data: templates } = useMessageTemplates();
+  const user = useAuthStore((s) => s.user);
 
   // Auto-resize textarea based on content
   const autoResize = useCallback(() => {
@@ -75,6 +83,40 @@ export function MessageInput({
     setSlashFilter(null);
   }
 
+  // Interpolate variables in template content
+  function interpolateTemplate(template: Template): string {
+    let content = template.content;
+
+    // Build variables object
+    const variables: Record<string, string> = {
+      customer_name: customerName || '{{customer_name}}',
+      agent_name: user ? `${user.firstName} ${user.lastName}`.trim() : '{{agent_name}}',
+      conversation_id: conversationId || '{{conversation_id}}',
+      order_number: '{{order_number}}', // Not available in current context
+    };
+
+    // Replace all variables in the template
+    template.variables.forEach((varName) => {
+      const regex = new RegExp(`\\{\\{${varName}\\}\\}`, 'g');
+      const replacement = variables[varName] || `{{${varName}}}`;
+      content = content.replace(regex, replacement);
+    });
+
+    return content;
+  }
+
+  function handleTemplateSelect(template: Template) {
+    const interpolated = interpolateTemplate(template);
+    onChange(interpolated);
+    onTyping(true);
+    setShowTemplates(false);
+
+    // Focus back on textarea
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 100);
+  }
+
   function handleKeyDown(e: React.KeyboardEvent) {
     // If slash autocomplete is showing and user presses Tab or Enter, insert match
     if (slashMatches.length > 0 && (e.key === 'Tab' || (e.key === 'Enter' && !e.shiftKey))) {
@@ -90,14 +132,15 @@ export function MessageInput({
   }, [templates]);
 
   return (
-    <div className="border-t bg-card px-3 md:px-5 py-3">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
-        onChange={onFileUpload}
-        className="hidden"
-      />
+    <>
+      <div className="border-t bg-card px-3 md:px-5 py-3">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+          onChange={onFileUpload}
+          className="hidden"
+        />
 
       {/* Slash autocomplete popup */}
       {slashMatches.length > 0 && (
@@ -168,7 +211,6 @@ export function MessageInput({
           >
             <FileText className="h-4 w-4" />
           </button>
-        )}
 
         <textarea
           ref={textareaRef}
@@ -211,5 +253,19 @@ export function MessageInput({
         {t('enterToSend')}
       </p>
     </div>
+
+      {/* Template Picker Dialog */}
+      <Dialog
+        open={showTemplates}
+        onOpenChange={setShowTemplates}
+        size="xl"
+      >
+        <TemplatePicker
+          conversationId={conversationId || undefined}
+          onSelect={handleTemplateSelect}
+          onClose={() => setShowTemplates(false)}
+        />
+      </Dialog>
+    </>
   );
 }

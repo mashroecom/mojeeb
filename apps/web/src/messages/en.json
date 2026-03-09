@@ -3306,6 +3306,8 @@
     "messageTemplates": {
       "title": "Message Templates",
       "search": "Search templates...",
+      "create": "Create Template",
+      "edit": "Edit Template",
       "templateTitle": "Title",
       "category": "Category",
       "allCategories": "All",
@@ -3324,9 +3326,19 @@
       "category_sales": "Sales",
       "category_billing": "Billing",
       "category_followup": "Follow-up",
+      "uncategorized": "Uncategorized",
+      "analytics": {
+        "totalTemplates": "Total Templates",
+        "activeTemplates": "Active Templates",
+        "sharedTemplates": "Shared Templates",
+        "mostUsed": "Most Used Templates",
+        "byCategory": "By Category"
+      },
       "toasts": {
+        "created": "Template created successfully",
+        "updated": "Template updated successfully",
         "deleted": "Template deleted successfully",
-        "error": "Failed to delete template"
+        "error": "Failed to perform action"
       }
     },
     "tags": {
@@ -3631,6 +3643,7 @@
       "noDataFound": "No data found.",
       "close": "Close",
       "refresh": "Refresh",
+      "uses": "uses",
       "notifications": "Notifications",
       "viewAll": "View All",
       "noNotifications": "No notifications",

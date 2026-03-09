@@ -44,6 +44,7 @@ model User {
   blockedIPs             BlockedIP[]          @relation("BlockedIPs")
   bulkEmailCampaigns     BulkEmailCampaign[]  @relation("BulkEmailCampaigns")
   adminNotifications     AdminNotification[]  @relation("AdminNotifications")
+  messageTemplates       MessageTemplate[]    @relation("CreatedMessageTemplates")
 
   @@index([isSuperAdmin])
   @@index([createdAt])
@@ -1238,27 +1239,33 @@ model ConversationNote {
 // ========================
 
 model MessageTemplate {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   orgId       String
   org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   title       String
-  contentEn   String   @db.Text
-  contentAr   String   @default("") @db.Text
+  titleAr     String       @default("")
+  contentEn   String       @db.Text
+  contentAr   String       @default("") @db.Text
   shortcut    String?
-  category    String   @default("general")
-  variables   Json     @default("[]")
+  category    String       @default("general")
+  variables   String[]     @default([])
   agentId     String?
-  isActive    Boolean  @default(true)
-  usageCount  Int      @default(0)
-  autoTrigger Json     @default("{\"enabled\":false,\"keywords\":[]}")
+  isActive    Boolean      @default(true)
+  isShared    Boolean      @default(false)
+  usageCount  Int          @default(0)
+  autoTrigger Json         @default("{\"enabled\":false,\"keywords\":[]}")
+  userId      String?
+  user        User?        @relation("CreatedMessageTemplates", fields: [userId], references: [id], onDelete: SetNull)
   createdBy   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@unique([orgId, shortcut])
   @@index([orgId])
   @@index([orgId, category])
   @@index([orgId, isActive])
+  @@index([orgId, isShared])
+  @@index([userId])
   @@map("message_templates")
 }
 
