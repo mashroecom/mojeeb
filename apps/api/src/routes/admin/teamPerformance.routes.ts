@@ -24,6 +24,29 @@ const realTimeQuerySchema = z.object({
 
 const router: Router = Router();
 
+// Helper function to convert data to CSV format
+function convertToCsv(rows: Record<string, unknown>[]): string {
+  if (!rows.length) return '';
+
+  const headers = Object.keys(rows[0]);
+  const csvContent = [
+    headers.join(','),
+    ...rows.map((row) =>
+      headers
+        .map((h) => {
+          const val = row[h];
+          const str = val === null || val === undefined ? '' : String(val);
+          return str.includes(',') || str.includes('"') || str.includes('\n')
+            ? `"${str.replace(/"/g, '""')}"`
+            : str;
+        })
+        .join(',')
+    ),
+  ].join('\n');
+
+  return csvContent;
+}
+
 // GET /real-time - Real-time metrics (active conversations, queue depth, wait times, agent availability)
 router.get('/real-time', validate({ query: realTimeQuerySchema }), async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -88,6 +111,30 @@ router.get('/ai-vs-human', validate({ query: dateRangeQuerySchema }), async (req
 
     const data = await teamPerformanceService.getAiVsHumanMetrics(orgId, dateRange);
     res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /export/csv - Export historical metrics to CSV
+router.get('/export/csv', validate({ query: dateRangeQuerySchema }), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { orgId, startDate, endDate } = req.query as z.infer<typeof dateRangeQuerySchema>;
+
+    const dateRange = {
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+    };
+
+    const data = await teamPerformanceService.getHistoricalMetrics(orgId, dateRange);
+
+    // Convert to CSV format
+    const csvContent = convertToCsv(data as Record<string, unknown>[]);
+
+    // Set headers for CSV download
+    res.setHeader('Content-Type', 'text/csv;charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="team-performance.csv"');
+    res.send(csvContent);
   } catch (err) {
     next(err);
   }
