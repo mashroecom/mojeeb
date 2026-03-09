@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { AdminConfirmDialog } from '@/components/admin/AdminConfirmDialog';
-import { fmtDate, fmtDateTime } from '@/lib/dateFormat';
+import { fmtDateTime } from '@/lib/dateFormat';
 import { useRouter } from '@/i18n/navigation';
 import {
   useAdminUserDetail,
@@ -34,30 +34,21 @@ import { UserActionsBar } from './_components/UserActionsBar';
 import { OrganizationsTab } from './_components/OrganizationsTab';
 import { LoginActivityTab } from './_components/LoginActivityTab';
 import { SessionsTab } from './_components/SessionsTab';
+import { AuditLogTab } from './_components/AuditLogTab';
+import { ApiKeysTab } from './_components/ApiKeysTab';
+import { ConversationsTab } from './_components/ConversationsTab';
+import { LeadsTab } from './_components/LeadsTab';
 import {
   ArrowLeft,
   Loader2,
-  UserCheck,
-  UserX,
-  Trash2,
   Building2,
   MessageSquare,
-  Shield,
-  ShieldOff,
-  KeyRound,
   Send,
-  UserCog,
   X,
-  CheckCircle2,
   Key,
-  Bot,
   Globe,
   Monitor,
-  LogOut,
-  AlertTriangle,
-  Pencil,
   History,
-  BadgeCheck,
   Users2,
   Bell,
   Activity,
@@ -424,213 +415,42 @@ export default function AdminUserDetailPage() {
 
               {/* Audit Log Tab */}
               {activeTab === 'audit' && (
-                <>
-                  {auditLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : !auditData?.items?.length ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      {t('userDetail.noAuditEntries')}
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {auditData.items.map((entry: any) => (
-                        <div
-                          key={entry.id}
-                          className="flex items-center justify-between rounded-lg border p-3"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                              <History className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium">
-                                {entry.action?.replace(/_/g, ' ')}
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {t('userDetail.by')} {entry.user?.firstName} {entry.user?.lastName} ({entry.user?.email})
-                              </p>
-                            </div>
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {fmtDateTime(entry.createdAt, locale)}
-                          </span>
-                        </div>
-                      ))}
-                      {auditData.totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 pt-2">
-                          <button
-                            onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
-                            disabled={auditPage === 1}
-                            className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
-                          >
-                            {t('common.previous')}
-                          </button>
-                          <span className="text-xs text-muted-foreground">
-                            {auditPage} / {auditData.totalPages}
-                          </span>
-                          <button
-                            onClick={() => setAuditPage((p) => Math.min(auditData.totalPages, p + 1))}
-                            disabled={auditPage === auditData.totalPages}
-                            className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
-                          >
-                            {t('common.next')}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
+                <AuditLogTab
+                  isLoading={auditLoading}
+                  auditData={auditData}
+                  currentPage={auditPage}
+                  onPageChange={setAuditPage}
+                />
               )}
 
               {/* API Keys Tab */}
               {activeTab === 'apikeys' && (
-                <div className="space-y-3">
-                  {apiKeysQuery.isLoading ? (
-                    <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-                  ) : !apiKeysQuery.data?.keys?.length ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">{t('userDetail.noApiKeys')}</p>
-                  ) : (
-                    <>
-                      {apiKeysQuery.data.keys.map((key: any) => (
-                        <div key={key.id} className="flex items-center justify-between p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800">
-                          <div className="flex items-center gap-3">
-                            <Key className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{key.name}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {key.keyPrefix}... · {key.org?.name}
-                              </p>
-                              {key.scopes?.length > 0 && (
-                                <div className="flex gap-1 mt-1 flex-wrap">
-                                  {key.scopes.map((scope: string) => (
-                                    <span key={scope} className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{scope}</span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right text-sm">
-                            <span className={cn('px-2 py-1 rounded-full text-xs font-medium', key.revokedAt ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300')}>
-                              {key.revokedAt ? t('userDetail.revoked') : t('userDetail.active')}
-                            </span>
-                            <p className="text-gray-500 dark:text-gray-400 mt-1">
-                              {t('userDetail.lastUsed')}: {key.lastUsedAt ? fmtDateTime(key.lastUsedAt, locale) : t('userDetail.never')}
-                            </p>
-                            <p className="text-gray-400 dark:text-gray-500">{fmtDate(key.createdAt, locale)}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {apiKeysQuery.data.totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-4 pt-2">
-                          <button onClick={() => setApiKeysPage(p => Math.max(1, p - 1))} disabled={apiKeysPage === 1} className="text-sm text-blue-600 disabled:text-gray-400">Previous</button>
-                          <span className="text-sm text-gray-500">{apiKeysPage} / {apiKeysQuery.data.totalPages}</span>
-                          <button onClick={() => setApiKeysPage(p => p + 1)} disabled={apiKeysPage >= apiKeysQuery.data.totalPages} className="text-sm text-blue-600 disabled:text-gray-400">Next</button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                <ApiKeysTab
+                  isLoading={apiKeysQuery.isLoading}
+                  apiKeysData={apiKeysQuery.data}
+                  currentPage={apiKeysPage}
+                  onPageChange={setApiKeysPage}
+                />
               )}
 
               {/* Conversations Tab */}
               {activeTab === 'conversations' && (
-                <div className="space-y-3">
-                  {conversationsQuery.isLoading ? (
-                    <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-                  ) : !conversationsQuery.data?.conversations?.length ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">{t('userDetail.noConversations')}</p>
-                  ) : (
-                    <>
-                      {conversationsQuery.data.conversations.map((conv: any) => (
-                        <div key={conv.id} className="flex items-center justify-between p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800">
-                          <div className="flex items-center gap-3">
-                            <MessageSquare className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{conv.customerName || conv.customerEmail || 'Anonymous'}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {conv.channel?.name} · {conv.org?.name}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right text-sm">
-                            <span className={cn('px-2 py-1 rounded-full text-xs font-medium',
-                              conv.status === 'ACTIVE' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                              conv.status === 'RESOLVED' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                              'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                            )}>
-                              {conv.status}
-                            </span>
-                            <p className="text-gray-500 dark:text-gray-400 mt-1">{t('userDetail.messages')}: {conv._count?.messages || 0}</p>
-                            <p className="text-gray-400 dark:text-gray-500">{fmtDateTime(conv.updatedAt, locale)}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {conversationsQuery.data.totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-4 pt-2">
-                          <button onClick={() => setConversationsPage(p => Math.max(1, p - 1))} disabled={conversationsPage === 1} className="text-sm text-blue-600 disabled:text-gray-400">Previous</button>
-                          <span className="text-sm text-gray-500">{conversationsPage} / {conversationsQuery.data.totalPages}</span>
-                          <button onClick={() => setConversationsPage(p => p + 1)} disabled={conversationsPage >= conversationsQuery.data.totalPages} className="text-sm text-blue-600 disabled:text-gray-400">Next</button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                <ConversationsTab
+                  isLoading={conversationsQuery.isLoading}
+                  conversationsData={conversationsQuery.data}
+                  currentPage={conversationsPage}
+                  onPageChange={setConversationsPage}
+                />
               )}
 
               {/* Leads Tab */}
               {activeTab === 'leads' && (
-                <div className="space-y-3">
-                  {leadsQuery.isLoading ? (
-                    <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-                  ) : !leadsQuery.data?.leads?.length ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">{t('userDetail.noLeads')}</p>
-                  ) : (
-                    <>
-                      {leadsQuery.data.leads.map((lead: any) => (
-                        <div key={lead.id} className="flex items-center justify-between p-4 rounded-xl bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800">
-                          <div className="flex items-center gap-3">
-                            <Users2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{lead.name || lead.email || 'Unknown'}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {lead.company && <>{lead.company} · </>}{lead.org?.name}
-                              </p>
-                              {lead.phone && <p className="text-sm text-gray-500 dark:text-gray-400">{t('userDetail.phone')}: {lead.phone}</p>}
-                              {lead.interests?.length > 0 && (
-                                <div className="flex gap-1 mt-1 flex-wrap">
-                                  {lead.interests.map((interest: string) => (
-                                    <span key={interest} className="text-xs px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">{interest}</span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right text-sm">
-                            <span className={cn('px-2 py-1 rounded-full text-xs font-medium',
-                              lead.status === 'NEW' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                              lead.status === 'CONTACTED' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
-                              lead.status === 'QUALIFIED' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                              lead.status === 'CONVERTED' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
-                              'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                            )}>
-                              {lead.status}
-                            </span>
-                            <p className="text-gray-400 dark:text-gray-500 mt-1">{fmtDate(lead.createdAt, locale)}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {leadsQuery.data.totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-4 pt-2">
-                          <button onClick={() => setLeadsPage(p => Math.max(1, p - 1))} disabled={leadsPage === 1} className="text-sm text-blue-600 disabled:text-gray-400">Previous</button>
-                          <span className="text-sm text-gray-500">{leadsPage} / {leadsQuery.data.totalPages}</span>
-                          <button onClick={() => setLeadsPage(p => p + 1)} disabled={leadsPage >= leadsQuery.data.totalPages} className="text-sm text-blue-600 disabled:text-gray-400">Next</button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                <LeadsTab
+                  isLoading={leadsQuery.isLoading}
+                  leadsData={leadsQuery.data}
+                  currentPage={leadsPage}
+                  onPageChange={setLeadsPage}
+                />
               )}
 
               {/* Notifications Tab */}
