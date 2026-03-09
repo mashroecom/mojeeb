@@ -3,7 +3,7 @@
   "spec": "017-extract-monolithic-page-components-into-composable",
   "state": "building",
   "subtasks": {
-    "completed": 5,
+    "completed": 8,
     "total": 27,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 7,
+    "number": 10,
     "started_at": "2026-03-09T23:16:16.233389"
   },
-  "last_update": "2026-03-09T23:42:33.268196"
+  "last_update": "2026-03-10T00:02:53.596814"
 }
