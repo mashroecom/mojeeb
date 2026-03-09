@@ -13,6 +13,7 @@ export interface Subscription {
   id: string;
   plan: 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
   status: 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'TRIALING';
+  paymentGateway: 'KASHIER' | 'STRIPE' | 'PAYPAL';
   messagesUsed: number;
   messagesLimit: number;
   agentsUsed: number;
