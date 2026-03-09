@@ -9,6 +9,8 @@ import { useAgent, useUpdateAgent } from '@/hooks/useAgents';
 import { toast } from '@/hooks/useToast';
 import { getTemplateById } from '@/lib/agent-templates';
 import { cn } from '@/lib/utils';
+import { useZodForm } from '@/hooks/useZodForm';
+import { createAgentSchema } from '@mojeeb/shared-utils';
 import {
   ArrowLeft,
   Save,
@@ -82,12 +84,17 @@ export default function EditAgentPage() {
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [saved, setSaved] = useState(false);
 
-  // Form state
-  const [name, setName] = useState('');
-  const [language, setLanguage] = useState('ar');
-  const [instructions, setInstructions] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const [enableLeadExtraction, setEnableLeadExtraction] = useState(false);
+  // Initialize form with partial schema (for editing, not all fields required)
+  const form = useZodForm({
+    schema: createAgentSchema.partial(),
+    initialValues: {
+      name: '',
+      language: 'ar' as 'ar' | 'en',
+      systemPrompt: '',
+      isActive: true,
+      enableLeadExtraction: false,
+    },
+  });
 
   // AI Behavior state
   const [tone, setTone] = useState('friendly');
@@ -111,11 +118,11 @@ export default function EditAgentPage() {
   const isDirty = useCallback(() => {
     if (!agent) return false;
     return (
-      name !== agent.name ||
-      language !== agent.language ||
-      instructions !== agent.systemPrompt ||
-      isActive !== agent.isActive ||
-      enableLeadExtraction !== agent.enableLeadExtraction ||
+      (form.values.name || '') !== agent.name ||
+      (form.values.language || '') !== agent.language ||
+      (form.values.systemPrompt || '') !== agent.systemPrompt ||
+      form.values.isActive !== agent.isActive ||
+      form.values.enableLeadExtraction !== agent.enableLeadExtraction ||
       tone !== (agent.tone || 'friendly') ||
       temperature !== (agent.temperature ?? 0.7) ||
       responseLength !== (agent.responseLength || 'medium') ||
@@ -124,7 +131,7 @@ export default function EditAgentPage() {
       JSON.stringify(escalationKeywords) !== JSON.stringify(agent.escalationKeywords ?? []) ||
       JSON.stringify(dataCollectionConfig) !== JSON.stringify(agent.dataCollectionConfig ?? { requiredFields: [], collectionStrategy: 'natural', customFields: [], confirmationEnabled: true })
     );
-  }, [agent, name, language, instructions, isActive, enableLeadExtraction, tone, temperature, responseLength, sentimentEscalation, escalationMessageCount, escalationKeywords, dataCollectionConfig]);
+  }, [agent, form.values, tone, temperature, responseLength, sentimentEscalation, escalationMessageCount, escalationKeywords, dataCollectionConfig]);
 
   // Warn on browser navigation if unsaved changes
   useEffect(() => {
@@ -140,11 +147,13 @@ export default function EditAgentPage() {
   // Pre-fill form when agent data loads
   useEffect(() => {
     if (agent) {
-      setName(agent.name);
-      setLanguage(agent.language);
-      setInstructions(agent.systemPrompt);
-      setIsActive(agent.isActive);
-      setEnableLeadExtraction(agent.enableLeadExtraction);
+      form.setValues({
+        name: agent.name,
+        language: agent.language as 'ar' | 'en',
+        systemPrompt: agent.systemPrompt,
+        isActive: agent.isActive,
+        enableLeadExtraction: agent.enableLeadExtraction,
+      });
       setTone(agent.tone || 'friendly');
       setTemperature(agent.temperature ?? 0.7);
       setResponseLength(agent.responseLength || 'medium');
@@ -157,18 +166,23 @@ export default function EditAgentPage() {
     }
   }, [agent]);
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!name.trim()) return;
+
+    // Validate form
+    const isValid = await form.handleSubmit();
+    if (!isValid) {
+      return;
+    }
 
     updateAgent.mutate(
       {
         id: agentId,
-        name: name.trim(),
-        language,
-        systemPrompt: instructions,
-        isActive,
-        enableLeadExtraction,
+        name: form.values.name!.trim(),
+        language: form.values.language,
+        systemPrompt: form.values.systemPrompt,
+        isActive: form.values.isActive,
+        enableLeadExtraction: form.values.enableLeadExtraction,
         tone,
         temperature,
         responseLength,
@@ -306,12 +320,21 @@ export default function EditAgentPage() {
                     <input
                       id="name"
                       type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      value={form.values.name || ''}
+                      onChange={form.handleChange('name')}
+                      onBlur={form.handleBlur('name')}
                       placeholder={t('namePlaceholder')}
-                      className={inputClass}
+                      className={cn(
+                        inputClass,
+                        form.errors.name && 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                      )}
                     />
+                    {form.errors.name && (
+                      <p className="mt-1.5 text-xs text-red-500">{form.errors.name}</p>
+                    )}
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {(form.values.name || '').length}/100
+                    </p>
                   </div>
 
                   {/* Response Language */}
@@ -324,8 +347,9 @@ export default function EditAgentPage() {
                     </label>
                     <select
                       id="language"
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
+                      value={form.values.language || 'ar'}
+                      onChange={form.handleChange('language')}
+                      onBlur={form.handleBlur('language')}
                       className={inputClass}
                     >
                       <option value="ar">{t('languageAr')}</option>
@@ -353,19 +377,30 @@ export default function EditAgentPage() {
 
                 <div className="p-6">
                   <label
-                    htmlFor="instructions"
+                    htmlFor="systemPrompt"
                     className="mb-1.5 block text-sm font-medium"
                   >
                     {t('personalityLabel')}
                   </label>
                   <textarea
-                    id="instructions"
+                    id="systemPrompt"
                     rows={10}
-                    value={instructions}
-                    onChange={(e) => setInstructions(e.target.value)}
+                    value={form.values.systemPrompt || ''}
+                    onChange={form.handleChange('systemPrompt')}
+                    onBlur={form.handleBlur('systemPrompt')}
                     placeholder={t('personalityPlaceholder')}
-                    className={cn(inputClass, 'resize-y')}
+                    className={cn(
+                      inputClass,
+                      'resize-y',
+                      form.errors.systemPrompt && 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                    )}
                   />
+                  {form.errors.systemPrompt && (
+                    <p className="mt-1.5 text-xs text-red-500">{form.errors.systemPrompt}</p>
+                  )}
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    {(form.values.systemPrompt || '').length}/10000
+                  </p>
                   <div className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
                     <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
                     <span>{t('personalityHint')}</span>
@@ -400,17 +435,17 @@ export default function EditAgentPage() {
                     <button
                       type="button"
                       role="switch"
-                      aria-checked={isActive}
-                      onClick={() => setIsActive(!isActive)}
+                      aria-checked={form.values.isActive ?? true}
+                      onClick={() => form.setFieldValue('isActive', !form.values.isActive)}
                       className={cn(
                         'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-                        isActive ? 'bg-primary' : 'bg-muted',
+                        form.values.isActive ? 'bg-primary' : 'bg-muted',
                       )}
                     >
                       <span
                         className={cn(
                           'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
-                          isActive ? 'ltr:translate-x-5 rtl:-translate-x-5' : 'translate-x-0',
+                          form.values.isActive ? 'ltr:translate-x-5 rtl:-translate-x-5' : 'translate-x-0',
                         )}
                       />
                     </button>
@@ -431,19 +466,19 @@ export default function EditAgentPage() {
                     <button
                       type="button"
                       role="switch"
-                      aria-checked={enableLeadExtraction}
+                      aria-checked={form.values.enableLeadExtraction ?? false}
                       onClick={() =>
-                        setEnableLeadExtraction(!enableLeadExtraction)
+                        form.setFieldValue('enableLeadExtraction', !form.values.enableLeadExtraction)
                       }
                       className={cn(
                         'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-                        enableLeadExtraction ? 'bg-primary' : 'bg-muted',
+                        form.values.enableLeadExtraction ? 'bg-primary' : 'bg-muted',
                       )}
                     >
                       <span
                         className={cn(
                           'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
-                          enableLeadExtraction
+                          form.values.enableLeadExtraction
                             ? 'ltr:translate-x-5 rtl:-translate-x-5'
                             : 'translate-x-0',
                         )}
@@ -478,10 +513,10 @@ export default function EditAgentPage() {
                   </Link>
                   <button
                     type="submit"
-                    disabled={updateAgent.isPending || !name.trim()}
+                    disabled={updateAgent.isPending || !form.values.name?.trim()}
                     className={cn(
                       'inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
-                      (updateAgent.isPending || !name.trim()) &&
+                      (updateAgent.isPending || !form.values.name?.trim()) &&
                         'cursor-not-allowed opacity-50',
                     )}
                   >
@@ -555,10 +590,10 @@ export default function EditAgentPage() {
                 <button
                   type="button"
                   onClick={() => handleSubmit()}
-                  disabled={updateAgent.isPending || !name.trim()}
+                  disabled={updateAgent.isPending || !form.values.name?.trim()}
                   className={cn(
                     'inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
-                    (updateAgent.isPending || !name.trim()) &&
+                    (updateAgent.isPending || !form.values.name?.trim()) &&
                       'cursor-not-allowed opacity-50',
                   )}
                 >
