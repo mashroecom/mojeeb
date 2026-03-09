@@ -1,15 +1,5 @@
 import { describe, it, expect } from 'vitest';
-
-// Test the escapeHtml function logic directly
-// (The function is inlined in email.service.ts; we test the same logic here)
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+import { escapeHtml } from './sanitize';
 
 describe('escapeHtml', () => {
   it('escapes ampersands', () => {
