@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "003-add-conversation-tagging-ui-to-dashboard",
+  "spec": "009-add-aria-busy-to-table-during-loading-and-improve-",
   "state": "building",
   "subtasks": {
-    "completed": 2,
-    "total": 5,
+    "completed": 3,
+    "total": 6,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Frontend Implementation",
+    "current": "Testing and Verification",
     "id": null,
-    "total": 5
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 4,
-    "started_at": "2026-03-09T16:05:38.909827"
+    "number": 5,
+    "started_at": "2026-03-09T21:17:22.001848"
   },
-  "last_update": "2026-03-09T16:16:13.451873"
+  "last_update": "2026-03-09T21:26:56.379520"
 }
