@@ -70,8 +70,6 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },  // Allow serving static files cross-origin
 }));
 
-// Serve uploaded files AFTER Helmet (so security headers like X-Content-Type-Options apply)
-app.use('/uploads', cors(), express.static(path.resolve(__dirname, '../uploads')));
 app.use(cors(corsOptions));
 // CSRF: Not needed — all auth uses Authorization Bearer header, no cookie-based auth
 
