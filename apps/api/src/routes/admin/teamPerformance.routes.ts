@@ -29,7 +29,7 @@ const router: Router = Router();
 function convertToCsv(rows: Record<string, unknown>[]): string {
   if (!rows.length) return '';
 
-  const headers = Object.keys(rows[0]);
+  const headers = Object.keys(rows[0]!);
   const csvContent = [
     headers.join(','),
     ...rows.map((row) =>
@@ -129,8 +129,8 @@ router.get('/export/csv', validate({ query: dateRangeQuerySchema }), async (req:
 
     const data = await teamPerformanceService.getHistoricalMetrics(orgId, dateRange);
 
-    // Convert to CSV format
-    const csvContent = convertToCsv(data as Record<string, unknown>[]);
+    // Convert agentMetrics array to CSV format (not the entire data object)
+    const csvContent = convertToCsv(data.agentMetrics as unknown as Record<string, unknown>[]);
 
     // Set headers for CSV download
     res.setHeader('Content-Type', 'text/csv;charset=utf-8');
