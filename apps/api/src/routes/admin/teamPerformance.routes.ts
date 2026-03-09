@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { teamPerformanceService } from '../../services/teamPerformance.service';
+import { pdfReportService } from '../../services/pdfReport.service';
 import { validate } from '../../middleware/validate';
 import { BadRequestError } from '../../utils/errors';
 
@@ -135,6 +136,23 @@ router.get('/export/csv', validate({ query: dateRangeQuerySchema }), async (req:
     res.setHeader('Content-Type', 'text/csv;charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="team-performance.csv"');
     res.send(csvContent);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /export/pdf - Export team performance report to PDF
+router.get('/export/pdf', validate({ query: dateRangeQuerySchema }), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { orgId, startDate, endDate } = req.query as z.infer<typeof dateRangeQuerySchema>;
+
+    // Generate PDF report
+    const pdfBuffer = await pdfReportService.generateTeamPerformanceReport(orgId, startDate, endDate);
+
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="team-performance-report.pdf"');
+    res.send(pdfBuffer);
   } catch (err) {
     next(err);
   }
