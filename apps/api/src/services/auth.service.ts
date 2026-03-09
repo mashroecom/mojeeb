@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import { config } from '../config';
 import { prisma } from '../config/database';
+import type { PrismaClient } from '@prisma/client';
 import { configService } from './config.service';
 import { BadRequestError, UnauthorizedError, ConflictError, NotFoundError } from '../utils/errors';
 import type { JwtPayload } from '../middleware/auth';
@@ -619,7 +620,11 @@ export class AuthService {
   }
 
   /** Generate tokens using a specific Prisma client (or transaction). */
-  private async generateTokensInTx(tx: typeof prisma, userId: string, email: string) {
+  private async generateTokensInTx(
+    tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'> | PrismaClient,
+    userId: string,
+    email: string
+  ) {
     const jti = crypto.randomUUID();
     const payload: JwtPayload = { userId, email, jti };
 

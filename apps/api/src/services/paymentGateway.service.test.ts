@@ -423,8 +423,9 @@ describe('PaymentGatewayService', () => {
       const gateways = await service.getAvailableGateways('org-sa');
 
       // First gateway should be the recommended one (Kashier for MENA)
-      expect(gateways[0].gateway).toBe(PaymentGateway.KASHIER);
-      expect(gateways[0].recommended).toBe(true);
+      expect(gateways[0]).toBeDefined();
+      expect(gateways[0]?.gateway).toBe(PaymentGateway.KASHIER);
+      expect(gateways[0]?.recommended).toBe(true);
     });
 
     it('should throw NotFoundError when organization does not exist', async () => {

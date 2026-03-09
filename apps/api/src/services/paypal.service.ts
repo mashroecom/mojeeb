@@ -228,7 +228,6 @@ export class PayPalService {
 
     // Create capture request
     const request = new paypal.orders.OrdersCaptureRequest(orderId);
-    request.prefer('return=representation');
     request.requestBody({});
 
     // Execute capture

@@ -40,17 +40,34 @@ export interface StripeCheckoutSession {
   url: string | null;
 }
 
-export interface StripeWebhookEvent extends Stripe.Event {
+export type StripeWebhookEvent = Stripe.Event & {
   type: string;
   data: {
     object: Stripe.Invoice | Stripe.Subscription | Stripe.PaymentIntent | Record<string, unknown>;
   };
-}
+};
 
 export interface PayPalOrderResponse {
   id: string;
   status: string;
-  links: Array<{
+  purchase_units: Array<{
+    reference_id?: string;
+    amount: {
+      currency_code: string;
+      value: string;
+    };
+    payments?: {
+      captures?: Array<{
+        id: string;
+        status: string;
+        amount: {
+          currency_code: string;
+          value: string;
+        };
+      }>;
+    };
+  }>;
+  links?: Array<{
     href: string;
     rel: string;
     method: string;
@@ -168,15 +185,17 @@ async function getStripeConfig(): Promise<{
  * Get or create Stripe client instance.
  */
 let stripeClient: Stripe | null = null;
+let currentStripeSecretKey: string | null = null;
 async function getStripeClient(): Promise<Stripe> {
   const stripeConfig = await getStripeConfig();
   if (!stripeConfig.secretKey) {
     throw new BadRequestError('Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment.');
   }
-  if (!stripeClient || stripeClient.apiKey !== stripeConfig.secretKey) {
+  if (!stripeClient || currentStripeSecretKey !== stripeConfig.secretKey) {
     stripeClient = new Stripe(stripeConfig.secretKey, {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2025-02-24.acacia',
     });
+    currentStripeSecretKey = stripeConfig.secretKey;
   }
   return stripeClient;
 }
@@ -684,7 +703,7 @@ export class SubscriptionService {
     const order = response.result as PayPalOrderResponse;
 
     // Find the approval URL
-    const approvalUrl = order.links.find((link) => link.rel === 'approve')?.href;
+    const approvalUrl = order.links?.find((link) => link.rel === 'approve')?.href;
     if (!approvalUrl) {
       throw new BadRequestError('Failed to create PayPal checkout session.');
     }
