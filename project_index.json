@@ -1,0 +1,36 @@
+{
+  "project_type": "monorepo",
+  "project_name": "mojeeb",
+  "description": "AI-powered customer support platform",
+  "services": {
+    "api": {
+      "path": "./apps/api",
+      "tech_stack": ["node", "typescript", "express", "prisma", "postgresql"],
+      "port": 3001,
+      "dev_command": "cd apps/api && pnpm dev",
+      "test_command": "cd apps/api && pnpm test",
+      "build_command": "cd apps/api && pnpm build"
+    },
+    "web": {
+      "path": "./apps/web",
+      "tech_stack": ["node", "typescript", "nextjs", "react", "tailwindcss", "tanstack-query"],
+      "port": 3000,
+      "dev_command": "cd apps/web && pnpm dev",
+      "test_command": "cd apps/web && pnpm test",
+      "build_command": "cd apps/web && pnpm build"
+    }
+  },
+  "infrastructure": {
+    "docker": true,
+    "database": "postgresql",
+    "package_manager": "pnpm",
+    "monorepo_tool": "turborepo"
+  },
+  "conventions": {
+    "linter": "eslint",
+    "formatter": "prettier",
+    "testing": "jest",
+    "api_pattern": "express_routes_services",
+    "state_management": "zustand_tanstack-query"
+  }
+}

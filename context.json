@@ -1,0 +1,45 @@
+{
+  "files_to_modify": {
+    "web": [
+      "apps/web/src/app/[locale]/(dashboard)/conversations/page.tsx",
+      "apps/web/src/app/[locale]/(dashboard)/conversations/_components/ConversationList.tsx",
+      "apps/web/src/hooks/useConversations.ts"
+    ],
+    "api": [
+      "apps/api/src/routes/conversations.routes.ts",
+      "apps/api/src/services/conversation.service.ts"
+    ]
+  },
+  "files_to_reference": [
+    "apps/web/src/app/[locale]/(admin)/admin/conversations/page.tsx",
+    "apps/web/src/hooks/useAdmin.ts",
+    "apps/api/src/routes/admin/conversations.routes.ts"
+  ],
+  "patterns": {
+    "multi_select_pattern": "Admin conversations page uses selectedIds: Set<string> with checkbox-based selection, toggleSelect, toggleSelectAll, and clearSelection handlers",
+    "bulk_toolbar_pattern": "Fixed bottom toolbar that appears when someSelected is true, using inline-flex items with action buttons",
+    "bulk_api_pattern": "Admin uses POST /admin/conversations/bulk-status with { conversationIds: string[], status: string } body",
+    "bulk_hook_pattern": "useBulkUpdateConversationStatus hook calls api.post with conversationIds array and invalidates queries on success",
+    "service_pattern": "ConversationService methods check orgId ownership, use prisma.conversation.updateMany with { id: { in: conversationIds }, orgId } where clause"
+  },
+  "existing_implementations": {
+    "description": "Found complete bulk operations pattern in admin panel, existing bulk-archive API endpoint at org-level, and service method bulkArchive",
+    "relevant_files": [
+      "apps/web/src/app/[locale]/(admin)/admin/conversations/page.tsx (lines 55-146: selectedIds state, bulk handlers)",
+      "apps/web/src/hooks/useAdmin.ts (lines 1604-1615: useBulkUpdateConversationStatus)",
+      "apps/api/src/routes/conversations.routes.ts (lines 66-90: POST /bulk-archive)",
+      "apps/api/src/services/conversation.service.ts (lines 172-182: bulkArchive method)"
+    ]
+  },
+  "api_endpoints": {
+    "existing_org_level": [
+      "POST /api/v1/organizations/:orgId/conversations/bulk-archive",
+      "POST /api/v1/organizations/:orgId/conversations/:convId/resolve",
+      "DELETE /api/v1/organizations/:orgId/conversations/:convId"
+    ],
+    "to_create": [
+      "POST /api/v1/organizations/:orgId/conversations/bulk-status (for bulk resolve)",
+      "POST /api/v1/organizations/:orgId/conversations/bulk-delete"
+    ]
+  }
+}
