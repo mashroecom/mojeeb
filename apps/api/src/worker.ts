@@ -1,3 +1,4 @@
+import express from 'express';
 import { config, validateConfig } from './config';
 import { logger } from './config/logger';
 import { prisma } from './config/database';
@@ -38,6 +39,73 @@ async function main() {
   logger.info('Queue workers started');
   logger.info(`Environment: ${config.nodeEnv}`);
 
+  // Health check server (for k8s liveness/readiness probes)
+  const healthPort = parseInt(process.env.WORKER_HEALTH_PORT || '4001', 10);
+  const healthApp = express();
+
+  healthApp.get('/health', async (req, res) => {
+    try {
+      const checks: Record<string, { status: string; latencyMs?: number; error?: string }> = {};
+
+      // Check database
+      const dbStart = Date.now();
+      try {
+        await prisma.$queryRaw`SELECT 1`;
+        checks.database = { status: 'healthy', latencyMs: Date.now() - dbStart };
+      } catch (err: any) {
+        checks.database = { status: 'unhealthy', latencyMs: Date.now() - dbStart, error: err.message };
+      }
+
+      // Check Redis
+      const redisStart = Date.now();
+      try {
+        await redis.ping();
+        checks.redis = { status: 'healthy', latencyMs: Date.now() - redisStart };
+      } catch (err: any) {
+        checks.redis = { status: 'unhealthy', latencyMs: Date.now() - redisStart, error: err.message };
+      }
+
+      // Check workers (ensure they're running)
+      const workers = [
+        { name: 'inbound', worker: inboundWorker },
+        { name: 'ai', worker: aiWorker },
+        { name: 'outbound', worker: outboundWorker },
+        { name: 'analytics', worker: analyticsWorker },
+        { name: 'webhook', worker: webhookWorker },
+        { name: 'bulkEmail', worker: bulkEmailWorker },
+        { name: 'email', worker: emailWorker },
+      ];
+
+      for (const { name, worker } of workers) {
+        const isRunning = worker.isRunning();
+        checks[`worker_${name}`] = {
+          status: isRunning ? 'healthy' : 'unhealthy',
+        };
+      }
+
+      const allHealthy = Object.values(checks).every((c) => c.status === 'healthy');
+
+      res.status(allHealthy ? 200 : 503).json({
+        success: true,
+        data: {
+          status: allHealthy ? 'healthy' : 'degraded',
+          timestamp: new Date().toISOString(),
+          checks,
+        },
+      });
+    } catch (err: any) {
+      logger.error({ err }, 'Health check error');
+      res.status(503).json({
+        success: false,
+        error: 'Health check failed',
+      });
+    }
+  });
+
+  const healthServer = healthApp.listen(healthPort, () => {
+    logger.info(`Worker health check server listening on port ${healthPort}`);
+  });
+
   // Graceful shutdown
   let isShuttingDown = false;
   const shutdown = async (signal: string) => {
@@ -77,7 +145,11 @@ async function main() {
     ]);
     logger.info('Queues closed');
 
-    // 3. Disconnect database and Redis
+    // 3. Close health check server
+    healthServer.close();
+    logger.info('Health check server closed');
+
+    // 4. Disconnect database and Redis
     await prisma.$disconnect();
     await redis.quit();
     logger.info('Worker shutdown complete');
