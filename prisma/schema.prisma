@@ -43,6 +43,7 @@ model User {
   blockedIPs             BlockedIP[]          @relation("BlockedIPs")
   bulkEmailCampaigns     BulkEmailCampaign[]  @relation("BulkEmailCampaigns")
   adminNotifications     AdminNotification[]  @relation("AdminNotifications")
+  messageTemplates       MessageTemplate[]    @relation("CreatedMessageTemplates")
 
   @@map("users")
 }
@@ -1083,17 +1084,27 @@ model ConversationNote {
 // ========================
 
 model MessageTemplate {
-  id        String   @id @default(cuid())
-  orgId     String
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  title     String
-  content   String   @db.Text
-  category  String?
-  shortcut  String?
-  createdBy String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  orgId      String
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  title      String
+  titleAr    String   @default("")
+  content    String   @db.Text
+  contentAr  String   @default("") @db.Text
+  category   String?
+  shortcut   String?
+  variables  String[] @default([])
+  isShared   Boolean  @default(false)
+  userId     String?
+  user       User?    @relation("CreatedMessageTemplates", fields: [userId], references: [id], onDelete: SetNull)
+  usageCount Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdBy  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([orgId])
+  @@index([orgId, isShared])
+  @@index([userId])
   @@map("message_templates")
 }
