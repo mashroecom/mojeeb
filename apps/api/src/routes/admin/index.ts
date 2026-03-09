@@ -51,6 +51,7 @@ import tokenUsageRoutes from './tokenUsage.routes';
 import faqRoutes from './faq.routes';
 import testimonialRoutes from './testimonials.routes';
 import legalRoutes from './legal.routes';
+import teamPerformanceRoutes from './teamPerformance.routes';
 
 const router: Router = Router();
 
@@ -107,5 +108,6 @@ router.use('/token-usage', tokenUsageRoutes);
 router.use('/faq', faqRoutes);
 router.use('/testimonials', testimonialRoutes);
 router.use('/legal', legalRoutes);
+router.use('/team-performance', teamPerformanceRoutes);
 
 export default router;

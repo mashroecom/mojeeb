@@ -1,5 +1,6 @@
 import PDFDocument from 'pdfkit';
 import { prisma } from '../config/database';
+import { teamPerformanceService } from './teamPerformance.service';
 
 function collectToBuffer(doc: PDFKit.PDFDocument): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -313,6 +314,111 @@ export class PdfReportService {
 
     if (recentSubs.length === 0) {
       doc.fontSize(10).font('Helvetica').text('  No subscriptions in this period.');
+    }
+
+    doc.end();
+    return bufferPromise;
+  }
+
+  async generateTeamPerformanceReport(
+    orgId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<Buffer> {
+    const dateRange = buildDateRange(startDate, endDate);
+
+    // Fetch data from team performance service
+    const dateRangeObj = {
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+    };
+
+    const [historicalData, aiVsHumanData] = await Promise.all([
+      teamPerformanceService.getHistoricalMetrics(orgId, dateRangeObj),
+      teamPerformanceService.getAiVsHumanMetrics(orgId, dateRangeObj),
+    ]);
+
+    const doc = new PDFDocument({ margin: 50 });
+    const bufferPromise = collectToBuffer(doc);
+
+    addTitle(doc, 'Team Performance Report', dateRange);
+
+    // Overall Metrics Section
+    addSection(doc, 'Overall Performance');
+    addKV(doc, 'Total Conversations', historicalData.totalConversations);
+    addKV(
+      doc,
+      'Avg Response Time',
+      `${(historicalData.avgResponseTimeMs / 1000).toFixed(2)}s`,
+    );
+    addKV(
+      doc,
+      'Avg Resolution Time',
+      `${(historicalData.avgResolutionTimeMs / 1000 / 60).toFixed(2)} min`,
+    );
+    addKV(doc, 'Avg CSAT', historicalData.avgCSAT.toFixed(2));
+    addKV(doc, 'Handoff Count', historicalData.handoffCount);
+    addKV(doc, 'Handoff Rate', `${(historicalData.handoffRate * 100).toFixed(2)}%`);
+
+    // AI vs Human Section
+    addSection(doc, 'AI vs Human Performance');
+
+    doc.fontSize(12).font('Helvetica-Bold').text('AI Agent Performance:');
+    doc.moveDown(0.2);
+    addKV(doc, '  Conversations', aiVsHumanData.ai.conversationCount);
+    addKV(
+      doc,
+      '  Avg Response Time',
+      `${(aiVsHumanData.ai.avgResponseTimeMs / 1000).toFixed(2)}s`,
+    );
+    addKV(
+      doc,
+      '  Avg Resolution Time',
+      `${(aiVsHumanData.ai.avgResolutionTimeMs / 1000 / 60).toFixed(2)} min`,
+    );
+    addKV(doc, '  Avg CSAT', aiVsHumanData.ai.avgCSAT.toFixed(2));
+    addKV(doc, '  Resolution Rate', `${(aiVsHumanData.ai.resolutionRate * 100).toFixed(2)}%`);
+
+    doc.moveDown(0.5);
+    doc.fontSize(12).font('Helvetica-Bold').text('Human Agent Performance:');
+    doc.moveDown(0.2);
+    addKV(doc, '  Conversations', aiVsHumanData.human.conversationCount);
+    addKV(
+      doc,
+      '  Avg Response Time',
+      `${(aiVsHumanData.human.avgResponseTimeMs / 1000).toFixed(2)}s`,
+    );
+    addKV(
+      doc,
+      '  Avg Resolution Time',
+      `${(aiVsHumanData.human.avgResolutionTimeMs / 1000 / 60).toFixed(2)} min`,
+    );
+    addKV(doc, '  Avg CSAT', aiVsHumanData.human.avgCSAT.toFixed(2));
+    addKV(
+      doc,
+      '  Resolution Rate',
+      `${(aiVsHumanData.human.resolutionRate * 100).toFixed(2)}%`,
+    );
+
+    // Individual Agent Performance
+    if (historicalData.agentMetrics.length > 0) {
+      addSection(doc, 'Individual Agent Performance');
+
+      for (const agent of historicalData.agentMetrics) {
+        doc.moveDown(0.3);
+        doc.fontSize(11).font('Helvetica-Bold').text(`${agent.agentName}:`);
+        doc.moveDown(0.1);
+        addKV(doc, '  Conversations', agent.conversationsHandled);
+        addKV(doc, '  Messages', agent.messageCount);
+        addKV(doc, '  Avg Response Time', `${(agent.avgResponseTimeMs / 1000).toFixed(2)}s`);
+        addKV(
+          doc,
+          '  Avg Resolution Time',
+          `${(agent.avgResolutionTimeMs / 1000 / 60).toFixed(2)} min`,
+        );
+        addKV(doc, '  Avg CSAT', agent.avgCSAT.toFixed(2));
+        addKV(doc, '  Handoff Count', agent.handoffCount);
+      }
     }
 
     doc.end();
