@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mojeeb
+  labels:
+    app: mojeeb
+    environment: production
