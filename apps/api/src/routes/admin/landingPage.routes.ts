@@ -40,7 +40,7 @@ const updateSchema = z.object({
   pricingSubtitleAr: z.string().optional(),
   footerText: z.string().optional(),
   footerTextAr: z.string().optional(),
-  customCss: z.string().nullable().optional(),
+  customCss: z.string().max(50000).nullable().optional(),
 });
 
 router.patch(
