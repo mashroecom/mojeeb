@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { AdminConfirmDialog } from '@/components/admin/AdminConfirmDialog';
-import { fmtDateTime } from '@/lib/dateFormat';
 import { useRouter } from '@/i18n/navigation';
 import {
   useAdminUserDetail,
@@ -12,13 +11,11 @@ import {
   useDeleteUser,
   useToggleSuperAdmin,
   useResetUserPassword,
-  useSendUserEmail,
   useImpersonateUser,
   useAdminLoginActivity,
   useAdminSessions,
   useKillSession,
   useKillUserSessions,
-  useUpdateUserProfile,
   useVerifyUserEmail,
   useAdminAuditLog,
   useAdminUserApiKeys,
@@ -38,13 +35,15 @@ import { AuditLogTab } from './_components/AuditLogTab';
 import { ApiKeysTab } from './_components/ApiKeysTab';
 import { ConversationsTab } from './_components/ConversationsTab';
 import { LeadsTab } from './_components/LeadsTab';
+import { NotificationsTab } from './_components/NotificationsTab';
+import { UserActionsTab } from './_components/UserActionsTab';
+import { EmailModal } from './_components/EmailModal';
+import { EditProfileModal } from './_components/EditProfileModal';
 import {
   ArrowLeft,
   Loader2,
   Building2,
   MessageSquare,
-  Send,
-  X,
   Key,
   Globe,
   Monitor,
@@ -60,7 +59,6 @@ export default function AdminUserDetailPage() {
   const userId = params.userId as string;
   const router = useRouter();
   const t = useTranslations('admin');
-  const locale = useLocale();
   const addToast = useToastStore((s) => s.addToast);
 
   const { data: user, isLoading, error } = useAdminUserDetail(userId);
@@ -68,22 +66,14 @@ export default function AdminUserDetailPage() {
   const deleteUser = useDeleteUser();
   const toggleSuperAdmin = useToggleSuperAdmin();
   const resetPassword = useResetUserPassword();
-  const sendEmail = useSendUserEmail();
   const impersonateUser = useImpersonateUser();
 
   const killSession = useKillSession();
   const killUserSessions = useKillUserSessions();
-  const updateProfile = useUpdateUserProfile();
   const verifyEmail = useVerifyUserEmail();
 
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editFirstName, setEditFirstName] = useState('');
-  const [editLastName, setEditLastName] = useState('');
-  const [editEmail, setEditEmail] = useState('');
-  const [editPassword, setEditPassword] = useState('');
-  const [emailSubject, setEmailSubject] = useState('');
-  const [emailBody, setEmailBody] = useState('');
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
   const [activeTab, setActiveTab] = useState<'orgs' | 'logins' | 'sessions' | 'audit' | 'apikeys' | 'conversations' | 'leads' | 'notifications' | 'useractions'>('orgs');
   const [loginPage, setLoginPage] = useState(1);
@@ -119,11 +109,6 @@ export default function AdminUserDetailPage() {
   const userActionsQuery = useAdminUserActions(userId as string, userActionsPage);
 
   function openEditModal() {
-    if (!user) return;
-    setEditFirstName(user.firstName || '');
-    setEditLastName(user.lastName || '');
-    setEditEmail(user.email || '');
-    setEditPassword('');
     setShowEditModal(true);
   }
 
@@ -455,80 +440,22 @@ export default function AdminUserDetailPage() {
 
               {/* Notifications Tab */}
               {activeTab === 'notifications' && (
-                <div className="space-y-3">
-                  {notificationsQuery.isLoading ? (
-                    <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-                  ) : !notificationsQuery.data?.notifications?.length ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">{t('userDetail.noNotifications')}</p>
-                  ) : (
-                    <>
-                      {notificationsQuery.data.notifications.map((notif: any) => (
-                        <div key={notif.id} className={cn('flex items-center justify-between p-4 rounded-xl border', notif.isRead ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800')}>
-                          <div className="flex items-center gap-3">
-                            <Bell className={cn('w-5 h-5', notif.isRead ? 'text-gray-400' : 'text-blue-600 dark:text-blue-400')} />
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{notif.title}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{notif.body}</p>
-                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                {notif.type} · {notif.organization?.name}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right text-sm">
-                            <span className={cn('px-2 py-1 rounded-full text-xs font-medium', notif.isRead ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300')}>
-                              {notif.isRead ? t('userDetail.read') : t('userDetail.unread')}
-                            </span>
-                            <p className="text-gray-400 dark:text-gray-500 mt-1">{fmtDateTime(notif.createdAt, locale)}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {notificationsQuery.data.totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-4 pt-2">
-                          <button onClick={() => setNotificationsPage(p => Math.max(1, p - 1))} disabled={notificationsPage === 1} className="text-sm text-blue-600 disabled:text-gray-400">Previous</button>
-                          <span className="text-sm text-gray-500">{notificationsPage} / {notificationsQuery.data.totalPages}</span>
-                          <button onClick={() => setNotificationsPage(p => p + 1)} disabled={notificationsPage >= notificationsQuery.data.totalPages} className="text-sm text-blue-600 disabled:text-gray-400">Next</button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                <NotificationsTab
+                  isLoading={notificationsQuery.isLoading}
+                  notificationsData={notificationsQuery.data}
+                  currentPage={notificationsPage}
+                  onPageChange={setNotificationsPage}
+                />
               )}
 
               {/* User Actions Tab */}
               {activeTab === 'useractions' && (
-                <div className="space-y-3">
-                  {userActionsQuery.isLoading ? (
-                    <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-                  ) : !userActionsQuery.data?.logs?.length ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">{t('userDetail.noUserActions')}</p>
-                  ) : (
-                    <>
-                      {userActionsQuery.data.logs.map((log: any) => (
-                        <div key={log.id} className="flex items-center justify-between p-4 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800">
-                          <div className="flex items-center gap-3">
-                            <Activity className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{log.action}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {t('userDetail.target')}: {log.targetType} ({log.targetId?.substring(0, 12)}...)
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right text-sm">
-                            <p className="text-gray-400 dark:text-gray-500">{fmtDateTime(log.createdAt, locale)}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {userActionsQuery.data.totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-4 pt-2">
-                          <button onClick={() => setUserActionsPage(p => Math.max(1, p - 1))} disabled={userActionsPage === 1} className="text-sm text-blue-600 disabled:text-gray-400">Previous</button>
-                          <span className="text-sm text-gray-500">{userActionsPage} / {userActionsQuery.data.totalPages}</span>
-                          <button onClick={() => setUserActionsPage(p => p + 1)} disabled={userActionsPage >= userActionsQuery.data.totalPages} className="text-sm text-blue-600 disabled:text-gray-400">Next</button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                <UserActionsTab
+                  isLoading={userActionsQuery.isLoading}
+                  userActionsData={userActionsQuery.data}
+                  currentPage={userActionsPage}
+                  onPageChange={setUserActionsPage}
+                />
               )}
             </div>
           </div>
@@ -554,189 +481,19 @@ export default function AdminUserDetailPage() {
         onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
       />
 
-      {/* Edit Profile Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-lg border bg-card p-6 shadow-xl mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">{t('userActions.editProfile')}</h3>
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="rounded-md p-1 hover:bg-muted transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">{t('userActions.firstName')}</label>
-                <input
-                  type="text"
-                  value={editFirstName}
-                  onChange={(e) => setEditFirstName(e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">{t('userActions.lastName')}</label>
-                <input
-                  type="text"
-                  value={editLastName}
-                  onChange={(e) => setEditLastName(e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">{t('users.email')}</label>
-                <input
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">{t('userActions.newPassword')}</label>
-                <input
-                  type="password"
-                  value={editPassword}
-                  onChange={(e) => setEditPassword(e.target.value)}
-                  placeholder={t('userActions.newPasswordPlaceholder')}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  onClick={() => {
-                    const updates: Record<string, string> = {};
-                    if (editFirstName !== user.firstName) updates.firstName = editFirstName;
-                    if (editLastName !== user.lastName) updates.lastName = editLastName;
-                    if (editEmail !== user.email) updates.email = editEmail;
-                    if (editPassword) updates.newPassword = editPassword;
-                    if (Object.keys(updates).length === 0) {
-                      setShowEditModal(false);
-                      return;
-                    }
-                    updateProfile.mutate(
-                      { userId, ...updates },
-                      {
-                        onSuccess: () => {
-                          addToast('success', t('userActions.profileUpdated'));
-                          setShowEditModal(false);
-                        },
-                        onError: () => addToast('error', t('userActions.profileUpdateFailed')),
-                      },
-                    );
-                  }}
-                  disabled={updateProfile.isPending}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-                >
-                  {updateProfile.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {t('userActions.saveChanges')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <EditProfileModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        userId={userId}
+        user={user}
+      />
 
-      {/* Email Modal */}
-      {showEmailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-lg border bg-card p-6 shadow-xl mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">
-                {t('userActions.sendEmailTo')} {user.email}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowEmailModal(false);
-                  setEmailSubject('');
-                  setEmailBody('');
-                }}
-                className="rounded-md p-1 hover:bg-muted transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  {t('userActions.emailSubject')}
-                </label>
-                <input
-                  type="text"
-                  value={emailSubject}
-                  onChange={(e) => setEmailSubject(e.target.value)}
-                  placeholder={t('userActions.emailSubjectPlaceholder')}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  {t('userActions.emailBody')}
-                </label>
-                <textarea
-                  value={emailBody}
-                  onChange={(e) => setEmailBody(e.target.value)}
-                  placeholder={t('userActions.emailBodyPlaceholder')}
-                  rows={6}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  onClick={() => {
-                    setShowEmailModal(false);
-                    setEmailSubject('');
-                    setEmailBody('');
-                  }}
-                  className="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  onClick={() => {
-                    if (!emailSubject.trim() || !emailBody.trim()) {
-                      addToast('error', t('userActions.emailFieldsRequired'));
-                      return;
-                    }
-                    sendEmail.mutate(
-                      { userId, subject: emailSubject, body: emailBody },
-                      {
-                        onSuccess: () => {
-                          addToast('success', t('userActions.emailSent'));
-                          setShowEmailModal(false);
-                          setEmailSubject('');
-                          setEmailBody('');
-                        },
-                      },
-                    );
-                  }}
-                  disabled={sendEmail.isPending}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-                >
-                  {sendEmail.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                  {t('userActions.send')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <EmailModal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        userId={userId}
+        userEmail={user.email || ''}
+      />
     </div>
   );
 }
