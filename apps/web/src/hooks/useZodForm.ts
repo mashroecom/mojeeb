@@ -99,11 +99,11 @@ export function useZodForm<T extends z.ZodTypeAny>({
         return null;
       } catch (error) {
         if (error instanceof z.ZodError) {
-          const fieldError = error.errors.find((e) => {
+          const fieldError = error.issues.find((e) => {
             // Check if error path matches the field
             return e.path.length > 0 && e.path[0] === field;
           });
-          return fieldError?.message || error.errors[0]?.message || 'Invalid value';
+          return fieldError?.message || error.issues[0]?.message || 'Invalid value';
         }
         return 'Invalid value';
       }
@@ -122,7 +122,7 @@ export function useZodForm<T extends z.ZodTypeAny>({
     } catch (error) {
       if (error instanceof z.ZodError) {
         const formErrors: Partial<Record<keyof z.infer<T>, string>> = {};
-        error.errors.forEach((err) => {
+        error.issues.forEach((err) => {
           const field = err.path[0] as keyof z.infer<T>;
           if (field && !formErrors[field]) {
             formErrors[field] = err.message;
