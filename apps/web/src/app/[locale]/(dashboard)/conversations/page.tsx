@@ -267,6 +267,11 @@ export default function ConversationsPage() {
           isFetching={conversationsQuery.isFetching}
           onRefresh={() => conversationsQuery.refetch()}
           onSelect={handleSelectConversation}
+          selectedIds={selectedIds}
+          toggleSelect={toggleSelect}
+          toggleSelectAll={toggleSelectAll}
+          allSelected={allSelected}
+          someSelected={someSelected}
         />
 
         {/* CENTER PANEL - Chat Window */}
