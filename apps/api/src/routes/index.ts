@@ -12,6 +12,8 @@ import channelRoutes from './channel.routes';
 import notificationRoutes from './notifications.routes';
 import whatsappWebhook from './webhooks/whatsapp.webhook';
 import kashierWebhook from './webhooks/kashier.webhook';
+import stripeWebhook from './webhooks/stripe.webhook';
+import paypalWebhook from './webhooks/paypal.webhook';
 import webchatRoutes from './webhooks/webchat.routes';
 import demoRequestRoutes from './demoRequests.routes';
 import contactMessageRoutes from './contactMessages.routes';
@@ -114,6 +116,8 @@ router.use('/organizations/:orgId/customers', customersRoutes);
 // Incoming webhook routes
 router.use('/webhooks/whatsapp', whatsappWebhook);
 router.use('/webhooks/kashier', kashierWebhook);
+router.use('/webhooks/stripe', stripeWebhook);
+router.use('/webhooks/paypal', paypalWebhook);
 
 // Webchat routes (public, no auth required)
 router.use('/webchat', webchatRoutes);

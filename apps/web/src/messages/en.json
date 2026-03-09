@@ -1054,6 +1054,7 @@
       "invoiceDate": "Date",
       "invoiceAmount": "Amount",
       "invoiceStatusLabel": "Status",
+      "gateway": "Payment Gateway",
       "invoiceDueDate": "Due Date",
       "createTestInvoice": "Create Test Invoice",
       "testInvoiceCreated": "Test invoice created successfully!",
@@ -1067,6 +1068,8 @@
         "PENDING": "Pending",
         "FAILED": "Failed"
       },
+      "paymentMethod": "Payment Method",
+      "selectPaymentGateway": "Choose your preferred payment gateway",
       "status": {
         "ACTIVE": "Active",
         "PAST_DUE": "Past Due",

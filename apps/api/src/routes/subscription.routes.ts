@@ -3,8 +3,10 @@ import { z } from 'zod';
 import PDFDocument from 'pdfkit';
 import { prisma } from '../config/database';
 import { subscriptionService } from '../services/subscription.service';
+import { paymentGatewayService } from '../services/paymentGateway.service';
 import { authenticate, orgContext, requireRole } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { PaymentGateway } from '@mojeeb/shared-types';
 
 interface OrgParams { orgId: string; [key: string]: string; }
 
@@ -23,8 +25,19 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+// GET /api/v1/organizations/:orgId/subscription/available-gateways
+router.get('/available-gateways', async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    const gateways = await paymentGatewayService.getAvailableGateways(orgId);
+    res.json({ success: true, data: gateways });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/v1/organizations/:orgId/subscription/checkout
-// Creates a Kashier checkout session for plan upgrade
+// Creates a checkout session for plan upgrade with selected payment gateway
 router.post(
   '/checkout',
   requireRole('OWNER', 'ADMIN'),
@@ -32,13 +45,32 @@ router.post(
     body: z.object({
       plan: z.string().min(1),
       billingCycle: z.enum(['monthly', 'yearly']).optional().default('monthly'),
+      gateway: z.enum(['KASHIER', 'STRIPE', 'PAYPAL']).optional(),
     }),
   }),
   async (req, res, next) => {
     try {
       const { orgId } = req.params as OrgParams;
-      const { plan, billingCycle } = req.body;
-      const result = await subscriptionService.createCheckout(orgId, plan, billingCycle);
+      const { plan, billingCycle, gateway } = req.body;
+
+      // Auto-select gateway if not provided
+      const selectedGateway = gateway || await paymentGatewayService.selectGateway(orgId);
+
+      // Call the appropriate checkout method based on gateway
+      let result;
+      switch (selectedGateway) {
+        case PaymentGateway.STRIPE:
+          result = await subscriptionService.createStripeCheckout(orgId, plan);
+          break;
+        case PaymentGateway.PAYPAL:
+          result = await subscriptionService.createPayPalCheckout(orgId, plan);
+          break;
+        case PaymentGateway.KASHIER:
+        default:
+          result = await subscriptionService.createCheckout(orgId, plan, billingCycle);
+          break;
+      }
+
       res.json({ success: true, data: result });
     } catch (err) {
       next(err);

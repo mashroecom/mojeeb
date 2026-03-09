@@ -161,14 +161,6 @@ export const ConversationList = React.memo(function ConversationList({
               )}
             />
           </button>
-          <button
-            onClick={onExport}
-            disabled={conversations.length === 0}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-muted disabled:opacity-50"
-            title={t('export')}
-          >
-            <Download className="h-4 w-4 text-muted-foreground" />
-          </button>
         </div>
       </div>
 

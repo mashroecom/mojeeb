@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useSubscription, useInvoices, usePlans } from '@/hooks/useSubscription';
+import { useSubscription, useInvoices, usePlans, usePaymentGateways } from '@/hooks/useSubscription';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuthStore } from '@/stores/authStore';
 import { useLocale } from 'next-intl';
@@ -23,6 +23,7 @@ import {
   X,
   Zap,
   Calendar,
+  CreditCard,
 } from 'lucide-react';
 
 export default function BillingPage() {
@@ -34,6 +35,7 @@ export default function BillingPage() {
   const { data: subscription, isLoading, refetch } = useSubscription();
   const { data: invoices, isLoading: loadingInvoices, refetch: refetchInvoices } = useInvoices();
   const { data: planConfigs } = usePlans();
+  const { data: paymentGateways, isLoading: loadingGateways } = usePaymentGateways();
   const orgId = useAuthStore((s) => s.organization?.id);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -44,6 +46,7 @@ export default function BillingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [selectedGateway, setSelectedGateway] = useState<'KASHIER' | 'STRIPE' | 'PAYPAL' | null>(null);
   const [statusMessage, setStatusMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -96,15 +99,29 @@ export default function BillingPage() {
     }
   }, [statusMessage]);
 
+  // Set default gateway when gateways are loaded
+  useEffect(() => {
+    if (paymentGateways && paymentGateways.length > 0 && !selectedGateway) {
+      const enabledGateways = paymentGateways.filter((gw) => gw.enabled);
+      if (enabledGateways.length > 0) {
+        setSelectedGateway(enabledGateways[0].gateway);
+      }
+    }
+  }, [paymentGateways, selectedGateway]);
+
   async function handleUpgrade(plan: string) {
-    if (!orgId) return;
+    if (!orgId || !selectedGateway) return;
     setCheckoutLoading(plan);
     setStatusMessage(null);
 
     try {
-      const { data } = await api.post(`/organizations/${orgId}/subscription/checkout`, { plan, billingCycle });
+      const { data } = await api.post(`/organizations/${orgId}/subscription/checkout`, {
+        plan,
+        billingCycle,
+        gateway: selectedGateway,
+      });
       const checkoutUrl = data.data.checkoutUrl;
-      // Redirect to Kashier checkout
+      // Redirect to payment gateway checkout
       window.location.href = checkoutUrl;
     } catch {
       setStatusMessage({ type: 'error', text: t('upgradeFailed') });
@@ -218,6 +235,19 @@ export default function BillingPage() {
     }
   }
 
+  function getGatewayStyle(gateway: string): { bg: string; text: string } {
+    switch (gateway) {
+      case 'KASHIER':
+        return { bg: 'bg-orange-100', text: 'text-orange-700' };
+      case 'STRIPE':
+        return { bg: 'bg-purple-100', text: 'text-purple-700' };
+      case 'PAYPAL':
+        return { bg: 'bg-blue-100', text: 'text-blue-700' };
+      default:
+        return { bg: 'bg-gray-100', text: 'text-gray-700' };
+    }
+  }
+
   const usageItems = subscription
     ? [
         {
@@ -289,6 +319,50 @@ export default function BillingPage() {
         </div>
       ) : (
         <>
+          {/* Payment Gateway Selector */}
+          {paymentGateways && paymentGateways.length > 0 && (
+            <div className="rounded-xl border bg-card p-6 shadow-sm mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">{t('paymentMethod')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('selectPaymentGateway')}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {paymentGateways
+                  .filter((gw) => gw.enabled)
+                  .map((gateway) => (
+                    <button
+                      key={gateway.gateway}
+                      onClick={() => setSelectedGateway(gateway.gateway)}
+                      className={`flex items-center justify-between rounded-lg border-2 p-4 text-left transition-all ${
+                        selectedGateway === gateway.gateway
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-muted hover:border-primary/50 hover:bg-accent'
+                      }`}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{gateway.displayName}</span>
+                          {selectedGateway === gateway.gateway && (
+                            <Check className="h-4 w-4 text-primary" />
+                          )}
+                        </div>
+                        {gateway.description && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {gateway.description}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {/* Current Plan Card */}
           {subscription && (
             <div className="rounded-xl border bg-card p-6 shadow-sm mb-6">
@@ -491,19 +565,29 @@ export default function BillingPage() {
                     <tr className="border-b text-muted-foreground">
                       <th className="text-start pb-3 font-medium">{t('invoiceDate')}</th>
                       <th className="text-start pb-3 font-medium">{t('invoiceAmount')}</th>
+                      <th className="text-start pb-3 font-medium">{t('gateway')}</th>
                       <th className="text-start pb-3 font-medium">{t('invoiceStatusLabel')}</th>
                       <th className="text-start pb-3 font-medium">{t('invoiceDueDate')}</th>
                       <th className="text-start pb-3 font-medium"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {invoices.map((invoice) => (
+                    {invoices.map((invoice) => {
+                      const gatewayStyle = getGatewayStyle((invoice as any).gateway || 'UNKNOWN');
+                      return (
                       <tr key={invoice.id} className="hover:bg-muted/50 transition-colors">
                         <td className="py-3">
                           {fmtDate(invoice.createdAt, locale)}
                         </td>
                         <td className="py-3 font-medium">
                           {invoice.currency} {Number(invoice.amount).toFixed(2)}
+                        </td>
+                        <td className="py-3">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${gatewayStyle.bg} ${gatewayStyle.text}`}
+                          >
+                            {(invoice as any).gateway || 'N/A'}
+                          </span>
                         </td>
                         <td className="py-3">
                           <span
@@ -552,7 +636,8 @@ export default function BillingPage() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

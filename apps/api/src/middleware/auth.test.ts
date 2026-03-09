@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Mock } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { authenticate, requireRole } from './auth';
@@ -94,7 +95,7 @@ describe('authenticate middleware', () => {
     const { req, res, next } = createMockReqRes({ authorization: `Bearer ${token}` });
     await authenticate(req, res, next);
 
-    expect(next).toHaveBeenCalledWith();
+    expect(next as unknown as Mock).toHaveBeenCalledWith();
     expect(req.user).toBeDefined();
     expect(req.user!.userId).toBe('user123');
     expect(req.user!.email).toBe('test@test.com');
@@ -142,7 +143,7 @@ describe('requireRole middleware', () => {
     const middleware = requireRole('OWNER', 'ADMIN');
     middleware(req, res, next);
 
-    expect(next).toHaveBeenCalledWith();
+    expect(next as unknown as Mock).toHaveBeenCalledWith();
   });
 
   it('allows OWNER role', () => {
@@ -151,6 +152,6 @@ describe('requireRole middleware', () => {
     const middleware = requireRole('OWNER');
     middleware(req, res, next);
 
-    expect(next).toHaveBeenCalledWith();
+    expect(next as unknown as Mock).toHaveBeenCalledWith();
   });
 });

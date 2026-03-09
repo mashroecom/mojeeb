@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import { config } from '../config';
 import { prisma } from '../config/database';
+import type { PrismaClient } from '@prisma/client';
 import { configService } from './config.service';
 import { BadRequestError, UnauthorizedError, ConflictError, NotFoundError } from '../utils/errors';
 import type { JwtPayload } from '../middleware/auth';

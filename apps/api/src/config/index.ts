@@ -43,6 +43,18 @@ export const config = {
     webhookSecret: process.env.KASHIER_WEBHOOK_SECRET || '',
   },
 
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+  },
+
+  paypal: {
+    clientId: process.env.PAYPAL_CLIENT_ID || '',
+    clientSecret: process.env.PAYPAL_CLIENT_SECRET || '',
+    mode: process.env.PAYPAL_MODE || 'sandbox',
+    webhookId: process.env.PAYPAL_WEBHOOK_ID || '',
+  },
+
   email: {
     resendApiKey: process.env.RESEND_API_KEY || '',
     from: process.env.EMAIL_FROM || 'noreply@mojeeb.app',

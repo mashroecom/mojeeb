@@ -13,6 +13,7 @@ export interface Subscription {
   id: string;
   plan: 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
   status: 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'TRIALING';
+  paymentGateway: 'KASHIER' | 'STRIPE' | 'PAYPAL';
   messagesUsed: number;
   messagesLimit: number;
   agentsUsed: number;
@@ -118,5 +119,31 @@ export function usePlans() {
       return data.data;
     },
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Payment Gateways
+// ---------------------------------------------------------------------------
+
+export interface PaymentGatewayInfo {
+  gateway: 'KASHIER' | 'STRIPE' | 'PAYPAL';
+  displayName: string;
+  enabled: boolean;
+  description?: string;
+}
+
+export function usePaymentGateways() {
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  return useQuery({
+    queryKey: ['organizations', orgId, 'subscription', 'available-gateways'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<PaymentGatewayInfo[]>>(
+        `/organizations/${orgId}/subscription/available-gateways`,
+      );
+      return data.data;
+    },
+    enabled: !!orgId,
   });
 }

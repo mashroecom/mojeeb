@@ -1003,6 +1003,7 @@
       "invoiceDate": "التاريخ",
       "invoiceAmount": "المبلغ",
       "invoiceStatusLabel": "الحالة",
+      "gateway": "بوابة الدفع",
       "invoiceStatus": {
         "PAID": "مدفوع",
         "PENDING": "قيد الانتظار",
@@ -1015,6 +1016,8 @@
       "viewInvoice": "عرض",
       "downloadInvoice": "تحميل",
       "downloadFailed": "فشل تحميل الفاتورة. يرجى المحاولة مرة أخرى.",
+      "paymentMethod": "طريقة الدفع",
+      "selectPaymentGateway": "اختر بوابة الدفع المفضلة لديك",
       "status": {
         "ACTIVE": "نشط",
         "PAST_DUE": "متأخر الدفع",

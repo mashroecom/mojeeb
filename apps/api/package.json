@@ -36,7 +36,9 @@
     "rate-limit-redis": "^4.2.0",
     "resend": "^6.9.1",
     "socket.io": "^4.8.0",
-    "zod": "^3.24.0"
+    "stripe": "^17.5.0",
+    "zod": "^3.24.0",
+    "@paypal/checkout-server-sdk": "^1.0.3"
   },
   "devDependencies": {
     "@types/compression": "^1.8.1",
