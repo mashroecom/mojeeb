@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "003-add-conversation-tagging-ui-to-dashboard",
+  "spec": "047-canned-responses-quick-reply-templates",
   "state": "building",
   "subtasks": {
-    "completed": 2,
-    "total": 5,
+    "completed": 15,
+    "total": 16,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Frontend Implementation",
+    "current": "End-to-End Integration",
     "id": null,
-    "total": 5
+    "total": 1
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 4,
-    "started_at": "2026-03-09T16:05:38.909827"
+    "number": 17,
+    "started_at": "2026-03-09T21:17:43.989683"
   },
-  "last_update": "2026-03-09T16:16:13.451873"
+  "last_update": "2026-03-09T22:16:16.797200"
 }
