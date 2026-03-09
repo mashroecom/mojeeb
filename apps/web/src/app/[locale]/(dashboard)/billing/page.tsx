@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useSubscription, useInvoices, usePlans } from '@/hooks/useSubscription';
+import { useSubscription, useInvoices, usePlans, usePaymentGateways } from '@/hooks/useSubscription';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuthStore } from '@/stores/authStore';
 import { useLocale } from 'next-intl';
@@ -22,6 +22,7 @@ import {
   X,
   Zap,
   Calendar,
+  CreditCard,
 } from 'lucide-react';
 
 export default function BillingPage() {
@@ -31,6 +32,7 @@ export default function BillingPage() {
   const { data: subscription, isLoading, refetch } = useSubscription();
   const { data: invoices, isLoading: loadingInvoices, refetch: refetchInvoices } = useInvoices();
   const { data: planConfigs } = usePlans();
+  const { data: paymentGateways, isLoading: loadingGateways } = usePaymentGateways();
   const orgId = useAuthStore((s) => s.organization?.id);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -40,6 +42,7 @@ export default function BillingPage() {
 
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [selectedGateway, setSelectedGateway] = useState<'KASHIER' | 'STRIPE' | 'PAYPAL' | null>(null);
   const [statusMessage, setStatusMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -94,15 +97,28 @@ export default function BillingPage() {
     }
   }, [statusMessage]);
 
+  // Set default gateway when gateways are loaded
+  useEffect(() => {
+    if (paymentGateways && paymentGateways.length > 0 && !selectedGateway) {
+      const enabledGateways = paymentGateways.filter((gw) => gw.enabled);
+      if (enabledGateways.length > 0) {
+        setSelectedGateway(enabledGateways[0].gateway);
+      }
+    }
+  }, [paymentGateways, selectedGateway]);
+
   async function handleUpgrade(plan: string) {
-    if (!orgId) return;
+    if (!orgId || !selectedGateway) return;
     setCheckoutLoading(plan);
     setStatusMessage(null);
 
     try {
-      const { data } = await api.post(`/organizations/${orgId}/subscription/checkout`, { plan });
+      const { data } = await api.post(`/organizations/${orgId}/subscription/checkout`, {
+        plan,
+        gateway: selectedGateway,
+      });
       const checkoutUrl = data.data.checkoutUrl;
-      // Redirect to Kashier checkout
+      // Redirect to payment gateway checkout
       window.location.href = checkoutUrl;
     } catch (err: any) {
       const message = err?.response?.data?.error || t('upgradeFailed');
@@ -278,6 +294,50 @@ export default function BillingPage() {
         </div>
       ) : (
         <>
+          {/* Payment Gateway Selector */}
+          {paymentGateways && paymentGateways.length > 0 && (
+            <div className="rounded-xl border bg-card p-6 shadow-sm mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">{t('paymentMethod')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('selectPaymentGateway')}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {paymentGateways
+                  .filter((gw) => gw.enabled)
+                  .map((gateway) => (
+                    <button
+                      key={gateway.gateway}
+                      onClick={() => setSelectedGateway(gateway.gateway)}
+                      className={`flex items-center justify-between rounded-lg border-2 p-4 text-left transition-all ${
+                        selectedGateway === gateway.gateway
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-muted hover:border-primary/50 hover:bg-accent'
+                      }`}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{gateway.displayName}</span>
+                          {selectedGateway === gateway.gateway && (
+                            <Check className="h-4 w-4 text-primary" />
+                          )}
+                        </div>
+                        {gateway.description && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {gateway.description}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {/* Current Plan Card */}
           {subscription && (
             <div className="rounded-xl border bg-card p-6 shadow-sm mb-6">

@@ -790,6 +790,8 @@
       "viewInvoice": "View",
       "downloadInvoice": "Download",
       "downloadFailed": "Failed to download invoice. Please try again.",
+      "paymentMethod": "Payment Method",
+      "selectPaymentGateway": "Choose your preferred payment gateway",
       "status": {
         "ACTIVE": "Active",
         "PAST_DUE": "Past Due",
