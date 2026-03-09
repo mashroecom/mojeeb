@@ -782,6 +782,7 @@
       "invoiceHistory": "سجل الفواتير",
       "invoiceDate": "التاريخ",
       "invoiceAmount": "المبلغ",
+      "gateway": "بوابة الدفع",
       "invoiceStatus": "الحالة",
       "invoiceDueDate": "تاريخ الاستحقاق",
       "createTestInvoice": "إنشاء فاتورة تجريبية",

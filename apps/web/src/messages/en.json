@@ -782,6 +782,7 @@
       "invoiceHistory": "Invoice History",
       "invoiceDate": "Date",
       "invoiceAmount": "Amount",
+      "gateway": "Payment Gateway",
       "invoiceStatus": "Status",
       "invoiceDueDate": "Due Date",
       "createTestInvoice": "Create Test Invoice",

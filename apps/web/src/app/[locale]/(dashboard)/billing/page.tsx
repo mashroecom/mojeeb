@@ -234,6 +234,19 @@ export default function BillingPage() {
     }
   }
 
+  function getGatewayStyle(gateway: string): { bg: string; text: string } {
+    switch (gateway) {
+      case 'KASHIER':
+        return { bg: 'bg-orange-100', text: 'text-orange-700' };
+      case 'STRIPE':
+        return { bg: 'bg-purple-100', text: 'text-purple-700' };
+      case 'PAYPAL':
+        return { bg: 'bg-blue-100', text: 'text-blue-700' };
+      default:
+        return { bg: 'bg-gray-100', text: 'text-gray-700' };
+    }
+  }
+
   const usageItems = subscription
     ? [
         {
@@ -511,19 +524,29 @@ export default function BillingPage() {
                     <tr className="border-b text-muted-foreground">
                       <th className="text-start pb-3 font-medium">{t('invoiceDate')}</th>
                       <th className="text-start pb-3 font-medium">{t('invoiceAmount')}</th>
+                      <th className="text-start pb-3 font-medium">{t('gateway')}</th>
                       <th className="text-start pb-3 font-medium">{t('invoiceStatus')}</th>
                       <th className="text-start pb-3 font-medium">{t('invoiceDueDate')}</th>
                       <th className="text-start pb-3 font-medium"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {invoices.map((invoice) => (
+                    {invoices.map((invoice) => {
+                      const gatewayStyle = getGatewayStyle((invoice as any).gateway || 'UNKNOWN');
+                      return (
                       <tr key={invoice.id} className="hover:bg-muted/50 transition-colors">
                         <td className="py-3">
                           {fmtDate(invoice.createdAt, locale)}
                         </td>
                         <td className="py-3 font-medium">
                           {invoice.currency} {Number(invoice.amount).toFixed(2)}
+                        </td>
+                        <td className="py-3">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${gatewayStyle.bg} ${gatewayStyle.text}`}
+                          >
+                            {(invoice as any).gateway || 'N/A'}
+                          </span>
                         </td>
                         <td className="py-3">
                           <span
@@ -572,7 +595,8 @@ export default function BillingPage() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
