@@ -400,6 +400,211 @@ export class AnalyticsService {
     }));
     }); // end cached
   }
+
+  // ─── 8. Queue Depth (active conversations per agent) ────────────
+
+  async getQueueDepth(orgId: string, userId?: string) {
+    const cacheKey = userId
+      ? `queue-depth:${orgId}:${userId}`
+      : `queue-depth:${orgId}`;
+
+    return this.cached(cacheKey, 60, async () => {
+    const where = userId
+      ? { orgId, assignedToHuman: userId, status: { in: ['ACTIVE' as const, 'HANDED_OFF' as const, 'WAITING' as const] } }
+      : { orgId, status: { in: ['ACTIVE' as const, 'HANDED_OFF' as const, 'WAITING' as const] }, assignedToHuman: { not: null } };
+
+    if (userId) {
+      const count = await prisma.conversation.count({ where });
+      return { userId, queueDepth: count };
+    }
+
+    const conversations = await prisma.conversation.findMany({
+      where,
+      select: { assignedToHuman: true },
+    });
+
+    const queueByAgent = new Map<string, number>();
+    for (const conv of conversations) {
+      if (conv.assignedToHuman) {
+        const current = queueByAgent.get(conv.assignedToHuman) ?? 0;
+        queueByAgent.set(conv.assignedToHuman, current + 1);
+      }
+    }
+
+    const users = await prisma.user.findMany({
+      where: { id: { in: Array.from(queueByAgent.keys()) } },
+      select: { id: true, firstName: true, lastName: true },
+    });
+
+    return users.map((user) => ({
+      userId: user.id,
+      userName: `${user.firstName} ${user.lastName}`,
+      queueDepth: queueByAgent.get(user.id) ?? 0,
+    }));
+    }); // end cached
+  }
+
+  // ─── 9. Handoff Volume Tracking ─────────────────────────────────
+
+  async getHandoffVolume(orgId: string, startDate?: Date, endDate?: Date) {
+    const start = startDate ?? this.defaultStart();
+    const end = endDate ?? this.defaultEnd();
+    const cacheKey = `handoff-volume:${orgId}:${start.toISOString().slice(0, 10)}:${end.toISOString().slice(0, 10)}`;
+
+    return this.cached(cacheKey, 300, async () => {
+    const [totalHandoffs, handoffsByAgent] = await Promise.all([
+      prisma.analyticsEvent.count({
+        where: {
+          orgId,
+          eventType: 'HUMAN_HANDOFF',
+          date: { gte: start, lte: end },
+        },
+      }),
+      prisma.conversation.groupBy({
+        by: ['assignedToHuman'],
+        where: {
+          orgId,
+          status: { in: ['HANDED_OFF', 'WAITING', 'RESOLVED'] },
+          assignedToHuman: { not: null },
+          updatedAt: { gte: start, lte: end },
+        },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const userIds = handoffsByAgent
+      .map((h) => h.assignedToHuman)
+      .filter((id): id is string => id !== null);
+
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, firstName: true, lastName: true },
+    });
+
+    const userMap = new Map(users.map((u) => [u.id, `${u.firstName} ${u.lastName}`]));
+
+    return {
+      totalHandoffs,
+      byAgent: handoffsByAgent.map((row) => ({
+        userId: row.assignedToHuman,
+        userName: row.assignedToHuman ? userMap.get(row.assignedToHuman) : 'Unknown',
+        handoffCount: row._count._all,
+      })),
+    };
+    }); // end cached
+  }
+
+  // ─── 10. Agent Availability Status ──────────────────────────────
+
+  async getAgentAvailabilityStatus(orgId: string) {
+    return this.cached(`availability:${orgId}`, 60, async () => {
+    const recentThreshold = new Date(Date.now() - 15 * 60 * 1000); // 15 minutes
+
+    const recentMessages = await prisma.message.findMany({
+      where: {
+        conversation: { orgId },
+        role: 'HUMAN_AGENT',
+        createdAt: { gte: recentThreshold },
+        humanAgentId: { not: null },
+      },
+      select: { humanAgentId: true },
+      distinct: ['humanAgentId'],
+    });
+
+    const activeAgentIds = recentMessages
+      .map((m) => m.humanAgentId)
+      .filter((id): id is string => id !== null);
+
+    const allAgents = await prisma.orgMembership.findMany({
+      where: { orgId },
+      select: {
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            lastLoginAt: true,
+          },
+        },
+      },
+    });
+
+    return allAgents.map((membership) => ({
+      userId: membership.user.id,
+      userName: `${membership.user.firstName} ${membership.user.lastName}`,
+      isOnline: activeAgentIds.includes(membership.user.id),
+      lastLoginAt: membership.user.lastLoginAt,
+    }));
+    }); // end cached
+  }
+
+  // ─── 11. Team Performance Time-Series ───────────────────────────
+
+  async getTeamPerformance(orgId: string, params: ConversationMetricsParams) {
+    const start = params.startDate ?? this.defaultStart();
+    const end = params.endDate ?? this.defaultEnd();
+    const trunc = this.dateTruncExpr(params.groupBy);
+    const cacheKey = `team-perf:${orgId}:${params.groupBy}:${start.toISOString().slice(0, 10)}:${end.toISOString().slice(0, 10)}`;
+
+    return this.cached(cacheKey, 300, async () => {
+    const handoffsByPeriod = await prisma.$queryRaw<TimeBucket[]>`
+      SELECT ${Prisma.raw(trunc.replace(/"createdAt"/g, 'ae."createdAt"'))} AS "date",
+             COUNT(*)::bigint AS "count"
+        FROM "analytics_events" ae
+       WHERE ae."orgId" = ${orgId}
+         AND ae."eventType" = 'HUMAN_HANDOFF'
+         AND ae."createdAt" >= ${start}
+         AND ae."createdAt" <= ${end}
+       GROUP BY 1
+       ORDER BY 1
+    `;
+
+    const humanMessagesByPeriod = await prisma.$queryRaw<TimeBucket[]>`
+      SELECT ${Prisma.raw(trunc.replace(/"createdAt"/g, 'm."createdAt"'))} AS "date",
+             COUNT(*)::bigint AS "count"
+        FROM "messages" m
+        JOIN "conversations" c ON c."id" = m."conversationId"
+       WHERE c."orgId" = ${orgId}
+         AND m."role" = 'HUMAN_AGENT'
+         AND m."createdAt" >= ${start}
+         AND m."createdAt" <= ${end}
+       GROUP BY 1
+       ORDER BY 1
+    `;
+
+    const activeAgentsByPeriod = await prisma.$queryRaw<
+      { date: Date; count: bigint }[]
+    >`
+      SELECT ${Prisma.raw(trunc.replace(/"createdAt"/g, 'm."createdAt"'))} AS "date",
+             COUNT(DISTINCT m."humanAgentId")::bigint AS "count"
+        FROM "messages" m
+        JOIN "conversations" c ON c."id" = m."conversationId"
+       WHERE c."orgId" = ${orgId}
+         AND m."role" = 'HUMAN_AGENT'
+         AND m."humanAgentId" IS NOT NULL
+         AND m."createdAt" >= ${start}
+         AND m."createdAt" <= ${end}
+       GROUP BY 1
+       ORDER BY 1
+    `;
+
+    return {
+      handoffs: handoffsByPeriod.map((r) => ({
+        date: r.date,
+        count: Number(r.count),
+      })),
+      humanMessages: humanMessagesByPeriod.map((r) => ({
+        date: r.date,
+        count: Number(r.count),
+      })),
+      activeAgents: activeAgentsByPeriod.map((r) => ({
+        date: r.date,
+        count: Number(r.count),
+      })),
+    };
+    }); // end cached
+  }
 }
 
 export const analyticsService = new AnalyticsService();
