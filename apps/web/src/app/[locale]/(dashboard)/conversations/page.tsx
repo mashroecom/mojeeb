@@ -222,10 +222,10 @@ export default function ConversationsPage() {
   function handleExport() {
     if (!conversations.length) return;
     const rows = conversations.map((conv) => ({
-      customerName: conv.customerName ?? conv.lead?.name ?? conv.customer?.name ?? '',
+      customerName: conv.customerName ?? '',
       channel: conv.channel?.name ?? '',
       status: conv.status,
-      messageCount: conv._count?.messages ?? 0,
+      messageCount: conv.messages?.length ?? 0,
       emotion: conv.lastEmotion ?? '',
       lastMessageAt: fmtDateTime(conv.lastMessageAt, locale),
     }));
