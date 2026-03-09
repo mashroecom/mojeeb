@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
-import { useTemplates, useTemplateSuggestions } from '@/hooks/useTemplates';
+import { useTemplates, useTemplateSuggestions, useTemplateUsage } from '@/hooks/useTemplates';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -113,6 +113,18 @@ export function TemplatePicker({
 
   const suggestions = suggestionsData?.suggestions || [];
 
+  // Track template usage
+  const trackUsage = useTemplateUsage();
+
+  // Handle template selection with usage tracking
+  const handleSelectTemplate = useCallback(
+    (template: Template) => {
+      trackUsage.mutate(template.id);
+      onSelect(template);
+    },
+    [trackUsage, onSelect],
+  );
+
   // Combine templates: AI suggestions first, then regular templates
   const allItems = useMemo(() => {
     const items: Array<{ type: 'suggestion' | 'template'; data: Template; meta?: { relevance: number; reasoning: string } }> = [];
@@ -160,14 +172,14 @@ export function TemplatePicker({
         e.preventDefault();
         const item = allItems[focusIndex];
         if (item) {
-          onSelect(item.data);
+          handleSelectTemplate(item.data);
         }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [allItems, focusIndex, onClose, onSelect]);
+  }, [allItems, focusIndex, onClose, handleSelectTemplate]);
 
   // Scroll focused item into view
   useEffect(() => {
@@ -218,7 +230,7 @@ export function TemplatePicker({
       <button
         key={`${type}-${template.id}`}
         ref={(el) => (itemRefs.current[index] = el)}
-        onClick={() => onSelect(template)}
+        onClick={() => handleSelectTemplate(template)}
         className={cn(
           'w-full text-start p-3 rounded-lg border transition-colors',
           'hover:bg-accent hover:border-primary/30',
