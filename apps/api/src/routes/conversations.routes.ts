@@ -122,6 +122,30 @@ router.post('/bulk-status', async (req, res, next) => {
   }
 });
 
+// POST /api/v1/organizations/:orgId/conversations/bulk-delete
+router.post('/bulk-delete', async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    const { conversationIds } = req.body as { conversationIds: string[] };
+
+    if (!Array.isArray(conversationIds) || conversationIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'conversationIds must be a non-empty array',
+      });
+    }
+
+    const result = await conversationService.bulkDelete(orgId, conversationIds);
+    emitToOrg(orgId, 'conversations:bulk-deleted', {
+      conversationIds,
+      deletedCount: result.deletedCount,
+    });
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/v1/organizations/:orgId/conversations/:convId
 router.get('/:convId', async (req, res, next) => {
   try {
