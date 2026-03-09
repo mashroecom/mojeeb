@@ -301,6 +301,52 @@ export function setupWebSocket(httpServer: HttpServer) {
   adminNs.on('connection', (socket) => {
     socket.join('admin:feed');
     logger.info({ userId: socket.data.user?.userId }, 'Admin connected to live feed');
+
+    // Team performance real-time metrics subscription
+    let metricsInterval: NodeJS.Timeout | null = null;
+
+    socket.on('team:metrics:subscribe', async (orgId: string) => {
+      if (typeof orgId !== 'string' || !SAFE_ID.test(orgId)) return;
+
+      // Clear any existing interval
+      if (metricsInterval) {
+        clearInterval(metricsInterval);
+      }
+
+      // Send initial metrics immediately
+      try {
+        const { teamPerformanceService } = await import('../services/teamPerformance.service');
+        const metrics = await teamPerformanceService.getRealTimeMetrics(orgId);
+        socket.emit('team:metrics:update', metrics);
+      } catch (err) {
+        logger.warn({ err, orgId }, 'Failed to fetch initial team metrics');
+      }
+
+      // Poll and emit metrics every 5 seconds
+      metricsInterval = setInterval(async () => {
+        try {
+          const { teamPerformanceService } = await import('../services/teamPerformance.service');
+          const metrics = await teamPerformanceService.getRealTimeMetrics(orgId);
+          socket.emit('team:metrics:update', metrics);
+        } catch (err) {
+          logger.warn({ err, orgId }, 'Failed to fetch team metrics');
+        }
+      }, 5000);
+    });
+
+    socket.on('team:metrics:unsubscribe', () => {
+      if (metricsInterval) {
+        clearInterval(metricsInterval);
+        metricsInterval = null;
+      }
+    });
+
+    socket.on('disconnect', () => {
+      if (metricsInterval) {
+        clearInterval(metricsInterval);
+        metricsInterval = null;
+      }
+    });
   });
 
   return io;
