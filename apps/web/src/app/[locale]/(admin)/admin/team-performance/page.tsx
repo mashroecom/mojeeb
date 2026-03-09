@@ -7,6 +7,8 @@ import { AgentComparisonChart } from '@/components/analytics/AgentComparisonChar
 import { TeamPerformanceCard } from '@/components/analytics/TeamPerformanceCard';
 import { Download, FileText, Calendar, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { exportToCsv } from '@/lib/exportCsv';
+import { useTeamPerformanceHistorical } from '@/hooks/useTeamPerformance';
 
 export default function TeamPerformancePage() {
   const [startDate, setStartDate] = useState<string>('');
@@ -19,12 +21,62 @@ export default function TeamPerformancePage() {
   const { organization } = useAuthStore();
   const orgId = organization?.id || '';
 
+  // Fetch historical data for export
+  const { data: historicalData } = useTeamPerformanceHistorical({
+    orgId,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  });
+
   const handleExportCsv = async () => {
     setExportingCsv(true);
     try {
-      // TODO: Implement CSV export in phase 6 (subtask-6-3)
-      console.log('Export CSV clicked - to be implemented');
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate export
+      const agentMetrics = historicalData?.agentMetrics || [];
+
+      if (agentMetrics.length === 0) {
+        return;
+      }
+
+      // Format time in milliseconds to readable format
+      const formatTime = (ms: number): string => {
+        if (ms < 1000) return `${ms}ms`;
+        if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+        const minutes = Math.floor(ms / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000);
+        return `${minutes}m ${seconds}s`;
+      };
+
+      // Transform agent metrics for CSV
+      const rows = agentMetrics.map((agent: {
+        agentId: string;
+        agentName: string;
+        conversationsHandled: number;
+        avgResponseTimeMs: number;
+        avgResolutionTimeMs: number;
+        avgCSAT: number;
+        handoffCount: number;
+        messageCount: number;
+      }) => ({
+        'Agent ID': agent.agentId,
+        'Agent Name': agent.agentName || 'Unknown Agent',
+        'Conversations Handled': agent.conversationsHandled ?? 0,
+        'Avg Response Time': formatTime(agent.avgResponseTimeMs ?? 0),
+        'Avg Resolution Time': formatTime(agent.avgResolutionTimeMs ?? 0),
+        'Avg CSAT': (agent.avgCSAT ?? 0).toFixed(2),
+        'Handoff Count': agent.handoffCount ?? 0,
+        'Message Count': agent.messageCount ?? 0,
+      }));
+
+      // Generate filename with date range
+      const dateRangeStr = startDate && endDate
+        ? `${startDate}_to_${endDate}`
+        : startDate
+        ? `from_${startDate}`
+        : endDate
+        ? `until_${endDate}`
+        : 'all_time';
+
+      exportToCsv(`team_performance_${dateRangeStr}`, rows);
     } catch (error) {
       console.error('CSV export failed:', error);
     } finally {
@@ -35,9 +87,8 @@ export default function TeamPerformancePage() {
   const handleExportPdf = async () => {
     setExportingPdf(true);
     try {
-      // TODO: Implement PDF export in phase 6 (subtask-6-3)
-      console.log('Export PDF clicked - to be implemented');
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate export
+      // Use browser's print dialog which allows saving as PDF
+      window.print();
     } catch (error) {
       console.error('PDF export failed:', error);
     } finally {
