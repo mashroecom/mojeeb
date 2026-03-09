@@ -14,6 +14,7 @@ import { emailQueue } from '../queues';
 import { verificationService } from './verification.service';
 import { adminNotificationService } from './adminNotification.service';
 import { logger } from '../config/logger';
+import type { Prisma } from '@prisma/client';
 
 // Cached Google OAuth client that is recreated when the client ID changes
 let cachedGoogleClient: OAuth2Client = new OAuth2Client(config.google.clientId);
@@ -649,7 +650,7 @@ export class AuthService {
   }
 
   /** Generate tokens using a specific Prisma client (or transaction). */
-  private async generateTokensInTx(tx: Pick<typeof prisma, 'session'>, userId: string, email: string) {
+  private async generateTokensInTx(tx: Prisma.TransactionClient | typeof prisma, userId: string, email: string) {
     const jti = crypto.randomUUID();
     const payload: JwtPayload = { userId, email, jti };
 

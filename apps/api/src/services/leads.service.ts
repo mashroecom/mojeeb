@@ -1,5 +1,6 @@
 import { prisma } from '../config/database';
 import { NotFoundError } from '../utils/errors';
+import { webhookService } from './webhook.service';
 
 export class LeadsService {
   async list(
@@ -65,10 +66,14 @@ export class LeadsService {
     const lead = await prisma.lead.findFirst({ where: { id: leadId, orgId } });
     if (!lead) throw new NotFoundError('Lead not found');
 
-    return prisma.lead.update({
+    const updatedLead = await prisma.lead.update({
       where: { id: leadId },
       data: { status: status as any },
     });
+
+    await webhookService.dispatch(orgId, 'lead.updated', updatedLead);
+
+    return updatedLead;
   }
 
   async create(
@@ -117,7 +122,7 @@ export class LeadsService {
     const lead = await prisma.lead.findFirst({ where: { id: leadId, orgId } });
     if (!lead) throw new NotFoundError('Lead not found');
 
-    return prisma.lead.update({
+    const updatedLead = await prisma.lead.update({
       where: { id: leadId },
       data: {
         ...(data.name !== undefined && { name: data.name || null }),
@@ -132,6 +137,10 @@ export class LeadsService {
         conversation: { select: { id: true, customerName: true } },
       },
     });
+
+    await webhookService.dispatch(orgId, 'lead.updated', updatedLead);
+
+    return updatedLead;
   }
 
   async delete(orgId: string, leadId: string) {
