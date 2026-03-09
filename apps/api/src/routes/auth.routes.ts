@@ -341,7 +341,7 @@ router.get('/sessions', authenticate, async (req, res, next) => {
 });
 
 // DELETE /api/v1/auth/sessions/:sessionId - revoke a specific session
-router.delete('/sessions/:sessionId', authenticate, async (req, res, next) => {
+router.delete('/sessions/:sessionId', destructiveActionLimiter, authenticate, async (req, res, next) => {
   try {
     const sessionId = req.params.sessionId as string;
     const session = await prisma.session.findFirst({
