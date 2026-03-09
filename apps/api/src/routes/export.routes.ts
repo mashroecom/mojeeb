@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../config/database';
 import { analyticsService } from '../services/analytics.service';
 import { authenticate, orgContext } from '../middleware/auth';
+import { csvSanitize } from '../utils/csvSanitize';
 
 interface OrgParams { orgId: string; [key: string]: string; }
 
@@ -9,21 +10,11 @@ const router: Router = Router({ mergeParams: true });
 
 router.use(authenticate, orgContext);
 
-// ─── Helper: escape a CSV field value ──────────────────────────────
-function csvEscape(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  const str = String(value);
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
-
 // ─── Helper: build CSV string from headers + rows ──────────────────
 function buildCsv(headers: string[], rows: string[][]): string {
   const lines = [headers.join(',')];
   for (const row of rows) {
-    lines.push(row.map(csvEscape).join(','));
+    lines.push(row.map(csvSanitize).join(','));
   }
   return lines.join('\n');
 }
