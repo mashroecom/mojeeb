@@ -46,6 +46,7 @@ docker/data/
 
 # Backups
 backups/
+CREDENTIALS_BACKUP.txt
 
 # Uploads
 uploads/

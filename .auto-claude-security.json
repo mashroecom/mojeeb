@@ -132,7 +132,6 @@
     "clang",
     "clang++",
     "cmake",
-    "composer",
     "createdb",
     "createuser",
     "dive",
@@ -146,37 +145,26 @@
     "g++",
     "gcc",
     "initdb",
-    "ipython",
-    "jupyter",
     "ld",
     "make",
     "meson",
     "ninja",
     "nm",
     "node",
-    "notebook",
     "npm",
     "npx",
     "objdump",
-    "pdb",
     "pg_ctl",
     "pg_dump",
     "pg_dumpall",
     "pg_isready",
     "pg_restore",
-    "php",
-    "pip",
-    "pip3",
-    "pipx",
     "pnpm",
     "pnpx",
     "postgres",
     "prettier",
     "prisma",
     "psql",
-    "pudb",
-    "python",
-    "python3",
     "redis-benchmark",
     "redis-cli",
     "redis-server",
@@ -195,10 +183,8 @@
   "custom_commands": [],
   "detected_stack": {
     "languages": [
-      "python",
       "javascript",
       "typescript",
-      "php",
       "c",
       "cpp"
     ],
@@ -212,8 +198,8 @@
       "prisma"
     ],
     "databases": [
-      "redis",
-      "postgresql"
+      "postgresql",
+      "redis"
     ],
     "infrastructure": [
       "docker"
@@ -244,8 +230,7 @@
     "cargo_aliases": [],
     "shell_scripts": []
   },
-  "project_dir": "D:\\mojeeb",
-  "created_at": "2026-03-09T15:34:18.099332",
-  "project_hash": "09aa5db61301ad8afb9dc8bf766b9b71",
-  "inherited_from": "D:\\mojeeb"
+  "project_dir": "D:\\mojeeb\\.auto-claude\\worktrees\\tasks\\011-rotate-and-remove-live-api-keys-secrets-from-env-f",
+  "created_at": "2026-03-09T23:40:09.407130",
+  "project_hash": "caf41bda26cec974ab4f889894378c8d"
 }
