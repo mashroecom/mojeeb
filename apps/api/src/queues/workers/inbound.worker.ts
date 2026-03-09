@@ -5,6 +5,7 @@ import { logger } from '../../config/logger';
 import { aiQueue, analyticsQueue } from '../index';
 import { moveToDeadLetterQueue } from '../dlq';
 import { emitToOrg, emitToConversation } from '../../websocket/index';
+import { webhookService } from '../../services/webhook.service';
 import type { InboundMessage } from '@mojeeb/shared-types';
 
 interface InboundJobData {
@@ -76,6 +77,16 @@ export const inboundWorker = new Worker(
         data: { channelType: data.channelType, conversationId: conversation.id },
         channelType: data.channelType,
       });
+
+      await webhookService.dispatch(data.orgId, 'conversation.created', {
+        conversationId: conversation.id,
+        channelId: conversation.channelId,
+        customerId: conversation.customerId,
+        customerName: conversation.customerName,
+        customerPhone: conversation.customerPhone,
+        status: conversation.status,
+        createdAt: conversation.createdAt,
+      });
     }
 
     // 2. Atomic check-and-increment subscription usage (prevents race condition)
@@ -100,6 +111,15 @@ export const inboundWorker = new Worker(
         externalId: data.message.externalMessageId,
         metadata: data.message.rawPayload as any,
       },
+    });
+
+    await webhookService.dispatch(data.orgId, 'message.received', {
+      messageId: message.id,
+      conversationId: conversation.id,
+      role: message.role,
+      content: message.content,
+      contentType: message.contentType,
+      createdAt: message.createdAt,
     });
 
     // 4. Update conversation stats
