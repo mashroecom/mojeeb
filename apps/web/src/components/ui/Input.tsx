@@ -51,6 +51,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <p
             id={inputId ? `${inputId}-error` : undefined}
             className="mt-1.5 text-xs text-destructive"
+            aria-live="polite"
           >
             {error}
           </p>
