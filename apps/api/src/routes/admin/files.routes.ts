@@ -55,13 +55,14 @@ router.post('/', upload.single('file'), async (req: Request, res: Response, next
       return res.status(400).json({ success: false, error: 'No file provided' });
     }
 
-    const relativePath = req.file.filename;
+    const filename = req.file.filename;
+    const relativePath = `/files/${filename}`;
 
     await auditLogService.log({
       userId: (req as any).user.id,
       action: 'UPLOAD_FILE',
       targetType: 'File',
-      targetId: relativePath,
+      targetId: filename,
       metadata: { originalName: req.file.originalname, size: req.file.size, mimeType: req.file.mimetype },
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],

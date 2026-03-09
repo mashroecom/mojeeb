@@ -1,7 +1,9 @@
 import path from 'path';
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
 import { prisma } from '../../config/database';
+import { config } from '../../config';
 import { logger } from '../../config/logger';
 import { inboundQueue } from '../../queues';
 import { getChannelAdapter } from '../../channels';
@@ -52,6 +54,24 @@ const upload = multer({
     }
   },
 });
+
+/**
+ * Generate a signed URL for visitor file access
+ * @param filename - The uploaded file's filename
+ * @param visitorId - The visitor's ID
+ * @returns Signed file URL with token query parameter
+ */
+function generateSignedFileUrl(filename: string, visitorId: string): string {
+  const payload = {
+    visitorId,
+    filename,
+  };
+
+  // Sign token with 7-day expiration
+  const token = jwt.sign(payload, config.jwt.secret, { expiresIn: '7d' });
+
+  return `/files/${filename}?token=${token}`;
+}
 
 /**
  * Middleware: Validate that the channelId exists, is active, and is a WEBCHAT channel.
@@ -467,7 +487,8 @@ router.post('/:channelId/upload', upload.single('file'), async (req: Request, re
     else if (file.mimetype.startsWith('video/')) contentType = 'VIDEO';
     else if (file.mimetype.startsWith('audio/')) contentType = 'AUDIO';
 
-    const fileUrl = `/uploads/${file.filename}`;
+    // Generate signed URL for visitor access
+    const signedFileUrl = generateSignedFileUrl(file.filename, visitorId);
 
     // Find or create conversation (wrapped in transaction to prevent race condition duplicates)
     const conversation = await prisma.$transaction(async (tx) => {
@@ -506,10 +527,10 @@ router.post('/:channelId/upload', upload.single('file'), async (req: Request, re
         externalMessageId: `webchat_file_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         senderId: visitorId,
         senderName: visitorName || undefined,
-        content: fileUrl,
+        content: signedFileUrl,
         contentType,
         rawPayload: {
-          fileUrl,
+          fileUrl: signedFileUrl,
           fileName: file.originalname,
           fileSize: file.size,
           mimeType: file.mimetype,
@@ -522,7 +543,7 @@ router.post('/:channelId/upload', upload.single('file'), async (req: Request, re
       success: true,
       data: {
         conversationId: conversation.id,
-        fileUrl,
+        fileUrl: signedFileUrl,
         contentType,
         fileName: file.originalname,
         fileSize: file.size,

@@ -1,0 +1,1359 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================
+// AUTH & ORGANIZATION
+// ========================
+
+model User {
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  passwordHash         String
+  firstName            String
+  lastName             String
+  avatarUrl            String?
+  isSuperAdmin         Boolean   @default(false)
+  suspendedAt          DateTime?
+  emailVerified        Boolean   @default(false)
+  emailVerifiedAt      DateTime?
+  emailVerifyToken     String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  onboardingCompleted  Boolean   @default(false)
+  lastLoginAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  memberships            OrgMembership[]
+  sentMessages           Message[]            @relation("HumanAgentMessages")
+  sessions               Session[]
+  apiKeys                ApiKey[]
+  notifications          Notification[]
+  verificationTokens     VerificationToken[]
+  auditLogs              AuditLog[]           @relation("AuditLogs")
+  announcements          Announcement[]       @relation("CreatedAnnouncements")
+  notificationPreferences NotificationPreference[]
+  assignedLeads          Lead[]               @relation("AssignedLeads")
+  loginActivities        LoginActivity[]
+  blockedIPs             BlockedIP[]          @relation("BlockedIPs")
+  bulkEmailCampaigns     BulkEmailCampaign[]  @relation("BulkEmailCampaigns")
+  adminNotifications     AdminNotification[]  @relation("AdminNotifications")
+
+  @@index([isSuperAdmin])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Organization {
+  id                  String    @id @default(cuid())
+  name                String
+  slug                String    @unique
+  logoUrl             String?
+  websiteUrl          String?
+  industry            String?
+  timezone            String    @default("Asia/Riyadh")
+  defaultLanguage     String    @default("ar")
+  primaryColor        String?   @default("#6366f1")
+  secondaryColor      String?
+  customCss           String?   @db.Text
+  dateFormat          String    @default("DD/MM/YYYY")
+  defaultAiModel      String?
+  defaultAiProvider   String?
+  defaultTemperature  Float?
+  defaultMaxTokens    Int?
+  fallbackMessage     String?
+  fallbackMessageAr   String?
+  escalationThreshold Float?
+  contactEmail        String?
+  suspendedAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  members                 OrgMembership[]
+  agents                  Agent[]
+  channels                Channel[]
+  conversations           Conversation[]
+  knowledgeBases          KnowledgeBase[]
+  subscription            Subscription?
+  apiKeys                 ApiKey[]
+  leads                   Lead[]
+  analyticsEvents         AnalyticsEvent[]
+  notifications           Notification[]
+  webhooks                Webhook[]
+  notificationPreferences NotificationPreference[]
+  messageTemplates        MessageTemplate[]
+  tokenUsages             TokenUsage[]
+
+  @@map("organizations")
+}
+
+model OrgMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  role      OrgRole  @default(MEMBER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+  @@map("org_memberships")
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// ========================
+// AI AGENTS
+// ========================
+
+model Agent {
+  id                     String     @id @default(cuid())
+  orgId                  String
+  org                    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name                   String
+  description            String?
+  aiProvider             AiProvider @default(OPENAI)
+  aiModel                String     @default("gpt-4o")
+  systemPrompt           String     @db.Text
+  temperature            Float      @default(0.7)
+  maxTokens              Int        @default(1024)
+  language               String     @default("ar")
+  isActive               Boolean    @default(true)
+  enableEmotionDetection Boolean    @default(true)
+  enableLeadExtraction   Boolean    @default(false)
+  enableHumanHandoff     Boolean    @default(true)
+  handoffThreshold       Float      @default(0.3)
+  tone                   String     @default("friendly")
+  responseLength         String     @default("medium")
+  dataCollectionConfig   Json?
+  escalationKeywords     String[]   @default([])
+  sentimentEscalation    Boolean    @default(false)
+  escalationMessageCount Int        @default(5)
+  quickRepliesConfig     Json?
+  templateType           String?
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+
+  knowledgeBases AgentKnowledgeBase[]
+  channels       ChannelAgent[]
+  conversations  Conversation[]
+
+  @@index([orgId])
+  @@index([orgId, isActive])
+  @@map("agents")
+}
+
+enum AiProvider {
+  OPENAI
+  ANTHROPIC
+}
+
+// ========================
+// KNOWLEDGE BASE
+// ========================
+
+model KnowledgeBase {
+  id          String   @id @default(cuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  documents KBDocument[]
+  agents    AgentKnowledgeBase[]
+
+  @@index([orgId])
+  @@map("knowledge_bases")
+}
+
+model KBDocument {
+  id              String          @id @default(cuid())
+  knowledgeBaseId String
+  knowledgeBase   KnowledgeBase   @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  title           String
+  content         String          @db.Text
+  contentType     KBDocumentType  @default(TEXT)
+  sourceUrl       String?
+  metadata        Json?
+  embeddingStatus EmbeddingStatus @default(PENDING)
+  chunkCount      Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  chunks KBChunk[]
+
+  @@index([knowledgeBaseId])
+  @@map("kb_documents")
+}
+
+model KBChunk {
+  id         String     @id @default(cuid())
+  documentId String
+  document   KBDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content    String     @db.Text
+  embedding  Unsupported("vector(1536)")?
+  chunkIndex Int
+  metadata   Json?
+  createdAt  DateTime   @default(now())
+
+  @@index([documentId])
+  @@map("kb_chunks")
+}
+
+model AgentKnowledgeBase {
+  agentId         String
+  agent           Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  knowledgeBaseId String
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+
+  @@id([agentId, knowledgeBaseId])
+  @@map("agent_knowledge_bases")
+}
+
+enum KBDocumentType {
+  TEXT
+  PDF
+  URL
+  FAQ
+}
+
+enum EmbeddingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ========================
+// CHANNELS
+// ========================
+
+model Channel {
+  id            String      @id @default(cuid())
+  orgId         String
+  org           Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  type          ChannelType
+  name          String
+  isActive      Boolean     @default(false)
+  credentials   Json
+  webhookSecret String?
+  externalId    String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  agents        ChannelAgent[]
+  conversations Conversation[]
+
+  @@unique([orgId, type, externalId])
+  @@index([orgId])
+  @@index([webhookSecret])
+  @@map("channels")
+}
+
+model ChannelAgent {
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  agentId   String
+  agent     Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  isPrimary Boolean @default(false)
+
+  @@id([channelId, agentId])
+  @@map("channel_agents")
+}
+
+enum ChannelType {
+  WHATSAPP
+  MESSENGER
+  INSTAGRAM
+  WEBCHAT
+}
+
+// ========================
+// CONVERSATIONS & MESSAGES
+// ========================
+
+model Conversation {
+  id              String             @id @default(cuid())
+  orgId           String
+  org             Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  channelId       String
+  channel         Channel            @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  agentId         String?
+  agent           Agent?             @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  customerId      String
+  customerName    String?
+  customerPhone   String?
+  customerEmail   String?
+  customerMeta    Json?
+  status          ConversationStatus @default(ACTIVE)
+  assignedToHuman String?
+  lastEmotion     String?
+  emotionScore    Float?
+  summary          String?            @db.Text
+  category         String?
+  topics           String[]           @default([])
+  customerIntent   String?
+  resolutionStatus String?
+  messageCount     Int                @default(0)
+  firstMessageAt  DateTime           @default(now())
+  lastMessageAt   DateTime           @default(now())
+  resolvedAt      DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  messages Message[]
+  leads    Lead[]
+  tags     ConversationTag[]
+  ratings  ConversationRating[]
+  notes    ConversationNote[]
+
+  @@index([orgId, status])
+  @@index([orgId, channelId])
+  @@index([orgId, lastMessageAt])
+  @@index([orgId, agentId])
+  @@index([orgId, status, lastMessageAt])
+  @@index([customerId, channelId])
+  @@index([channelId])
+  @@index([agentId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String             @id @default(cuid())
+  conversationId String
+  conversation   Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String             @db.Text
+  contentType    MessageContentType @default(TEXT)
+  humanAgentId   String?
+  humanAgent     User?              @relation("HumanAgentMessages", fields: [humanAgentId], references: [id], onDelete: SetNull)
+  aiProvider     AiProvider?
+  aiModel        String?
+  tokenCount     Int?
+  latencyMs      Int?
+  emotion        String?
+  emotionScore   Float?
+  externalId     String?
+  metadata       Json?
+  deliveryStatus DeliveryStatus     @default(SENT)
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  failureReason  String?
+  createdAt      DateTime           @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([conversationId, role])
+  @@index([externalId])
+  @@index([humanAgentId])
+  @@index([deliveryStatus])
+  @@map("messages")
+}
+
+enum ConversationStatus {
+  ACTIVE
+  HANDED_OFF
+  WAITING
+  RESOLVED
+  ARCHIVED
+}
+
+enum MessageRole {
+  CUSTOMER
+  AI_AGENT
+  HUMAN_AGENT
+  SYSTEM
+}
+
+enum MessageContentType {
+  TEXT
+  IMAGE
+  AUDIO
+  VIDEO
+  DOCUMENT
+  LOCATION
+  CONTACT
+  TEMPLATE
+}
+
+enum DeliveryStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+// ========================
+// CONVERSATION TAGS
+// ========================
+
+model Tag {
+  id        String            @id @default(cuid())
+  orgId     String
+  name      String
+  color     String            @default("#6366f1")
+  createdAt DateTime          @default(now())
+
+  conversations ConversationTag[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@map("tags")
+}
+
+model ConversationTag {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  tagId          String
+  tag            Tag          @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([conversationId, tagId])
+  @@map("conversation_tags")
+}
+
+// ========================
+// CSAT RATINGS
+// ========================
+
+model ConversationRating {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  rating         Int          // 1-5
+  feedback       String?      @db.Text
+  customerId     String
+  createdAt      DateTime     @default(now())
+
+  @@unique([conversationId, customerId])
+  @@index([conversationId])
+  @@map("conversation_ratings")
+}
+
+// ========================
+// LEADS
+// ========================
+
+model Lead {
+  id             String        @id @default(cuid())
+  orgId          String
+  org            Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  assignedTo     String?
+  assignedUser   User?         @relation("AssignedLeads", fields: [assignedTo], references: [id], onDelete: SetNull)
+  name           String?
+  email          String?
+  phone          String?
+  company        String?
+  interests      String[]
+  budget         String?
+  timeline       String?
+  notes          String?       @db.Text
+  confidence     Float         @default(0.0)
+  source         String?
+  status         LeadStatus    @default(NEW)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  activities LeadActivity[]
+
+  @@index([orgId, status])
+  @@index([orgId, createdAt])
+  @@index([orgId, assignedTo])
+  @@index([conversationId])
+  @@index([assignedTo])
+  @@index([orgId, email])
+  @@index([orgId, phone])
+  @@map("leads")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+// ========================
+// DEMO REQUESTS
+// ========================
+
+model DemoRequest {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  company   String?
+  message   String?  @db.Text
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("demo_requests")
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("contact_messages")
+}
+
+// ========================
+// SUBSCRIPTIONS & BILLING
+// ========================
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  orgId                 String             @unique
+  org                   Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  plan                  SubscriptionPlan   @default(FREE)
+  status                SubscriptionStatus @default(ACTIVE)
+  kashierSubscriptionId String?            @unique
+  kashierCustomerId     String?
+  currentPeriodStart    DateTime           @default(now())
+  currentPeriodEnd      DateTime
+  cancelAtPeriodEnd     Boolean            @default(false)
+  messagesUsed          Int                @default(0)
+  messagesLimit         Int                @default(100)
+  agentsUsed            Int                @default(0)
+  agentsLimit           Int                @default(1)
+  integrationsUsed      Int                @default(0)
+  integrationsLimit     Int                @default(1)
+  tokensUsed            Int                @default(0)
+  tokensLimit           Int                @default(500000)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  invoices Invoice[]
+
+  @@index([status])
+  @@index([plan])
+  @@index([status, createdAt])
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  subscriptionId   String
+  subscription     Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amount           Decimal       @db.Decimal(10, 2)
+  currency         String        @default("USD")
+  status           InvoiceStatus @default(PENDING)
+  kashierOrderId   String?       @unique
+  kashierPaymentId String?
+  paidAt           DateTime?
+  dueDate          DateTime
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([paidAt])
+  @@index([status, paidAt])
+  @@map("invoices")
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// ========================
+// API KEYS
+// ========================
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgId      String
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name       String
+  keyHash    String    @unique
+  keyPrefix  String
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  scopes     String[]
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([orgId])
+  @@index([keyHash])
+  @@index([keyHash, revokedAt])
+  @@map("api_keys")
+}
+
+// ========================
+// ANALYTICS
+// ========================
+
+model AnalyticsEvent {
+  id          String             @id @default(cuid())
+  orgId       String
+  org         Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  eventType   AnalyticsEventType
+  data        Json
+  channelType ChannelType?
+  agentId     String?
+  date        DateTime           @default(now()) @db.Date
+  createdAt   DateTime           @default(now())
+
+  @@index([orgId, eventType, date])
+  @@index([orgId, date])
+  @@map("analytics_events")
+}
+
+enum AnalyticsEventType {
+  MESSAGE_RECEIVED
+  MESSAGE_SENT
+  CONVERSATION_STARTED
+  CONVERSATION_RESOLVED
+  HUMAN_HANDOFF
+  LEAD_EXTRACTED
+  EMOTION_DETECTED
+  AI_RESPONSE_GENERATED
+}
+
+// ========================
+// NOTIFICATIONS
+// ========================
+
+model Notification {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  type      String   // CONVERSATION_NEW, CONVERSATION_HANDOFF, LEAD_NEW, USAGE_WARNING, SYSTEM
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  metadata  Json?    // optional data (conversationId, leadId, etc.)
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+  @@index([orgId])
+  @@map("notifications")
+}
+
+// ========================
+// VERIFICATION TOKENS
+// ========================
+
+model VerificationToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  type      String    // EMAIL_VERIFY, PASSWORD_RESET
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId, type])
+  @@map("verification_tokens")
+}
+
+// ========================
+// AUDIT LOG
+// ========================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation("AuditLogs", fields: [userId], references: [id], onDelete: Cascade)
+  action     String
+  targetType String
+  targetId   String
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([targetType, targetId])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+// ========================
+// ANNOUNCEMENTS
+// ========================
+
+model Announcement {
+  id        String    @id @default(cuid())
+  title     String
+  body      String    @db.Text
+  type      String    @default("INFO") // INFO, WARNING, CRITICAL
+  isActive  Boolean   @default(true)
+  startsAt  DateTime  @default(now())
+  endsAt    DateTime?
+  createdBy String?
+  creator   User?     @relation("CreatedAnnouncements", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  dismissals AnnouncementDismissal[]
+
+  @@index([isActive, startsAt])
+  @@map("announcements")
+}
+
+// ========================
+// NOTIFICATION PREFERENCES
+// ========================
+
+model NotificationPreference {
+  id                   String       @id @default(cuid())
+  orgId                String
+  org                  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  userId               String
+  user                 User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailNewConversation Boolean      @default(true)
+  emailHandoff         Boolean      @default(true)
+  emailLeadExtracted   Boolean      @default(true)
+  emailUsageWarning    Boolean      @default(true)
+  emailWeeklyDigest    Boolean      @default(false)
+  emailDailyDigest     Boolean      @default(false)
+  emailMonthlyReport   Boolean      @default(true)
+  emailNegativeSentiment Boolean    @default(true)
+  browserNotifications Boolean      @default(true)
+  soundEnabled         Boolean      @default(true)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@unique([orgId, userId])
+  @@map("notification_preferences")
+}
+
+// ========================
+// WEBHOOKS
+// ========================
+
+model Webhook {
+  id              String       @id @default(cuid())
+  orgId           String
+  org             Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  url             String
+  secret          String
+  events          String[]
+  isActive        Boolean      @default(true)
+  lastError       String?
+  lastTriggeredAt DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  logs WebhookLog[]
+
+  @@index([orgId])
+  @@index([orgId, isActive])
+  @@map("webhooks")
+}
+
+// ========================
+// LEAD ACTIVITY
+// ========================
+
+model LeadActivity {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId    String?
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([leadId, createdAt])
+  @@map("lead_activities")
+}
+
+// ========================
+// SITE SETTINGS (singleton)
+// ========================
+
+model SiteSettings {
+  id                    String   @id @default("singleton")
+  siteName              String   @default("Mojeeb")
+  logoUrl               String?
+  faviconUrl            String?
+  ogImageUrl            String?
+  description           String   @default("")
+  keywords              String   @default("")
+  primaryColor          String   @default("#6366f1")
+  secondaryColor        String   @default("#ec4899")
+  twitterUrl            String?
+  linkedinUrl           String?
+  githubUrl             String?
+  facebookUrl           String?
+  instagramUrl          String?
+  youtubeUrl            String?
+  supportEmail          String?
+  contactPhone          String?
+  companyAddress        String?
+  copyrightText         String?
+  timezone              String   @default("UTC")
+  googleAnalyticsId     String?
+  customHeadScripts     String?
+  maintenanceMode       Boolean  @default(false)
+  maintenanceMessage    String?
+  supportChatEnabled    Boolean  @default(false)
+  supportChatChannelId  String?
+  supportChatPosition   String   @default("right")
+  supportChatColor      String   @default("#6366f1")
+  supportChatWelcome    String?
+  supportChatWelcomeAr  String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+// ========================
+// PLAN CONFIGURATION
+// ========================
+
+model PlanConfig {
+  id                String           @id @default(cuid())
+  plan              SubscriptionPlan @unique
+  displayName       String
+  displayNameAr     String           @default("")
+  monthlyPrice      Float            @default(0)
+  yearlyPrice       Float            @default(0)
+  currency          String           @default("USD")
+  messagesPerMonth  Int              @default(100)
+  maxAgents         Int              @default(1)
+  maxChannels       Int              @default(1)
+  maxKnowledgeBases Int              @default(0)
+  maxTeamMembers    Int              @default(1)
+  maxTokensPerMonth Int              @default(500000)
+  apiAccess         Boolean          @default(false)
+  isPopular         Boolean          @default(false)
+  sortOrder         Int              @default(0)
+  features          String           @default("[]")
+  featuresAr        String           @default("[]")
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@map("plan_configs")
+}
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   @default("")
+  category    String   @default("general")
+  isSecret    Boolean  @default(false)
+  label       String   @default("")
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@map("system_configs")
+}
+
+// ========================
+// LOGIN ACTIVITY LOG
+// ========================
+
+model LoginActivity {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email      String
+  success    Boolean
+  ipAddress  String?
+  userAgent  String?
+  country    String?
+  city       String?
+  failReason String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([email, createdAt])
+  @@index([ipAddress, createdAt])
+  @@index([success, createdAt])
+  @@map("login_activities")
+}
+
+// ========================
+// IP BLOCKING
+// ========================
+
+model BlockedIP {
+  id        String    @id @default(cuid())
+  ip        String    @unique
+  reason    String
+  blockedBy String?
+  blocker   User?     @relation("BlockedIPs", fields: [blockedBy], references: [id], onDelete: SetNull)
+  autoBlock Boolean   @default(false)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([ip])
+  @@index([expiresAt])
+  @@map("blocked_ips")
+}
+
+// ========================
+// FEATURE FLAGS
+// ========================
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  enabled     Boolean  @default(false)
+  description String   @default("")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("feature_flags")
+}
+
+// ========================
+// ERROR LOGS
+// ========================
+
+model ErrorLog {
+  id        String   @id @default(cuid())
+  level     String   @default("ERROR")
+  message   String
+  stack     String?  @db.Text
+  source    String?
+  path      String?
+  method    String?
+  userId    String?
+  ipAddress String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([level, createdAt])
+  @@index([source, createdAt])
+  @@index([createdAt])
+  @@map("error_logs")
+}
+
+// ========================
+// WEBHOOK DELIVERY LOGS
+// ========================
+
+model WebhookLog {
+  id           String   @id @default(cuid())
+  webhookId    String
+  webhook      Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  event        String
+  status       Int?
+  requestBody  String?  @db.Text
+  responseBody String?  @db.Text
+  duration     Int?
+  attempt      Int      @default(1)
+  error        String?
+  success      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([webhookId, createdAt])
+  @@index([success, createdAt])
+  @@index([event, createdAt])
+  @@map("webhook_logs")
+}
+
+// ========================
+// EMAIL TEMPLATES
+// ========================
+
+model EmailTemplate {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  subject    String
+  subjectAr  String   @default("")
+  bodyHtml   String   @db.Text
+  bodyHtmlAr String   @default("") @db.Text
+  bodyText   String?  @db.Text
+  variables  String[]
+  isActive   Boolean  @default(true)
+  updatedBy  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
+// ========================
+// BULK EMAIL CAMPAIGNS
+// ========================
+
+enum BulkEmailCampaignStatus {
+  DRAFT
+  SENDING
+  COMPLETED
+}
+
+model BulkEmailCampaign {
+  id              String                  @id @default(cuid())
+  subject         String
+  bodyHtml        String                  @db.Text
+  status          BulkEmailCampaignStatus @default(DRAFT)
+  targetFilter    Json
+  totalRecipients Int                     @default(0)
+  sentCount       Int                     @default(0)
+  failedCount     Int                     @default(0)
+  createdBy       String?
+  creator         User?                   @relation("BulkEmailCampaigns", fields: [createdBy], references: [id], onDelete: SetNull)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("bulk_email_campaigns")
+}
+
+// ========================
+// ADMIN NOTIFICATIONS
+// ========================
+
+model AdminNotification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("AdminNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
+  @@map("admin_notifications")
+}
+
+// ========================
+// LANDING PAGE CONTENT
+// ========================
+
+model LandingPageContent {
+  id                  String   @id @default("singleton")
+
+  // --- Hero Section ---
+  heroEnabled         Boolean  @default(true)
+  heroTitle           String   @default("AI-Powered Customer Support")
+  heroTitleAr         String   @default("دعم العملاء بالذكاء الاصطناعي")
+  heroSubtitle        String   @default("Automate your customer support with intelligent AI agents")
+  heroSubtitleAr      String   @default("أتمت دعم العملاء مع وكلاء ذكاء اصطناعي")
+  heroCta             String   @default("Get Started Free")
+  heroCtaAr           String   @default("ابدأ مجاناً")
+  heroCtaLink         String   @default("/register")
+  heroImage           String?
+  showNoCreditCard    Boolean  @default(true)
+  badgeText           String   @default("Powered by AI")
+  badgeTextAr         String   @default("مدعوم بالذكاء الاصطناعي")
+
+  // --- Trusted By / Logos Section ---
+  trustedByEnabled    Boolean  @default(false)
+  trustedByTitle      String   @default("Trusted By")
+  trustedByTitleAr    String   @default("موثوق من قبل")
+  trustedByLogos      Json     @default("[]") // [{image: string, name: string}]
+
+  // --- Features Section ---
+  featuresEnabled     Boolean  @default(true)
+  featuresTitle       String   @default("Why Choose Mojeeb?")
+  featuresTitleAr     String   @default("لماذا تختار مجيب؟")
+  featuresSubtitle    String   @default("Everything you need to deliver exceptional customer support")
+  featuresSubtitleAr  String   @default("كل ما تحتاجه لتقديم دعم عملاء استثنائي")
+  features            Json     @default("[]")
+  featuresAr          Json     @default("[]")
+
+  // --- Stats ---
+  statsEnabled        Boolean  @default(false)
+  statsCustomers      String   @default("500+")
+  statsMessages       String   @default("10M+")
+  statsLanguages      String   @default("20+")
+  statsUptime         String   @default("99.9%")
+
+  // --- Pricing Section ---
+  pricingEnabled      Boolean  @default(true)
+  pricingTitle        String   @default("Simple, Transparent Pricing")
+  pricingTitleAr      String   @default("أسعار بسيطة وشفافة")
+  pricingSubtitle     String   @default("Choose the plan that fits your business")
+  pricingSubtitleAr   String   @default("اختر الخطة المناسبة لعملك")
+  showYearlyToggle    Boolean  @default(true)
+  yearlyDiscount      Int      @default(20)
+  enterpriseCtaText   String   @default("Contact Sales")
+  enterpriseCtaTextAr String   @default("تواصل مع المبيعات")
+  enterpriseCtaLink   String   @default("/contact")
+
+  // --- Testimonials Section ---
+  testimonialsEnabled Boolean  @default(true)
+  testimonialsTitle   String   @default("What Our Customers Say")
+  testimonialsTitleAr String   @default("ماذا يقول عملاؤنا")
+  testimonialsSubtitle   String   @default("Trusted by businesses worldwide")
+  testimonialsSubtitleAr String   @default("موثوق من الشركات حول العالم")
+  testimonialsMaxDisplay Int    @default(3)
+  testimonials        Json     @default("[]")
+  testimonialsAr      Json     @default("[]")
+
+  // --- FAQ Section ---
+  faqEnabled          Boolean  @default(true)
+  faqTitle            String   @default("Frequently Asked Questions")
+  faqTitleAr          String   @default("الأسئلة الشائعة")
+  faqSubtitle         String   @default("Find answers to common questions")
+  faqSubtitleAr       String   @default("اعثر على إجابات للأسئلة الشائعة")
+  faqMaxDisplay       Int      @default(5)
+  faqShowViewAll      Boolean  @default(true)
+
+  // --- Bottom CTA Section ---
+  bottomCtaEnabled    Boolean  @default(true)
+  bottomCtaTitle      String   @default("Ready to Transform Your Customer Support?")
+  bottomCtaTitleAr    String   @default("مستعد لتحويل دعم عملائك؟")
+  bottomCtaSubtitle   String   @default("Start your free trial today. No credit card required.")
+  bottomCtaSubtitleAr String   @default("ابدأ تجربتك المجانية اليوم. لا حاجة لبطاقة ائتمان.")
+  bottomCtaButtonText String   @default("Get Started Free")
+  bottomCtaButtonTextAr String @default("ابدأ مجاناً")
+  bottomCtaButtonLink String   @default("/register")
+
+  // --- Footer ---
+  footerCopyrightText   String @default("© 2025 Mojeeb. All rights reserved.")
+  footerCopyrightTextAr String @default("© 2025 مجيب. جميع الحقوق محفوظة.")
+  footerShowSocialLinks Boolean @default(true)
+  footerTwitter       String   @default("")
+  footerLinkedin      String   @default("")
+  footerInstagram     String   @default("")
+  footerFacebook      String   @default("")
+  footerLinks         Json     @default("[]") // [{label: {en, ar}, url}]
+
+  // --- Legacy footer fields ---
+  footerText          String   @default("© 2025 Mojeeb. All rights reserved.")
+  footerTextAr        String   @default("© 2025 مجيب. جميع الحقوق محفوظة.")
+  customCss           String?  @db.Text
+
+  // --- SEO & Meta ---
+  seoMetaTitle        String   @default("Mojeeb - AI-Powered Customer Support")
+  seoMetaTitleAr      String   @default("مجيب - دعم العملاء بالذكاء الاصطناعي")
+  seoMetaDescription  String   @default("Automate your customer support with intelligent AI agents")
+  seoMetaDescriptionAr String  @default("أتمت دعم العملاء مع وكلاء ذكاء اصطناعي")
+  seoOgImage          String?
+  seoGoogleAnalyticsId String  @default("")
+  seoCustomHeadCode   String?  @db.Text
+  seoCustomFooterCode String?  @db.Text
+  seoFavicon          String?
+
+  // --- Maintenance Mode ---
+  maintenanceEnabled  Boolean  @default(false)
+  maintenanceTitle    String   @default("We'll Be Back Soon")
+  maintenanceTitleAr  String   @default("سنعود قريباً")
+  maintenanceMessage  String   @default("We're currently performing scheduled maintenance. Please check back shortly.")
+  maintenanceMessageAr String  @default("نقوم حالياً بصيانة مجدولة. يرجى المحاولة مرة أخرى قريباً.")
+
+  // --- Section Ordering ---
+  sectionOrder        Json     @default("[\"hero\",\"trustedBy\",\"features\",\"stats\",\"pricing\",\"testimonials\",\"faq\",\"bottomCta\"]")
+
+  updatedAt           DateTime @updatedAt
+
+  @@map("landing_page_content")
+}
+
+// ========================
+// CONVERSATION NOTES
+// ========================
+
+model ConversationNote {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([userId])
+  @@map("conversation_notes")
+}
+
+// ========================
+// MESSAGE TEMPLATES
+// ========================
+
+model MessageTemplate {
+  id          String   @id @default(cuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  title       String
+  contentEn   String   @db.Text
+  contentAr   String   @default("") @db.Text
+  shortcut    String?
+  category    String   @default("general")
+  variables   Json     @default("[]")
+  agentId     String?
+  isActive    Boolean  @default(true)
+  usageCount  Int      @default(0)
+  autoTrigger Json     @default("{\"enabled\":false,\"keywords\":[]}")
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([orgId, shortcut])
+  @@index([orgId])
+  @@index([orgId, category])
+  @@index([orgId, isActive])
+  @@map("message_templates")
+}
+
+// ========================
+// TOKEN USAGE TRACKING
+// ========================
+
+model TokenUsage {
+  id             String       @id @default(cuid())
+  orgId          String
+  org            Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  agentId        String?
+  conversationId String?
+  model          String
+  provider       String
+  inputTokens    Int
+  outputTokens   Int
+  totalTokens    Int
+  costUsd        Decimal      @db.Decimal(10, 6)
+  pipelineType   String       @default("response")
+  createdAt      DateTime     @default(now())
+
+  @@index([orgId, createdAt])
+  @@index([createdAt])
+  @@map("token_usages")
+}
+
+// ========================
+// FAQ
+// ========================
+
+model FAQ {
+  id         String   @id @default(cuid())
+  question   String
+  questionAr String   @default("")
+  answer     String   @db.Text
+  answerAr   String   @default("") @db.Text
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("faqs")
+}
+
+// ========================
+// LEGAL CONTENT (privacy policy, terms of service)
+// ========================
+
+model LegalContent {
+  id          String   @id
+  contentEn   String   @default("") @db.Text
+  contentAr   String   @default("") @db.Text
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@map("legal_contents")
+}
+
+// ========================
+// TESTIMONIALS
+// ========================
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  nameAr    String   @default("")
+  role      String   @default("")
+  roleAr    String   @default("")
+  content   String   @db.Text
+  contentAr String   @default("") @db.Text
+  photoUrl  String?
+  company   String?
+  rating    Int      @default(5)
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("testimonials")
+}
+
+// ========================
+// ANNOUNCEMENT DISMISSALS
+// ========================
+
+model AnnouncementDismissal {
+  id             String       @id @default(cuid())
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId         String
+  dismissedAt    DateTime     @default(now())
+
+  @@unique([announcementId, userId])
+  @@map("announcement_dismissals")
+}

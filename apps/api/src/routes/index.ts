@@ -21,6 +21,7 @@ import webhookMgmtRoutes from './webhook.routes';
 import conversationNotesRoutes from './conversationNotes.routes';
 import messageTemplateRoutes from './messageTemplates.routes';
 import customersRoutes from './customers.routes';
+import filesRoutes from './files.routes';
 import adminRoutes from './admin';
 import publicRoutes from './public.routes';
 import setupRoutes from './setup.routes';
@@ -115,6 +116,9 @@ router.use('/webhooks/kashier', kashierWebhook);
 
 // Webchat routes (public, no auth required)
 router.use('/webchat', webchatRoutes);
+
+// File access routes (requires token or Bearer auth)
+router.use('/files', filesRoutes);
 
 // Demo request routes (public, no auth required)
 router.use('/demo-requests', demoRequestRoutes);
