@@ -104,7 +104,6 @@ router.use('/organizations/:orgId/export', exportRoutes);
 router.use('/organizations/:orgId/webhooks', webhookMgmtRoutes);
 router.use('/organizations/:orgId/conversations/:conversationId/notes', conversationNotesRoutes);
 router.use('/organizations/:orgId/message-templates', messageTemplateRoutes);
-router.use('/organizations/:orgId/files', filesRoutes);
 
 // Incoming webhook routes
 router.use('/webhooks/whatsapp', whatsappWebhook);
@@ -112,6 +111,9 @@ router.use('/webhooks/kashier', kashierWebhook);
 
 // Webchat routes (public, no auth required)
 router.use('/webchat', webchatRoutes);
+
+// File access routes (requires token or Bearer auth)
+router.use('/files', filesRoutes);
 
 // Demo request routes (public, no auth required)
 router.use('/demo-requests', demoRequestRoutes);
