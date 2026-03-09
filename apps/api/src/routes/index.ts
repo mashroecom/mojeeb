@@ -20,6 +20,7 @@ import exportRoutes from './export.routes';
 import webhookMgmtRoutes from './webhook.routes';
 import conversationNotesRoutes from './conversationNotes.routes';
 import messageTemplateRoutes from './messageTemplates.routes';
+import templatesRoutes from './templates.routes';
 import adminRoutes from './admin';
 import publicRoutes from './public.routes';
 
@@ -119,6 +120,9 @@ router.use('/contact', contactMessageRoutes);
 
 // Public routes (no auth, for landing page)
 router.use('/public', publicRoutes);
+
+// Templates routes (requires authentication)
+router.use('/templates', templatesRoutes);
 
 // Super Admin routes (requires authentication + super admin)
 router.use('/admin', adminRoutes);
