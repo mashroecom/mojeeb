@@ -83,6 +83,12 @@ export enum EmbeddingStatus {
   FAILED = 'FAILED',
 }
 
+export enum PaymentGateway {
+  KASHIER = 'KASHIER',
+  STRIPE = 'STRIPE',
+  PAYPAL = 'PAYPAL',
+}
+
 // ========================
 // Subscription Plan Limits
 // ========================
