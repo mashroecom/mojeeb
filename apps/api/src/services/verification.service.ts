@@ -69,9 +69,11 @@ export class VerificationService {
     ]);
 
     // Send welcome email (non-blocking)
-    emailService
-      .sendWelcomeEmail(verificationToken.user.email, verificationToken.user.firstName)
-      .catch(err => logger.warn({ err }, 'Failed to send welcome email'));
+    emailQueue.add('welcome', {
+      type: 'welcome',
+      to: verificationToken.user.email,
+      firstName: verificationToken.user.firstName
+    }).catch((err: Error) => logger.warn({ err }, 'Failed to queue welcome email'));
   }
 
   /**

@@ -53,3 +53,6 @@ uploads/
 # SSL certificates
 letsencrypt/
 certbot/
+
+# Auto Claude data directory
+.auto-claude/

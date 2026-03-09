@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "002-wire-up-webhook-event-dispatch-in-queue-workers",
+  "state": "building",
+  "subtasks": {
+    "completed": 6,
+    "total": 8,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "End-to-End Verification",
+    "id": null,
+    "total": 3
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 8,
+    "started_at": "2026-03-09T16:05:42.191094"
+  },
+  "last_update": "2026-03-09T16:26:10.441916"
+}

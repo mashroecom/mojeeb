@@ -25,7 +25,7 @@ function createMockReqRes(headers: Record<string, string> = {}) {
   } as unknown as Request;
 
   const res = {} as Response;
-  const next = vi.fn() as NextFunction;
+  const next = vi.fn();
 
   return { req, res, next };
 }
@@ -33,7 +33,7 @@ function createMockReqRes(headers: Record<string, string> = {}) {
 /** Helper: extract the error passed to next() */
 function getNextError(next: ReturnType<typeof vi.fn>): any {
   expect(next).toHaveBeenCalledTimes(1);
-  return next.mock.calls[0][0];
+  return next.mock.calls[0]?.[0];
 }
 
 describe('authenticate middleware', () => {
