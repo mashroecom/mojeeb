@@ -89,6 +89,39 @@ router.post('/bulk-archive', async (req, res, next) => {
   }
 });
 
+// POST /api/v1/organizations/:orgId/conversations/bulk-status
+router.post('/bulk-status', async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    const { conversationIds, status } = req.body as { conversationIds: string[]; status: string };
+
+    if (!Array.isArray(conversationIds) || conversationIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'conversationIds must be a non-empty array',
+      });
+    }
+
+    const validStatuses = ['ACTIVE', 'HANDED_OFF', 'WAITING', 'RESOLVED', 'ARCHIVED'];
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'status must be one of: ' + validStatuses.join(', '),
+      });
+    }
+
+    const result = await conversationService.bulkUpdateStatus(orgId, conversationIds, status);
+    emitToOrg(orgId, 'conversations:bulk-updated', {
+      conversationIds,
+      status,
+      updatedCount: result.updatedCount,
+    });
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/v1/organizations/:orgId/conversations/:convId
 router.get('/:convId', async (req, res, next) => {
   try {
