@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "003-add-conversation-tagging-ui-to-dashboard",
+  "spec": "011-rotate-and-remove-live-api-keys-secrets-from-env-f",
   "state": "building",
   "subtasks": {
     "completed": 2,
-    "total": 5,
+    "total": 16,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Frontend Implementation",
+    "current": "Rotate API Keys at Providers",
     "id": null,
-    "total": 5
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 4,
-    "started_at": "2026-03-09T16:05:38.909827"
+    "number": 11,
+    "started_at": "2026-03-09T22:04:53.247928"
   },
-  "last_update": "2026-03-09T16:16:13.451873"
+  "last_update": "2026-03-09T22:19:14.208239"
 }

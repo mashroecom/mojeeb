@@ -1,0 +1,42 @@
+{
+  "project_type": "monorepo",
+  "services": {
+    "backend": {
+      "path": "./apps/api",
+      "tech_stack": ["typescript", "express", "prisma", "postgresql", "redis", "bullmq"],
+      "port": 4000,
+      "dev_command": "cd apps/api && pnpm dev",
+      "test_command": "cd apps/api && pnpm test",
+      "main_entry": "apps/api/src/index.ts",
+      "config_file": "apps/api/src/config/index.ts"
+    },
+    "frontend": {
+      "path": "./apps/web",
+      "tech_stack": ["typescript", "nextjs", "react", "tailwindcss"],
+      "port": 3000,
+      "dev_command": "cd apps/web && pnpm dev",
+      "test_command": "cd apps/web && pnpm test",
+      "main_entry": "apps/web/src/app"
+    }
+  },
+  "infrastructure": {
+    "docker": true,
+    "docker_compose": "docker-compose.prod.yml",
+    "database": "postgresql",
+    "cache": "redis",
+    "queue": "bullmq"
+  },
+  "conventions": {
+    "package_manager": "pnpm",
+    "linter": "eslint",
+    "formatter": "prettier",
+    "testing": "vitest",
+    "env_file": ".env",
+    "env_example": ".env.example"
+  },
+  "security": {
+    "env_validation": "apps/api/src/config/index.ts",
+    "gitignored_files": [".env"],
+    "audit_report": "AUDIT-REPORT.md"
+  }
+}

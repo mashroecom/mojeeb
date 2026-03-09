@@ -1,0 +1,55 @@
+{
+  "task_type": "security_hardening",
+  "severity": "critical",
+  "files_to_modify": {
+    "root": [".env"]
+  },
+  "files_to_create": {
+    "root": ["SECURITY.md", "docs/KEY_ROTATION.md"]
+  },
+  "files_to_reference": [
+    ".env.example",
+    "apps/api/src/config/index.ts",
+    "AUDIT-REPORT.md"
+  ],
+  "patterns": {
+    "env_structure": "The .env.example file shows the correct structure with placeholders",
+    "config_loading": "All environment variables are loaded via apps/api/src/config/index.ts with dotenv",
+    "validation": "The validateConfig() function checks for placeholder values in production mode"
+  },
+  "existing_implementations": {
+    "description": "The project has a comprehensive config system with validation that checks for weak/placeholder secrets",
+    "relevant_files": [
+      "apps/api/src/config/index.ts",
+      ".env.example"
+    ],
+    "validation_checks": [
+      "JWT_SECRET must be at least 32 characters",
+      "JWT_SECRET cannot contain known placeholders",
+      "ENCRYPTION_KEY must be 64 hex characters",
+      "ENCRYPTION_KEY cannot be the example value"
+    ]
+  },
+  "live_credentials_found": {
+    "openai_key": "sk-proj-9UaI... (LIVE)",
+    "anthropic_key": "sk-ant-oat01-... (LIVE)",
+    "kashier_merchant_id": "MID-5857-102 (LIVE)",
+    "kashier_api_key": "ea1640e3-... (LIVE)",
+    "kashier_webhook_secret": "fd83cd17... (LIVE)",
+    "google_client_id": "44877055026-... (LIVE)",
+    "google_client_secret": "GOCSPX-djBTyms4... (LIVE)",
+    "jwt_secret": "your-jwt-secret-change-in-production (WEAK PLACEHOLDER)",
+    "encryption_key": "0123456789abcdef... (EXAMPLE VALUE)"
+  },
+  "rotation_required": [
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "KASHIER_MERCHANT_ID",
+    "KASHIER_API_KEY",
+    "KASHIER_WEBHOOK_SECRET",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "JWT_SECRET",
+    "ENCRYPTION_KEY"
+  ]
+}
