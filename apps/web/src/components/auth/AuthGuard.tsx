@@ -67,7 +67,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         router.replace('/login');
       })
       .finally(() => setChecking(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   if (checking) {
     return (

@@ -185,7 +185,11 @@ export default function ConversationsPage() {
               canvas.height = img.naturalHeight;
               canvas.getContext('2d')!.drawImage(img, 0, 0);
               canvas.toBlob((blob) => {
-                blob ? resolve(blob) : reject(new Error('Failed to convert'));
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(new Error('Failed to convert'));
+                }
               }, 'image/png');
               URL.revokeObjectURL(img.src);
             };

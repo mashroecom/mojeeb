@@ -83,7 +83,6 @@ export default function BillingPage() {
       setStatusMessage({ type: 'error', text: t('upgradeFailed') });
       router.replace('/billing');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, orgId]);
 
   // Auto-dismiss status message after 5 seconds

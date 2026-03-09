@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Table } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
 
-interface TestData {
+interface TestData extends Record<string, unknown> {
   id: number;
   name: string;
   email: string;
