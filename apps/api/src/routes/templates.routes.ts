@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { templateSuggestionPipeline } from '../ai/pipelines/templateSuggestion.pipeline';
 
 const router: Router = Router();
 
@@ -219,5 +222,64 @@ router.post('/:templateId/use', async (req: Request, res: Response, next: NextFu
     next(err);
   }
 });
+
+const suggestTemplatesSchema = z.object({
+  conversationId: z.string().min(1, 'conversationId is required'),
+});
+
+// POST /suggest - Get AI-suggested templates based on conversation context
+router.post(
+  '/suggest',
+  validate({ body: suggestTemplatesSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { conversationId } = req.body as { conversationId: string };
+      const userId = req.user!.userId;
+
+      // Get user's orgId from their membership
+      const membership = await prisma.orgMembership.findFirst({
+        where: { userId },
+        select: { orgId: true },
+      });
+
+      if (!membership) {
+        return res.status(400).json({ success: false, message: 'User organization not found' });
+      }
+
+      const orgId = membership.orgId;
+
+      // Verify user has access to the conversation
+      const conversation = await prisma.conversation.findFirst({
+        where: {
+          id: conversationId,
+          channel: {
+            orgId,
+          },
+        },
+      });
+
+      if (!conversation) {
+        return res.status(404).json({ success: false, message: 'Conversation not found' });
+      }
+
+      // Get AI suggestions
+      const suggestions = await templateSuggestionPipeline.suggest({
+        conversationId,
+        orgId,
+        userId,
+      });
+
+      res.json({
+        success: true,
+        data: {
+          suggestions,
+          conversationId,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 export default router;
