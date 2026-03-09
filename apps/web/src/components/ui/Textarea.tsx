@@ -40,6 +40,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           )}
           aria-invalid={error ? true : undefined}
           aria-describedby={error && textareaId ? `${textareaId}-error` : undefined}
+          aria-required={rest.required ? true : undefined}
           {...rest}
         />
         <div className="mt-1.5 flex items-center justify-between">
