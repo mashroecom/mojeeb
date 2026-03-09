@@ -7,6 +7,8 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { useCreateAgent } from '@/hooks/useAgents';
 import { AGENT_TEMPLATES, type AgentTemplate } from '@/lib/agent-templates';
 import { cn } from '@/lib/utils';
+import { useZodForm } from '@/hooks/useZodForm';
+import { createAgentSchema } from '@mojeeb/shared-utils';
 import {
   ArrowLeft,
   Headphones,
@@ -48,33 +50,47 @@ export default function CreateAgentPage() {
   const createAgent = useCreateAgent();
 
   const [selectedTemplate, setSelectedTemplate] = useState<AgentTemplate | null>(null);
-  const [name, setName] = useState('');
-  const [language, setLanguage] = useState<'ar' | 'en'>('ar');
   const [additionalInstructions, setAdditionalInstructions] = useState('');
-  const [enableLeadExtraction, setEnableLeadExtraction] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const form = useZodForm({
+    schema: createAgentSchema,
+    initialValues: {
+      name: '',
+      language: 'ar' as 'ar' | 'en',
+      aiProvider: 'OPENAI' as const,
+      aiModel: 'gpt-4o',
+      enableLeadExtraction: false,
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedTemplate || !name.trim()) return;
+    if (!selectedTemplate) return;
+
+    // Validate form
+    const isValid = await form.handleSubmit();
+    if (!isValid) {
+      return;
+    }
 
     const systemPrompt = selectedTemplate.systemPromptTemplate({
-      agentName: name,
-      language,
+      agentName: form.values.name || '',
+      language: form.values.language || 'ar',
       additionalInstructions: additionalInstructions.trim() || undefined,
     });
 
     createAgent.mutate(
       {
-        name,
+        name: form.values.name!,
         systemPrompt,
         templateType: selectedTemplate.id,
         aiProvider: 'OPENAI',
         aiModel: 'gpt-4o',
-        language,
+        language: form.values.language,
         temperature: selectedTemplate.defaultTemperature,
         maxTokens: selectedTemplate.defaultMaxTokens,
         enableEmotionDetection: selectedTemplate.enableEmotionDetection,
-        enableLeadExtraction,
+        enableLeadExtraction: form.values.enableLeadExtraction,
         enableHumanHandoff: selectedTemplate.enableHumanHandoff,
         handoffThreshold: selectedTemplate.handoffThreshold,
       },
@@ -119,7 +135,7 @@ export default function CreateAgentPage() {
                   key={template.id}
                   onClick={() => {
                     setSelectedTemplate(template);
-                    setEnableLeadExtraction(template.enableLeadExtraction);
+                    form.setFieldValue('enableLeadExtraction', template.enableLeadExtraction);
                   }}
                   className="group rounded-xl border bg-card p-6 text-start shadow-sm transition-all hover:border-primary hover:shadow-md"
                 >
@@ -182,12 +198,15 @@ export default function CreateAgentPage() {
                 <input
                   id="name"
                   type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={form.values.name || ''}
+                  onChange={form.handleChange('name')}
+                  onBlur={form.handleBlur('name')}
                   placeholder={t('namePlaceholder')}
                   className={inputClass}
                 />
+                {form.errors.name && (
+                  <p className="mt-1 text-xs text-destructive">{form.errors.name}</p>
+                )}
               </div>
 
               {/* Language */}
@@ -197,13 +216,17 @@ export default function CreateAgentPage() {
                 </label>
                 <select
                   id="language"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value as 'ar' | 'en')}
+                  value={form.values.language || 'ar'}
+                  onChange={form.handleChange('language')}
+                  onBlur={form.handleBlur('language')}
                   className={inputClass}
                 >
                   <option value="ar">{t('languageAr')}</option>
                   <option value="en">{t('languageEn')}</option>
                 </select>
+                {form.errors.language && (
+                  <p className="mt-1 text-xs text-destructive">{form.errors.language}</p>
+                )}
               </div>
 
               {/* Additional Instructions */}
@@ -229,17 +252,17 @@ export default function CreateAgentPage() {
                 <button
                   type="button"
                   role="switch"
-                  aria-checked={enableLeadExtraction}
-                  onClick={() => setEnableLeadExtraction(!enableLeadExtraction)}
+                  aria-checked={form.values.enableLeadExtraction || false}
+                  onClick={() => form.setFieldValue('enableLeadExtraction', !form.values.enableLeadExtraction)}
                   className={cn(
                     'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-                    enableLeadExtraction ? 'bg-primary' : 'bg-muted',
+                    form.values.enableLeadExtraction ? 'bg-primary' : 'bg-muted',
                   )}
                 >
                   <span
                     className={cn(
                       'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
-                      enableLeadExtraction ? 'translate-x-5' : 'translate-x-0',
+                      form.values.enableLeadExtraction ? 'translate-x-5' : 'translate-x-0',
                     )}
                   />
                 </button>
@@ -260,10 +283,10 @@ export default function CreateAgentPage() {
               </Link>
               <button
                 type="submit"
-                disabled={createAgent.isPending || !name.trim()}
+                disabled={createAgent.isPending || !form.values.name?.trim()}
                 className={cn(
                   'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
-                  (createAgent.isPending || !name.trim()) &&
+                  (createAgent.isPending || !form.values.name?.trim()) &&
                     'cursor-not-allowed opacity-50',
                 )}
               >
