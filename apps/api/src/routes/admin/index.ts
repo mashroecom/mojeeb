@@ -40,6 +40,7 @@ import adminWebhooksRoutes from './webhooks.routes';
 import ratingsRoutes from './ratings.routes';
 import adminMessageTemplatesRoutes from './messageTemplates.routes';
 import adminTagsRoutes from './tags.routes';
+import teamPerformanceRoutes from './teamPerformance.routes';
 
 const router: Router = Router();
 
@@ -85,5 +86,6 @@ router.use('/webhooks', adminWebhooksRoutes);
 router.use('/ratings', ratingsRoutes);
 router.use('/message-templates-admin', adminMessageTemplatesRoutes);
 router.use('/tags', adminTagsRoutes);
+router.use('/team-performance', teamPerformanceRoutes);
 
 export default router;
