@@ -5,10 +5,12 @@ import { HeroSection } from '@/components/landing/HeroSection';
 import { FeaturesSection } from '@/components/landing/FeaturesSection';
 import { PricingSection } from '@/components/landing/PricingSection';
 import { CTASection } from '@/components/landing/CTASection';
+import { CustomStyles } from '@/components/landing/CustomStyles';
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
+      <CustomStyles />
       <Header />
       <main className="flex-1">
         <HeroSection />
