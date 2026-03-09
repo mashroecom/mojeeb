@@ -87,7 +87,7 @@ export default function EditAgentPage() {
     if (agent) {
       form.setValues({
         name: agent.name,
-        language: agent.language,
+        language: agent.language as 'ar' | 'en',
         systemPrompt: agent.systemPrompt,
         isActive: agent.isActive,
         enableLeadExtraction: agent.enableLeadExtraction,
