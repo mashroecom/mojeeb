@@ -98,3 +98,18 @@ export const tokenRefreshLimiter = rateLimit({
     code: 'RATE_LIMITED',
   },
 });
+
+/** Destructive action rate limiter — prevents abuse of account deletion and session revocation. */
+export const destructiveActionLimiter = rateLimit({
+  store: createRedisStore('destructive'),
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: isDev ? 10 : 5, // Very strict: 5 destructive actions per hour in production
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: getClientKey,
+  message: {
+    success: false,
+    error: 'Too many destructive actions, please try again later',
+    code: 'RATE_LIMITED',
+  },
+});
