@@ -10,9 +10,6 @@ import {
   FileText,
   ArrowLeft,
   Loader2,
-  CheckCircle,
-  XCircle,
-  Clock,
   Upload,
   Globe,
   ChevronDown,
@@ -32,61 +29,8 @@ import {
   type KnowledgeBase,
   type KBDocument,
 } from '@/hooks/useKnowledgeBase';
-
-// ---------------------------------------------------------------------------
-// Status badge component
-// ---------------------------------------------------------------------------
-
-function StatusBadge({ status, label }: { status: KBDocument['embeddingStatus']; label: string }) {
-  const colorMap: Record<KBDocument['embeddingStatus'], string> = {
-    PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    PROCESSING: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-    COMPLETED: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    FAILED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  };
-
-  const iconMap: Record<KBDocument['embeddingStatus'], React.ReactNode> = {
-    PENDING: <Clock className="h-3 w-3" />,
-    PROCESSING: <Loader2 className="h-3 w-3 animate-spin" />,
-    COMPLETED: <CheckCircle className="h-3 w-3" />,
-    FAILED: <XCircle className="h-3 w-3" />,
-  };
-
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
-        colorMap[status],
-      )}
-    >
-      {iconMap[status]}
-      {label}
-    </span>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Content type badge
-// ---------------------------------------------------------------------------
-
-function ContentTypeBadge({ type, label }: { type: KBDocument['contentType']; label: string }) {
-  const colorMap: Record<string, string> = {
-    TEXT: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
-    FAQ: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-    PDF: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    URL: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  };
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-        colorMap[type] || colorMap.TEXT,
-      )}
-    >
-      {label}
-    </span>
-  );
-}
+import { StatusBadge } from './_components/StatusBadge';
+import { ContentTypeBadge } from './_components/ContentTypeBadge';
 
 // ---------------------------------------------------------------------------
 // KB List View
