@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "003-add-conversation-tagging-ui-to-dashboard",
+  "spec": "048-real-time-team-performance-dashboard",
   "state": "building",
   "subtasks": {
-    "completed": 2,
-    "total": 5,
+    "completed": 14,
+    "total": 15,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Frontend Implementation",
+    "current": "Integration & Testing",
     "id": null,
-    "total": 5
+    "total": 1
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 4,
-    "started_at": "2026-03-09T16:05:38.909827"
+    "number": 16,
+    "started_at": "2026-03-09T21:17:35.079825"
   },
-  "last_update": "2026-03-09T16:16:13.451873"
+  "last_update": "2026-03-09T22:13:04.984472"
 }
