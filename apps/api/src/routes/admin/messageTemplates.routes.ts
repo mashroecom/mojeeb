@@ -53,6 +53,55 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+// GET /analytics - Template usage analytics
+router.get('/analytics', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const [
+      totalTemplates,
+      activeTemplates,
+      categoryStats,
+      mostUsedTemplates,
+      sharedTemplates,
+    ] = await Promise.all([
+      prisma.messageTemplate.count(),
+      prisma.messageTemplate.count({ where: { isActive: true } }),
+      prisma.messageTemplate.groupBy({
+        by: ['category'],
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+      }),
+      prisma.messageTemplate.findMany({
+        orderBy: { usageCount: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          title: true,
+          category: true,
+          usageCount: true,
+          org: { select: { name: true } },
+        },
+      }),
+      prisma.messageTemplate.count({ where: { isShared: true } }),
+    ]);
+
+    const data = {
+      totalTemplates,
+      activeTemplates,
+      inactiveTemplates: totalTemplates - activeTemplates,
+      sharedTemplates,
+      categoryStats: categoryStats.map((stat) => ({
+        category: stat.category || 'Uncategorized',
+        count: stat._count.id,
+      })),
+      mostUsedTemplates,
+    };
+
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /:id - Get template detail
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
