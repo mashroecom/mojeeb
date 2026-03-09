@@ -3,7 +3,7 @@ import argon2 from 'argon2';
 import { authService } from '../services/auth.service';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
-import { authLimiter } from '../middleware/rateLimiter';
+import { authLimiter, tokenRefreshLimiter } from '../middleware/rateLimiter';
 import { registerSchema, loginSchema } from '@mojeeb/shared-utils';
 import { z } from 'zod';
 import { prisma } from '../config/database';
@@ -91,7 +91,7 @@ router.post(
 );
 
 // POST /api/v1/auth/refresh
-router.post('/refresh', async (req, res, next) => {
+router.post('/refresh', tokenRefreshLimiter, async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken) {
