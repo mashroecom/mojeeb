@@ -8,23 +8,38 @@ import { useRouter } from '@/i18n/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { setAuthCookie } from '@/lib/auth-cookies';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
+import { useZodForm } from '@/hooks/useZodForm';
+import { loginSchema } from '@mojeeb/shared-utils';
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const form = useZodForm({
+    schema: loginSchema,
+    initialValues: {
+      email: '',
+      password: '',
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate form
+    const isValid = await form.handleSubmit();
+    if (!isValid) {
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/login', form.values);
       const { tokens, user, organization, organizations } = response.data.data;
 
       localStorage.setItem('accessToken', tokens.accessToken);
@@ -61,13 +76,16 @@ export default function LoginPage() {
           <label className="mb-1.5 block text-sm font-medium">{t('email')}</label>
           <input
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
+            value={form.values.email || ''}
+            onChange={form.handleChange('email')}
+            onBlur={form.handleBlur('email')}
             className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             placeholder="name@company.com"
             dir="ltr"
           />
+          {form.errors.email && (
+            <p className="mt-1 text-xs text-destructive">{form.errors.email}</p>
+          )}
         </div>
 
         <div>
@@ -79,12 +97,15 @@ export default function LoginPage() {
           </div>
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
+            value={form.values.password || ''}
+            onChange={form.handleChange('password')}
+            onBlur={form.handleBlur('password')}
             className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             dir="ltr"
           />
+          {form.errors.password && (
+            <p className="mt-1 text-xs text-destructive">{form.errors.password}</p>
+          )}
         </div>
 
         <button
