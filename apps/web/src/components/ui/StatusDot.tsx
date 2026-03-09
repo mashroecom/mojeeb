@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { Tooltip } from './Tooltip';
 
 const statusColors = {
   online: 'bg-green-500',
@@ -8,6 +9,14 @@ const statusColors = {
   active: 'bg-blue-500',
   warning: 'bg-yellow-500',
   error: 'bg-red-500',
+} as const;
+
+const statusLabels = {
+  online: 'Online',
+  offline: 'Offline',
+  active: 'Active',
+  warning: 'Warning',
+  error: 'Error',
 } as const;
 
 const sizeStyles = {
@@ -27,15 +36,17 @@ export function StatusDot({
   className,
 }: StatusDotProps) {
   return (
-    <span
-      className={cn(
-        'inline-block shrink-0 rounded-full',
-        statusColors[status],
-        sizeStyles[size],
-        className,
-      )}
-      role="status"
-      aria-label={status}
-    />
+    <Tooltip content={statusLabels[status]}>
+      <span
+        className={cn(
+          'inline-block shrink-0 rounded-full',
+          statusColors[status],
+          sizeStyles[size],
+          className,
+        )}
+        role="status"
+        aria-label={status}
+      />
+    </Tooltip>
   );
 }
