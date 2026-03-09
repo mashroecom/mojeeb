@@ -1,0 +1,266 @@
+---
+# Ingress with SSL/TLS and routing configuration
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mojeeb-ingress
+  namespace: mojeeb
+  labels:
+    app: mojeeb
+    component: ingress
+  annotations:
+    # NGINX Ingress Controller class
+    kubernetes.io/ingress.class: nginx
+
+    # SSL/TLS configuration (using cert-manager)
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/acme-challenge-type: http01
+
+    # SSL redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+    # SSL protocols and ciphers
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+    nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+    nginx.ingress.kubernetes.io/ssl-prefer-server-ciphers: "off"
+
+    # HSTS
+    nginx.ingress.kubernetes.io/hsts: "true"
+    nginx.ingress.kubernetes.io/hsts-max-age: "63072000"
+    nginx.ingress.kubernetes.io/hsts-include-subdomains: "true"
+    nginx.ingress.kubernetes.io/hsts-preload: "true"
+
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Gzip compression
+    nginx.ingress.kubernetes.io/enable-gzip: "true"
+    nginx.ingress.kubernetes.io/gzip-level: "6"
+    nginx.ingress.kubernetes.io/gzip-types: "text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml"
+
+    # Max body size (file uploads)
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+    # WebSocket support
+    nginx.ingress.kubernetes.io/websocket-services: api
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
+
+    # Rate limiting zones (global configuration)
+    nginx.ingress.kubernetes.io/limit-rps: "30"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+
+spec:
+  tls:
+  - hosts:
+    - mojeeb.app
+    - www.mojeeb.app
+    secretName: mojeeb-tls-cert
+
+  rules:
+  # Main domain
+  - host: mojeeb.app
+    http:
+      paths:
+      # API health check (no rate limit)
+      - path: /api/v1/health
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      # Auth endpoints (stricter rate limiting)
+      - path: /api/v1/auth
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      # WebSocket endpoint
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      # Socket.IO endpoint
+      - path: /socket.io
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      # Static uploads
+      - path: /uploads
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      # Widget JS
+      - path: /widget
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      # Chat page
+      - path: /chat.html
+        pathType: Exact
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      # API endpoints (general)
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      # Next.js static assets
+      - path: /_next/static
+        pathType: Prefix
+        backend:
+          service:
+            name: web
+            port:
+              number: 3000
+
+      # Frontend (default)
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web
+            port:
+              number: 3000
+
+  # www subdomain (same configuration)
+  - host: www.mojeeb.app
+    http:
+      paths:
+      - path: /api/v1/health
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      - path: /api/v1/auth
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      - path: /socket.io
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      - path: /uploads
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      - path: /widget
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      - path: /chat.html
+        pathType: Exact
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api
+            port:
+              number: 4000
+
+      - path: /_next/static
+        pathType: Prefix
+        backend:
+          service:
+            name: web
+            port:
+              number: 3000
+
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web
+            port:
+              number: 3000
+
+---
+# Rate limiting ConfigMap for NGINX Ingress Controller
+# This ConfigMap provides additional rate limiting configuration per location
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-rate-limits
+  namespace: mojeeb
+  labels:
+    app: mojeeb
+    component: ingress
+data:
+  # API general rate limit: 30 req/sec with burst of 50
+  api-limit-rps: "30"
+  api-limit-burst: "50"
+
+  # Auth endpoints: 5 req/min with burst of 10
+  auth-limit-rps: "0.083"  # 5 requests per minute = 5/60 = 0.083 req/sec
+  auth-limit-burst: "10"
+
+  # WebSocket rate limit: 10 req/sec with burst of 20
+  ws-limit-rps: "10"
+  ws-limit-burst: "20"
