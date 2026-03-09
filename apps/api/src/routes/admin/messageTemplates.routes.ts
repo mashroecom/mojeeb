@@ -1,6 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import { prisma } from '../../config/database';
 import { auditLogService } from '../../services/auditLog.service';
+import { validate } from '../../middleware/validate';
 
 const router: Router = Router();
 
@@ -69,6 +71,96 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     next(err);
   }
 });
+
+// Validation schemas
+const createTemplateSchema = z.object({
+  orgId: z.string().min(1),
+  title: z.string().min(1).max(200),
+  titleAr: z.string().max(200).optional(),
+  content: z.string().min(1),
+  contentAr: z.string().optional(),
+  category: z.string().max(100).optional(),
+  shortcut: z.string().max(50).optional(),
+  variables: z.array(z.string()).optional(),
+  isShared: z.boolean().optional(),
+  userId: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+const updateTemplateSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  titleAr: z.string().max(200).optional(),
+  content: z.string().min(1).optional(),
+  contentAr: z.string().optional(),
+  category: z.string().max(100).optional(),
+  shortcut: z.string().max(50).optional(),
+  variables: z.array(z.string()).optional(),
+  isShared: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+});
+
+// POST / - Create new template
+router.post(
+  '/',
+  validate({ body: createTemplateSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const template = await prisma.messageTemplate.create({
+        data: req.body,
+        include: { org: { select: { name: true } } },
+      });
+
+      await auditLogService.log({
+        userId: req.user!.userId,
+        action: 'MESSAGE_TEMPLATE_CREATED',
+        targetType: 'MessageTemplate',
+        targetId: template.id,
+        metadata: req.body,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      res.status(201).json({ success: true, data: template });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// PATCH /:id - Update template
+router.patch(
+  '/:id',
+  validate({ body: updateTemplateSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params as { id: string };
+      const template = await prisma.messageTemplate.findUnique({ where: { id } });
+      if (!template) {
+        return res.status(404).json({ success: false, message: 'Template not found' });
+      }
+
+      const updated = await prisma.messageTemplate.update({
+        where: { id },
+        data: req.body,
+        include: { org: { select: { name: true } } },
+      });
+
+      await auditLogService.log({
+        userId: req.user!.userId,
+        action: 'MESSAGE_TEMPLATE_UPDATED',
+        targetType: 'MessageTemplate',
+        targetId: id,
+        metadata: req.body,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      res.json({ success: true, data: updated });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 // DELETE /:id - Delete template
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
