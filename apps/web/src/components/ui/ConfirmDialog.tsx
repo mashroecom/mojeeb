@@ -56,8 +56,8 @@ export function ConfirmDialog({
       <div className="mx-4 w-full max-w-md animate-in fade-in zoom-in-95 rounded-xl border bg-card p-6 shadow-lg">
         <div className="flex items-start gap-3">
           {variant === 'danger' && (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
           )}
           <div className="flex-1">
@@ -78,7 +78,7 @@ export function ConfirmDialog({
             className={cn(
               'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
               variant === 'danger'
-                ? 'bg-red-600 text-white hover:bg-red-700'
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
                 : 'bg-primary text-primary-foreground hover:bg-primary/90',
             )}
           >

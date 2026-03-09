@@ -11,6 +11,7 @@ export interface SearchInputProps {
   debounceMs?: number;
   onClear?: () => void;
   className?: string;
+  clearLabel?: string;
 }
 
 export function SearchInput({
@@ -20,6 +21,7 @@ export function SearchInput({
   debounceMs = 300,
   onClear,
   className,
+  clearLabel = 'Clear search',
 }: SearchInputProps) {
   const [internal, setInternal] = useState(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,8 +61,8 @@ export function SearchInput({
         onChange={(e) => setInternal(e.target.value)}
         placeholder={placeholder}
         className={cn(
-          'w-full rounded-md border bg-background py-2 ps-9 pe-9 text-sm outline-none transition-colors',
-          'focus:border-primary focus:ring-1 focus:ring-primary',
+          'h-10 w-full rounded-lg border bg-background ps-9 pe-9 text-sm outline-none transition-colors',
+          'focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary',
           'placeholder:text-muted-foreground',
         )}
       />
@@ -69,7 +71,7 @@ export function SearchInput({
           type="button"
           onClick={handleClear}
           className="absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Clear search"
+          aria-label={clearLabel}
         >
           <X className="h-4 w-4" />
         </button>

@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { api } from '@/lib/api';
-import { setAuthCookie } from '@/lib/auth-cookies';
+import { setAuthCookie, setOnboardingCookie } from '@/lib/auth-cookies';
 import { Loader2 } from 'lucide-react';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
@@ -67,14 +67,15 @@ export function GoogleSignInButton({ text = 'continue_with' }: GoogleSignInButto
         localStorage.setItem('accessToken', tokens.accessToken);
         localStorage.setItem('refreshToken', tokens.refreshToken);
         setAuthCookie(tokens.accessToken);
+        setOnboardingCookie(user?.onboardingCompleted === true);
 
         if (user && organization) {
           setAuth(user, organization, organizations);
         }
 
-        router.push('/dashboard');
+        router.push(user?.onboardingCompleted ? '/dashboard' : '/onboarding');
       } catch (err: any) {
-        setError(err.response?.data?.error || 'Google sign-in failed');
+        setError(t('googleSignInFailed'));
         setLoading(false);
       }
     },
@@ -135,13 +136,13 @@ export function GoogleSignInButton({ text = 'continue_with' }: GoogleSignInButto
   return (
     <div className="w-full">
       {error && (
-        <div className="mb-2 rounded-md bg-destructive/10 p-2 text-xs text-destructive">
+        <div className="mb-2 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center rounded-md border py-2.5">
+        <div className="flex items-center justify-center rounded-lg border py-2.5">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       ) : (
@@ -156,9 +157,9 @@ export function GoogleSignInButton({ text = 'continue_with' }: GoogleSignInButto
         <button
           type="button"
           onClick={() => {
-            setError('Google Sign-In is not available. Please try again later.');
+            setError(t('googleSignInUnavailable'));
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-md border bg-background py-2.5 text-sm font-medium hover:bg-accent transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border bg-background py-2.5 text-sm font-medium hover:bg-accent transition-colors"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path

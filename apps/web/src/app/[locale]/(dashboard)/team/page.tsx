@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { fmtDate } from '@/lib/dateFormat';
 import {
   useOrgMembers,
@@ -12,6 +13,7 @@ import {
 } from '@/hooks/useOrganization';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuthStore } from '@/stores/authStore';
+import { toast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import {
   Users,
@@ -30,13 +32,16 @@ import {
 } from 'lucide-react';
 
 const inputClass =
-  'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
+  'h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
 
 const selectClass =
-  'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
+  'h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
 
 export default function TeamPage() {
   const t = useTranslations('dashboard.team');
+  const tc = useTranslations('common');
+  const ts = useTranslations('dashboard.sidebar');
+  const tb = useTranslations('dashboard.breadcrumb');
   const locale = useLocale();
   const user = useAuthStore((s) => s.user);
 
@@ -64,6 +69,14 @@ export default function TeamPage() {
   return (
     <>
     <div>
+      <Breadcrumb
+        items={[
+          { label: tb('dashboard'), href: '/dashboard' },
+          { label: ts('team') },
+        ]}
+        className="mb-4"
+      />
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
@@ -126,18 +139,22 @@ export default function TeamPage() {
                         setInviteEmail('');
                         setInviteStatus('success');
                         setTimeout(() => setInviteStatus('idle'), 3000);
+                        toast.success(tc('toast.inviteSent'));
                       },
                       onError: (err: any) => {
-                        const msg = err?.response?.data?.error;
-                        setInviteErrorMsg(msg || t('inviteError'));
+                        const raw = err?.response?.data?.error ?? '';
+                        const msg = raw.includes('limit reached')
+                          ? t('memberLimitReached')
+                          : raw || t('inviteError');
                         setInviteStatus('error');
                         setTimeout(() => setInviteStatus('idle'), 5000);
+                        toast.error(tc('toast.inviteFailed'));
                       },
                     },
                   );
                 }}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
+                  'inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
                   (inviteMember.isPending || !inviteEmail.trim()) &&
                     'cursor-not-allowed opacity-50',
                 )}
@@ -244,15 +261,21 @@ export default function TeamPage() {
                               onChange={(e) => {
                                 const newRole = e.target.value as 'ADMIN' | 'MEMBER';
                                 if (newRole !== member.role) {
-                                  updateMemberRole.mutate({
-                                    memberId: member.id,
-                                    role: newRole,
-                                  });
+                                  updateMemberRole.mutate(
+                                    {
+                                      memberId: member.id,
+                                      role: newRole,
+                                    },
+                                    {
+                                      onSuccess: () => toast.success(tc('toast.roleUpdated')),
+                                      onError: () => toast.error(tc('toast.roleUpdateFailed')),
+                                    },
+                                  );
                                 }
                               }}
                               disabled={updateMemberRole.isPending}
                               className={cn(
-                                'rounded-md border bg-background px-2 py-1 text-xs outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary',
+                                'rounded-lg border bg-background px-2 py-1 text-xs outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary',
                                 updateMemberRole.isPending && 'opacity-50',
                               )}
                             >
@@ -268,7 +291,7 @@ export default function TeamPage() {
                                 member.role === 'ADMIN' &&
                                   'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
                                 member.role === 'MEMBER' &&
-                                  'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+                                  'bg-muted text-muted-foreground',
                               )}
                             >
                               {member.role === 'OWNER' && <Crown className="h-3 w-3" />}
@@ -301,11 +324,14 @@ export default function TeamPage() {
                                       cancelLabel: t('cancel'),
                                       variant: 'danger',
                                       onConfirm: () => {
-                                        transferOwnership.mutate(member.id);
+                                        transferOwnership.mutate(member.id, {
+                                          onSuccess: () => toast.success(tc('toast.ownershipTransferred')),
+                                          onError: () => toast.error(tc('toast.ownershipTransferFailed')),
+                                        });
                                       },
                                     });
                                   }}
-                                  className="inline-flex items-center gap-1 rounded-md border border-amber-200 px-2 py-1 text-xs font-medium text-amber-600 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900/20 disabled:opacity-50"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-amber-200 px-2 py-1 text-xs font-medium text-amber-600 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900/20 disabled:opacity-50"
                                 >
                                   <ArrowRightLeft className="h-3 w-3" />
                                 </button>
@@ -323,11 +349,14 @@ export default function TeamPage() {
                                       cancelLabel: t('cancel'),
                                       variant: 'danger',
                                       onConfirm: () => {
-                                        removeMember.mutate(member.id);
+                                        removeMember.mutate(member.id, {
+                                          onSuccess: () => toast.success(tc('toast.memberRemoved')),
+                                          onError: () => toast.error(tc('toast.memberRemoveFailed')),
+                                        });
                                       },
                                     });
                                   }}
-                                  className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 disabled:opacity-50"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 disabled:opacity-50"
                                 >
                                   <UserMinus className="h-3 w-3" />
                                 </button>
@@ -429,7 +458,7 @@ export default function TeamPage() {
               <p className="text-xs text-muted-foreground">{t('adminDesc')}</p>
             </div>
             <div className="flex items-start gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-800 dark:text-gray-300 shrink-0">
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground shrink-0">
                 <Shield className="h-3 w-3" />
                 {t('member')}
               </span>

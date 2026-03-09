@@ -6,20 +6,20 @@ import { cn } from '@/lib/utils';
 
 const variantStyles = {
   primary:
-    'bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary',
+    'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary',
   secondary:
-    'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:ring-secondary',
+    'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-secondary',
   danger:
-    'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive',
+    'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive',
   ghost:
-    'hover:bg-muted text-foreground focus:ring-muted',
+    'hover:bg-muted text-foreground focus-visible:ring-muted',
   outline:
-    'border bg-background text-foreground hover:bg-muted focus:ring-primary',
+    'border bg-background text-foreground hover:bg-muted focus-visible:ring-primary',
 } as const;
 
 const sizeStyles = {
   sm: 'h-8 px-3 text-xs gap-1.5',
-  md: 'h-9 px-4 text-sm gap-2',
+  md: 'h-10 px-4 py-2.5 text-sm gap-2',
   lg: 'h-11 px-6 text-base gap-2.5',
 } as const;
 
@@ -49,8 +49,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         className={cn(
           'inline-flex items-center justify-center rounded-lg font-medium transition-colors',
-          'outline-none focus:ring-2 focus:ring-offset-2',
-          'disabled:pointer-events-none disabled:opacity-50',
+          'outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
           variantStyles[variant],
           sizeStyles[size],
           className,

@@ -30,7 +30,7 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
             const isBlock = codeClassName?.includes('language-');
             if (isBlock) {
               return (
-                <pre className="mb-2 overflow-x-auto rounded-md bg-black/10 p-3 text-xs dark:bg-white/10">
+                <pre className="mb-2 overflow-x-auto rounded-lg bg-black/10 p-3 text-xs dark:bg-white/10">
                   <code>{children}</code>
                 </pre>
               );

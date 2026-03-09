@@ -66,7 +66,7 @@ const emptyForm: FormData = {
 
 function CardSkeleton() {
   return (
-    <div className="animate-pulse rounded-lg border bg-card p-5">
+    <div className="animate-pulse rounded-xl border bg-card p-5">
       <div className="flex items-start justify-between mb-3">
         <div className="h-5 w-48 rounded bg-muted" />
         <div className="h-5 w-16 rounded-full bg-muted" />
@@ -101,7 +101,7 @@ export default function EmailTemplatesPage() {
   const deleteMutation = useDeleteEmailTemplate();
   const seedMutation = useSeedEmailTemplates();
 
-  const templates: EmailTemplate[] = data?.data ?? data ?? [];
+  const templates: EmailTemplate[] = data ?? [];
 
   // --- Handlers ---
 
@@ -182,7 +182,7 @@ export default function EmailTemplatesPage() {
         <button
           onClick={handleSeed}
           disabled={seedMutation.isPending}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 shrink-0"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 shrink-0"
         >
           {seedMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -197,7 +197,7 @@ export default function EmailTemplatesPage() {
       {editingKey && (
         <form
           onSubmit={handleSubmit}
-          className="mb-6 rounded-lg border bg-card p-5 shadow-sm space-y-4"
+          className="mb-6 rounded-xl border bg-card p-5 shadow-sm space-y-4"
         >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
@@ -207,7 +207,7 @@ export default function EmailTemplatesPage() {
               type="button"
               onClick={closeForm}
               aria-label={tc('close')}
-              className="rounded-md p-1 text-muted-foreground hover:bg-muted transition-colors"
+              className="rounded-lg p-1 text-muted-foreground hover:bg-muted transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -222,7 +222,7 @@ export default function EmailTemplatesPage() {
                 required
                 value={form.subject}
                 onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               />
             </div>
 
@@ -234,7 +234,7 @@ export default function EmailTemplatesPage() {
                 value={form.subjectAr}
                 onChange={(e) => setForm((f) => ({ ...f, subjectAr: e.target.value }))}
                 dir="rtl"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               />
             </div>
 
@@ -246,7 +246,7 @@ export default function EmailTemplatesPage() {
                 rows={8}
                 value={form.bodyHtml}
                 onChange={(e) => setForm((f) => ({ ...f, bodyHtml: e.target.value }))}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm font-mono outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors resize-none"
               />
             </div>
 
@@ -258,7 +258,7 @@ export default function EmailTemplatesPage() {
                 value={form.bodyHtmlAr}
                 onChange={(e) => setForm((f) => ({ ...f, bodyHtmlAr: e.target.value }))}
                 dir="rtl"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm font-mono outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors resize-none"
               />
             </div>
 
@@ -273,7 +273,7 @@ export default function EmailTemplatesPage() {
                 value={form.variables}
                 onChange={(e) => setForm((f) => ({ ...f, variables: e.target.value }))}
                 placeholder={t('variablesPlaceholder')}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm font-mono outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               />
             </div>
           </div>
@@ -283,14 +283,14 @@ export default function EmailTemplatesPage() {
             <button
               type="button"
               onClick={closeForm}
-              className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
               {tc('cancel')}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {tc('save')}
@@ -323,7 +323,7 @@ export default function EmailTemplatesPage() {
 
       {/* Empty State */}
       {!isLoading && !isError && templates.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border bg-card py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-16 text-center">
           <FileCode2 className="h-12 w-12 text-muted-foreground/40 mb-4" />
           <p className="text-sm text-muted-foreground">{t('noTemplates')}</p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -339,7 +339,7 @@ export default function EmailTemplatesPage() {
             <div
               key={tpl.key}
               className={cn(
-                'rounded-lg border bg-card p-5 shadow-sm transition-colors',
+                'rounded-xl border bg-card p-5 shadow-sm transition-colors',
                 !tpl.isActive && 'opacity-60',
               )}
             >
@@ -357,7 +357,7 @@ export default function EmailTemplatesPage() {
                     'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0',
                     tpl.isActive
                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+                      : 'bg-muted text-muted-foreground',
                   )}
                 >
                   {tpl.isActive ? t('active') : t('inactive')}
@@ -386,7 +386,7 @@ export default function EmailTemplatesPage() {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => openEdit(tpl)}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                     title={tc('edit')}
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -397,14 +397,14 @@ export default function EmailTemplatesPage() {
                       <button
                         onClick={() => handleDelete(tpl.key)}
                         disabled={deleteMutation.isPending}
-                        className="inline-flex items-center gap-1 rounded-md bg-red-500 px-2 py-1 text-[10px] font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-lg bg-destructive px-2 py-1 text-[10px] font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
                       >
                         {deleteMutation.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                         {tc('confirm')}
                       </button>
                       <button
                         onClick={() => setDeleteConfirmKey(null)}
-                        className="rounded-md px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
+                        className="rounded-lg px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
                       >
                         {tc('cancel')}
                       </button>
@@ -412,7 +412,7 @@ export default function EmailTemplatesPage() {
                   ) : (
                     <button
                       onClick={() => setDeleteConfirmKey(tpl.key)}
-                      className="rounded-md p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 transition-colors"
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 transition-colors"
                       title={tc('delete')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

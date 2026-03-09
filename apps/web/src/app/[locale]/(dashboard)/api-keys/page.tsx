@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { fmtDate } from '@/lib/dateFormat';
 import { useApiKeys, useCreateApiKey, useRevokeApiKey } from '@/hooks/useApiKeys';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import type { ApiKeyCreated } from '@/hooks/useApiKeys';
 import { useAuthStore } from '@/stores/authStore';
+import { toast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import {
   Key,
@@ -23,10 +25,13 @@ import {
 } from 'lucide-react';
 
 const inputClass =
-  'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
+  'w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
 
 export default function ApiKeysPage() {
   const t = useTranslations('dashboard.apiKeys');
+  const tc = useTranslations('common');
+  const ts = useTranslations('dashboard.sidebar');
+  const tb = useTranslations('dashboard.breadcrumb');
   const locale = useLocale();
   const orgId = useAuthStore((s) => s.organization?.id);
 
@@ -51,7 +56,9 @@ export default function ApiKeysPage() {
           setCreatedKey(data);
           setNewKeyName('');
           setShowNewKeyDialog(false);
+          toast.success(tc('toast.apiKeyCreated'));
         },
+        onError: () => toast.error(tc('toast.apiKeyCreateFailed')),
       },
     );
   };
@@ -64,7 +71,10 @@ export default function ApiKeysPage() {
       cancelLabel: t('cancel'),
       variant: 'danger',
       onConfirm: () => {
-        revokeApiKey.mutate(keyId);
+        revokeApiKey.mutate(keyId, {
+          onSuccess: () => toast.success(tc('toast.apiKeyRevoked')),
+          onError: () => toast.error(tc('toast.apiKeyRevokeFailed')),
+        });
       },
     });
   };
@@ -88,6 +98,14 @@ export default function ApiKeysPage() {
   return (
     <>
     <div>
+      <Breadcrumb
+        items={[
+          { label: tb('dashboard'), href: '/dashboard' },
+          { label: ts('apiKeys') },
+        ]}
+        className="mb-4"
+      />
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
@@ -103,13 +121,13 @@ export default function ApiKeysPage() {
             </h2>
             <p className="text-sm text-muted-foreground mb-3">{t('orgIdDescription')}</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-md bg-background border px-4 py-2.5 text-sm font-mono" dir="ltr">
+              <code className="flex-1 rounded-lg bg-background border px-4 py-2.5 text-sm font-mono" dir="ltr">
                 {orgId}
               </code>
               <button
                 type="button"
                 onClick={handleCopyOrgId}
-                className="inline-flex items-center gap-1.5 rounded-md border bg-background px-3 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
               >
                 {copiedOrgId ? (
                   <>
@@ -135,7 +153,7 @@ export default function ApiKeysPage() {
 
           {/* Created key banner */}
           {createdKey && (
-            <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
               <p className="mb-2 text-sm font-medium text-green-800 dark:text-green-300">
                 {t('keyCreated')}
               </p>
@@ -146,7 +164,7 @@ export default function ApiKeysPage() {
                 <button
                   type="button"
                   onClick={() => handleCopyKey(createdKey.key)}
-                  className="rounded-md border px-2 py-1.5 text-xs hover:bg-accent"
+                  className="rounded-lg border px-2 py-1.5 text-xs hover:bg-accent"
                 >
                   {copiedKeyId === createdKey.key ? (
                     <CheckCircle className="h-3.5 w-3.5 text-green-600" />
@@ -190,7 +208,7 @@ export default function ApiKeysPage() {
                 type="button"
                 onClick={handleCreateApiKey}
                 disabled={createApiKey.isPending || !newKeyName.trim()}
-                className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {createApiKey.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -205,7 +223,7 @@ export default function ApiKeysPage() {
                   setShowNewKeyDialog(false);
                   setNewKeyName('');
                 }}
-                className="rounded-md border px-3 py-2 text-sm hover:bg-accent"
+                className="rounded-lg border px-3 py-2 text-sm hover:bg-accent"
               >
                 {t('cancel')}
               </button>
@@ -215,7 +233,7 @@ export default function ApiKeysPage() {
               <button
                 type="button"
                 onClick={() => setShowNewKeyDialog(true)}
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4" />
                 {t('create')}
@@ -255,7 +273,7 @@ export default function ApiKeysPage() {
                     type="button"
                     onClick={() => handleRevokeApiKey(apiKey.id)}
                     disabled={revokeApiKey.isPending}
-                    className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                    className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     {t('revoke')}

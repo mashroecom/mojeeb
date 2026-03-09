@@ -137,6 +137,38 @@ router.post(
   }
 );
 
+// POST /api/v1/organizations/:orgId/knowledge-bases/:kbId/documents/bulk
+router.post(
+  '/:kbId/documents/bulk',
+  validate({
+    body: z.object({
+      documents: z.array(
+        z.object({
+          title: z.string().min(1).max(200),
+          content: z.string().min(1),
+          contentType: z.enum(['TEXT', 'FAQ']).default('TEXT'),
+        }),
+      ).min(1).max(50),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const { orgId, kbId } = req.params as KbParams;
+      await knowledgeBaseService.getById(orgId, kbId);
+
+      const results = await Promise.all(
+        req.body.documents.map((doc: { title: string; content: string; contentType: string }) =>
+          knowledgeBaseService.addDocument(kbId, doc),
+        ),
+      );
+
+      res.status(201).json({ success: true, data: results });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // DELETE /api/v1/organizations/:orgId/knowledge-bases/:kbId/documents/:docId
 router.delete('/:kbId/documents/:docId', async (req, res, next) => {
   try {

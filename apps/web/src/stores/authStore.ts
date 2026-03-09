@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { clearAuthCookie } from '@/lib/auth-cookies';
+import { useChatStore } from './chatStore';
 
 interface User {
   id: string;
@@ -8,6 +9,7 @@ interface User {
   lastName: string;
   avatarUrl: string | null;
   isSuperAdmin?: boolean;
+  onboardingCompleted?: boolean;
 }
 
 interface Organization {
@@ -44,6 +46,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     clearAuthCookie();
+    useChatStore.getState().clearAll();
     set({ user: null, organization: null, organizations: [], isAuthenticated: false });
   },
 }));

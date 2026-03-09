@@ -60,6 +60,26 @@ interface DeleteDocumentInput {
   docId: string;
 }
 
+// Search
+export interface SearchResult {
+  id: string;
+  title: string;
+  content: string;
+  score: number;
+}
+
+interface SearchKBInput {
+  kbId: string;
+  query: string;
+  limit?: number;
+}
+
+// Bulk import
+interface BulkImportInput {
+  kbId: string;
+  documents: Array<{ title: string; content: string; contentType?: 'TEXT' | 'FAQ' }>;
+}
+
 // ---------------------------------------------------------------------------
 // Query key factory
 // ---------------------------------------------------------------------------
@@ -230,6 +250,46 @@ export function useDeleteDocument() {
         queryClient.invalidateQueries({
           queryKey: knowledgeBaseKeys.detail(orgId, variables.kbId),
         });
+        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.all(orgId) });
+      }
+    },
+  });
+}
+
+/**
+ * Search within a knowledge base using semantic/vector search.
+ */
+export function useSearchKB() {
+  const orgId = useAuthStore((s) => s.organization?.id);
+  return useMutation({
+    mutationFn: async ({ kbId, query, limit }: SearchKBInput) => {
+      const { data } = await api.post<ApiResponse<SearchResult[]>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/search`,
+        { query, limit },
+      );
+      return data.data;
+    },
+  });
+}
+
+/**
+ * Bulk import documents into a knowledge base.
+ * Invalidates both the single KB detail and the KB list on success.
+ */
+export function useBulkImportDocuments() {
+  const queryClient = useQueryClient();
+  const orgId = useAuthStore((s) => s.organization?.id);
+  return useMutation({
+    mutationFn: async ({ kbId, documents }: BulkImportInput) => {
+      const { data } = await api.post<ApiResponse<KBDocument[]>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/documents/bulk`,
+        { documents },
+      );
+      return data.data;
+    },
+    onSuccess: (_data, variables) => {
+      if (orgId) {
+        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.detail(orgId, variables.kbId) });
         queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.all(orgId) });
       }
     },

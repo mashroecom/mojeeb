@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useRouter } from '@/i18n/navigation';
 import { useAuthStore } from '@/stores/authStore';
-import { setAuthCookie } from '@/lib/auth-cookies';
+import { setAuthCookie, setOnboardingCookie } from '@/lib/auth-cookies';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 export default function LoginPage() {
@@ -30,14 +30,22 @@ export default function LoginPage() {
       localStorage.setItem('accessToken', tokens.accessToken);
       localStorage.setItem('refreshToken', tokens.refreshToken);
       setAuthCookie(tokens.accessToken);
+      setOnboardingCookie(user?.onboardingCompleted === true);
 
       if (user && organization) {
         setAuth(user, organization, organizations);
       }
 
-      router.push('/dashboard');
+      if (user?.onboardingCompleted === true) {
+        router.push('/dashboard');
+      } else {
+        router.push('/onboarding');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
+      const msg = err.response?.data?.error || '';
+      if (msg.includes('Invalid email or password')) setError(t('invalidCredentials'));
+      else if (msg.includes('suspended')) setError(t('accountSuspended'));
+      else setError(t('loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -52,19 +60,20 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium">{t('email')}</label>
+          <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium">{t('email')}</label>
           <input
+            id="login-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             placeholder="name@company.com"
             dir="ltr"
           />
@@ -72,17 +81,18 @@ export default function LoginPage() {
 
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <label className="text-sm font-medium">{t('password')}</label>
+            <label htmlFor="login-password" className="text-sm font-medium">{t('password')}</label>
             <Link href="/forgot-password" className="text-xs text-primary hover:underline">
               {t('forgotPassword')}
             </Link>
           </div>
           <input
+            id="login-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             dir="ltr"
           />
         </div>
@@ -90,9 +100,9 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          className="w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
-          {loading ? '...' : t('submit')}
+          {loading ? t('submitting') : t('submit')}
         </button>
       </form>
 

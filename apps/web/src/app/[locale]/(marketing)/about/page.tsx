@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useLandingPageContent } from '@/hooks/useLandingPage';
 import {
   Building2,
   Users,
@@ -22,6 +23,7 @@ const valueIcons = {
 
 export default function AboutPage() {
   const t = useTranslations('about');
+  const { data: cms } = useLandingPageContent();
 
   return (
     <div>
@@ -65,10 +67,10 @@ export default function AboutPage() {
         <div className="container max-w-5xl">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
             {[
-              { value: '500+', label: t('stats.customers'), icon: Users },
-              { value: '10M+', label: t('stats.messages'), icon: MessageSquare },
-              { value: '20+', label: t('stats.languages'), icon: Globe },
-              { value: '99.9%', label: t('stats.uptime'), icon: Clock },
+              { value: cms?.statsCustomers || '500+', label: t('stats.customers'), icon: Users },
+              { value: cms?.statsMessages || '10M+', label: t('stats.messages'), icon: MessageSquare },
+              { value: cms?.statsLanguages || '20+', label: t('stats.languages'), icon: Globe },
+              { value: cms?.statsUptime || '99.9%', label: t('stats.uptime'), icon: Clock },
             ].map((stat) => (
               <div
                 key={stat.label}

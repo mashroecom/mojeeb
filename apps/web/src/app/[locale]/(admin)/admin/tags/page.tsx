@@ -118,7 +118,7 @@ export default function TagsPage() {
                 </thead>
                 <tbody className="divide-y">
                   {tags.map((tag: any) => (
-                    <tr key={tag.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={tag.id} className="hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-3 text-sm font-medium">
                         <div className="flex items-center gap-2">
                           <span

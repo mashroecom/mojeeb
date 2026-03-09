@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Loader2, MessagesSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/useToast';
 import {
   useConversations,
   useConversation,
@@ -26,15 +28,26 @@ import { ConversationHeader } from './_components/ConversationHeader';
 import { MessageBubble } from './_components/MessageBubble';
 import { MessageInput } from './_components/MessageInput';
 import { InsightsSidebar, MobileInsightsDrawer } from './_components/InsightsPanel';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function ConversationsPage() {
   const t = useTranslations('dashboard.conversations');
+  const tc = useTranslations('common');
+
+  // ---- URL query param for deep-linking ----
+  const searchParams = useSearchParams();
+  const initialId = searchParams.get('id');
 
   // ---- Local state ----
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(initialId);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [channelId, setChannelId] = useState<string>('');
+  const [sentiment, setSentiment] = useState<string>('');
+  const [category, setCategory] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [messageInput, setMessageInput] = useState('');
   const [insightsOpen, setInsightsOpen] = useState(true);
   const [mobileInsightsOpen, setMobileInsightsOpen] = useState(false);
@@ -59,6 +72,11 @@ export default function ConversationsPage() {
     status: STATUS_FILTER_MAP[statusFilter],
     limit: 50,
     search: debouncedSearch || undefined,
+    channelId: channelId || undefined,
+    sentiment: sentiment || undefined,
+    category: category || undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
   });
   const conversations: Conversation[] = conversationsQuery.data?.data ?? [];
 
@@ -162,7 +180,13 @@ export default function ConversationsPage() {
       onConfirm: () => {
         deleteConversation.mutate(
           { conversationId: selectedConversationId },
-          { onSuccess: () => setSelectedConversationId(null) },
+          {
+            onSuccess: () => {
+              setSelectedConversationId(null);
+              toast.success(tc('toast.convDeleted'));
+            },
+            onError: () => toast.error(tc('toast.convDeleteFailed')),
+          },
         );
       },
     });
@@ -182,7 +206,7 @@ export default function ConversationsPage() {
               canvas.height = img.naturalHeight;
               canvas.getContext('2d')!.drawImage(img, 0, 0);
               canvas.toBlob((blob) => {
-                blob ? resolve(blob) : reject(new Error('Failed to convert'));
+                if (blob) { resolve(blob); } else { reject(new Error('Failed to convert')); }
               }, 'image/png');
               URL.revokeObjectURL(img.src);
             };
@@ -231,6 +255,16 @@ export default function ConversationsPage() {
           onSearchChange={setSearchQuery}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
+          channelId={channelId}
+          onChannelChange={setChannelId}
+          sentiment={sentiment}
+          onSentimentChange={setSentiment}
+          category={category}
+          onCategoryChange={setCategory}
+          startDate={startDate}
+          onStartDateChange={setStartDate}
+          endDate={endDate}
+          onEndDateChange={setEndDate}
           isLoading={conversationsQuery.isLoading}
           isError={conversationsQuery.isError}
           isFetching={conversationsQuery.isFetching}
@@ -246,18 +280,21 @@ export default function ConversationsPage() {
           )}
         >
           {!selectedConversationId ? (
-            <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground">
-              <MessageSquare className="mb-3 h-12 w-12 opacity-30" />
-              <p className="text-sm">{t('selectConversation')}</p>
+            <div className="flex flex-1 items-center justify-center">
+              <EmptyState
+                icon={MessagesSquare}
+                title={t('selectConversation')}
+                description={t('noMessages')}
+              />
             </div>
           ) : (
             <>
               <ConversationHeader
                 conversation={selectedConversation}
                 onBack={() => setSelectedConversationId(null)}
-                onHandoff={() => handoff.mutate({ conversationId: selectedConversationId })}
-                onResolve={() => resolve.mutate({ conversationId: selectedConversationId })}
-                onReturnToAI={() => returnToAI.mutate({ conversationId: selectedConversationId })}
+                onHandoff={() => handoff.mutate({ conversationId: selectedConversationId }, { onSuccess: () => toast.success(tc('toast.handedOff')), onError: () => toast.error(tc('toast.handoffFailed')) })}
+                onResolve={() => resolve.mutate({ conversationId: selectedConversationId }, { onSuccess: () => toast.success(tc('toast.resolved')), onError: () => toast.error(tc('toast.resolveFailed')) })}
+                onReturnToAI={() => returnToAI.mutate({ conversationId: selectedConversationId }, { onSuccess: () => toast.success(tc('toast.returnedToAI')), onError: () => toast.error(tc('toast.returnToAIFailed')) })}
                 onDelete={handleDelete}
                 onToggleInsights={() => setInsightsOpen((v) => !v)}
                 onMobileInsightsOpen={() => setMobileInsightsOpen(true)}
@@ -269,7 +306,7 @@ export default function ConversationsPage() {
               />
 
               {/* Messages area */}
-              <div className="flex-1 overflow-y-auto px-3 md:px-5 py-4">
+              <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4">
                 {messagesQuery.isLoading && (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -299,12 +336,12 @@ export default function ConversationsPage() {
 
                 {/* Typing indicator */}
                 {isTyping && (
-                  <div className="mb-3 flex justify-end">
-                    <div className="flex items-center gap-2 rounded-xl rounded-ee-none bg-primary/10 px-4 py-2.5">
+                  <div className="mb-4 flex justify-end">
+                    <div className="flex items-center gap-2.5 rounded-lg rounded-br-sm bg-primary/10 px-4 py-3">
                       <div className="flex gap-1">
-                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60 [animation-delay:0ms]" />
-                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60 [animation-delay:150ms]" />
-                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60 [animation-delay:300ms]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-primary/60 [animation-delay:0ms]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-primary/60 [animation-delay:150ms]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-primary/60 [animation-delay:300ms]" />
                       </div>
                       <span className="text-xs text-muted-foreground">{t('aiTyping')}</span>
                     </div>

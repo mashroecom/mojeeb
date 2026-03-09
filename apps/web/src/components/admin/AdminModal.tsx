@@ -25,7 +25,7 @@ export function AdminModal({ open, onClose, title, children, maxWidth = 'max-w-l
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div
-        className={`relative w-full ${maxWidth} rounded-lg border bg-card shadow-xl mx-4 max-h-[90vh] flex flex-col`}
+        className={`relative w-full ${maxWidth} rounded-xl border bg-card shadow-xl mx-4 max-h-[90vh] flex flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b px-6 py-4 flex-shrink-0">
@@ -34,6 +34,7 @@ export function AdminModal({ open, onClose, title, children, maxWidth = 'max-w-l
             type="button"
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Close"
           >
             <X className="h-4 w-4" />
           </button>

@@ -20,8 +20,12 @@ import exportRoutes from './export.routes';
 import webhookMgmtRoutes from './webhook.routes';
 import conversationNotesRoutes from './conversationNotes.routes';
 import messageTemplateRoutes from './messageTemplates.routes';
+import customersRoutes from './customers.routes';
 import adminRoutes from './admin';
 import publicRoutes from './public.routes';
+import setupRoutes from './setup.routes';
+import announcementsRoutes from './announcements.routes';
+import { authenticate } from '../middleware/auth';
 
 const router: Router = Router();
 
@@ -103,6 +107,7 @@ router.use('/organizations/:orgId/export', exportRoutes);
 router.use('/organizations/:orgId/webhooks', webhookMgmtRoutes);
 router.use('/organizations/:orgId/conversations/:conversationId/notes', conversationNotesRoutes);
 router.use('/organizations/:orgId/message-templates', messageTemplateRoutes);
+router.use('/organizations/:orgId/customers', customersRoutes);
 
 // Incoming webhook routes
 router.use('/webhooks/whatsapp', whatsappWebhook);
@@ -119,6 +124,12 @@ router.use('/contact', contactMessageRoutes);
 
 // Public routes (no auth, for landing page)
 router.use('/public', publicRoutes);
+
+// Setup / onboarding routes (authenticated, no orgContext needed)
+router.use('/setup', setupRoutes);
+
+// Announcements routes (authenticated, user-facing)
+router.use('/announcements', authenticate, announcementsRoutes);
 
 // Super Admin routes (requires authentication + super admin)
 router.use('/admin', adminRoutes);

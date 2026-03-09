@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import { prisma } from '../config/database';
 import { emailQueue } from '../queues';
 import { logger } from '../config/logger';
+import { adminNotificationService } from '../services/adminNotification.service';
 
 const router: Router = Router();
 
@@ -44,6 +45,13 @@ router.post('/', contactLimiter, async (req, res, next) => {
     emailQueue.add('contact', { type: 'contact', name, email, subject, message }).catch((err) => {
       logger.warn({ err }, 'Failed to queue contact notification email');
     });
+
+    // Notify admins
+    adminNotificationService.create({
+      type: 'SUPPORT_MESSAGE',
+      title: 'New Contact Message',
+      body: `${name} (${email}) sent a message: "${subject}"`,
+    }).catch((err) => logger.debug({ err }, 'Admin notification failed'));
 
     res.status(201).json({ success: true, data: { id: contact.id } });
   } catch (err) {

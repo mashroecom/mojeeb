@@ -148,7 +148,11 @@ router.post(
       // 2. Assign the agent as primary
       await channelService.assignAgent(channel.id, agentId, true);
 
-      // 3. Return channel with agent info
+      // 3. Invalidate agent cache so next fetch includes the new channel
+      const { cache } = await import('../config/cache');
+      await cache.del(`agent:${agentId}`);
+
+      // 4. Return channel with agent info
       const fullChannel = await channelService.getById(orgId, channel.id);
       res.json({ success: true, data: fullChannel });
     } catch (error: any) {

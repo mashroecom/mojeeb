@@ -43,10 +43,21 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       prisma.session.count({ where }),
     ]);
 
+    const mapped = items.map((s) => ({
+      id: s.id,
+      userId: s.userId,
+      userEmail: s.user?.email ?? '',
+      userName: s.user ? `${s.user.firstName ?? ''} ${s.user.lastName ?? ''}`.trim() : undefined,
+      ip: s.ipAddress ?? '',
+      userAgent: s.userAgent ?? '',
+      createdAt: s.createdAt,
+      expiresAt: s.expiresAt,
+    }));
+
     res.json({
       success: true,
       data: {
-        items,
+        items: mapped,
         total,
         page,
         limit,

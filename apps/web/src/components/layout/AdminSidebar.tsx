@@ -42,10 +42,6 @@ import {
   Send,
   MessageSquare,
   Shield,
-  Lock,
-  BellRing,
-  Building,
-  Globe,
   Bell,
   ArchiveX,
   Bot,
@@ -55,8 +51,16 @@ import {
   Receipt,
   Database,
   Star,
-  MessageSquareText,
   Tag,
+  Heart,
+  Cpu,
+  ShieldAlert,
+  TrendingUp,
+  Zap,
+  HelpCircle,
+  Quote,
+  Globe,
+  Scale,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -82,48 +86,62 @@ interface SidebarGroup {
 // ---------------------------------------------------------------------------
 
 const allItems: Record<string, SidebarItem> = {
+  // Dashboard
   overview:              { key: 'overview',              href: '/admin',                     icon: LayoutDashboard },
+  // Users & Orgs
   users:                 { key: 'users',                 href: '/admin/users',               icon: Users },
   organizations:         { key: 'organizations',         href: '/admin/organizations',       icon: Building2 },
   subscriptions:         { key: 'subscriptions',         href: '/admin/subscriptions',       icon: CreditCard },
-  announcements:         { key: 'announcements',         href: '/admin/announcements',       icon: Megaphone },
-  demoRequests:          { key: 'demoRequests',          href: '/admin/demo-requests',       icon: ClipboardList },
-  contactMessages:       { key: 'contactMessages',       href: '/admin/contact-messages',    icon: Mail },
-  emailTemplates:        { key: 'emailTemplates',        href: '/admin/email-templates',     icon: MailOpen },
-  bulkEmail:             { key: 'bulkEmail',             href: '/admin/bulk-email',          icon: Send },
-  analytics:             { key: 'analytics',             href: '/admin/analytics',           icon: BarChart3 },
-  system:                { key: 'system',                href: '/admin/system',              icon: Server },
-  errorLogs:             { key: 'errorLogs',             href: '/admin/error-logs',          icon: Bug },
-  webhookLogs:           { key: 'webhookLogs',           href: '/admin/webhook-logs',        icon: Webhook },
-  activityMonitor:       { key: 'activityMonitor',       href: '/admin/activity-monitor',    icon: Radio },
-  auditLog:              { key: 'auditLog',              href: '/admin/audit-log',           icon: ScrollText },
-  loginActivity:         { key: 'loginActivity',         href: '/admin/login-activity',      icon: Activity },
-  reports:               { key: 'reports',               href: '/admin/reports',             icon: FileText },
-  blockedIPs:            { key: 'blockedIPs',            href: '/admin/blocked-ips',         icon: ShieldBan },
-  sessions:              { key: 'sessions',              href: '/admin/sessions',            icon: Monitor },
-  featureFlags:          { key: 'featureFlags',          href: '/admin/feature-flags',       icon: ToggleLeft },
-  siteSettings:          { key: 'siteSettings',          href: '/admin/site-settings',       icon: Settings },
-  config:                { key: 'config',                href: '/admin/config',              icon: Wrench },
-  plans:                 { key: 'plans',                 href: '/admin/plans',               icon: Tags },
-  securitySettings:      { key: 'securitySettings',      href: '/admin/security-settings',   icon: Lock },
-  notificationSettings:  { key: 'notificationSettings',  href: '/admin/notification-settings', icon: BellRing },
-  orgDefaults:           { key: 'orgDefaults',           href: '/admin/org-defaults',        icon: Building },
-  landingPageCms:        { key: 'landingPageCms',        href: '/admin/landing-page',        icon: Globe },
-  files:                 { key: 'files',                 href: '/admin/files',               icon: FolderOpen },
-  notifications:         { key: 'notifications',         href: '/admin/notifications',       icon: Bell },
-  dlq:                   { key: 'dlq',                   href: '/admin/dlq',                 icon: ArchiveX },
   // Platform Data
   adminAgents:           { key: 'adminAgents',           href: '/admin/agents',              icon: Bot },
-  adminChannels:         { key: 'adminChannels',         href: '/admin/channels',            icon: Radio },
   adminConversations:    { key: 'adminConversations',    href: '/admin/conversations',       icon: MessageSquare },
   adminLeads:            { key: 'adminLeads',            href: '/admin/leads',               icon: UserPlus },
   adminKnowledgeBases:   { key: 'adminKnowledgeBases',   href: '/admin/knowledge-bases',     icon: BookOpen },
   adminApiKeys:          { key: 'adminApiKeys',          href: '/admin/api-keys',            icon: Key },
   adminInvoices:         { key: 'adminInvoices',         href: '/admin/invoices',            icon: Receipt },
   adminWebhooks:         { key: 'adminWebhooks',         href: '/admin/webhooks',            icon: Webhook },
-  csatAnalytics:         { key: 'csatAnalytics',         href: '/admin/csat-analytics',      icon: Star },
-  messageTemplates:      { key: 'messageTemplates',      href: '/admin/message-templates',   icon: MessageSquareText },
   adminTags:             { key: 'adminTags',             href: '/admin/tags',                icon: Tag },
+  // Analytics & Insights
+  analytics:             { key: 'analytics',             href: '/admin/analytics',           icon: BarChart3 },
+  tokenUsage:            { key: 'tokenUsage',            href: '/admin/token-usage',         icon: Zap },
+  csatAnalytics:         { key: 'csatAnalytics',         href: '/admin/csat-analytics',      icon: Star },
+  sentimentAnalysis:     { key: 'sentimentAnalysis',     href: '/admin/sentiment-analysis',  icon: Heart },
+  conversationQuality:   { key: 'conversationQuality',   href: '/admin/conversation-quality', icon: Star },
+  messageAnalytics:      { key: 'messageAnalytics',      href: '/admin/message-analytics',   icon: BarChart3 },
+  leadInsights:          { key: 'leadInsights',          href: '/admin/lead-insights',       icon: TrendingUp },
+  apiUsage:              { key: 'apiUsage',              href: '/admin/api-usage',           icon: Key },
+  reports:               { key: 'reports',               href: '/admin/reports',             icon: FileText },
+  // Content & Communications
+  announcements:         { key: 'announcements',         href: '/admin/announcements',       icon: Megaphone },
+  faq:                   { key: 'faq',                   href: '/admin/faq',                 icon: HelpCircle },
+  testimonials:          { key: 'testimonials',          href: '/admin/testimonials',        icon: Quote },
+  landingPageCms:        { key: 'landingPageCms',        href: '/admin/landing-page',        icon: Globe },
+  legal:                 { key: 'legal',                 href: '/admin/legal',               icon: Scale },
+  emailTemplates:        { key: 'emailTemplates',        href: '/admin/email-templates',     icon: MailOpen },
+  bulkEmail:             { key: 'bulkEmail',             href: '/admin/bulk-email',          icon: Send },
+  demoRequests:          { key: 'demoRequests',          href: '/admin/demo-requests',       icon: ClipboardList },
+  contactMessages:       { key: 'contactMessages',       href: '/admin/contact-messages',    icon: Mail },
+  notifications:         { key: 'notifications',         href: '/admin/notifications',       icon: Bell },
+  // Monitoring & Logs
+  system:                { key: 'system',                href: '/admin/system',              icon: Server },
+  activityMonitor:       { key: 'activityMonitor',       href: '/admin/activity-monitor',    icon: Radio },
+  errorLogs:             { key: 'errorLogs',             href: '/admin/error-logs',          icon: Bug },
+  webhookLogs:           { key: 'webhookLogs',           href: '/admin/webhook-logs',        icon: Webhook },
+  auditLog:              { key: 'auditLog',              href: '/admin/audit-log',           icon: ScrollText },
+  loginActivity:         { key: 'loginActivity',         href: '/admin/login-activity',      icon: Activity },
+  dlq:                   { key: 'dlq',                   href: '/admin/dlq',                 icon: ArchiveX },
+  // Security & Access
+  blockedIPs:            { key: 'blockedIPs',            href: '/admin/blocked-ips',         icon: ShieldBan },
+  sessions:              { key: 'sessions',              href: '/admin/sessions',            icon: Monitor },
+  securityAudit:         { key: 'securityAudit',         href: '/admin/security-audit',      icon: ShieldAlert },
+  featureFlags:          { key: 'featureFlags',          href: '/admin/feature-flags',       icon: ToggleLeft },
+  // Settings
+  adminSettings:         { key: 'adminSettings',         href: '/admin/settings',            icon: Settings },
+  plans:                 { key: 'plans',                 href: '/admin/plans',               icon: Tags },
+  config:                { key: 'config',                href: '/admin/config',              icon: Wrench },
+  aiModels:              { key: 'aiModels',              href: '/admin/ai-models',           icon: Cpu },
+  files:                 { key: 'files',                 href: '/admin/files',               icon: FolderOpen },
+  systemBackup:          { key: 'systemBackup',          href: '/admin/system-backup',       icon: Database },
 };
 
 // ---------------------------------------------------------------------------
@@ -131,84 +149,71 @@ const allItems: Record<string, SidebarItem> = {
 // ---------------------------------------------------------------------------
 
 const sidebarGroups: SidebarGroup[] = [
+  // Top-level: Dashboard
   {
     key: 'dashboard',
     icon: LayoutDashboard,
     collapsible: false,
     items: [allItems.overview],
   },
+  // Users & Subscriptions
   {
     key: 'usersAndOrgs',
     icon: Users,
     collapsible: true,
-    items: [allItems.users, allItems.organizations, allItems.subscriptions],
+    items: [allItems.users, allItems.organizations, allItems.subscriptions, allItems.plans],
   },
-  {
-    key: 'platformData',
-    icon: Database,
-    collapsible: true,
-    items: [
-      allItems.adminAgents,
-      allItems.adminChannels,
-      allItems.adminConversations,
-      allItems.adminLeads,
-      allItems.adminKnowledgeBases,
-      allItems.adminApiKeys,
-      allItems.adminInvoices,
-      allItems.adminWebhooks,
-      allItems.csatAnalytics,
-      allItems.messageTemplates,
-      allItems.adminTags,
-    ],
-  },
+  // Content & Marketing
   {
     key: 'contentAndComms',
-    icon: MessageSquare,
+    icon: Globe,
     collapsible: true,
     items: [
+      allItems.landingPageCms,
+      allItems.faq,
+      allItems.testimonials,
       allItems.announcements,
-      allItems.notifications,
+      allItems.legal,
       allItems.demoRequests,
       allItems.contactMessages,
-      allItems.emailTemplates,
-      allItems.bulkEmail,
     ],
   },
-  {
-    key: 'monitoringAndLogs',
-    icon: Activity,
-    collapsible: true,
-    items: [
-      allItems.analytics,
-      allItems.system,
-      allItems.errorLogs,
-      allItems.webhookLogs,
-      allItems.activityMonitor,
-      allItems.auditLog,
-      allItems.loginActivity,
-      allItems.reports,
-      allItems.dlq,
-    ],
-  },
-  {
-    key: 'securityAndAccess',
-    icon: Shield,
-    collapsible: true,
-    items: [allItems.blockedIPs, allItems.sessions, allItems.featureFlags],
-  },
+  // Settings & Configuration
   {
     key: 'settings',
     icon: Settings,
     collapsible: true,
     items: [
-      allItems.siteSettings,
+      allItems.adminSettings,
       allItems.config,
-      allItems.plans,
-      allItems.securitySettings,
-      allItems.notificationSettings,
-      allItems.orgDefaults,
-      allItems.files,
+      allItems.aiModels,
+      allItems.emailTemplates,
+      allItems.bulkEmail,
+      allItems.notifications,
     ],
+  },
+  // System & Monitoring
+  {
+    key: 'monitoringAndLogs',
+    icon: Server,
+    collapsible: true,
+    items: [
+      allItems.system,
+      allItems.errorLogs,
+      allItems.webhookLogs,
+      allItems.auditLog,
+      allItems.loginActivity,
+      allItems.tokenUsage,
+      allItems.dlq,
+      allItems.systemBackup,
+    ],
+  },
+  // Security
+  {
+    key: 'securityAndAccess',
+    icon: Shield,
+    collapsible: true,
+    items: [allItems.blockedIPs, allItems.sessions, allItems.featureFlags],
   },
 ];
 
@@ -256,6 +261,7 @@ function findActiveGroupKey(pathname: string): string | null {
 
 export function AdminSidebar() {
   const t = useTranslations('admin.sidebar');
+  const tUser = useTranslations('admin.userDetail');
   const pathname = usePathname();
   const router = useRouter();
   const { user, clearAuth } = useAuthStore();
@@ -303,7 +309,7 @@ export function AdminSidebar() {
   );
 
   // ---- user display ----
-  const displayName = user ? `${user.firstName} ${user.lastName}` : 'Admin';
+  const displayName = user ? `${user.firstName} ${user.lastName}` : t('admin');
   const initials = user
     ? `${user.firstName[0] || ''}${user.lastName[0] || ''}`
     : 'A';
@@ -391,7 +397,7 @@ export function AdminSidebar() {
                     <button
                       type="button"
                       onClick={() => toggleGroup(group.key)}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
                     >
                       <GroupIcon className="h-3.5 w-3.5 shrink-0" />
                       <span className="flex-1 text-start">
@@ -404,8 +410,6 @@ export function AdminSidebar() {
                       )}
                     </button>
                   ) : (
-                    /* Non-collapsible group (dashboard) — no header needed,
-                       render items directly */
                     null
                   )}
 
@@ -455,7 +459,7 @@ export function AdminSidebar() {
                   type="button"
                   onClick={handleLogout}
                   disabled={loggingOut}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
                 >
                   <LogOut className="h-4 w-4" />
                   {t('logout')}
@@ -475,7 +479,7 @@ export function AdminSidebar() {
             <div className="flex-1 truncate text-start">
               <p className="text-sm font-medium truncate">{displayName}</p>
               <p className="text-xs text-red-600 dark:text-red-400 truncate">
-                Super Admin
+                {tUser('superAdmin')}
               </p>
             </div>
             <ChevronUp

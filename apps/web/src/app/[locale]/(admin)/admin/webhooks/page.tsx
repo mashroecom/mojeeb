@@ -43,7 +43,7 @@ type StatusFilter = '' | 'active' | 'inactive';
 
 function StatSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm animate-pulse">
+    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
       <div className="h-3 w-20 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -98,7 +98,7 @@ export default function AdminWebhooksPage() {
   const updateWebhook = useUpdateAdminWebhook();
   const deleteWebhook = useDeleteAdminWebhook();
 
-  const entries: WebhookEntry[] = data?.webhooks ?? data?.data ?? [];
+  const entries: WebhookEntry[] = data?.webhooks ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   // Toggle active state
@@ -149,28 +149,28 @@ export default function AdminWebhooksPage() {
           </>
         ) : (
           <>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Webhook className="h-4 w-4" />
                 {t('totalWebhooks')}
               </div>
               <p className="text-2xl font-bold">{stats?.total ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 {t('active')}
               </div>
               <p className="text-2xl font-bold text-green-600">{stats?.active ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <XCircle className="h-4 w-4 text-red-500" />
                 {t('inactive')}
               </div>
               <p className="text-2xl font-bold text-red-600">{stats?.inactive ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
                 {t('recentErrors')}
@@ -191,7 +191,7 @@ export default function AdminWebhooksPage() {
               setStatusFilter(e.target.value as StatusFilter);
               setPage(1);
             }}
-            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
           >
             <option value="">{t('allStatuses')}</option>
             <option value="active">{t('active')}</option>
@@ -214,11 +214,11 @@ export default function AdminWebhooksPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('url')}
                 </th>
@@ -260,7 +260,7 @@ export default function AdminWebhooksPage() {
                 entries.map((entry) => (
                   <tr
                     key={entry.id}
-                    className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
+                    className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
                   >
                     {/* URL (truncated) */}
                     <td className="px-4 py-3">
@@ -336,7 +336,7 @@ export default function AdminWebhooksPage() {
                       <button
                         onClick={() => handleDelete(entry.id)}
                         disabled={deleteWebhook.isPending}
-                        className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
                       >
                         <Trash2 className="h-3 w-3" />
                         {tc('delete')}

@@ -123,14 +123,49 @@ router.patch(
       const updated = await prisma.invoice.update({
         where: { id: invoiceId },
         data: updateData,
+        include: {
+          subscription: { select: { id: true, orgId: true, plan: true } },
+        },
       });
+
+      // When invoice is marked PAID, activate the subscription with the plan's limits
+      if (req.body.status === 'PAID' && updated.subscription) {
+        const sub = updated.subscription;
+
+        // Load plan limits from PlanConfig
+        const planConfig = await prisma.planConfig.findUnique({
+          where: { plan: sub.plan },
+        });
+
+        const now = new Date();
+        const nextPeriodEnd = new Date(now);
+        nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
+
+        await prisma.subscription.update({
+          where: { id: sub.id },
+          data: {
+            status: 'ACTIVE',
+            currentPeriodStart: now,
+            currentPeriodEnd: nextPeriodEnd,
+            cancelAtPeriodEnd: false,
+            messagesUsed: 0,
+            tokensUsed: 0,
+            ...(planConfig && {
+              messagesLimit: planConfig.messagesPerMonth,
+              agentsLimit: planConfig.maxAgents,
+              integrationsLimit: planConfig.maxChannels,
+              tokensLimit: planConfig.maxTokensPerMonth,
+            }),
+          },
+        });
+      }
 
       await auditLogService.log({
         userId: req.user!.userId,
         action: 'ADMIN_INVOICE_UPDATED',
         targetType: 'Invoice',
         targetId: invoiceId,
-        metadata: { status: req.body.status },
+        metadata: { status: req.body.status, subscriptionId: updated.subscriptionId },
       });
 
       res.json({ success: true, data: updated });

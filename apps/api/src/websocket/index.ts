@@ -303,6 +303,11 @@ export function setupWebSocket(httpServer: HttpServer) {
     logger.info({ userId: socket.data.user?.userId }, 'Admin connected to live feed');
   });
 
+  // Global error handlers — catch transport/protocol errors
+  io.engine.on('connection_error', (err: Error) => {
+    logger.error({ err }, 'WebSocket engine connection error');
+  });
+
   return io;
 }
 

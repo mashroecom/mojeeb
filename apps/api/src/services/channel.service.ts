@@ -1,4 +1,5 @@
 import { prisma } from '../config/database';
+import { cache } from '../config/cache';
 import { NotFoundError, BadRequestError, ConflictError } from '../utils/errors';
 import { encrypt, decrypt } from '../utils/encryption';
 import { logger } from '../config/logger';
@@ -122,14 +123,21 @@ export class ChannelService {
   async disconnect(orgId: string, channelId: string) {
     const channel = await prisma.channel.findFirst({
       where: { id: channelId, orgId },
+      include: { agents: { select: { agentId: true } } },
     });
     if (!channel) throw new NotFoundError('Channel not found');
+
+    // Collect agent IDs before deletion so we can invalidate their caches
+    const agentIds = channel.agents.map((a) => a.agentId);
 
     await prisma.$transaction([
       prisma.conversation.deleteMany({ where: { channelId } }),
       prisma.channelAgent.deleteMany({ where: { channelId } }),
       prisma.channel.delete({ where: { id: channelId } }),
     ]);
+
+    // Invalidate all affected agent caches
+    await Promise.all(agentIds.map((id) => cache.del(`agent:${id}`)));
   }
 
   /**
@@ -138,10 +146,11 @@ export class ChannelService {
   async toggleActive(orgId: string, channelId: string) {
     const channel = await prisma.channel.findFirst({
       where: { id: channelId, orgId },
+      include: { agents: { select: { agentId: true } } },
     });
     if (!channel) throw new NotFoundError('Channel not found');
 
-    return prisma.channel.update({
+    const updated = await prisma.channel.update({
       where: { id: channelId },
       data: { isActive: !channel.isActive },
       include: {
@@ -153,11 +162,19 @@ export class ChannelService {
         _count: { select: { conversations: true } },
       },
     });
+
+    // Invalidate agent caches so the new isActive value is reflected
+    await Promise.all(
+      channel.agents.map((ca) => cache.del(`agent:${ca.agentId}`)),
+    );
+
+    return updated;
   }
 
   /**
    * Assign an agent to a channel.
    * If isPrimary is true, unset any existing primary agent first.
+   * Enforces: each agent can have at most one channel of each type.
    */
   async assignAgent(
     channelId: string,
@@ -175,6 +192,22 @@ export class ChannelService {
     });
     if (!agent) throw new NotFoundError('Agent not found');
 
+    // Enforce one-channel-per-type rule:
+    // Check if this agent already has a DIFFERENT channel of the same type
+    const existing = await prisma.channelAgent.findFirst({
+      where: {
+        agentId,
+        channel: { type: channel.type },
+        channelId: { not: channelId },
+      },
+      include: { channel: { select: { name: true } } },
+    });
+    if (existing) {
+      throw new ConflictError(
+        `This agent already has a ${channel.type} channel connected ("${existing.channel.name}"). Each agent can only have one channel of each type. Please disconnect the existing one first.`,
+      );
+    }
+
     // If setting as primary, unset existing primary first
     if (isPrimary) {
       await prisma.channelAgent.updateMany({
@@ -184,7 +217,7 @@ export class ChannelService {
     }
 
     // Upsert the channel-agent link
-    return prisma.channelAgent.upsert({
+    const result = await prisma.channelAgent.upsert({
       where: {
         channelId_agentId: { channelId, agentId },
       },
@@ -194,6 +227,9 @@ export class ChannelService {
         agent: { select: { id: true, name: true, isActive: true } },
       },
     });
+
+    await cache.del(`agent:${agentId}`);
+    return result;
   }
 
   /**
@@ -240,6 +276,8 @@ export class ChannelService {
     await prisma.channelAgent.delete({
       where: { channelId_agentId: { channelId, agentId } },
     });
+
+    await cache.del(`agent:${agentId}`);
   }
 
   // ---------------------------------------------------------------------------

@@ -104,7 +104,7 @@ function ReportCard({ report }: { report: ReportConfig }) {
   }
 
   return (
-    <div className="rounded-lg border bg-card p-6 shadow-sm flex flex-col">
+    <div className="rounded-xl border bg-card p-6 shadow-sm flex flex-col">
       <div className="flex items-start gap-4 mb-4">
         <div className="rounded-lg bg-primary/10 p-3 text-primary">{report.icon}</div>
         <div className="min-w-0">
@@ -120,7 +120,7 @@ function ReportCard({ report }: { report: ReportConfig }) {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
           />
         </div>
         <div>
@@ -129,7 +129,7 @@ function ReportCard({ report }: { report: ReportConfig }) {
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
           />
         </div>
       </div>
@@ -140,7 +140,7 @@ function ReportCard({ report }: { report: ReportConfig }) {
         <button
           onClick={handleDownload}
           disabled={downloading}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
         >
           {downloading ? (
             <>

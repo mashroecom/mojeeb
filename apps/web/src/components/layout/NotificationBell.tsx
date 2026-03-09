@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { fmtDate } from '@/lib/dateFormat';
 import {
   Bell,
@@ -43,7 +44,11 @@ function getNotificationIcon(type: string) {
   }
 }
 
-function formatRelativeTime(dateStr: string, locale: string): string {
+function formatRelativeTime(
+  dateStr: string,
+  locale: string,
+  t: (key: string, values?: Record<string, number>) => string,
+): string {
   const now = Date.now();
   const date = new Date(dateStr).getTime();
   const diffMs = now - date;
@@ -52,10 +57,10 @@ function formatRelativeTime(dateStr: string, locale: string): string {
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);
 
-  if (diffSec < 60) return 'Just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHour < 24) return `${diffHour}h ago`;
-  if (diffDay < 7) return `${diffDay}d ago`;
+  if (diffSec < 60) return t('justNow');
+  if (diffMin < 60) return t('minutesAgo', { count: diffMin });
+  if (diffHour < 24) return t('hoursAgo', { count: diffHour });
+  if (diffDay < 7) return t('daysAgo', { count: diffDay });
   return fmtDate(dateStr, locale);
 }
 
@@ -67,12 +72,15 @@ function NotificationItem({
   notification,
   onMarkRead,
   onDelete,
+  onNavigate,
 }: {
   notification: Notification;
   onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
+  onNavigate: (notification: Notification) => void;
 }) {
   const locale = useLocale();
+  const t = useTranslations('notifications');
   return (
     <div
       role="button"
@@ -85,10 +93,12 @@ function NotificationItem({
         if (!notification.isRead) {
           onMarkRead(notification.id);
         }
+        onNavigate(notification);
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && !notification.isRead) {
-          onMarkRead(notification.id);
+        if (e.key === 'Enter') {
+          if (!notification.isRead) onMarkRead(notification.id);
+          onNavigate(notification);
         }
       }}
     >
@@ -116,19 +126,19 @@ function NotificationItem({
           {notification.body}
         </p>
         <p className="text-xs text-muted-foreground/70 mt-1">
-          {formatRelativeTime(notification.createdAt, locale)}
+          {formatRelativeTime(notification.createdAt, locale, t)}
         </p>
       </div>
 
       {/* Actions */}
       <button
-        className="mt-0.5 shrink-0 rounded p-1 hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+        className="mt-0.5 shrink-0 rounded p-1 hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
         onClick={(e) => {
           e.stopPropagation();
           onDelete(notification.id);
         }}
-        title="Delete notification"
-        aria-label="Delete notification"
+        title={t('deleteNotification')}
+        aria-label={t('deleteNotification')}
       >
         <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
       </button>
@@ -141,6 +151,9 @@ function NotificationItem({
 // ---------------------------------------------------------------------------
 
 export function NotificationBell() {
+  const t = useTranslations('notifications');
+  const locale = useLocale();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -151,6 +164,14 @@ export function NotificationBell() {
   const deleteNotification = useDeleteNotification();
 
   const notifications = notificationsData?.data ?? [];
+
+  const handleNavigate = (notification: Notification) => {
+    const convId = notification.metadata?.conversationId;
+    if (convId) {
+      setIsOpen(false);
+      router.push(`/${locale}/conversations?id=${convId}`);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -189,9 +210,9 @@ export function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       {/* Bell button */}
       <button
-        className="relative rounded-md p-2 hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+        className="relative rounded-lg p-2 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-colors"
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label="Notifications"
+        aria-label={t('bellAriaLabel')}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -208,7 +229,7 @@ export function NotificationBell() {
         <div className="absolute end-0 top-full mt-2 w-96 rounded-lg border bg-card shadow-lg z-50">
           {/* Header */}
           <div className="flex items-center justify-between border-b px-4 py-3">
-            <h3 className="text-sm font-semibold">Notifications</h3>
+            <h3 className="text-sm font-semibold">{t('title')}</h3>
             {unreadCount > 0 && (
               <button
                 className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
@@ -216,7 +237,7 @@ export function NotificationBell() {
                 disabled={markAllAsRead.isPending}
               >
                 <Check className="h-3 w-3" />
-                Mark all read
+                {t('markAllRead')}
               </button>
             )}
           </div>
@@ -226,7 +247,7 @@ export function NotificationBell() {
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <Bell className="h-8 w-8 mb-2 opacity-40" />
-                <p className="text-sm">No notifications yet</p>
+                <p className="text-sm">{t('empty')}</p>
               </div>
             ) : (
               notifications.map((notification) => (
@@ -235,6 +256,7 @@ export function NotificationBell() {
                   notification={notification}
                   onMarkRead={(id) => markAsRead.mutate(id)}
                   onDelete={(id) => deleteNotification.mutate(id)}
+                  onNavigate={handleNavigate}
                 />
               ))
             )}

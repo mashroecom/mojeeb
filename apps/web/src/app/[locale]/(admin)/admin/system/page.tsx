@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useSystemHealth, useSystemQueues, useSystemDbStats } from '@/hooks/useAdmin';
 import { cn } from '@/lib/utils';
 import {
@@ -44,8 +44,8 @@ interface DbTable {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatNumber(n: number) {
-  return new Intl.NumberFormat().format(n);
+function formatNumber(n: number, locale?: string) {
+  return new Intl.NumberFormat(locale).format(n);
 }
 
 const healthIcons: Record<string, typeof Database> = {
@@ -59,7 +59,7 @@ const queueBarColors: Record<string, string> = {
   active: 'bg-blue-400 dark:bg-blue-500',
   completed: 'bg-green-400 dark:bg-green-500',
   failed: 'bg-red-400 dark:bg-red-500',
-  delayed: 'bg-gray-400 dark:bg-gray-500',
+  delayed: 'bg-muted-foreground',
 };
 
 // ---------------------------------------------------------------------------
@@ -68,9 +68,9 @@ const queueBarColors: Record<string, string> = {
 
 function HealthSkeleton() {
   return (
-    <div className="animate-pulse rounded-lg border bg-card p-5">
+    <div className="animate-pulse rounded-xl border bg-card p-5">
       <div className="flex items-center gap-3 mb-3">
-        <div className="h-10 w-10 rounded-md bg-muted" />
+        <div className="h-10 w-10 rounded-lg bg-muted" />
         <div className="space-y-2">
           <div className="h-4 w-24 rounded bg-muted" />
           <div className="h-3 w-16 rounded bg-muted" />
@@ -83,7 +83,7 @@ function HealthSkeleton() {
 
 function QueueSkeleton() {
   return (
-    <div className="animate-pulse rounded-lg border bg-card p-5 space-y-3">
+    <div className="animate-pulse rounded-xl border bg-card p-5 space-y-3">
       <div className="h-4 w-32 rounded bg-muted" />
       <div className="h-3 w-full rounded bg-muted" />
       <div className="flex gap-3">
@@ -115,6 +115,7 @@ function TableSkeleton() {
 export default function SystemPage() {
   const t = useTranslations('admin.system');
   const tc = useTranslations('admin.common');
+  const locale = useLocale();
 
   const {
     data: healthData,
@@ -219,12 +220,12 @@ export default function SystemPage() {
                 return (
                   <div
                     key={svc.name}
-                    className="rounded-lg border bg-card p-5 shadow-sm"
+                    className="rounded-xl border bg-card p-5 shadow-sm"
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div
                         className={cn(
-                          'flex h-10 w-10 items-center justify-center rounded-md',
+                          'flex h-10 w-10 items-center justify-center rounded-lg',
                           isHealthy
                             ? 'bg-green-100 dark:bg-green-900/30'
                             : 'bg-red-100 dark:bg-red-900/30',
@@ -304,7 +305,7 @@ export default function SystemPage() {
         )}
 
         {!loadingQueues && !errorQueues && queues.length === 0 && (
-          <div className="rounded-lg border bg-card py-8 text-center">
+          <div className="rounded-xl border bg-card py-8 text-center">
             <Layers className="mx-auto h-8 w-8 text-muted-foreground/40 mb-2" />
             <p className="text-sm text-muted-foreground">{tc('noData')}</p>
           </div>
@@ -322,7 +323,7 @@ export default function SystemPage() {
                 { key: 'delayed', count: q.delayed },
               ];
               return (
-                <div key={q.name} className="rounded-lg border bg-card p-5 shadow-sm">
+                <div key={q.name} className="rounded-xl border bg-card p-5 shadow-sm">
                   <h3 className="text-sm font-semibold mb-3 capitalize">{q.name}</h3>
 
                   {/* Horizontal bar */}
@@ -334,7 +335,7 @@ export default function SystemPage() {
                             key={seg.key}
                             className={cn('h-full transition-all', queueBarColors[seg.key])}
                             style={{ width: `${(seg.count / total) * 100}%` }}
-                            title={`${t(seg.key as 'waiting' | 'active' | 'completed' | 'failed' | 'delayed')}: ${formatNumber(seg.count)}`}
+                            title={`${t(seg.key as 'waiting' | 'active' | 'completed' | 'failed' | 'delayed')}: ${formatNumber(seg.count, locale)}`}
                           />
                         ) : null,
                       )}
@@ -348,7 +349,7 @@ export default function SystemPage() {
                     {segments.map((seg) => (
                       <span key={seg.key} className="inline-flex items-center gap-1.5">
                         <span className={cn('h-2 w-2 rounded-full', queueBarColors[seg.key])} />
-                        {t(seg.key as 'waiting' | 'active' | 'completed' | 'failed' | 'delayed')}: {formatNumber(seg.count)}
+                        {t(seg.key as 'waiting' | 'active' | 'completed' | 'failed' | 'delayed')}: {formatNumber(seg.count, locale)}
                       </span>
                     ))}
                   </div>
@@ -367,7 +368,7 @@ export default function SystemPage() {
           <h2 className="text-lg font-semibold">{t('dbStats')}</h2>
           <button
             onClick={() => refetchDb()}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted transition-colors"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors"
             title={tc('refresh')}
           >
             <RefreshCw className="h-4 w-4" />
@@ -386,9 +387,9 @@ export default function SystemPage() {
           </div>
         )}
 
-        <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
           {/* Table Header */}
-          <div className="flex items-center justify-between border-b px-5 py-3 bg-muted/30">
+          <div className="flex items-center justify-between border-b px-5 py-3 bg-muted/50">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               {t('tableName')}
             </span>
@@ -423,11 +424,11 @@ export default function SystemPage() {
               {dbTables.map((row) => (
                 <div
                   key={row.table}
-                  className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors"
+                  className="flex items-center justify-between px-5 py-3 hover:bg-muted/50 transition-colors"
                 >
                   <span className="text-sm font-mono">{row.table}</span>
                   <span className="text-sm font-semibold tabular-nums">
-                    {formatNumber(row.rowCount)}
+                    {formatNumber(row.rowCount, locale)}
                   </span>
                 </div>
               ))}

@@ -76,18 +76,18 @@ export default function BlockedIPsPage() {
   const blockIP = useBlockIP();
   const unblockIP = useUnblockIP();
 
-  const entries: BlockedIP[] = data?.data ?? [];
+  const entries: BlockedIP[] = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   function handleExport() {
     if (!entries.length) return;
     const rows = entries.map((entry) => ({
-      IP: entry.ip,
-      Reason: entry.reason || '',
-      'Blocked By': entry.blockedByName || entry.blockedByEmail || '',
-      Type: entry.isAuto ? 'Auto' : 'Manual',
-      'Expires At': entry.expiresAt ? fmtDateTime(entry.expiresAt, locale) : 'Never',
-      'Created At': fmtDateTime(entry.createdAt, locale),
+      [t('csvIP')]: entry.ip,
+      [t('csvReason')]: entry.reason || '',
+      [t('csvBlockedBy')]: entry.blockedByName || entry.blockedByEmail || '',
+      [t('csvType')]: entry.isAuto ? t('auto') : t('manual'),
+      [t('csvExpiresAt')]: entry.expiresAt ? fmtDateTime(entry.expiresAt, locale) : t('never'),
+      [t('csvCreatedAt')]: fmtDateTime(entry.createdAt, locale),
     }));
     exportToCsv('admin-blocked-ips', rows);
   }
@@ -146,7 +146,7 @@ export default function BlockedIPsPage() {
           </button>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors"
           >
             {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             {t('blockIP')}
@@ -156,7 +156,7 @@ export default function BlockedIPsPage() {
 
       {/* Block IP Form */}
       {showForm && (
-        <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">
+        <div className="mb-6 rounded-xl border bg-card p-4 shadow-sm">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
@@ -167,7 +167,7 @@ export default function BlockedIPsPage() {
                 value={formIP}
                 onChange={(e) => setFormIP(e.target.value)}
                 placeholder="192.168.1.1"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               />
             </div>
             <div>
@@ -177,9 +177,9 @@ export default function BlockedIPsPage() {
               <textarea
                 value={formReason}
                 onChange={(e) => setFormReason(e.target.value)}
-                placeholder="Reason for blocking..."
+                placeholder={t('reasonPlaceholder')}
                 rows={1}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors resize-none"
               />
             </div>
             <div>
@@ -190,7 +190,7 @@ export default function BlockedIPsPage() {
                 type="datetime-local"
                 value={formExpiry}
                 onChange={(e) => setFormExpiry(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               />
             </div>
           </div>
@@ -198,7 +198,7 @@ export default function BlockedIPsPage() {
             <button
               onClick={handleBlock}
               disabled={blockIP.isPending || !formIP.trim()}
-              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
             >
               {blockIP.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               {t('blockIP')}
@@ -221,11 +221,11 @@ export default function BlockedIPsPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('ip')}
                 </th>
@@ -263,7 +263,7 @@ export default function BlockedIPsPage() {
               {!isLoading &&
                 !isError &&
                 entries.map((entry) => (
-                  <tr key={entry.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+                  <tr key={entry.id} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3">
                       <span className="text-sm font-mono font-medium">{entry.ip}</span>
                     </td>
@@ -296,7 +296,7 @@ export default function BlockedIPsPage() {
                       <button
                         onClick={() => handleUnblock(entry.id)}
                         disabled={unblockIP.isPending}
-                        className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
                       >
                         <Trash2 className="h-3 w-3" />
                         {t('unblock')}

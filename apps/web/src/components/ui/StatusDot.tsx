@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 const statusColors = {
   online: 'bg-green-500',
-  offline: 'bg-gray-400 dark:bg-gray-600',
+  offline: 'bg-muted-foreground',
   active: 'bg-blue-500',
   warning: 'bg-yellow-500',
   error: 'bg-red-500',

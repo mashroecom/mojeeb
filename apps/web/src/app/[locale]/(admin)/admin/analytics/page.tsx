@@ -24,7 +24,7 @@ import {
 
 function StatSkeleton() {
   return (
-    <div className="animate-pulse rounded-lg border bg-card p-6">
+    <div className="animate-pulse rounded-xl border bg-card p-6">
       <div className="flex items-center gap-4">
         <div className="h-10 w-10 rounded-lg bg-muted" />
         <div className="flex-1 space-y-2">
@@ -147,7 +147,7 @@ export default function AdminAnalyticsPage() {
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.key} className="rounded-lg border bg-card p-6">
+              <div key={stat.key} className="rounded-xl border bg-card p-6">
                 <div className="flex items-center gap-4">
                   <div className={cn('rounded-lg p-2.5', stat.bg)}>
                     <Icon className={cn('h-5 w-5', stat.color)} />
@@ -156,8 +156,8 @@ export default function AdminAnalyticsPage() {
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
                     <p className="text-2xl font-bold mt-0.5">
                       {stat.isCurrency
-                        ? `$${Number(stat.value).toLocaleString()}`
-                        : Number(stat.value).toLocaleString()}
+                        ? `${t('currencySymbol')}${Number(stat.value).toLocaleString(locale)}`
+                        : Number(stat.value).toLocaleString(locale)}
                     </p>
                   </div>
                 </div>
@@ -168,11 +168,11 @@ export default function AdminAnalyticsPage() {
       )}
 
       {/* Growth Chart & Table */}
-      <div className="mt-8 rounded-lg border bg-card p-6">
+      <div className="mt-8 rounded-xl border bg-card p-6">
         <div className="flex items-center gap-2 mb-6">
           <TrendingUp className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-lg font-semibold">{t('growth')}</h2>
-          <div className="ms-auto flex rounded-lg border bg-muted/30 overflow-hidden">
+          <div className="ms-auto flex rounded-lg border bg-muted/50 overflow-hidden">
             {GROUP_BY_OPTIONS.map((opt) => (
               <button
                 key={opt}
@@ -293,13 +293,13 @@ export default function AdminAnalyticsPage() {
                           : '-'}
                       </td>
                       <td className="px-4 py-2.5 font-medium">
-                        {(point.users ?? 0).toLocaleString()}
+                        {(point.users ?? 0).toLocaleString(locale)}
                       </td>
                       <td className="px-4 py-2.5 font-medium">
-                        {(point.organizations ?? 0).toLocaleString()}
+                        {(point.organizations ?? 0).toLocaleString(locale)}
                       </td>
                       <td className="px-4 py-2.5 font-medium">
-                        {(point.conversations ?? 0).toLocaleString()}
+                        {(point.conversations ?? 0).toLocaleString(locale)}
                       </td>
                     </tr>
                   ))}
@@ -311,7 +311,7 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* Plan Distribution */}
-      <div className="mt-8 rounded-lg border bg-card p-6">
+      <div className="mt-8 rounded-xl border bg-card p-6">
         <div className="flex items-center gap-2 mb-6">
           <BarChart3 className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-lg font-semibold">{t('planDistribution')}</h2>
@@ -334,7 +334,7 @@ export default function AdminAnalyticsPage() {
               return (
                 <div
                   key={planName}
-                  className="rounded-lg border bg-card p-5 flex-1 min-w-[180px]"
+                  className="rounded-xl border bg-card p-5 flex-1 min-w-[180px]"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span
@@ -343,11 +343,11 @@ export default function AdminAnalyticsPage() {
                         PLAN_COLORS[planName] ?? PLAN_COLORS.FREE
                       )}
                     >
-                      {planName}
+                      {t(`plan_${planName}`)}
                     </span>
                   </div>
                   <p className="text-3xl font-bold">
-                    {Number(count).toLocaleString()}
+                    {Number(count).toLocaleString(locale)}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
                     {t('subscriptions')}

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, Fragment } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDateTime } from '@/lib/dateFormat';
-import { useAdminWebhookLogs, useAdminWebhookLogStats } from '@/hooks/useAdmin';
+import { useAdminWebhookLogs, useAdminWebhookLogStats, useAdminWebhookHealth, useAdminWebhookStats } from '@/hooks/useAdmin';
 import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import {
@@ -62,7 +62,7 @@ function truncateUrl(url: string, max = 50) {
 
 function StatSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm animate-pulse">
+    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
       <div className="h-3 w-20 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -88,6 +88,7 @@ function RowSkeleton() {
 
 export default function WebhookLogsPage() {
   const t = useTranslations('admin.webhookLogs');
+  const th = useTranslations('admin.webhookHealth');
   const tc = useTranslations('admin.common');
   const locale = useLocale();
   const [page, setPage] = useState(1);
@@ -122,21 +123,23 @@ export default function WebhookLogsPage() {
 
   const { data, isLoading, isError, refetch } = useAdminWebhookLogs(params);
   const { data: stats, isLoading: statsLoading } = useAdminWebhookLogStats();
+  const { data: health, isLoading: healthLoading } = useAdminWebhookHealth();
+  const { data: webhookStats, isLoading: webhookStatsLoading } = useAdminWebhookStats();
 
-  const entries: WebhookLogEntry[] = data?.data ?? [];
+  const entries: WebhookLogEntry[] = data?.logs ?? [];
   const totalPages = data?.totalPages ?? 1;
   const statsData = stats as WebhookLogStats | undefined;
 
   function handleExport() {
     if (!entries.length) return;
     const rows = entries.map((entry) => ({
-      'Webhook URL': entry.webhookUrl,
-      Event: entry.event,
-      Status: entry.success ? 'Success' : 'Failed',
-      'Status Code': entry.statusCode ?? '',
-      'Duration (ms)': entry.duration ?? '',
-      Attempt: entry.attempt,
-      Time: fmtDateTime(entry.createdAt, locale),
+      [t('csvWebhookUrl')]: entry.webhookUrl,
+      [t('csvEvent')]: entry.event,
+      [t('csvStatus')]: entry.success ? t('success') : t('failed'),
+      [t('csvStatusCode')]: entry.statusCode ?? '',
+      [t('csvDuration')]: entry.duration ?? '',
+      [t('csvAttempt')]: entry.attempt,
+      [t('csvTime')]: fmtDateTime(entry.createdAt, locale),
     }));
     exportToCsv('admin-webhook-logs', rows);
   }
@@ -166,6 +169,51 @@ export default function WebhookLogsPage() {
         </button>
       </div>
 
+      {/* Health Stats */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        {healthLoading || webhookStatsLoading ? (
+          <>
+            <StatSkeleton />
+            <StatSkeleton />
+            <StatSkeleton />
+            <StatSkeleton />
+          </>
+        ) : (
+          <>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <Activity className="h-4 w-4" />
+                {th('totalSent')}
+              </div>
+              <p className="text-2xl font-bold">{health?.totalDeliveries ?? 0}</p>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                {th('successRate')}
+              </div>
+              <p className="text-2xl font-bold text-green-600">
+                {health?.successRate != null ? `${health.successRate}%` : '-'}
+              </p>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <XCircle className="h-4 w-4 text-red-500" />
+                {th('failed')}
+              </div>
+              <p className="text-2xl font-bold text-red-600">{health?.totalFailures ?? 0}</p>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                {th('deadWebhooks')}
+              </div>
+              <p className="text-2xl font-bold text-amber-600">{webhookStats?.inactive ?? 0}</p>
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Stats Bar */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {statsLoading ? (
@@ -177,14 +225,14 @@ export default function WebhookLogsPage() {
           </>
         ) : (
           <>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Activity className="h-4 w-4" />
                 {t('totalDeliveries')}
               </div>
               <p className="text-2xl font-bold">{statsData?.totalDeliveries ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 {t('successRate')}
@@ -193,7 +241,7 @@ export default function WebhookLogsPage() {
                 {statsData?.successRate != null ? `${statsData.successRate}%` : '-'}
               </p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Clock className="h-4 w-4" />
                 {t('avgDuration')}
@@ -202,7 +250,7 @@ export default function WebhookLogsPage() {
                 {statsData?.avgDuration != null ? `${statsData.avgDuration}ms` : '-'}
               </p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <XCircle className="h-4 w-4 text-red-500" />
                 {t('totalFailures')}
@@ -214,7 +262,7 @@ export default function WebhookLogsPage() {
       </div>
 
       {/* Filters */}
-      <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">
+      <div className="mb-6 rounded-xl border bg-card p-4 shadow-sm">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
           <Filter className="h-4 w-4" />
           {t('filters')}
@@ -231,7 +279,7 @@ export default function WebhookLogsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('searchUrlPlaceholder')}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -241,7 +289,7 @@ export default function WebhookLogsPage() {
             <select
               value={successFilter}
               onChange={(e) => updateFilter(setSuccessFilter)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             >
               <option value="">{t('all')}</option>
               <option value="true">{t('success')}</option>
@@ -257,7 +305,7 @@ export default function WebhookLogsPage() {
               value={event}
               onChange={(e) => updateFilter(setEvent)(e.target.value)}
               placeholder={t('eventPlaceholder')}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -271,7 +319,7 @@ export default function WebhookLogsPage() {
               type="date"
               value={startDate}
               onChange={(e) => updateFilter(setStartDate)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -285,7 +333,7 @@ export default function WebhookLogsPage() {
               type="date"
               value={endDate}
               onChange={(e) => updateFilter(setEndDate)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
         </div>
@@ -305,11 +353,11 @@ export default function WebhookLogsPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('webhookUrl')}
                 </th>
@@ -349,7 +397,7 @@ export default function WebhookLogsPage() {
                   <Fragment key={entry.id}>
                     <tr
                       onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
-                      className="border-b last:border-b-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                      className="border-b last:border-b-0 hover:bg-muted/50 transition-colors cursor-pointer"
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -391,7 +439,7 @@ export default function WebhookLogsPage() {
                       <tr className="border-b last:border-b-0 bg-muted/10">
                         <td colSpan={6} className="px-4 py-3">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="rounded-md border bg-background p-3">
+                            <div className="rounded-lg border bg-background p-3">
                               <p className="text-xs font-medium text-muted-foreground mb-2">{t('requestBody')}</p>
                               <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all max-h-48 overflow-y-auto">
                                 {entry.requestBody
@@ -405,7 +453,7 @@ export default function WebhookLogsPage() {
                                   : t('noRequestBody')}
                               </pre>
                             </div>
-                            <div className="rounded-md border bg-background p-3">
+                            <div className="rounded-lg border bg-background p-3">
                               <p className="text-xs font-medium text-muted-foreground mb-2">{t('responseBody')}</p>
                               <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all max-h-48 overflow-y-auto">
                                 {entry.responseBody

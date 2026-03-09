@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 export interface PaginationProps {
@@ -50,6 +51,7 @@ export function Pagination({
   showInfo = true,
   className,
 }: PaginationProps) {
+  const t = useTranslations('pagination');
   if (totalPages <= 1) return null;
 
   const pages = getPageNumbers(page, totalPages);
@@ -57,13 +59,13 @@ export function Pagination({
   const isLast = page === totalPages;
 
   const buttonBase =
-    'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors h-9 min-w-[36px] px-2 disabled:pointer-events-none disabled:opacity-50';
+    'inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors h-9 min-w-[36px] px-2 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2';
 
   return (
     <div className={cn('flex items-center justify-between gap-4', className)}>
       {showInfo && (
         <span className="text-sm text-muted-foreground">
-          Page {page} of {totalPages}
+          {t('pageInfo', { page, totalPages })}
         </span>
       )}
 
@@ -72,9 +74,9 @@ export function Pagination({
           disabled={isFirst}
           onClick={() => onPageChange(page - 1)}
           className={cn(buttonBase, 'hover:bg-muted')}
-          aria-label="Previous page"
+          aria-label={t('previousPage')}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
         </button>
 
         {pages.map((p, i) =>
@@ -106,9 +108,9 @@ export function Pagination({
           disabled={isLast}
           onClick={() => onPageChange(page + 1)}
           className={cn(buttonBase, 'hover:bg-muted')}
-          aria-label="Next page"
+          aria-label={t('nextPage')}
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4 rtl:rotate-180" />
         </button>
       </div>
     </div>

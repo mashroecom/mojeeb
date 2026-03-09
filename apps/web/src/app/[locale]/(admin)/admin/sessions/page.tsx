@@ -69,7 +69,7 @@ function parseUA(ua: string): string {
 
 function StatSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm animate-pulse">
+    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
       <div className="h-3 w-20 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -118,18 +118,18 @@ export default function SessionsPage() {
   const killSession = useKillSession();
   const killUserSessions = useKillUserSessions();
 
-  const entries: SessionEntry[] = data?.data ?? [];
+  const entries: SessionEntry[] = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   function handleExport() {
     if (!entries.length) return;
     const rows = entries.map((entry) => ({
-      Email: entry.userEmail,
-      User: entry.userName || '',
-      IP: entry.ip,
-      Device: parseUA(entry.userAgent),
-      'Created At': fmtDateTime(entry.createdAt, locale),
-      'Expires At': fmtDateTime(entry.expiresAt, locale),
+      [t('csvEmail')]: entry.userEmail,
+      [t('csvUser')]: entry.userName || '',
+      [t('csvIP')]: entry.ip,
+      [t('csvDevice')]: parseUA(entry.userAgent),
+      [t('csvCreatedAt')]: fmtDateTime(entry.createdAt, locale),
+      [t('csvExpiresAt')]: fmtDateTime(entry.expiresAt, locale),
     }));
     exportToCsv('admin-sessions', rows);
   }
@@ -200,19 +200,19 @@ export default function SessionsPage() {
           </>
         ) : (
           <>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Users className="h-4 w-4" />
                 {t('totalSessions')}
               </div>
-              <p className="text-2xl font-bold">{stats?.totalSessions ?? 0}</p>
+              <p className="text-2xl font-bold">{stats?.totalActive ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <CalendarPlus className="h-4 w-4" />
                 {t('todaySessions')}
               </div>
-              <p className="text-2xl font-bold">{stats?.todaySessions ?? 0}</p>
+              <p className="text-2xl font-bold">{stats?.createdToday ?? 0}</p>
             </div>
           </>
         )}
@@ -228,12 +228,12 @@ export default function SessionsPage() {
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder={t('searchByEmail')}
-            className="w-full rounded-md border bg-background ps-9 pe-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            className="w-full rounded-lg border bg-background ps-9 pe-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
           />
         </div>
         <button
           onClick={handleSearch}
-          className="inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+          className="inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
         >
           <Search className="h-4 w-4" />
         </button>
@@ -253,11 +253,11 @@ export default function SessionsPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('user')}
                 </th>
@@ -292,7 +292,7 @@ export default function SessionsPage() {
               {!isLoading &&
                 !isError &&
                 entries.map((entry) => (
-                  <tr key={entry.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+                  <tr key={entry.id} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="text-sm font-medium truncate max-w-[200px]">
                         {entry.userEmail}
@@ -320,7 +320,7 @@ export default function SessionsPage() {
                         <button
                           onClick={() => handleKill(entry.id)}
                           disabled={killSession.isPending}
-                          className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
                         >
                           <XCircle className="h-3 w-3" />
                           {t('kill')}
@@ -328,7 +328,7 @@ export default function SessionsPage() {
                         <button
                           onClick={() => handleKillAll(entry.userId)}
                           disabled={killUserSessions.isPending}
-                          className="inline-flex items-center gap-1 rounded-md border border-orange-200 px-2.5 py-1 text-xs font-medium text-orange-600 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-900/20 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-lg border border-orange-200 px-2.5 py-1 text-xs font-medium text-orange-600 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-900/20 transition-colors disabled:opacity-50"
                         >
                           <XCircle className="h-3 w-3" />
                           {t('killAll')}

@@ -46,16 +46,12 @@ export const adminKeys = {
   unreadCount: ['admin', 'unread-count'] as const,
   securitySettings: ['admin', 'security-settings'] as const,
   notificationSettings: ['admin', 'notification-settings'] as const,
-  orgDefaults: ['admin', 'org-defaults'] as const,
   landingPage: ['admin', 'landing-page'] as const,
   dlq: (params?: Record<string, unknown>) => ['admin', 'dlq', params] as const,
   // New admin entities
   agents: (params?: Record<string, unknown>) => ['admin', 'agents', params] as const,
   agentDetail: (id: string) => ['admin', 'agents', id] as const,
   agentStats: ['admin', 'agents-stats'] as const,
-  channels: (params?: Record<string, unknown>) => ['admin', 'channels', params] as const,
-  channelDetail: (id: string) => ['admin', 'channels', id] as const,
-  channelStats: ['admin', 'channels-stats'] as const,
   conversations: (params?: Record<string, unknown>) => ['admin', 'conversations', params] as const,
   conversationDetail: (id: string) => ['admin', 'conversations', id] as const,
   conversationStats: ['admin', 'conversations-stats'] as const,
@@ -80,6 +76,56 @@ export const adminKeys = {
   messageTemplatesAdmin: (params?: Record<string, unknown>) => ['admin', 'message-templates-admin', params] as const,
   // Tags (admin)
   tagsAdmin: (params?: Record<string, unknown>) => ['admin', 'tags-admin', params] as const,
+  // Message Analytics
+  messageAnalyticsStats: ['admin', 'message-analytics-stats'] as const,
+  messageAnalyticsTrends: ['admin', 'message-analytics-trends'] as const,
+  // Sentiment Analysis
+  sentimentStats: ['admin', 'sentiment-stats'] as const,
+  sentimentTrends: ['admin', 'sentiment-trends'] as const,
+  // AI Models
+  aiModelStats: ['admin', 'ai-model-stats'] as const,
+  aiModelUsage: ['admin', 'ai-model-usage'] as const,
+  // Security Audit
+  securityAuditStats: ['admin', 'security-audit-stats'] as const,
+  recentFailures: (params?: Record<string, unknown>) => ['admin', 'recent-failures', params] as const,
+  // Conversation Quality
+  conversationQualityStats: ['admin', 'conversation-quality-stats'] as const,
+  lowQualityConversations: (params?: Record<string, unknown>) => ['admin', 'low-quality-conversations', params] as const,
+  // Lead Insights
+  leadInsightsStats: ['admin', 'lead-insights-stats'] as const,
+  topLeads: ['admin', 'top-leads'] as const,
+  // Org Resources
+  orgResources: (orgId: string) => ['admin', 'organizations', orgId, 'resources'] as const,
+  // Message Delivery
+  messageDeliveryStats: ['admin', 'message-delivery-stats'] as const,
+  // API Usage
+  apiUsageStats: ['admin', 'api-usage-stats'] as const,
+  // KB Health
+  kbHealth: ['admin', 'kb-health'] as const,
+  // Webhook Health
+  webhookHealth: ['admin', 'webhook-health'] as const,
+  // FAQ
+  faqs: (params?: object) => ['admin', 'faqs', params] as const,
+  // Testimonials
+  testimonialsList: (params?: object) => ['admin', 'testimonials', params] as const,
+  // Active Announcements (user-facing)
+  activeAnnouncements: ['admin', 'active-announcements'] as const,
+  // Dashboard v2
+  dashboardOverview: ['admin', 'dashboard-overview'] as const,
+  sparkline: (metric: string) => ['admin', 'sparkline', metric] as const,
+  signupsOverTime: ['admin', 'signups-over-time'] as const,
+  revenueOverTime: ['admin', 'revenue-over-time'] as const,
+  subscriptionsByPlan: ['admin', 'subscriptions-by-plan'] as const,
+  tokenUsageOverTime: ['admin', 'token-usage-over-time'] as const,
+  topUsersByUsage: ['admin', 'top-users-by-usage'] as const,
+  platformHeatmap: ['admin', 'platform-heatmap'] as const,
+  recentEvents: ['admin', 'recent-events'] as const,
+  // Token Usage Page
+  tokenSummary: (params?: object) => ['admin', 'token-summary', params] as const,
+  tokenByOrg: (params?: object) => ['admin', 'token-by-org', params] as const,
+  tokenByModel: (params?: object) => ['admin', 'token-by-model', params] as const,
+  tokenByDay: (params?: object) => ['admin', 'token-by-day', params] as const,
+  topConsumers: (params?: object) => ['admin', 'top-consumers', params] as const,
 };
 
 // Platform Overview (auto-refresh every 30 seconds)
@@ -820,7 +866,7 @@ export function useAdminLoginActivity(params: { page: number; limit: number; ema
         limit: String(params.limit),
       });
       if (params.email) searchParams.set('email', params.email);
-      if (params.ip) searchParams.set('ip', params.ip);
+      if (params.ip) searchParams.set('ipAddress', params.ip);
       if (params.success) searchParams.set('success', params.success);
       if (params.startDate) searchParams.set('startDate', params.startDate);
       if (params.endDate) searchParams.set('endDate', params.endDate);
@@ -891,7 +937,7 @@ export function useAdminSessions(params: { page: number; limit: number; email?: 
         page: String(params.page),
         limit: String(params.limit),
       });
-      if (params.email) searchParams.set('email', params.email);
+      if (params.email) searchParams.set('search', params.email);
       const { data } = await api.get(`/admin/sessions?${searchParams}`);
       return data.data;
     },
@@ -1351,30 +1397,6 @@ export function useTestNotificationEmail() {
   });
 }
 
-// ===== Org Defaults =====
-export function useAdminOrgDefaults() {
-  return useQuery({
-    queryKey: adminKeys.orgDefaults,
-    queryFn: async () => {
-      const { data } = await api.get('/admin/org-defaults');
-      return data.data;
-    },
-  });
-}
-
-export function useUpdateOrgDefaults() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (settings: Record<string, string>) => {
-      const { data } = await api.patch('/admin/org-defaults', { settings });
-      return data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.orgDefaults });
-    },
-  });
-}
-
 // ===== Landing Page CMS =====
 export function useAdminLandingPage() {
   return useQuery({
@@ -1395,6 +1417,21 @@ export function useUpdateLandingPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.landingPage });
+      // Also invalidate public landing page cache
+      queryClient.invalidateQueries({ queryKey: ['public', 'landing-page'] });
+    },
+  });
+}
+
+export function useUploadLandingImage() {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await api.post('/admin/landing-page/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data.data as { url: string };
     },
   });
 }
@@ -1499,69 +1536,6 @@ export function useDeleteAdminAgent() {
   });
 }
 
-// ===== Admin Channels =====
-export function useAdminChannels(params: { page: number; limit: number; search?: string; orgId?: string; type?: string; status?: string }) {
-  return useQuery({
-    queryKey: adminKeys.channels(params),
-    queryFn: async () => {
-      const sp = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
-      if (params.search) sp.set('search', params.search);
-      if (params.orgId) sp.set('orgId', params.orgId);
-      if (params.type) sp.set('type', params.type);
-      if (params.status) sp.set('status', params.status);
-      const { data } = await api.get(`/admin/channels?${sp}`);
-      return data.data;
-    },
-  });
-}
-
-export function useAdminChannelDetail(channelId: string) {
-  return useQuery({
-    queryKey: adminKeys.channelDetail(channelId),
-    queryFn: async () => {
-      const { data } = await api.get(`/admin/channels/${channelId}`);
-      return data.data;
-    },
-    enabled: !!channelId,
-  });
-}
-
-export function useAdminChannelStats() {
-  return useQuery({
-    queryKey: adminKeys.channelStats,
-    queryFn: async () => {
-      const { data } = await api.get('/admin/channels/stats');
-      return data.data;
-    },
-  });
-}
-
-export function useUpdateAdminChannel() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ channelId, ...body }: { channelId: string; [key: string]: unknown }) => {
-      const { data } = await api.patch(`/admin/channels/${channelId}`, body);
-      return data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'channels'] });
-    },
-  });
-}
-
-export function useDeleteAdminChannel() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (channelId: string) => {
-      const { data } = await api.delete(`/admin/channels/${channelId}`);
-      return data.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'channels'] });
-    },
-  });
-}
-
 // ===== Admin Conversations =====
 export function useAdminConversations(params: { page: number; limit: number; search?: string; orgId?: string; channelId?: string; status?: string; startDate?: string; endDate?: string }) {
   return useQuery({
@@ -1619,6 +1593,32 @@ export function useUpdateAdminConversation() {
   return useMutation({
     mutationFn: async ({ conversationId, ...body }: { conversationId: string; [key: string]: unknown }) => {
       const { data } = await api.patch(`/admin/conversations/${conversationId}`, body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'conversations'] });
+    },
+  });
+}
+
+export function useDeleteAdminConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (conversationId: string) => {
+      const { data } = await api.delete(`/admin/conversations/${conversationId}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'conversations'] });
+    },
+  });
+}
+
+export function useBulkDeleteConversations() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (conversationIds: string[]) => {
+      const { data } = await api.post('/admin/conversations/bulk-delete', { conversationIds });
       return data.data;
     },
     onSuccess: () => {
@@ -2028,5 +2028,508 @@ export function useDeleteTag() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'tags-admin'] });
     },
+  });
+}
+
+// ===== Message Analytics =====
+export function useAdminMessageAnalyticsStats() {
+  return useQuery({
+    queryKey: adminKeys.messageAnalyticsStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/message-analytics/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminMessageAnalyticsTrends() {
+  return useQuery({
+    queryKey: adminKeys.messageAnalyticsTrends,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/message-analytics/trends');
+      return data.data;
+    },
+  });
+}
+
+// ===== Sentiment Analysis =====
+export function useAdminSentimentStats() {
+  return useQuery({
+    queryKey: adminKeys.sentimentStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/sentiment-analysis/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminSentimentTrends() {
+  return useQuery({
+    queryKey: adminKeys.sentimentTrends,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/sentiment-analysis/trends');
+      return data.data;
+    },
+  });
+}
+
+// ===== AI Models =====
+export function useAdminAIModelStats() {
+  return useQuery({
+    queryKey: adminKeys.aiModelStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/ai-models/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminAIModelUsage() {
+  return useQuery({
+    queryKey: adminKeys.aiModelUsage,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/ai-models/usage');
+      return data.data;
+    },
+  });
+}
+
+// ===== Security Audit =====
+export function useAdminSecurityStats() {
+  return useQuery({
+    queryKey: adminKeys.securityAuditStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/security-audit/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminRecentFailures(page = 1, limit = 10) {
+  return useQuery({
+    queryKey: adminKeys.recentFailures({ page, limit }),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/security-audit/recent-failures?page=${page}&limit=${limit}`);
+      return data.data;
+    },
+  });
+}
+
+// ===== Conversation Quality =====
+export function useAdminConversationQualityStats() {
+  return useQuery({
+    queryKey: adminKeys.conversationQualityStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/conversation-quality/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminLowQualityConversations(page = 1, limit = 10) {
+  return useQuery({
+    queryKey: adminKeys.lowQualityConversations({ page, limit }),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/conversation-quality/low-quality?page=${page}&limit=${limit}`);
+      return data.data;
+    },
+  });
+}
+
+// ===== Lead Insights =====
+export function useAdminLeadInsightsStats() {
+  return useQuery({
+    queryKey: adminKeys.leadInsightsStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/lead-insights/stats');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminTopLeads() {
+  return useQuery({
+    queryKey: adminKeys.topLeads,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/lead-insights/top-leads');
+      return data.data;
+    },
+  });
+}
+
+// ===== System Backup =====
+export function useExportConfig() {
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.get('/admin/system-backup/export');
+      return data;
+    },
+  });
+}
+
+export function useImportConfig() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (config: Record<string, unknown>) => {
+      const { data } = await api.post('/admin/system-backup/import', config);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin'] });
+    },
+  });
+}
+
+// ===== Org Resources =====
+export function useAdminOrgResources(orgId: string) {
+  return useQuery({
+    queryKey: adminKeys.orgResources(orgId),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/organizations/${orgId}/resources`);
+      return data.data;
+    },
+    enabled: !!orgId,
+  });
+}
+
+// ===== Message Delivery Stats =====
+export function useAdminMessageDeliveryStats() {
+  return useQuery({
+    queryKey: adminKeys.messageDeliveryStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/message-delivery/stats');
+      return data.data;
+    },
+    refetchInterval: 30000,
+  });
+}
+
+// ===== API Usage Stats =====
+export function useAdminApiUsageStats() {
+  return useQuery({
+    queryKey: adminKeys.apiUsageStats,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/api-usage/stats');
+      return data.data;
+    },
+  });
+}
+
+// ===== KB Health =====
+export function useAdminKBHealth() {
+  return useQuery({
+    queryKey: adminKeys.kbHealth,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/knowledge-bases/health');
+      return data.data;
+    },
+  });
+}
+
+// ===== Webhook Health =====
+export function useAdminWebhookHealth() {
+  return useQuery({
+    queryKey: adminKeys.webhookHealth,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/webhook-logs/stats');
+      return data.data;
+    },
+    refetchInterval: 30000,
+  });
+}
+
+// ===== Dashboard v2 =====
+export function useAdminDashboardOverview() {
+  return useQuery({
+    queryKey: adminKeys.dashboardOverview,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/analytics/dashboard-overview');
+      return data.data;
+    },
+    refetchInterval: 30000,
+  });
+}
+
+export function useAdminSparkline(metric: string) {
+  return useQuery({
+    queryKey: adminKeys.sparkline(metric),
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/analytics/sparkline/${metric}`);
+      return data.data;
+    },
+    enabled: !!metric,
+  });
+}
+
+export function useAdminSignupsOverTime() {
+  return useQuery({
+    queryKey: adminKeys.signupsOverTime,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/analytics/signups-over-time');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminRevenueOverTime() {
+  return useQuery({
+    queryKey: adminKeys.revenueOverTime,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/analytics/revenue-over-time');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminSubscriptionsByPlan() {
+  return useQuery({
+    queryKey: adminKeys.subscriptionsByPlan,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/analytics/subscriptions-by-plan');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminTokenUsageOverTime() {
+  return useQuery({
+    queryKey: adminKeys.tokenUsageOverTime,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/analytics/token-usage-over-time');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminTopUsersByUsage() {
+  return useQuery({
+    queryKey: adminKeys.topUsersByUsage,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/analytics/top-users-by-usage');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminPlatformHeatmap() {
+  return useQuery({
+    queryKey: adminKeys.platformHeatmap,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/analytics/platform-heatmap');
+      return data.data;
+    },
+  });
+}
+
+export function useAdminRecentEvents() {
+  return useQuery({
+    queryKey: adminKeys.recentEvents,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/analytics/recent-events');
+      return data.data;
+    },
+    refetchInterval: 30000,
+  });
+}
+
+// ===== Token Usage Page =====
+export function useAdminTokenSummary(params?: { startDate?: string; endDate?: string }) {
+  return useQuery({
+    queryKey: adminKeys.tokenSummary(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams();
+      if (params?.startDate) sp.set('startDate', params.startDate);
+      if (params?.endDate) sp.set('endDate', params.endDate);
+      const query = sp.toString();
+      const { data } = await api.get(`/admin/analytics/token-summary${query ? `?${query}` : ''}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminTokenByOrg(params?: { startDate?: string; endDate?: string; page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: adminKeys.tokenByOrg(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams();
+      if (params?.startDate) sp.set('startDate', params.startDate);
+      if (params?.endDate) sp.set('endDate', params.endDate);
+      if (params?.page) sp.set('page', String(params.page));
+      if (params?.limit) sp.set('limit', String(params.limit));
+      const query = sp.toString();
+      const { data } = await api.get(`/admin/analytics/token-by-org${query ? `?${query}` : ''}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminTokenByModel(params?: { startDate?: string; endDate?: string }) {
+  return useQuery({
+    queryKey: adminKeys.tokenByModel(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams();
+      if (params?.startDate) sp.set('startDate', params.startDate);
+      if (params?.endDate) sp.set('endDate', params.endDate);
+      const query = sp.toString();
+      const { data } = await api.get(`/admin/analytics/token-by-model${query ? `?${query}` : ''}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminTokenByDay(params?: { startDate?: string; endDate?: string }) {
+  return useQuery({
+    queryKey: adminKeys.tokenByDay(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams();
+      if (params?.startDate) sp.set('startDate', params.startDate);
+      if (params?.endDate) sp.set('endDate', params.endDate);
+      const query = sp.toString();
+      const { data } = await api.get(`/admin/analytics/token-by-day${query ? `?${query}` : ''}`);
+      return data.data;
+    },
+  });
+}
+
+export function useAdminTopConsumers(params?: { startDate?: string; endDate?: string; limit?: number }) {
+  return useQuery({
+    queryKey: adminKeys.topConsumers(params),
+    queryFn: async () => {
+      const sp = new URLSearchParams();
+      if (params?.startDate) sp.set('startDate', params.startDate);
+      if (params?.endDate) sp.set('endDate', params.endDate);
+      if (params?.limit) sp.set('limit', String(params.limit));
+      const query = sp.toString();
+      const { data } = await api.get(`/admin/analytics/top-consumers${query ? `?${query}` : ''}`);
+      return data.data;
+    },
+  });
+}
+
+// ─── FAQ Admin ─────────────────────────────────────────────────
+export function useAdminFAQs() {
+  return useQuery({
+    queryKey: ['admin', 'faqs'],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/faq');
+      return data.data;
+    },
+  });
+}
+
+export function useCreateFAQ() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: Record<string, unknown>) => {
+      const { data } = await api.post('/admin/faq', body);
+      return data.data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'faqs'] }),
+  });
+}
+
+export function useUpdateFAQ() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...body }: { id: string } & Record<string, unknown>) => {
+      const { data } = await api.patch(`/admin/faq/${id}`, body);
+      return data.data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'faqs'] }),
+  });
+}
+
+export function useDeleteFAQ() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/admin/faq/${id}`);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'faqs'] }),
+  });
+}
+
+export function useReorderFAQs() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      await api.put('/admin/faq/reorder', { ids });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'faqs'] }),
+  });
+}
+
+// ─── Testimonials Admin ──────────────────────────────────────────
+export function useAdminTestimonials() {
+  return useQuery({
+    queryKey: ['admin', 'testimonials'],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/testimonials');
+      return data.data;
+    },
+  });
+}
+
+export function useCreateTestimonial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: Record<string, unknown>) => {
+      const { data } = await api.post('/admin/testimonials', body);
+      return data.data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'testimonials'] }),
+  });
+}
+
+export function useUpdateTestimonial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...body }: { id: string } & Record<string, unknown>) => {
+      const { data } = await api.patch(`/admin/testimonials/${id}`, body);
+      return data.data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'testimonials'] }),
+  });
+}
+
+export function useDeleteTestimonial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/admin/testimonials/${id}`);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'testimonials'] }),
+  });
+}
+
+export function useReorderTestimonials() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      await api.put('/admin/testimonials/reorder', { ids });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'testimonials'] }),
+  });
+}
+
+// ─── Legal Content Admin ─────────────────────────────────────────
+export function useAdminLegalContent(type: 'privacy-policy' | 'terms') {
+  return useQuery({
+    queryKey: ['admin', 'legal', type],
+    queryFn: async () => {
+      const { data } = await api.get(`/admin/legal/${type}`);
+      return data.data;
+    },
+  });
+}
+
+export function useUpdateLegalContent(type: 'privacy-policy' | 'terms') {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { contentEn: string; contentAr: string }) => {
+      const { data } = await api.put(`/admin/legal/${type}`, body);
+      return data.data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'legal', type] }),
   });
 }

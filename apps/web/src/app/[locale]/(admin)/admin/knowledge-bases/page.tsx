@@ -19,6 +19,8 @@ import {
   FileText,
   Database,
   CheckCircle,
+  XCircle,
+  BarChart3,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -27,7 +29,7 @@ import {
 
 function StatSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm animate-pulse">
+    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
       <div className="h-3 w-20 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -54,6 +56,7 @@ function RowSkeleton() {
 
 export default function AdminKnowledgeBasesPage() {
   const t = useTranslations('admin.knowledgeBases');
+  const th = useTranslations('admin.kbHealth');
   const tc = useTranslations('admin.common');
   const locale = useLocale();
   const addToast = useToastStore((s) => s.addToast);
@@ -84,10 +87,11 @@ export default function AdminKnowledgeBasesPage() {
     search: debouncedSearch || undefined,
   });
   const { data: stats, isLoading: statsLoading } = useAdminKnowledgeBaseStats();
+  const { data: health, isLoading: healthLoading } = useAdminKBHealth();
   const deleteKB = useDeleteAdminKnowledgeBase();
 
-  const knowledgeBases = data?.data ?? [];
-  const pagination = data?.pagination;
+  const knowledgeBases = data?.knowledgeBases ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   // Derive embeddings completed count from byEmbeddingStatus array
   const embeddingsCompleted = useMemo(() => {
@@ -141,6 +145,49 @@ export default function AdminKnowledgeBasesPage() {
         <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
+      {/* Health Stats Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        {healthLoading ? (
+          <>
+            <StatSkeleton />
+            <StatSkeleton />
+            <StatSkeleton />
+            <StatSkeleton />
+          </>
+        ) : (
+          <>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <BookOpen className="h-4 w-4" />
+                {th('totalKBs')}
+              </div>
+              <p className="text-2xl font-bold">{health?.totalKBs ?? 0}</p>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <FileText className="h-4 w-4" />
+                {th('totalDocuments')}
+              </div>
+              <p className="text-2xl font-bold">{health?.totalDocuments ?? 0}</p>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 mb-1">
+                <BarChart3 className="h-4 w-4" />
+                {th('completedEmbeddings')}
+              </div>
+              <p className="text-2xl font-bold text-green-600">{health?.completedPct ?? 0}%</p>
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 mb-1">
+                <XCircle className="h-4 w-4" />
+                {th('failedEmbeddings')}
+              </div>
+              <p className="text-2xl font-bold text-red-600">{health?.failedEmbeddings ?? 0}</p>
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Stat Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {statsLoading ? (
@@ -152,28 +199,28 @@ export default function AdminKnowledgeBasesPage() {
           </>
         ) : (
           <>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <BookOpen className="h-4 w-4" />
                 {t('totalKBs')}
               </div>
               <p className="text-2xl font-bold">{stats?.totalKBs ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <FileText className="h-4 w-4" />
                 {t('totalDocuments')}
               </div>
               <p className="text-2xl font-bold">{stats?.totalDocs ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Database className="h-4 w-4" />
                 {t('totalChunks')}
               </div>
               <p className="text-2xl font-bold">{stats?.totalChunks ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 mb-1">
                 <CheckCircle className="h-4 w-4" />
                 {t('embeddingStatus')}
@@ -193,13 +240,13 @@ export default function AdminKnowledgeBasesPage() {
             placeholder={t('search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border bg-card ps-10 pe-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-lg border bg-card ps-10 pe-4 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="rounded-xl border bg-card overflow-hidden">
         {isLoading ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -284,11 +331,11 @@ export default function AdminKnowledgeBasesPage() {
         )}
 
         {/* Pagination */}
-        {!isLoading && pagination && (
+        {!isLoading && totalPages > 1 && (
           <div className="border-t px-4 py-3">
             <AdminPagination
               page={page}
-              totalPages={pagination.totalPages}
+              totalPages={totalPages}
               onPageChange={setPage}
               previousLabel={tc('previous')}
               nextLabel={tc('next')}

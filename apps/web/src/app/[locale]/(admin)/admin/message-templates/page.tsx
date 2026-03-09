@@ -106,7 +106,7 @@ export default function MessageTemplatesPage() {
                     : 'bg-muted text-muted-foreground hover:bg-muted/80',
                 )}
               >
-                {cat}
+                {t(`category_${cat}`)}
               </button>
             ))}
           </div>
@@ -160,12 +160,12 @@ export default function MessageTemplatesPage() {
                 </thead>
                 <tbody className="divide-y">
                   {templates.map((tpl: any) => (
-                    <tr key={tpl.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={tpl.id} className="hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-3 text-sm font-medium">{tpl.title}</td>
                       <td className="px-4 py-3 text-sm">
                         {tpl.category ? (
                           <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
-                            {tpl.category}
+                            {t(`category_${tpl.category}`)}
                           </span>
                         ) : '—'}
                       </td>
@@ -175,8 +175,8 @@ export default function MessageTemplatesPage() {
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {tpl.org?.name || '—'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate">
-                        {tpl.content}
+                      <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+                        {locale === 'ar' && tpl.contentAr ? tpl.contentAr : tpl.contentEn}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {fmtDate(tpl.createdAt, locale)}
@@ -205,7 +205,7 @@ export default function MessageTemplatesPage() {
                       <p className="font-medium">{tpl.title}</p>
                       {tpl.category && (
                         <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium mt-1 inline-block">
-                          {tpl.category}
+                          {t(`category_${tpl.category}`)}
                         </span>
                       )}
                     </div>
@@ -216,7 +216,9 @@ export default function MessageTemplatesPage() {
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{tpl.content}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+                    {locale === 'ar' && tpl.contentAr ? tpl.contentAr : tpl.contentEn}
+                  </p>
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                     <span>{tpl.org?.name || '—'}</span>
                     <span>{fmtDate(tpl.createdAt, locale)}</span>

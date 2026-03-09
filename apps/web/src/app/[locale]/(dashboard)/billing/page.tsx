@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSubscription, useInvoices, usePlans } from '@/hooks/useSubscription';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -26,6 +27,8 @@ import {
 
 export default function BillingPage() {
   const t = useTranslations('dashboard.billing');
+  const ts = useTranslations('dashboard.sidebar');
+  const tb = useTranslations('dashboard.breadcrumb');
   const locale = useLocale();
   const isAr = locale === 'ar';
   const { data: subscription, isLoading, refetch } = useSubscription();
@@ -38,6 +41,7 @@ export default function BillingPage() {
   const { confirmProps, confirm } = useConfirmDialog();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{
@@ -71,9 +75,8 @@ export default function BillingPage() {
           refetch();
           refetchInvoices();
         })
-        .catch((err: any) => {
-          const message = err?.response?.data?.error || t('upgradeFailed');
-          setStatusMessage({ type: 'error', text: message });
+        .catch(() => {
+          setStatusMessage({ type: 'error', text: t('upgradeFailed') });
         })
         .finally(() => {
           confirmingRef.current = false;
@@ -83,7 +86,6 @@ export default function BillingPage() {
       setStatusMessage({ type: 'error', text: t('upgradeFailed') });
       router.replace('/billing');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, orgId]);
 
   // Auto-dismiss status message after 5 seconds
@@ -100,13 +102,12 @@ export default function BillingPage() {
     setStatusMessage(null);
 
     try {
-      const { data } = await api.post(`/organizations/${orgId}/subscription/checkout`, { plan });
+      const { data } = await api.post(`/organizations/${orgId}/subscription/checkout`, { plan, billingCycle });
       const checkoutUrl = data.data.checkoutUrl;
       // Redirect to Kashier checkout
       window.location.href = checkoutUrl;
-    } catch (err: any) {
-      const message = err?.response?.data?.error || t('upgradeFailed');
-      setStatusMessage({ type: 'error', text: message });
+    } catch {
+      setStatusMessage({ type: 'error', text: t('upgradeFailed') });
       setCheckoutLoading(null);
     }
   }
@@ -124,9 +125,8 @@ export default function BillingPage() {
         text: immediate ? t('canceled') : t('canceledAtPeriodEnd', { date: periodEnd }),
       });
       refetch();
-    } catch (err: any) {
-      const message = err?.response?.data?.error || t('upgradeFailed');
-      setStatusMessage({ type: 'error', text: message });
+    } catch {
+      setStatusMessage({ type: 'error', text: t('upgradeFailed') });
     } finally {
       setCancelLoading(false);
     }
@@ -239,19 +239,30 @@ export default function BillingPage() {
       ]
     : [];
 
-  const plans = (planConfigs ?? []).map((cfg) => ({
-    key: cfg.plan,
-    name: isAr ? (cfg.displayNameAr || cfg.displayName) : cfg.displayName,
-    price: cfg.monthlyPrice === 0
-      ? (isAr ? 'مجاني' : 'Free')
-      : `$${cfg.monthlyPrice}`,
-    popular: cfg.isPopular,
-    features: parseFeatures(isAr ? cfg.featuresAr : cfg.features),
-  }));
+  const plans = (planConfigs ?? []).map((cfg) => {
+    const price = billingCycle === 'yearly' ? cfg.yearlyPrice : cfg.monthlyPrice;
+    return {
+      key: cfg.plan,
+      name: isAr ? (cfg.displayNameAr || cfg.displayName) : cfg.displayName,
+      price: price === 0 ? t('freePrice') : `$${price}`,
+      monthlyPrice: cfg.monthlyPrice,
+      yearlyPrice: cfg.yearlyPrice,
+      popular: cfg.isPopular,
+      features: parseFeatures(isAr ? cfg.featuresAr : cfg.features),
+    };
+  });
 
   return (
     <>
     <div>
+      <Breadcrumb
+        items={[
+          { label: tb('dashboard'), href: '/dashboard' },
+          { label: ts('billing') },
+        ]}
+        className="mb-4"
+      />
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
@@ -260,10 +271,10 @@ export default function BillingPage() {
       {/* Status message banner */}
       {statusMessage && (
         <div
-          className={`mb-6 rounded-lg px-4 py-3 text-sm font-medium ${
+          className={`mb-6 rounded-xl px-4 py-3 text-sm font-medium ${
             statusMessage.type === 'success'
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-red-50 text-red-700 border border-red-200'
+              ? 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800'
+              : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'
           }`}
         >
           {statusMessage.text}
@@ -294,10 +305,10 @@ export default function BillingPage() {
                     <span
                       className={`rounded-full px-3 py-0.5 text-xs font-medium ${
                         subscription.status === 'ACTIVE'
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                           : subscription.status === 'PAST_DUE'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-gray-100 text-gray-700'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {statusText(subscription.status)}
@@ -364,7 +375,34 @@ export default function BillingPage() {
 
           {/* Available Plans */}
           <div className="rounded-xl border bg-card p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">{t('availablePlans')}</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold">{t('availablePlans')}</h2>
+              <div className="flex items-center gap-1 rounded-lg border bg-muted/50 p-1">
+                <button
+                  onClick={() => setBillingCycle('monthly')}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    billingCycle === 'monthly'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {t('monthly')}
+                </button>
+                <button
+                  onClick={() => setBillingCycle('yearly')}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    billingCycle === 'yearly'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {t('yearly')}
+                  <span className="ms-1 rounded-full bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    {t('savePercent')}
+                  </span>
+                </button>
+              </div>
+            </div>
             <div className={`grid grid-cols-1 gap-4 ${plans.length === 4 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
               {plans.map((plan) => {
                 const isCurrent = subscription?.plan === plan.key;
@@ -374,7 +412,7 @@ export default function BillingPage() {
                 return (
                   <div
                     key={plan.key}
-                    className={`rounded-xl border p-5 transition-shadow ${
+                    className={`rounded-xl border p-5 transition-shadow hover:shadow-md ${
                       plan.popular ? 'border-primary shadow-md' : ''
                     } ${isCurrent ? 'bg-primary/5' : ''}`}
                   >
@@ -389,7 +427,9 @@ export default function BillingPage() {
                     <div className="mb-4">
                       <span className="text-3xl font-bold">{plan.price}</span>
                       {plan.key !== 'FREE' && (
-                        <span className="text-sm text-muted-foreground">{t('perMonth')}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {billingCycle === 'yearly' ? t('perYear') : t('perMonth')}
+                        </span>
                       )}
                     </div>
                     <ul className="space-y-2 mb-5">
@@ -451,7 +491,7 @@ export default function BillingPage() {
                     <tr className="border-b text-muted-foreground">
                       <th className="text-start pb-3 font-medium">{t('invoiceDate')}</th>
                       <th className="text-start pb-3 font-medium">{t('invoiceAmount')}</th>
-                      <th className="text-start pb-3 font-medium">{t('invoiceStatus')}</th>
+                      <th className="text-start pb-3 font-medium">{t('invoiceStatusLabel')}</th>
                       <th className="text-start pb-3 font-medium">{t('invoiceDueDate')}</th>
                       <th className="text-start pb-3 font-medium"></th>
                     </tr>
@@ -469,15 +509,15 @@ export default function BillingPage() {
                           <span
                             className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                               invoice.status === 'PAID'
-                                ? 'bg-green-100 text-green-700'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                 : invoice.status === 'PENDING'
-                                  ? 'bg-yellow-100 text-yellow-700'
+                                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                                   : invoice.status === 'FAILED'
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-gray-100 text-gray-700'
+                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                    : 'bg-muted text-muted-foreground'
                             }`}
                           >
-                            {invoice.status}
+                            {t(`invoiceStatus.${invoice.status}`)}
                           </span>
                         </td>
                         <td className="py-3 text-muted-foreground">

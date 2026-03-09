@@ -45,7 +45,7 @@ export function GettingStartedCard() {
       done: hasChannel,
       label: t('connectChannel'),
       desc: t('connectChannelDesc'),
-      href: '/channels',
+      href: '/agents',
       icon: Globe,
     },
     {
@@ -85,7 +85,7 @@ export function GettingStartedCard() {
         </div>
         <button
           onClick={handleDismiss}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           title={t('dismiss')}
         >
           <X className="h-4 w-4" />
@@ -129,10 +129,10 @@ export function GettingStartedCard() {
               ) : (
                 <Link
                   href={step.href}
-                  className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
                 >
                   {t('go')}
-                  <ArrowRight className="h-3 w-3" />
+                  <ArrowRight className="h-3 w-3 rtl:rotate-180" />
                 </Link>
               )}
             </div>

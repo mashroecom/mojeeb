@@ -23,7 +23,14 @@
       "Bash(cat:*)",
       "Bash(npx prisma db push:*)",
       "Bash(pnpm build:*)",
-      "Bash(gh pr list:*)"
+      "Bash(gh pr list:*)",
+      "Bash(git checkout:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx prisma generate)",
+      "Bash(redis-server --version)",
+      "Bash(redis-cli --version)",
+      "Bash(docker --version)",
+      "Bash(git fetch --all)"
     ]
   },
   "inputs": [

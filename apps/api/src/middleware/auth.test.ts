@@ -25,15 +25,16 @@ function createMockReqRes(headers: Record<string, string> = {}) {
   } as unknown as Request;
 
   const res = {} as Response;
-  const next = vi.fn() as NextFunction;
+  const next = vi.fn() as unknown as NextFunction;
 
   return { req, res, next };
 }
 
 /** Helper: extract the error passed to next() */
-function getNextError(next: ReturnType<typeof vi.fn>): any {
-  expect(next).toHaveBeenCalledTimes(1);
-  return next.mock.calls[0][0];
+function getNextError(next: NextFunction): any {
+  const mockNext = next as unknown as ReturnType<typeof vi.fn>;
+  expect(mockNext).toHaveBeenCalledTimes(1);
+  return mockNext.mock.calls[0]?.[0];
 }
 
 describe('authenticate middleware', () => {

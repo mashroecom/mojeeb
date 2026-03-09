@@ -30,11 +30,18 @@ interface DLQJob {
   timestamp: number;
 }
 
-const QUEUE_LABELS: Record<string, { label: string; color: string }> = {
-  'inbound-messages': { label: 'Inbound', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400' },
-  'ai-processing': { label: 'AI', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400' },
-  'outbound-messages': { label: 'Outbound', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' },
-  'webhook-dispatch': { label: 'Webhook', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' },
+const QUEUE_COLORS: Record<string, string> = {
+  'inbound-messages': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+  'ai-processing': 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400',
+  'outbound-messages': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+  'webhook-dispatch': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+};
+
+const QUEUE_LABEL_KEYS: Record<string, string> = {
+  'inbound-messages': 'queueInbound',
+  'ai-processing': 'queueAI',
+  'outbound-messages': 'queueOutbound',
+  'webhook-dispatch': 'queueWebhook',
 };
 
 function JobCard({
@@ -55,18 +62,18 @@ function JobCard({
   locale: string;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const queueInfo = QUEUE_LABELS[job.data.originalQueue || ''] || {
-    label: job.data.originalQueue || 'Unknown',
-    color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
-  };
+  const queueKey = job.data.originalQueue || '';
+  const queueColor = QUEUE_COLORS[queueKey] || 'bg-muted text-muted-foreground';
+  const queueLabelKey = QUEUE_LABEL_KEYS[queueKey];
+  const queueLabel = queueLabelKey ? t(queueLabelKey) : (job.data.originalQueue || t('unknown'));
 
   return (
-    <div className="rounded-lg border bg-card p-4 transition-colors hover:border-primary/20">
+    <div className="rounded-xl border bg-card p-4 transition-colors hover:border-primary/20">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded-full', queueInfo.color)}>
-              {queueInfo.label}
+            <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded-full', queueColor)}>
+              {queueLabel}
             </span>
             <span className="text-sm font-medium truncate">{job.data.jobName || job.name}</span>
             <span className="text-xs text-muted-foreground">#{job.id}</span>
@@ -83,7 +90,7 @@ function JobCard({
             onClick={() => onRetry(job.id)}
             disabled={isRetrying}
             title={t('retry')}
-            className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-muted transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:bg-muted transition-colors disabled:opacity-50"
           >
             {isRetrying ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
             {t('retry')}
@@ -92,7 +99,7 @@ function JobCard({
             onClick={() => onDiscard(job.id)}
             disabled={isDiscarding}
             title={t('discard')}
-            className="inline-flex items-center gap-1.5 rounded-md border border-red-200 text-red-600 px-2.5 py-1.5 text-xs font-medium hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 text-red-600 px-2.5 py-1.5 text-xs font-medium hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
           >
             {isDiscarding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
             {t('discard')}
@@ -109,7 +116,7 @@ function JobCard({
         {t('viewData')}
       </button>
       {expanded && (
-        <pre className="mt-2 overflow-auto max-h-48 rounded-md bg-muted p-3 text-xs font-mono whitespace-pre-wrap break-all">
+        <pre className="mt-2 overflow-auto max-h-48 rounded-lg bg-muted p-3 text-xs font-mono whitespace-pre-wrap break-all">
           {JSON.stringify(job.data.data || job.data, null, 2)}
         </pre>
       )}
@@ -188,7 +195,7 @@ export default function DLQPage() {
 
       {/* Stats bar */}
       <div className="mb-6 flex items-center gap-4">
-        <div className="rounded-lg border bg-card px-4 py-3">
+        <div className="rounded-xl border bg-card px-4 py-3">
           <p className="text-xs text-muted-foreground">{t('totalJobs')}</p>
           <p className="text-2xl font-bold">{total}</p>
         </div>

@@ -32,6 +32,11 @@ router.patch(
       websiteUrl: z.string().url().max(500).optional().or(z.literal('')),
       timezone: z.string().max(100).optional(),
       defaultLanguage: z.string().max(10).optional(),
+      dateFormat: z.string().max(20).optional(),
+      primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+      secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+      customCss: z.string().max(10000).optional().nullable(),
+      contactEmail: z.string().email().max(254).optional().or(z.literal('')),
     }).refine((d) => Object.values(d).some(v => v !== undefined), {
       message: 'At least one field is required',
     }),
@@ -65,7 +70,7 @@ router.post(
   validate({
     body: z.object({
       email: z.string().email().max(254).trim().toLowerCase(),
-      role: z.enum(['ADMIN', 'MEMBER']),
+      role: z.enum(['OWNER', 'ADMIN', 'MEMBER']),
     }),
   }),
   async (req, res, next) => {
@@ -86,7 +91,7 @@ router.patch(
   requireRole('OWNER', 'ADMIN'),
   validate({
     body: z.object({
-      role: z.enum(['ADMIN', 'MEMBER']),
+      role: z.enum(['OWNER', 'ADMIN', 'MEMBER']),
     }),
   }),
   async (req, res, next) => {

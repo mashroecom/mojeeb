@@ -52,7 +52,7 @@ function SingleToast({ id, type, message, duration, onRemove }: SingleToastProps
     <ToastPrimitive.Root
       className={cn(
         'group pointer-events-auto relative flex w-full items-center gap-3 overflow-hidden rounded-lg border p-4 shadow-lg transition-all',
-        'data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom-full data-[state=open]:fade-in-0',
+        'data-[state=open]:animate-in data-[state=open]:slide-in-from-top-full data-[state=open]:fade-in-0',
         'data-[state=closed]:animate-out data-[state=closed]:slide-out-to-end data-[state=closed]:fade-out-0',
         'data-[swipe=cancel]:translate-x-0 data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]',
         'data-[swipe=end]:animate-out data-[swipe=end]:slide-out-to-end',
@@ -69,8 +69,8 @@ function SingleToast({ id, type, message, duration, onRemove }: SingleToastProps
       </ToastPrimitive.Description>
       <ToastPrimitive.Close
         className={cn(
-          'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-opacity',
-          'opacity-60 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-1',
+          'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-opacity',
+          'opacity-60 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         )}
         aria-label="Close"
       >
@@ -106,8 +106,8 @@ export function ToastViewport() {
   return (
     <ToastPrimitive.Viewport
       className={cn(
-        'fixed z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4',
-        'bottom-0 end-0 sm:max-w-[420px]',
+        'fixed z-[100] flex max-h-screen w-full flex-col gap-2 p-4',
+        'top-0 end-0 sm:max-w-[420px]',
       )}
     />
   );

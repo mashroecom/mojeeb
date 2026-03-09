@@ -20,6 +20,13 @@ export class AgentService {
     enableLeadExtraction?: boolean;
     enableHumanHandoff?: boolean;
     handoffThreshold?: number;
+    tone?: string;
+    responseLength?: string;
+    dataCollectionConfig?: any;
+    escalationKeywords?: string[];
+    sentimentEscalation?: boolean;
+    escalationMessageCount?: number;
+    quickRepliesConfig?: any;
   }) {
     // Check limit and increment agent usage counter
     await subscriptionService.incrementUsage(orgId, 'agents');
@@ -42,6 +49,13 @@ export class AgentService {
         enableLeadExtraction: data.enableLeadExtraction ?? false,
         enableHumanHandoff: data.enableHumanHandoff ?? true,
         handoffThreshold: data.handoffThreshold ?? 0.3,
+        tone: data.tone ?? 'friendly',
+        responseLength: data.responseLength ?? 'medium',
+        dataCollectionConfig: data.dataCollectionConfig ?? undefined,
+        escalationKeywords: data.escalationKeywords ?? [],
+        sentimentEscalation: data.sentimentEscalation ?? false,
+        escalationMessageCount: data.escalationMessageCount ?? 5,
+        quickRepliesConfig: data.quickRepliesConfig ?? undefined,
       },
     });
   }
@@ -87,6 +101,13 @@ export class AgentService {
     enableLeadExtraction: boolean;
     enableHumanHandoff: boolean;
     handoffThreshold: number;
+    tone: string;
+    responseLength: string;
+    dataCollectionConfig: any;
+    escalationKeywords: string[];
+    sentimentEscalation: boolean;
+    escalationMessageCount: number;
+    quickRepliesConfig: any;
   }>) {
     const agent = await prisma.agent.findFirst({ where: { id: agentId, orgId } });
     if (!agent) throw new NotFoundError('Agent not found');
@@ -156,8 +177,8 @@ export class AgentService {
     message: string,
     history?: { role: 'user' | 'assistant'; content: string }[],
   ) {
-    const agent = await prisma.agent.findUnique({
-      where: { id: agentId },
+    const agent = await prisma.agent.findFirst({
+      where: { id: agentId, orgId },
       include: { knowledgeBases: true },
     });
     if (!agent) throw new NotFoundError('Agent not found');

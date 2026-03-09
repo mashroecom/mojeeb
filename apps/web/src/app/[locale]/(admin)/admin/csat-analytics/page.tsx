@@ -163,14 +163,14 @@ export default function CsatAnalyticsPage() {
             type="date"
             value={startDate}
             onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
-            className="rounded-md border bg-background px-2 py-1.5 text-sm"
+            className="rounded-lg border bg-background px-2 py-1.5 text-sm"
           />
           <span className="text-sm text-muted-foreground">—</span>
           <input
             type="date"
             value={endDate}
             onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
-            className="rounded-md border bg-background px-2 py-1.5 text-sm"
+            className="rounded-lg border bg-background px-2 py-1.5 text-sm"
           />
         </div>
       </div>
@@ -217,9 +217,9 @@ export default function CsatAnalyticsPage() {
               </thead>
               <tbody className="divide-y">
                 {ratings.map((r: any) => (
-                  <tr key={r.id} className="hover:bg-muted/30 transition-colors">
+                  <tr key={r.id} className="hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium">
-                      {r.conversation?.visitorName || r.customerId || '—'}
+                      {r.conversation?.customerName || r.customerId || '—'}
                     </td>
                     <td className="px-4 py-3">
                       <Stars count={r.rating} />
@@ -250,7 +250,7 @@ export default function CsatAnalyticsPage() {
               <div key={r.id} className="rounded-xl border bg-card shadow-sm p-4">
                 <div className="flex items-start justify-between mb-2">
                   <p className="font-medium text-sm">
-                    {r.conversation?.visitorName || r.customerId || '—'}
+                    {r.conversation?.customerName || r.customerId || '—'}
                   </p>
                   <Stars count={r.rating} />
                 </div>

@@ -34,11 +34,11 @@ export function AdminDataTable<T>({
   const t = useTranslations('admin.common');
   const resolvedEmptyMessage = emptyMessage ?? t('noDataFound');
   return (
-    <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+    <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b bg-muted/30">
+            <tr className="border-b bg-muted/50">
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -79,7 +79,7 @@ export function AdminDataTable<T>({
                   key={rowKey(row)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
-                    'border-b last:border-b-0 transition-colors hover:bg-muted/30',
+                    'border-b last:border-b-0 transition-colors hover:bg-muted/50',
                     onRowClick && 'cursor-pointer'
                   )}
                 >

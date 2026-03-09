@@ -25,6 +25,7 @@ model User {
   emailVerifyToken     String?
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
+  onboardingCompleted  Boolean   @default(false)
   lastLoginAt          DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -44,6 +45,8 @@ model User {
   bulkEmailCampaigns     BulkEmailCampaign[]  @relation("BulkEmailCampaigns")
   adminNotifications     AdminNotification[]  @relation("AdminNotifications")
 
+  @@index([isSuperAdmin])
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -62,17 +65,29 @@ model Session {
 }
 
 model Organization {
-  id              String    @id @default(cuid())
-  name            String
-  slug            String    @unique
-  logoUrl         String?
-  websiteUrl      String?
-  industry        String?
-  timezone        String    @default("Asia/Riyadh")
-  defaultLanguage String    @default("ar")
-  suspendedAt     DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  name                String
+  slug                String    @unique
+  logoUrl             String?
+  websiteUrl          String?
+  industry            String?
+  timezone            String    @default("Asia/Riyadh")
+  defaultLanguage     String    @default("ar")
+  primaryColor        String?   @default("#6366f1")
+  secondaryColor      String?
+  customCss           String?   @db.Text
+  dateFormat          String    @default("DD/MM/YYYY")
+  defaultAiModel      String?
+  defaultAiProvider   String?
+  defaultTemperature  Float?
+  defaultMaxTokens    Int?
+  fallbackMessage     String?
+  fallbackMessageAr   String?
+  escalationThreshold Float?
+  contactEmail        String?
+  suspendedAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   members                 OrgMembership[]
   agents                  Agent[]
@@ -87,6 +102,7 @@ model Organization {
   webhooks                Webhook[]
   notificationPreferences NotificationPreference[]
   messageTemplates        MessageTemplate[]
+  tokenUsages             TokenUsage[]
 
   @@map("organizations")
 }
@@ -133,6 +149,13 @@ model Agent {
   enableLeadExtraction   Boolean    @default(false)
   enableHumanHandoff     Boolean    @default(true)
   handoffThreshold       Float      @default(0.3)
+  tone                   String     @default("friendly")
+  responseLength         String     @default("medium")
+  dataCollectionConfig   Json?
+  escalationKeywords     String[]   @default([])
+  sentimentEscalation    Boolean    @default(false)
+  escalationMessageCount Int        @default(5)
+  quickRepliesConfig     Json?
   templateType           String?
   createdAt              DateTime   @default(now())
   updatedAt              DateTime   @updatedAt
@@ -142,6 +165,7 @@ model Agent {
   conversations  Conversation[]
 
   @@index([orgId])
+  @@index([orgId, isActive])
   @@map("agents")
 }
 
@@ -281,9 +305,9 @@ model Conversation {
   orgId           String
   org             Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   channelId       String
-  channel         Channel            @relation(fields: [channelId], references: [id])
+  channel         Channel            @relation(fields: [channelId], references: [id], onDelete: Cascade)
   agentId         String?
-  agent           Agent?             @relation(fields: [agentId], references: [id])
+  agent           Agent?             @relation(fields: [agentId], references: [id], onDelete: SetNull)
   customerId      String
   customerName    String?
   customerPhone   String?
@@ -293,8 +317,12 @@ model Conversation {
   assignedToHuman String?
   lastEmotion     String?
   emotionScore    Float?
-  summary         String?            @db.Text
-  messageCount    Int                @default(0)
+  summary          String?            @db.Text
+  category         String?
+  topics           String[]           @default([])
+  customerIntent   String?
+  resolutionStatus String?
+  messageCount     Int                @default(0)
   firstMessageAt  DateTime           @default(now())
   lastMessageAt   DateTime           @default(now())
   resolvedAt      DateTime?
@@ -310,6 +338,8 @@ model Conversation {
   @@index([orgId, status])
   @@index([orgId, channelId])
   @@index([orgId, lastMessageAt])
+  @@index([orgId, agentId])
+  @@index([orgId, status, lastMessageAt])
   @@index([customerId, channelId])
   @@index([channelId])
   @@index([agentId])
@@ -324,7 +354,7 @@ model Message {
   content        String             @db.Text
   contentType    MessageContentType @default(TEXT)
   humanAgentId   String?
-  humanAgent     User?              @relation("HumanAgentMessages", fields: [humanAgentId], references: [id])
+  humanAgent     User?              @relation("HumanAgentMessages", fields: [humanAgentId], references: [id], onDelete: SetNull)
   aiProvider     AiProvider?
   aiModel        String?
   tokenCount     Int?
@@ -340,8 +370,10 @@ model Message {
   createdAt      DateTime           @default(now())
 
   @@index([conversationId, createdAt])
+  @@index([conversationId, role])
   @@index([externalId])
   @@index([humanAgentId])
+  @@index([deliveryStatus])
   @@map("messages")
 }
 
@@ -438,7 +470,7 @@ model Lead {
   conversationId String?
   conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   assignedTo     String?
-  assignedUser   User?         @relation("AssignedLeads", fields: [assignedTo], references: [id])
+  assignedUser   User?         @relation("AssignedLeads", fields: [assignedTo], references: [id], onDelete: SetNull)
   name           String?
   email          String?
   phone          String?
@@ -457,6 +489,7 @@ model Lead {
 
   @@index([orgId, status])
   @@index([orgId, createdAt])
+  @@index([orgId, assignedTo])
   @@index([conversationId])
   @@index([assignedTo])
   @@index([orgId, email])
@@ -528,11 +561,16 @@ model Subscription {
   agentsLimit           Int                @default(1)
   integrationsUsed      Int                @default(0)
   integrationsLimit     Int                @default(1)
+  tokensUsed            Int                @default(0)
+  tokensLimit           Int                @default(500000)
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
 
   invoices Invoice[]
 
+  @@index([status])
+  @@index([plan])
+  @@index([status, createdAt])
   @@map("subscriptions")
 }
 
@@ -551,6 +589,9 @@ model Invoice {
   updatedAt        DateTime      @updatedAt
 
   @@index([subscriptionId])
+  @@index([status])
+  @@index([paidAt])
+  @@index([status, paidAt])
   @@map("invoices")
 }
 
@@ -708,10 +749,12 @@ model Announcement {
   isActive  Boolean   @default(true)
   startsAt  DateTime  @default(now())
   endsAt    DateTime?
-  createdBy String
-  creator   User      @relation("CreatedAnnouncements", fields: [createdBy], references: [id])
+  createdBy String?
+  creator   User?     @relation("CreatedAnnouncements", fields: [createdBy], references: [id], onDelete: SetNull)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  dismissals AnnouncementDismissal[]
 
   @@index([isActive, startsAt])
   @@map("announcements")
@@ -732,6 +775,11 @@ model NotificationPreference {
   emailLeadExtracted   Boolean      @default(true)
   emailUsageWarning    Boolean      @default(true)
   emailWeeklyDigest    Boolean      @default(false)
+  emailDailyDigest     Boolean      @default(false)
+  emailMonthlyReport   Boolean      @default(true)
+  emailNegativeSentiment Boolean    @default(true)
+  browserNotifications Boolean      @default(true)
+  soundEnabled         Boolean      @default(true)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 
@@ -759,6 +807,7 @@ model Webhook {
   logs WebhookLog[]
 
   @@index([orgId])
+  @@index([orgId, isActive])
   @@map("webhooks")
 }
 
@@ -784,32 +833,38 @@ model LeadActivity {
 // ========================
 
 model SiteSettings {
-  id                 String   @id @default("singleton")
-  siteName           String   @default("Mojeeb")
-  logoUrl            String?
-  faviconUrl         String?
-  ogImageUrl         String?
-  description        String   @default("")
-  keywords           String   @default("")
-  primaryColor       String   @default("#6366f1")
-  secondaryColor     String   @default("#ec4899")
-  twitterUrl         String?
-  linkedinUrl        String?
-  githubUrl          String?
-  facebookUrl        String?
-  instagramUrl       String?
-  youtubeUrl         String?
-  supportEmail       String?
-  contactPhone       String?
-  companyAddress     String?
-  copyrightText      String?
-  timezone           String   @default("UTC")
-  googleAnalyticsId  String?
-  customHeadScripts  String?
-  maintenanceMode    Boolean  @default(false)
-  maintenanceMessage String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                    String   @id @default("singleton")
+  siteName              String   @default("Mojeeb")
+  logoUrl               String?
+  faviconUrl            String?
+  ogImageUrl            String?
+  description           String   @default("")
+  keywords              String   @default("")
+  primaryColor          String   @default("#6366f1")
+  secondaryColor        String   @default("#ec4899")
+  twitterUrl            String?
+  linkedinUrl           String?
+  githubUrl             String?
+  facebookUrl           String?
+  instagramUrl          String?
+  youtubeUrl            String?
+  supportEmail          String?
+  contactPhone          String?
+  companyAddress        String?
+  copyrightText         String?
+  timezone              String   @default("UTC")
+  googleAnalyticsId     String?
+  customHeadScripts     String?
+  maintenanceMode       Boolean  @default(false)
+  maintenanceMessage    String?
+  supportChatEnabled    Boolean  @default(false)
+  supportChatChannelId  String?
+  supportChatPosition   String   @default("right")
+  supportChatColor      String   @default("#6366f1")
+  supportChatWelcome    String?
+  supportChatWelcomeAr  String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@map("site_settings")
 }
@@ -831,6 +886,7 @@ model PlanConfig {
   maxChannels       Int              @default(1)
   maxKnowledgeBases Int              @default(0)
   maxTeamMembers    Int              @default(1)
+  maxTokensPerMonth Int              @default(500000)
   apiAccess         Boolean          @default(false)
   isPopular         Boolean          @default(false)
   sortOrder         Int              @default(0)
@@ -889,8 +945,8 @@ model BlockedIP {
   id        String    @id @default(cuid())
   ip        String    @unique
   reason    String
-  blockedBy String
-  blocker   User      @relation("BlockedIPs", fields: [blockedBy], references: [id])
+  blockedBy String?
+  blocker   User?     @relation("BlockedIPs", fields: [blockedBy], references: [id], onDelete: SetNull)
   autoBlock Boolean   @default(false)
   expiresAt DateTime?
   createdAt DateTime  @default(now())
@@ -988,21 +1044,27 @@ model EmailTemplate {
 // BULK EMAIL CAMPAIGNS
 // ========================
 
+enum BulkEmailCampaignStatus {
+  DRAFT
+  SENDING
+  COMPLETED
+}
+
 model BulkEmailCampaign {
-  id              String    @id @default(cuid())
+  id              String                  @id @default(cuid())
   subject         String
-  bodyHtml        String    @db.Text
-  status          String    @default("DRAFT")
+  bodyHtml        String                  @db.Text
+  status          BulkEmailCampaignStatus @default(DRAFT)
   targetFilter    Json
-  totalRecipients Int       @default(0)
-  sentCount       Int       @default(0)
-  failedCount     Int       @default(0)
-  createdBy       String
-  creator         User      @relation("BulkEmailCampaigns", fields: [createdBy], references: [id])
+  totalRecipients Int                     @default(0)
+  sentCount       Int                     @default(0)
+  failedCount     Int                     @default(0)
+  createdBy       String?
+  creator         User?                   @relation("BulkEmailCampaigns", fields: [createdBy], references: [id], onDelete: SetNull)
   startedAt       DateTime?
   completedAt     DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
 
   @@index([status])
   @@index([createdAt])
@@ -1034,6 +1096,9 @@ model AdminNotification {
 
 model LandingPageContent {
   id                  String   @id @default("singleton")
+
+  // --- Hero Section ---
+  heroEnabled         Boolean  @default(true)
   heroTitle           String   @default("AI-Powered Customer Support")
   heroTitleAr         String   @default("دعم العملاء بالذكاء الاصطناعي")
   heroSubtitle        String   @default("Automate your customer support with intelligent AI agents")
@@ -1041,21 +1106,110 @@ model LandingPageContent {
   heroCta             String   @default("Get Started Free")
   heroCtaAr           String   @default("ابدأ مجاناً")
   heroCtaLink         String   @default("/register")
+  heroImage           String?
+  showNoCreditCard    Boolean  @default(true)
+  badgeText           String   @default("Powered by AI")
+  badgeTextAr         String   @default("مدعوم بالذكاء الاصطناعي")
+
+  // --- Trusted By / Logos Section ---
+  trustedByEnabled    Boolean  @default(false)
+  trustedByTitle      String   @default("Trusted By")
+  trustedByTitleAr    String   @default("موثوق من قبل")
+  trustedByLogos      Json     @default("[]") // [{image: string, name: string}]
+
+  // --- Features Section ---
+  featuresEnabled     Boolean  @default(true)
   featuresTitle       String   @default("Why Choose Mojeeb?")
   featuresTitleAr     String   @default("لماذا تختار مجيب؟")
+  featuresSubtitle    String   @default("Everything you need to deliver exceptional customer support")
+  featuresSubtitleAr  String   @default("كل ما تحتاجه لتقديم دعم عملاء استثنائي")
   features            Json     @default("[]")
   featuresAr          Json     @default("[]")
-  statsEnabled        Boolean  @default(true)
-  testimonialsEnabled Boolean  @default(true)
-  testimonials        Json     @default("[]")
-  testimonialsAr      Json     @default("[]")
+
+  // --- Stats ---
+  statsEnabled        Boolean  @default(false)
+  statsCustomers      String   @default("500+")
+  statsMessages       String   @default("10M+")
+  statsLanguages      String   @default("20+")
+  statsUptime         String   @default("99.9%")
+
+  // --- Pricing Section ---
+  pricingEnabled      Boolean  @default(true)
   pricingTitle        String   @default("Simple, Transparent Pricing")
   pricingTitleAr      String   @default("أسعار بسيطة وشفافة")
   pricingSubtitle     String   @default("Choose the plan that fits your business")
   pricingSubtitleAr   String   @default("اختر الخطة المناسبة لعملك")
+  showYearlyToggle    Boolean  @default(true)
+  yearlyDiscount      Int      @default(20)
+  enterpriseCtaText   String   @default("Contact Sales")
+  enterpriseCtaTextAr String   @default("تواصل مع المبيعات")
+  enterpriseCtaLink   String   @default("/contact")
+
+  // --- Testimonials Section ---
+  testimonialsEnabled Boolean  @default(true)
+  testimonialsTitle   String   @default("What Our Customers Say")
+  testimonialsTitleAr String   @default("ماذا يقول عملاؤنا")
+  testimonialsSubtitle   String   @default("Trusted by businesses worldwide")
+  testimonialsSubtitleAr String   @default("موثوق من الشركات حول العالم")
+  testimonialsMaxDisplay Int    @default(3)
+  testimonials        Json     @default("[]")
+  testimonialsAr      Json     @default("[]")
+
+  // --- FAQ Section ---
+  faqEnabled          Boolean  @default(true)
+  faqTitle            String   @default("Frequently Asked Questions")
+  faqTitleAr          String   @default("الأسئلة الشائعة")
+  faqSubtitle         String   @default("Find answers to common questions")
+  faqSubtitleAr       String   @default("اعثر على إجابات للأسئلة الشائعة")
+  faqMaxDisplay       Int      @default(5)
+  faqShowViewAll      Boolean  @default(true)
+
+  // --- Bottom CTA Section ---
+  bottomCtaEnabled    Boolean  @default(true)
+  bottomCtaTitle      String   @default("Ready to Transform Your Customer Support?")
+  bottomCtaTitleAr    String   @default("مستعد لتحويل دعم عملائك؟")
+  bottomCtaSubtitle   String   @default("Start your free trial today. No credit card required.")
+  bottomCtaSubtitleAr String   @default("ابدأ تجربتك المجانية اليوم. لا حاجة لبطاقة ائتمان.")
+  bottomCtaButtonText String   @default("Get Started Free")
+  bottomCtaButtonTextAr String @default("ابدأ مجاناً")
+  bottomCtaButtonLink String   @default("/register")
+
+  // --- Footer ---
+  footerCopyrightText   String @default("© 2025 Mojeeb. All rights reserved.")
+  footerCopyrightTextAr String @default("© 2025 مجيب. جميع الحقوق محفوظة.")
+  footerShowSocialLinks Boolean @default(true)
+  footerTwitter       String   @default("")
+  footerLinkedin      String   @default("")
+  footerInstagram     String   @default("")
+  footerFacebook      String   @default("")
+  footerLinks         Json     @default("[]") // [{label: {en, ar}, url}]
+
+  // --- Legacy footer fields ---
   footerText          String   @default("© 2025 Mojeeb. All rights reserved.")
   footerTextAr        String   @default("© 2025 مجيب. جميع الحقوق محفوظة.")
   customCss           String?  @db.Text
+
+  // --- SEO & Meta ---
+  seoMetaTitle        String   @default("Mojeeb - AI-Powered Customer Support")
+  seoMetaTitleAr      String   @default("مجيب - دعم العملاء بالذكاء الاصطناعي")
+  seoMetaDescription  String   @default("Automate your customer support with intelligent AI agents")
+  seoMetaDescriptionAr String  @default("أتمت دعم العملاء مع وكلاء ذكاء اصطناعي")
+  seoOgImage          String?
+  seoGoogleAnalyticsId String  @default("")
+  seoCustomHeadCode   String?  @db.Text
+  seoCustomFooterCode String?  @db.Text
+  seoFavicon          String?
+
+  // --- Maintenance Mode ---
+  maintenanceEnabled  Boolean  @default(false)
+  maintenanceTitle    String   @default("We'll Be Back Soon")
+  maintenanceTitleAr  String   @default("سنعود قريباً")
+  maintenanceMessage  String   @default("We're currently performing scheduled maintenance. Please check back shortly.")
+  maintenanceMessageAr String  @default("نقوم حالياً بصيانة مجدولة. يرجى المحاولة مرة أخرى قريباً.")
+
+  // --- Section Ordering ---
+  sectionOrder        Json     @default("[\"hero\",\"trustedBy\",\"features\",\"stats\",\"pricing\",\"testimonials\",\"faq\",\"bottomCta\"]")
+
   updatedAt           DateTime @updatedAt
 
   @@map("landing_page_content")
@@ -1075,6 +1229,7 @@ model ConversationNote {
   updatedAt      DateTime     @updatedAt
 
   @@index([conversationId, createdAt])
+  @@index([userId])
   @@map("conversation_notes")
 }
 
@@ -1083,17 +1238,122 @@ model ConversationNote {
 // ========================
 
 model MessageTemplate {
+  id          String   @id @default(cuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  title       String
+  contentEn   String   @db.Text
+  contentAr   String   @default("") @db.Text
+  shortcut    String?
+  category    String   @default("general")
+  variables   Json     @default("[]")
+  agentId     String?
+  isActive    Boolean  @default(true)
+  usageCount  Int      @default(0)
+  autoTrigger Json     @default("{\"enabled\":false,\"keywords\":[]}")
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([orgId, shortcut])
+  @@index([orgId])
+  @@index([orgId, category])
+  @@index([orgId, isActive])
+  @@map("message_templates")
+}
+
+// ========================
+// TOKEN USAGE TRACKING
+// ========================
+
+model TokenUsage {
+  id             String       @id @default(cuid())
+  orgId          String
+  org            Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  agentId        String?
+  conversationId String?
+  model          String
+  provider       String
+  inputTokens    Int
+  outputTokens   Int
+  totalTokens    Int
+  costUsd        Decimal      @db.Decimal(10, 6)
+  pipelineType   String       @default("response")
+  createdAt      DateTime     @default(now())
+
+  @@index([orgId, createdAt])
+  @@index([createdAt])
+  @@map("token_usages")
+}
+
+// ========================
+// FAQ
+// ========================
+
+model FAQ {
+  id         String   @id @default(cuid())
+  question   String
+  questionAr String   @default("")
+  answer     String   @db.Text
+  answerAr   String   @default("") @db.Text
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("faqs")
+}
+
+// ========================
+// LEGAL CONTENT (privacy policy, terms of service)
+// ========================
+
+model LegalContent {
+  id          String   @id
+  contentEn   String   @default("") @db.Text
+  contentAr   String   @default("") @db.Text
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@map("legal_contents")
+}
+
+// ========================
+// TESTIMONIALS
+// ========================
+
+model Testimonial {
   id        String   @id @default(cuid())
-  orgId     String
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  title     String
+  name      String
+  nameAr    String   @default("")
+  role      String   @default("")
+  roleAr    String   @default("")
   content   String   @db.Text
-  category  String?
-  shortcut  String?
-  createdBy String?
+  contentAr String   @default("") @db.Text
+  photoUrl  String?
+  company   String?
+  rating    Int      @default(5)
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([orgId])
-  @@map("message_templates")
+  @@index([isActive, sortOrder])
+  @@map("testimonials")
+}
+
+// ========================
+// ANNOUNCEMENT DISMISSALS
+// ========================
+
+model AnnouncementDismissal {
+  id             String       @id @default(cuid())
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId         String
+  dismissedAt    DateTime     @default(now())
+
+  @@unique([announcementId, userId])
+  @@map("announcement_dismissals")
 }

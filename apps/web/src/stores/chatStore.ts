@@ -23,6 +23,7 @@ interface ChatState {
   setTyping: (conversationId: string, isTyping: boolean) => void;
   updateConversation: (conversationId: string, update: ConversationUpdate) => void;
   clearConversation: (conversationId: string) => void;
+  clearAll: () => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -75,4 +76,6 @@ export const useChatStore = create<ChatState>((set) => ({
         conversationUpdates: restUpdates,
       };
     }),
+  clearAll: () =>
+    set({ messagesByConversation: {}, typingByConversation: {}, conversationUpdates: {} }),
 }));

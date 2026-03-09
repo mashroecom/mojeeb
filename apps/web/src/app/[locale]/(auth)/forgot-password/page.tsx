@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
 
       {sent ? (
         <div className="text-center">
-          <div className="mb-4 rounded-md bg-primary/10 p-4 text-sm text-primary">
+          <div className="mb-4 rounded-lg bg-primary/10 p-4 text-sm text-primary">
             {t('resetLinkSent')}
           </div>
           <Link href="/login" className="text-sm text-primary hover:underline">
@@ -45,13 +45,14 @@ export default function ForgotPasswordPage() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium">{t('email')}</label>
+            <label htmlFor="forgot-email" className="mb-1.5 block text-sm font-medium">{t('email')}</label>
             <input
+              id="forgot-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
               placeholder="name@company.com"
               dir="ltr"
             />
@@ -60,9 +61,9 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            {loading ? '...' : t('submit')}
+            {loading ? t('submitting') : t('submit')}
           </button>
 
           <p className="text-center">

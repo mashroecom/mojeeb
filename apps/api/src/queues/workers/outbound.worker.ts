@@ -27,7 +27,9 @@ export const outboundWorker = new Worker(
     });
 
     if (!channel) {
-      throw new Error(`Channel not found: ${data.channelId}`);
+      // BUG FIX: return instead of throw — throwing causes infinite retries for deleted channels
+      logger.warn({ channelId: data.channelId }, 'Channel not found, skipping outbound message');
+      return { success: false, error: 'Channel not found' };
     }
 
     // Load conversation for customer ID
@@ -36,37 +38,53 @@ export const outboundWorker = new Worker(
     });
 
     if (!conversation) {
-      throw new Error(`Conversation not found: ${data.conversationId}`);
+      // BUG FIX: return instead of throw — throwing causes infinite retries for deleted conversations
+      logger.warn({ conversationId: data.conversationId }, 'Conversation not found, skipping outbound message');
+      return { success: false, error: 'Conversation not found' };
     }
 
     // Get adapter and send
     const adapter = getChannelAdapter(data.channelType);
-    const result = await adapter.sendMessage(
-      channel.credentials as Record<string, string>,
-      {
-        recipientId: conversation.customerId,
-        content: data.content,
-        contentType: data.contentType as any,
-      }
-    );
+    let result: { success: boolean; externalId?: string; error?: string };
+    try {
+      result = await adapter.sendMessage(
+        channel.credentials as Record<string, string>,
+        {
+          recipientId: conversation.customerId,
+          content: data.content,
+          contentType: data.contentType as any,
+        }
+      );
+    } catch (adapterErr) {
+      logger.error({ err: adapterErr, channelType: data.channelType, messageId: data.messageId }, 'Channel adapter error');
+      result = { success: false, error: (adapterErr as Error).message };
+    }
 
     // Update message delivery status
-    await prisma.message.update({
-      where: { id: data.messageId },
-      data: {
-        deliveryStatus: result.success ? 'SENT' : 'FAILED',
-        externalId: result.externalId,
-        failureReason: result.error,
-      },
-    });
+    try {
+      await prisma.message.update({
+        where: { id: data.messageId },
+        data: {
+          deliveryStatus: result.success ? 'SENT' : 'FAILED',
+          externalId: result.externalId,
+          failureReason: result.error,
+        },
+      });
+    } catch (dbErr) {
+      logger.error({ err: dbErr, messageId: data.messageId }, 'Failed to update message delivery status');
+    }
 
     // Track
-    await analyticsQueue.add('track-event', {
-      orgId: channel.orgId,
-      eventType: 'MESSAGE_SENT',
-      data: { conversationId: data.conversationId, success: result.success },
-      channelType: data.channelType,
-    });
+    try {
+      await analyticsQueue.add('track-event', {
+        orgId: channel.orgId,
+        eventType: 'MESSAGE_SENT',
+        data: { conversationId: data.conversationId, success: result.success },
+        channelType: data.channelType,
+      });
+    } catch (analyticsErr) {
+      logger.warn({ err: analyticsErr, conversationId: data.conversationId }, 'Failed to queue outbound analytics');
+    }
 
     return result;
   },

@@ -105,7 +105,7 @@ export class SubscriptionService {
    * Create a Kashier checkout session for upgrading to a paid plan.
    * In development without Kashier credentials, upgrades directly (demo mode).
    */
-  async createCheckout(orgId: string, plan: string) {
+  async createCheckout(orgId: string, plan: string, billingCycle: 'monthly' | 'yearly' = 'monthly') {
     // Validate the target plan
     if (plan !== 'STARTER' && plan !== 'PROFESSIONAL') {
       throw new BadRequestError('Invalid plan. Must be STARTER or PROFESSIONAL.');
@@ -118,7 +118,7 @@ export class SubscriptionService {
       throw new BadRequestError('You are already on this plan.');
     }
 
-    const amount = await planConfigService.getPrice(plan);
+    const amount = await planConfigService.getPrice(plan, billingCycle);
     if (!amount) {
       throw new BadRequestError('Plan price not configured.');
     }
@@ -232,15 +232,16 @@ export class SubscriptionService {
 
     // Determine the new plan from the payment amount
     const paidAmount = Number(amount);
-    const newPlan = await planConfigService.getPlanByPrice(paidAmount);
-    if (!newPlan) {
+    const result = await planConfigService.getPlanByPrice(paidAmount);
+    if (!result) {
       throw new BadRequestError('Unknown payment amount — cannot determine plan.');
     }
 
+    const { plan: newPlan, billingCycle } = result;
     const limits = await planConfigService.getLimits(newPlan);
     const now = new Date();
     const periodEnd = new Date(now);
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
+    periodEnd.setMonth(periodEnd.getMonth() + (billingCycle === 'yearly' ? 12 : 1));
 
     // Update subscription with new plan
     await prisma.subscription.update({
@@ -318,16 +319,17 @@ export class SubscriptionService {
     if (data.status === 'SUCCESS') {
       // Determine the new plan from the payment amount
       const amount = Number(data.amount);
-      const newPlan = await planConfigService.getPlanByPrice(amount);
-      if (!newPlan) {
+      const result = await planConfigService.getPlanByPrice(amount);
+      if (!result) {
         logger.error({ amount }, 'Unknown payment amount - cannot determine plan');
         return;
       }
 
+      const { plan: newPlan, billingCycle } = result;
       const limits = await planConfigService.getLimits(newPlan);
       const now = new Date();
       const periodEnd = new Date(now);
-      periodEnd.setMonth(periodEnd.getMonth() + 1);
+      periodEnd.setMonth(periodEnd.getMonth() + (billingCycle === 'yearly' ? 12 : 1));
 
       // Update subscription with new plan and reset usage counters
       await prisma.subscription.update({

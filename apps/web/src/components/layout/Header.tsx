@@ -82,21 +82,22 @@ export function Header() {
           <LanguageSwitcher />
           <Link
             href="/login"
-            className="hidden md:inline-flex text-sm font-medium text-muted-foreground hover:text-foreground"
+            className="hidden md:inline-flex text-sm font-medium text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
           >
             {t('login')}
           </Link>
           <Link
             href="/register"
-            className="hidden md:inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            className="hidden md:inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             {t('register')}
           </Link>
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2"
+            className="md:hidden rounded-lg p-2 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -123,7 +124,7 @@ export function Header() {
             </Link>
             <Link
               href="/register"
-              className="rounded-md bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground"
+              className="rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               onClick={() => setMobileOpen(false)}
             >
               {t('register')}

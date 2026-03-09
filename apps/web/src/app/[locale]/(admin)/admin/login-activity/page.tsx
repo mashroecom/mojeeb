@@ -47,7 +47,7 @@ function truncateUA(ua: string, max = 60) {
 
 function StatSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm animate-pulse">
+    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
       <div className="h-3 w-20 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -99,18 +99,18 @@ export default function LoginActivityPage() {
   const { data, isLoading, isError, refetch } = useAdminLoginActivity(params);
   const { data: stats, isLoading: statsLoading } = useAdminLoginActivityStats();
 
-  const entries: LoginEntry[] = data?.data ?? [];
+  const entries: LoginEntry[] = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   function handleExport() {
     if (!entries.length) return;
     const rows = entries.map((entry) => ({
-      Email: entry.email,
-      User: entry.userName || '',
-      Status: entry.success ? 'Success' : 'Failed',
-      IP: entry.ip,
-      'User Agent': entry.userAgent,
-      Time: fmtDateTime(entry.createdAt, locale),
+      [t('csvEmail')]: entry.email,
+      [t('csvUser')]: entry.userName || '',
+      [t('csvStatus')]: entry.success ? t('success') : t('failed'),
+      [t('csvIP')]: entry.ip,
+      [t('csvUserAgent')]: entry.userAgent,
+      [t('csvTime')]: fmtDateTime(entry.createdAt, locale),
     }));
     exportToCsv('admin-login-activity', rows);
   }
@@ -151,34 +151,34 @@ export default function LoginActivityPage() {
           </>
         ) : (
           <>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Activity className="h-4 w-4" />
                 {t('totalToday')}
               </div>
-              <p className="text-2xl font-bold">{stats?.totalToday ?? 0}</p>
+              <p className="text-2xl font-bold">{stats?.totalLogins ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <XCircle className="h-4 w-4 text-red-500" />
                 {t('failedToday')}
               </div>
-              <p className="text-2xl font-bold text-red-600">{stats?.failedToday ?? 0}</p>
+              <p className="text-2xl font-bold text-red-600">{stats?.failedLogins ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Globe className="h-4 w-4" />
                 {t('uniqueIPs')}
               </div>
               <p className="text-2xl font-bold">{stats?.uniqueIPs ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <TrendingUp className="h-4 w-4 text-green-500" />
                 {t('successRate')}
               </div>
               <p className="text-2xl font-bold text-green-600">
-                {stats?.successRate != null ? `${stats.successRate}%` : '-'}
+                {stats?.totalLogins ? `${Math.round((stats.successfulLogins / stats.totalLogins) * 100)}%` : '-'}
               </p>
             </div>
           </>
@@ -186,7 +186,7 @@ export default function LoginActivityPage() {
       </div>
 
       {/* Filters */}
-      <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">
+      <div className="mb-6 rounded-xl border bg-card p-4 shadow-sm">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
           <Filter className="h-4 w-4" />
           {t('filters')}
@@ -202,7 +202,7 @@ export default function LoginActivityPage() {
               value={email}
               onChange={(e) => updateFilter(setEmail)(e.target.value)}
               placeholder="user@example.com"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -216,7 +216,7 @@ export default function LoginActivityPage() {
               value={ip}
               onChange={(e) => updateFilter(setIp)(e.target.value)}
               placeholder="192.168.1.1"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -228,7 +228,7 @@ export default function LoginActivityPage() {
             <select
               value={success}
               onChange={(e) => updateFilter(setSuccess)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             >
               <option value="">{t('all')}</option>
               <option value="true">{t('success')}</option>
@@ -246,7 +246,7 @@ export default function LoginActivityPage() {
               type="date"
               value={startDate}
               onChange={(e) => updateFilter(setStartDate)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -260,7 +260,7 @@ export default function LoginActivityPage() {
               type="date"
               value={endDate}
               onChange={(e) => updateFilter(setEndDate)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
         </div>
@@ -280,11 +280,11 @@ export default function LoginActivityPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('email')}
                 </th>
@@ -321,7 +321,7 @@ export default function LoginActivityPage() {
               {!isLoading &&
                 !isError &&
                 entries.map((entry) => (
-                  <tr key={entry.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+                  <tr key={entry.id} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium truncate block max-w-[200px]">
                         {entry.email}

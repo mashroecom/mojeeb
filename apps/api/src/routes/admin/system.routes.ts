@@ -7,36 +7,44 @@ const router: Router = Router();
 // GET /health - System health check
 router.get('/health', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const checks: Record<string, { status: string; latencyMs?: number; error?: string }> = {};
+    const services: Record<string, { status: 'healthy' | 'unhealthy'; latency?: number }> = {};
 
     // Check database
     const dbStart = Date.now();
     try {
       await prisma.$queryRaw`SELECT 1`;
-      checks.database = { status: 'healthy', latencyMs: Date.now() - dbStart };
-    } catch (err: any) {
-      checks.database = { status: 'unhealthy', latencyMs: Date.now() - dbStart, error: err.message };
+      services.database = { status: 'healthy', latency: Date.now() - dbStart };
+    } catch {
+      services.database = { status: 'unhealthy', latency: Date.now() - dbStart };
     }
 
     // Check Redis
     const redisStart = Date.now();
     try {
       await redis.ping();
-      checks.redis = { status: 'healthy', latencyMs: Date.now() - redisStart };
-    } catch (err: any) {
-      checks.redis = { status: 'unhealthy', latencyMs: Date.now() - redisStart, error: err.message };
+      services.redis = { status: 'healthy', latency: Date.now() - redisStart };
+    } catch {
+      services.redis = { status: 'unhealthy', latency: Date.now() - redisStart };
     }
 
-    const allHealthy = Object.values(checks).every((c) => c.status === 'healthy');
+    // Check BullMQ queues (via Redis – if Redis is up, queues work)
+    const queueStart = Date.now();
+    try {
+      const queueModule = await import('../../queues');
+      const anyQueue = Object.values(queueModule).find(
+        (v) => v && typeof (v as any).getJobCounts === 'function'
+      );
+      if (anyQueue) {
+        await (anyQueue as any).getJobCounts('waiting');
+        services.queues = { status: 'healthy', latency: Date.now() - queueStart };
+      } else {
+        services.queues = { status: 'healthy', latency: Date.now() - queueStart };
+      }
+    } catch {
+      services.queues = { status: 'unhealthy', latency: Date.now() - queueStart };
+    }
 
-    res.status(allHealthy ? 200 : 503).json({
-      success: true,
-      data: {
-        status: allHealthy ? 'healthy' : 'degraded',
-        timestamp: new Date().toISOString(),
-        checks,
-      },
-    });
+    res.json({ success: true, data: services });
   } catch (err) {
     next(err);
   }
@@ -45,7 +53,7 @@ router.get('/health', async (_req: Request, res: Response, next: NextFunction) =
 // GET /queues - BullMQ queue stats
 router.get('/queues', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    let queues: Record<string, any> = {};
+    const result: Record<string, { waiting: number; active: number; completed: number; failed: number; delayed: number }> = {};
 
     try {
       const queueModule = await import('../../queues');
@@ -55,14 +63,21 @@ router.get('/queues', async (_req: Request, res: Response, next: NextFunction) =
 
       for (const [name, queue] of queueEntries) {
         const counts = await (queue as any).getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed');
-        queues[name] = counts;
+        // Use a display-friendly name (strip "Queue" suffix from export name)
+        const displayName = name.replace(/Queue$/, '');
+        result[displayName] = {
+          waiting: counts.waiting ?? 0,
+          active: counts.active ?? 0,
+          completed: counts.completed ?? 0,
+          failed: counts.failed ?? 0,
+          delayed: counts.delayed ?? 0,
+        };
       }
     } catch {
-      // queues module not available, return empty
-      queues = {};
+      // queues module not available
     }
 
-    res.json({ success: true, data: { queues } });
+    res.json({ success: true, data: result });
   } catch (err) {
     next(err);
   }
@@ -77,13 +92,12 @@ router.get('/db-stats', async (_req: Request, res: Response, next: NextFunction)
       ORDER BY n_live_tup DESC
     `;
 
-    // Convert BigInt to Number for JSON serialization
     const data = tables.map((t) => ({
-      table_name: t.table_name,
-      row_count: Number(t.row_count),
+      table: t.table_name,
+      rowCount: Number(t.row_count),
     }));
 
-    res.json({ success: true, data: { tables: data } });
+    res.json({ success: true, data });
   } catch (err) {
     next(err);
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Brain, X, StickyNote, Plus, Pencil, Trash2, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Conversation } from '@/hooks/useConversations';
@@ -32,6 +32,7 @@ interface InsightsPanelProps {
 
 function NotesSection({ conversationId }: { conversationId: string | null }) {
   const t = useTranslations('dashboard.conversations');
+  const locale = useLocale();
   const { data: notes, isLoading } = useConversationNotes(conversationId);
   const createNote = useCreateNote();
   const updateNote = useUpdateNote();
@@ -83,12 +84,12 @@ function NotesSection({ conversationId }: { conversationId: string | null }) {
           onChange={(e) => setNewNote(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder={t('addNotePlaceholder')}
-          className="flex-1 rounded-md border bg-background px-2.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-primary/40"
+          className="flex-1 rounded-lg border bg-background px-2.5 py-1.5 text-xs outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
         />
         <button
           onClick={handleAdd}
           disabled={!newNote.trim() || createNote.isPending}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-2 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-lg bg-primary px-2 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
           {createNote.isPending ? (
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -108,7 +109,7 @@ function NotesSection({ conversationId }: { conversationId: string | null }) {
           {notes.map((note) => (
             <div
               key={note.id}
-              className="group rounded-md border bg-muted/30 px-2.5 py-2 text-xs"
+              className="group rounded-lg border bg-muted/30 px-2.5 py-2 text-xs"
             >
               {editingId === note.id ? (
                 <div className="flex gap-1.5">
@@ -116,7 +117,7 @@ function NotesSection({ conversationId }: { conversationId: string | null }) {
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
-                    className="flex-1 rounded border bg-background px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/40"
+                    className="flex-1 rounded border bg-background px-2 py-1 text-xs outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
                     autoFocus
                   />
                   <button
@@ -138,7 +139,7 @@ function NotesSection({ conversationId }: { conversationId: string | null }) {
                   <p className="leading-relaxed whitespace-pre-wrap">{note.content}</p>
                   <div className="mt-1 flex items-center justify-between">
                     <span className="text-[10px] text-muted-foreground">
-                      {new Date(note.createdAt).toLocaleString()}
+                      {new Date(note.createdAt).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US')}
                     </span>
                     <div className="hidden group-hover:flex items-center gap-1">
                       <button

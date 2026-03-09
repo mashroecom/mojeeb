@@ -28,7 +28,8 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { page, limit, level, source, startDate, endDate, search } =
-        (req as any).validatedQuery;
+        // BUG FIX: validate middleware sets data on req.query, not validatedQuery
+        req.query as any;
 
       const result = await errorLogService.list({
         page,

@@ -81,7 +81,7 @@ function getActionColor(action: string): string {
   if (lower.includes('update')) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
   if (lower.includes('delete') || lower.includes('suspend') || lower.includes('cancel'))
     return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-  return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+  return 'bg-muted text-muted-foreground';
 }
 
 function renderMetadata(metadata: Record<string, unknown> | undefined) {
@@ -131,7 +131,7 @@ function AuditRow({ entry, t }: { entry: AuditLogEntry; t: ReturnType<typeof use
 
   return (
     <>
-      <tr className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+      <tr className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
         {/* User */}
         <td className="px-4 py-3">
           <div className="text-sm font-medium truncate max-w-[180px]">
@@ -152,12 +152,12 @@ function AuditRow({ entry, t }: { entry: AuditLogEntry; t: ReturnType<typeof use
               getActionColor(entry.action),
             )}
           >
-            {entry.action}
+            {t(`action_${entry.action}`)}
           </span>
         </td>
 
         {/* Target Type */}
-        <td className="px-4 py-3 text-sm">{entry.targetType}</td>
+        <td className="px-4 py-3 text-sm">{t(`target_${entry.targetType}`)}</td>
 
         {/* Target ID */}
         <td className="px-4 py-3">
@@ -234,19 +234,19 @@ export default function AuditLogPage() {
 
   const { data, isLoading, isError, refetch } = useAdminAuditLog(params);
 
-  const entries: AuditLogEntry[] = data?.data ?? [];
+  const entries: AuditLogEntry[] = data?.logs ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   function handleExport() {
     if (!entries.length) return;
     const rows = entries.map((entry) => ({
-      User: entry.userName || entry.userEmail || entry.userId,
-      Email: entry.userEmail || '',
-      Action: entry.action,
-      'Target Type': entry.targetType,
-      'Target ID': entry.targetId,
-      Date: fmtDateTime(entry.createdAt, locale),
-      Details: entry.metadata ? JSON.stringify(entry.metadata) : '',
+      [t('csvUser')]: entry.userName || entry.userEmail || entry.userId,
+      [t('csvEmail')]: entry.userEmail || '',
+      [t('csvAction')]: entry.action,
+      [t('csvTargetType')]: entry.targetType,
+      [t('csvTargetId')]: entry.targetId,
+      [t('csvDate')]: fmtDateTime(entry.createdAt, locale),
+      [t('csvDetails')]: entry.metadata ? JSON.stringify(entry.metadata) : '',
     }));
     exportToCsv('admin-audit-log', rows);
   }
@@ -276,7 +276,7 @@ export default function AuditLogPage() {
       </div>
 
       {/* Filters */}
-      <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">
+      <div className="mb-6 rounded-xl border bg-card p-4 shadow-sm">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
           <Filter className="h-4 w-4" />
           {t('filters')}
@@ -290,12 +290,12 @@ export default function AuditLogPage() {
             <select
               value={action}
               onChange={(e) => updateFilter(setAction)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             >
               <option value="">{t('allActions')}</option>
               {ACTION_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>
-                  {opt}
+                  {t(`action_${opt}`)}
                 </option>
               ))}
             </select>
@@ -309,12 +309,12 @@ export default function AuditLogPage() {
             <select
               value={targetType}
               onChange={(e) => updateFilter(setTargetType)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             >
               <option value="">{t('allTargets')}</option>
               {TARGET_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>
-                  {opt}
+                  {t(`target_${opt}`)}
                 </option>
               ))}
             </select>
@@ -330,7 +330,7 @@ export default function AuditLogPage() {
               type="date"
               value={startDate}
               onChange={(e) => updateFilter(setStartDate)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -344,7 +344,7 @@ export default function AuditLogPage() {
               type="date"
               value={endDate}
               onChange={(e) => updateFilter(setEndDate)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
         </div>
@@ -364,11 +364,11 @@ export default function AuditLogPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('user')}
                 </th>
@@ -379,7 +379,7 @@ export default function AuditLogPage() {
                   {t('target')}
                 </th>
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  ID
+                  {t('id')}
                 </th>
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('date')}

@@ -578,7 +578,7 @@ interface WindowWithWidget extends Window {
       const fabBtn = getElement(ELEMENT_IDS.BUTTON);
       if (fabBtn) {
         fabBtn.setAttribute('aria-expanded', 'true');
-        fabBtn.setAttribute('aria-label', 'Close chat');
+        fabBtn.setAttribute('aria-label', config.direction === 'rtl' ? 'إغلاق المحادثة' : 'Close chat');
       }
 
       // Update FAB icon to arrow-down (desktop only)
@@ -632,7 +632,7 @@ interface WindowWithWidget extends Window {
       const fabBtnClose = getElement(ELEMENT_IDS.BUTTON);
       if (fabBtnClose) {
         fabBtnClose.setAttribute('aria-expanded', 'false');
-        fabBtnClose.setAttribute('aria-label', 'Open chat');
+        fabBtnClose.setAttribute('aria-label', resolvedConfig?.direction === 'rtl' ? 'فتح المحادثة' : 'Open chat');
       }
 
       // Update FAB icon back to chat
@@ -702,7 +702,7 @@ interface WindowWithWidget extends Window {
     // FAB button
     const button = document.createElement('button');
     button.id = ELEMENT_IDS.BUTTON;
-    button.setAttribute('aria-label', 'Open chat');
+    button.setAttribute('aria-label', config.direction === 'rtl' ? 'فتح المحادثة' : 'Open chat');
     button.setAttribute('aria-expanded', 'false');
     button.style.cssText = `
       background: ${config.primaryColor};
@@ -758,7 +758,7 @@ interface WindowWithWidget extends Window {
 
     const button = document.createElement('button');
     button.id = ELEMENT_IDS.BUTTON;
-    button.setAttribute('aria-label', 'Chat unavailable');
+    button.setAttribute('aria-label', 'Chat unavailable / المحادثة غير متاحة');
     button.style.cssText = `
       background: #dc3545;
       width: 60px;

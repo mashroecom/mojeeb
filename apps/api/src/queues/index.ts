@@ -55,7 +55,7 @@ export const bulkEmailQueue = new Queue('bulk-email', {
 export const deadLetterQueue = new Queue('dead-letter', {
   connection: redis,
   defaultJobOptions: {
-    removeOnComplete: false,
-    removeOnFail: false,
+    removeOnComplete: { age: 7 * 86400, count: 10000 }, // Keep 7 days or 10k jobs max
+    removeOnFail: { age: 7 * 86400, count: 10000 },
   },
 });

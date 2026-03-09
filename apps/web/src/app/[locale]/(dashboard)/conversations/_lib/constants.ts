@@ -96,6 +96,29 @@ export const EMOTION_TRANSLATION_KEY: Record<string, string> = {
   urgent: 'emotionUrgent',
 };
 
+export const CATEGORY_COLORS: Record<string, string> = {
+  complaint: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  inquiry: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  purchase_request: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+  feedback: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  support: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  other: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+};
+
+export const CATEGORY_TRANSLATION_KEY: Record<string, string> = {
+  complaint: 'categoryComplaint',
+  inquiry: 'categoryInquiry',
+  purchase_request: 'categoryPurchaseRequest',
+  feedback: 'categoryFeedback',
+  support: 'categorySupport',
+  other: 'categoryOther',
+};
+
+export function categoryBadgeClass(category: string | null | undefined): string {
+  if (!category) return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+  return CATEGORY_COLORS[category.toLowerCase()] ?? CATEGORY_COLORS.other;
+}
+
 export const STATUS_BADGE: Record<string, string> = {
   ACTIVE: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
   HANDED_OFF: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',

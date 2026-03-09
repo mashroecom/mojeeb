@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Mail, MapPin, Send, Loader2 } from 'lucide-react';
+import { usePublicSiteSettings } from '@/hooks/usePublicSiteSettings';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
 export default function ContactPage() {
   const t = useTranslations('landing.contact');
+  const { data: settings } = usePublicSiteSettings();
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,7 +51,7 @@ export default function ContactPage() {
               <Mail className="h-5 w-5 text-primary mt-0.5" />
               <div>
                 <h3 className="font-medium">{t('emailLabel')}</h3>
-                <p className="text-sm text-muted-foreground">support@mojeeb.app</p>
+                <p className="text-sm text-muted-foreground">{settings?.supportEmail || 'support@mojeeb.app'}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -81,7 +83,7 @@ export default function ContactPage() {
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                       required
-                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     />
                   </div>
                   <div>
@@ -92,7 +94,7 @@ export default function ContactPage() {
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
                       required
                       dir="ltr"
-                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     />
                   </div>
                 </div>
@@ -103,7 +105,7 @@ export default function ContactPage() {
                     value={form.subject}
                     onChange={(e) => setForm({ ...form, subject: e.target.value })}
                     required
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   />
                 </div>
                 <div>
@@ -113,7 +115,7 @@ export default function ContactPage() {
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                     required
                     rows={5}
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary resize-none"
                   />
                 </div>
                 {error && (
@@ -122,7 +124,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   {t('send')}

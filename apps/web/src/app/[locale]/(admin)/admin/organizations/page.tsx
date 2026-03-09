@@ -136,13 +136,13 @@ export default function AdminOrganizationsPage() {
   function handleExport() {
     if (!organizations.length) return;
     const rows = organizations.map((org: any) => ({
-      Name: org.name,
-      Members: org._count?.members ?? 0,
-      Conversations: org._count?.conversations ?? 0,
-      Agents: org._count?.agents ?? 0,
-      Plan: org.subscription?.plan ?? 'FREE',
-      Status: org.suspendedAt ? 'Suspended' : 'Active',
-      Created: fmtDate(org.createdAt, locale),
+      [t('name')]: org.name,
+      [t('members')]: org._count?.members ?? 0,
+      [t('conversations')]: org._count?.conversations ?? 0,
+      [t('agents')]: org._count?.agents ?? 0,
+      [t('plan')]: org.subscription?.plan ?? 'FREE',
+      [t('status')]: org.suspendedAt ? t('suspended') : t('active'),
+      [t('created')]: fmtDate(org.createdAt, locale),
     }));
     exportToCsv('admin-organizations', rows);
   }
@@ -184,7 +184,7 @@ export default function AdminOrganizationsPage() {
             placeholder={t('search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border bg-card ps-10 pe-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-lg border bg-card ps-10 pe-4 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
 
@@ -218,7 +218,7 @@ export default function AdminOrganizationsPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="rounded-xl border bg-card overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -241,7 +241,7 @@ export default function AdminOrganizationsPage() {
                         if (el) el.indeterminate = someSelected && !allSelected;
                       }}
                       onChange={toggleSelectAll}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                      className="h-4 w-4 rounded border text-primary focus-visible:ring-primary cursor-pointer"
                       title={t('selectAll')}
                     />
                   </th>
@@ -289,7 +289,7 @@ export default function AdminOrganizationsPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleSelect(org.id)}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                          className="h-4 w-4 rounded border text-primary focus-visible:ring-primary cursor-pointer"
                         />
                       </td>
                       <td className="px-4 py-3 font-medium">
@@ -316,7 +316,7 @@ export default function AdminOrganizationsPage() {
                             PLAN_COLORS[plan] ?? PLAN_COLORS.FREE
                           )}
                         >
-                          {plan}
+                          {t(`plan_${plan}`)}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -342,7 +342,7 @@ export default function AdminOrganizationsPage() {
                             }
                             disabled={toggleSuspension.isPending}
                             className={cn(
-                              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                              'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                               isSuspended
                                 ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
                                 : 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50'
@@ -363,7 +363,7 @@ export default function AdminOrganizationsPage() {
                           <button
                             onClick={() => handleDelete(org.id)}
                             disabled={deleteOrg.isPending}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             {t('delete')}
@@ -396,14 +396,14 @@ export default function AdminOrganizationsPage() {
           <button
             onClick={handleBulkSuspend}
             disabled={bulkSuspend.isPending}
-            className="inline-flex items-center gap-1.5 rounded-md bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
           >
             <ShieldOff className="h-3.5 w-3.5" />
             {t('bulkSuspend', { count: selectedIds.size })}
           </button>
           <button
             onClick={clearSelection}
-            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
           >
             <X className="h-3.5 w-3.5" />
             {t('clearSelection')}

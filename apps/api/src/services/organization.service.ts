@@ -25,6 +25,11 @@ export class OrganizationService {
       websiteUrl?: string;
       timezone?: string;
       defaultLanguage?: string;
+      dateFormat?: string;
+      primaryColor?: string;
+      secondaryColor?: string;
+      customCss?: string | null;
+      contactEmail?: string;
     },
   ) {
     const org = await prisma.organization.findUnique({ where: { id: orgId } });
@@ -38,6 +43,11 @@ export class OrganizationService {
         ...(data.websiteUrl !== undefined && { websiteUrl: data.websiteUrl }),
         ...(data.timezone !== undefined && { timezone: data.timezone }),
         ...(data.defaultLanguage !== undefined && { defaultLanguage: data.defaultLanguage }),
+        ...(data.dateFormat !== undefined && { dateFormat: data.dateFormat }),
+        ...(data.primaryColor !== undefined && { primaryColor: data.primaryColor }),
+        ...(data.secondaryColor !== undefined && { secondaryColor: data.secondaryColor }),
+        ...(data.customCss !== undefined && { customCss: data.customCss }),
+        ...(data.contactEmail !== undefined && { contactEmail: data.contactEmail || null }),
       },
       include: {
         _count: { select: { members: true, agents: true, channels: true } },

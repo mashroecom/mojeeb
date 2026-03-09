@@ -53,7 +53,7 @@ const CATEGORIES = [
   { id: 'email', icon: Mail, color: 'text-blue-500' },
   { id: 'meta', icon: MessageSquare, color: 'text-sky-500' },
   { id: 'oauth', icon: KeyRound, color: 'text-amber-500' },
-  { id: 'general', icon: Settings, color: 'text-gray-500' },
+  { id: 'general', icon: Settings, color: 'text-muted-foreground' },
 ] as const;
 
 function ConfigItemCard({
@@ -89,7 +89,7 @@ function ConfigItemCard({
   }
 
   return (
-    <div className="rounded-lg border bg-card p-4 transition-colors hover:border-primary/20">
+    <div className="rounded-xl border bg-card p-4 transition-colors hover:border-primary/20">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -116,7 +116,7 @@ function ConfigItemCard({
               {hasValue ? (
                 <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
                   {item.value}
-                  {item.isSecret && <KeyRound className="inline h-3 w-3 ml-1 text-amber-500" />}
+                  {item.isSecret && <KeyRound className="inline h-3 w-3 ms-1 text-amber-500" />}
                 </code>
               ) : (
                 <span className="text-xs text-red-400 italic">{t('notConfigured')}</span>
@@ -124,7 +124,7 @@ function ConfigItemCard({
             </div>
             <button
               onClick={startEdit}
-              className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-muted transition-colors shrink-0"
+              className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:bg-muted transition-colors shrink-0"
             >
               <Pencil className="h-3 w-3" />
               {t('edit')}
@@ -137,13 +137,13 @@ function ConfigItemCard({
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               placeholder={item.isSecret ? t('secretHidden') : t('enterValue')}
-              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               autoFocus
             />
             <div className="flex items-center gap-2 justify-end">
               <button
                 onClick={cancelEdit}
-                className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-muted transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:bg-muted transition-colors"
               >
                 <X className="h-3 w-3" />
                 {t('cancel')}
@@ -151,7 +151,7 @@ function ConfigItemCard({
               <button
                 onClick={handleSave}
                 disabled={isSaving || !editValue.trim()}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 {isSaving ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -178,7 +178,7 @@ function TestResultsPanel({
   onClose: () => void;
 }) {
   return (
-    <div className="mb-6 rounded-lg border bg-card overflow-hidden">
+    <div className="mb-6 rounded-xl border bg-card overflow-hidden">
       <div
         className={cn(
           'px-4 py-3 flex items-center justify-between',
@@ -297,7 +297,7 @@ export default function ConfigPage() {
               key={cat.id}
               onClick={() => setActiveTab(cat.id)}
               className={cn(
-                'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -338,7 +338,7 @@ export default function ConfigPage() {
       )}
 
       {/* Tab Content */}
-      <div className="rounded-lg border bg-card p-6">
+      <div className="rounded-xl border bg-card p-6">
         {/* Tab description */}
         <div className="mb-6 flex items-center justify-between">
           <div>

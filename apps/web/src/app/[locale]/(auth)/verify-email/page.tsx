@@ -56,7 +56,7 @@ export default function VerifyEmailPage() {
 
         {status === 'success' && (
           <div>
-            <div className="mb-4 rounded-md bg-primary/10 p-4 text-sm text-primary">
+            <div className="mb-4 rounded-lg bg-primary/10 p-4 text-sm text-primary">
               {t('success')}
             </div>
             <Link href="/login" className="text-sm font-medium text-primary hover:underline">
@@ -67,7 +67,7 @@ export default function VerifyEmailPage() {
 
         {status === 'error' && (
           <div>
-            <div className="mb-4 rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+            <div className="mb-4 rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
               {t('failed')}
             </div>
             <div className="flex flex-col items-center gap-3">
@@ -83,7 +83,7 @@ export default function VerifyEmailPage() {
                   type="button"
                   onClick={handleResend}
                   disabled={resendStatus === 'sending' || resendStatus === 'sent'}
-                  className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {resendStatus === 'sending' && (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -107,7 +107,7 @@ export default function VerifyEmailPage() {
 
         {status === 'no-token' && (
           <div>
-            <div className="mb-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-4 text-sm text-yellow-800 dark:text-yellow-300">
+            <div className="mb-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 p-4 text-sm text-yellow-800 dark:text-yellow-300">
               {t('noToken')}
             </div>
             <Link href="/login" className="text-sm font-medium text-primary hover:underline">

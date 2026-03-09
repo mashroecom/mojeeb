@@ -14,6 +14,8 @@ const MIME_MAP: Record<string, string> = {
 
 const SUPPORTED_EXTENSIONS = new Set(Object.keys(MIME_MAP));
 
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+
 export function isSupportedImageFile(filePath: string): boolean {
   const ext = path.extname(filePath).toLowerCase();
   return SUPPORTED_EXTENSIONS.has(ext);
@@ -21,7 +23,12 @@ export function isSupportedImageFile(filePath: string): boolean {
 
 export function resolveUploadPath(uploadUrl: string): string {
   const filename = uploadUrl.replace(/^\/uploads\//, '');
-  return path.join(UPLOADS_DIR, filename);
+  // BUG FIX: prevent path traversal (e.g. ../../etc/passwd)
+  const resolved = path.resolve(UPLOADS_DIR, filename);
+  if (!resolved.startsWith(UPLOADS_DIR)) {
+    throw new Error('Invalid upload path: directory traversal detected');
+  }
+  return resolved;
 }
 
 export async function imageToBase64DataUrl(
@@ -34,6 +41,12 @@ export async function imageToBase64DataUrl(
 
     if (!mimeType) {
       logger.warn({ uploadUrl, ext }, 'Unsupported image extension for vision');
+      return null;
+    }
+
+    const stat = await fs.stat(filePath);
+    if (stat.size > MAX_IMAGE_SIZE) {
+      logger.warn({ uploadUrl, sizeMB: Math.round(stat.size / 1024 / 1024) }, 'Image too large for vision, skipping');
       return null;
     }
 

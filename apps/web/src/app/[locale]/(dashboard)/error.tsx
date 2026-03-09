@@ -34,7 +34,7 @@ export default function DashboardError({
         <p className="mt-2 text-sm text-muted-foreground">{t('errorDescription')}</p>
         <button
           onClick={reset}
-          className="mt-6 rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="mt-6 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           {t('tryAgain')}
         </button>

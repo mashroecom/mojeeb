@@ -54,6 +54,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
               lastName: profile.lastName,
               avatarUrl: profile.avatarUrl,
               isSuperAdmin: profile.isSuperAdmin,
+              onboardingCompleted: profile.onboardingCompleted,
             },
             org,
             memberships.map((m: any) => ({ id: m.id, role: m.role, org: m.org })),
@@ -68,7 +69,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         router.replace('/login');
       })
       .finally(() => setChecking(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   if (checking) {
     return (

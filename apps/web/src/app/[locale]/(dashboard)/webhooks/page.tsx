@@ -2,6 +2,7 @@
 
 import { useState, type ComponentType } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { fmtDate, fmtDateTime } from '@/lib/dateFormat';
 import {
   useWebhooks,
@@ -14,6 +15,7 @@ import {
 } from '@/hooks/useWebhooks';
 import type { WebhookWithSecret } from '@/hooks/useWebhooks';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { toast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import {
   Webhook,
@@ -38,7 +40,7 @@ import {
 } from 'lucide-react';
 
 const inputClass =
-  'w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50';
+  'w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50';
 
 const EVENTS = [
   'conversation.created',
@@ -62,6 +64,8 @@ export default function WebhooksPage() {
   const t = useTranslations('dashboard.webhooks');
   const locale = useLocale();
   const ct = useTranslations('common');
+  const ts = useTranslations('dashboard.sidebar');
+  const tb = useTranslations('dashboard.breadcrumb');
 
   const { data: webhooks, isLoading, isError, refetch: refetchWebhooks } = useWebhooks();
   const createWebhook = useCreateWebhook();
@@ -102,7 +106,13 @@ export default function WebhooksPage() {
     if (!editingId || !editUrl.trim() || editEvents.length === 0) return;
     updateWebhook.mutate(
       { webhookId: editingId, url: editUrl.trim(), events: editEvents },
-      { onSuccess: () => setEditingId(null) },
+      {
+        onSuccess: () => {
+          setEditingId(null);
+          toast.success(ct('toast.webhookUpdated'));
+        },
+        onError: () => toast.error(ct('toast.webhookUpdateFailed')),
+      },
     );
   };
 
@@ -116,10 +126,12 @@ export default function WebhooksPage() {
       onSuccess: () => {
         setTestStatus({ id: webhookId, type: 'success' });
         setTimeout(() => setTestStatus(null), 3000);
+        toast.success(ct('toast.webhookTestSent'));
       },
       onError: () => {
         setTestStatus({ id: webhookId, type: 'error' });
         setTimeout(() => setTestStatus(null), 3000);
+        toast.error(ct('toast.webhookTestFailed'));
       },
     });
   };
@@ -134,7 +146,9 @@ export default function WebhooksPage() {
           setUrl('');
           setSelectedEvents([]);
           setShowCreate(false);
+          toast.success(ct('toast.webhookCreated'));
         },
+        onError: () => toast.error(ct('toast.webhookCreateFailed')),
       },
     );
   };
@@ -146,14 +160,24 @@ export default function WebhooksPage() {
   };
 
   const handleToggleActive = (webhookId: string, isActive: boolean) => {
-    updateWebhook.mutate({ webhookId, isActive: !isActive });
+    updateWebhook.mutate(
+      { webhookId, isActive: !isActive },
+      {
+        onSuccess: () => toast.success(ct('toast.webhookUpdated')),
+        onError: () => toast.error(ct('toast.webhookUpdateFailed')),
+      },
+    );
   };
 
   const handleDelete = (webhookId: string) => {
     confirm({
       title: ct('delete'),
       message: t('deleteConfirm'),
-      onConfirm: () => deleteWebhook.mutate(webhookId),
+      onConfirm: () =>
+        deleteWebhook.mutate(webhookId, {
+          onSuccess: () => toast.success(ct('toast.webhookDeleted')),
+          onError: () => toast.error(ct('toast.webhookDeleteFailed')),
+        }),
     });
   };
 
@@ -163,7 +187,11 @@ export default function WebhooksPage() {
       message: t('regenerateConfirm'),
       onConfirm: () =>
         regenerateSecret.mutate(webhookId, {
-          onSuccess: (data) => setNewSecret(data.secret),
+          onSuccess: (data) => {
+            setNewSecret(data.secret);
+            toast.success(ct('toast.secretRegenerated'));
+          },
+          onError: () => toast.error(ct('toast.secretRegenerateFailed')),
         }),
     });
   };
@@ -176,6 +204,13 @@ export default function WebhooksPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
+      <Breadcrumb
+        items={[
+          { label: tb('dashboard'), href: '/dashboard' },
+          { label: ts('webhooks') },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -315,7 +350,7 @@ export default function WebhooksPage() {
                   setUrl('');
                   setSelectedEvents([]);
                 }}
-                className="rounded-md p-1 text-muted-foreground hover:bg-accent transition-colors"
+                className="rounded-lg p-1 text-muted-foreground hover:bg-accent transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -360,7 +395,7 @@ export default function WebhooksPage() {
                       )}
                     >
                       <div className={cn(
-                        'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md',
+                        'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg',
                         isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
                       )}>
                         <Icon className="h-3 w-3" />
@@ -424,7 +459,7 @@ export default function WebhooksPage() {
           <p className="mt-1 text-sm text-muted-foreground">{ct('errorDescription')}</p>
           <button
             onClick={() => refetchWebhooks()}
-            className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             {ct('tryAgain')}
           </button>
@@ -470,13 +505,13 @@ export default function WebhooksPage() {
                           'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
                           webhook.isActive
                             ? 'bg-green-100 dark:bg-green-900/30'
-                            : 'bg-gray-100 dark:bg-gray-800',
+                            : 'bg-muted',
                         )}>
                           <Globe className={cn(
                             'h-4 w-4',
                             webhook.isActive
                               ? 'text-green-600 dark:text-green-400'
-                              : 'text-gray-400',
+                              : 'text-muted-foreground',
                           )} />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -488,7 +523,7 @@ export default function WebhooksPage() {
                               'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
                               webhook.isActive
                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+                                : 'bg-muted text-muted-foreground',
                             )}>
                               {webhook.isActive ? t('active') : t('inactive')}
                             </span>
@@ -516,7 +551,7 @@ export default function WebhooksPage() {
 
                       {/* Last error */}
                       {webhook.lastError && (
-                        <div className="mt-2 ms-10.5 flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-600 dark:bg-red-950 dark:text-red-400">
+                        <div className="mt-2 ms-10.5 flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-xs text-red-600 dark:bg-red-950 dark:text-red-400">
                           <AlertTriangle className="h-3 w-3 shrink-0" />
                           <span className="truncate">{webhook.lastError}</span>
                         </div>
@@ -527,7 +562,7 @@ export default function WebhooksPage() {
                         {webhook.events.map((event) => (
                           <span
                             key={event}
-                            className="inline-flex items-center gap-1 rounded-md bg-primary/5 px-2 py-1 text-xs font-medium text-primary"
+                            className="inline-flex items-center gap-1 rounded-lg bg-primary/5 px-2 py-1 text-xs font-medium text-primary"
                           >
                             {t(`eventTypes.${event.replace(/\./g, '_')}` as any)}
                           </span>
@@ -539,7 +574,7 @@ export default function WebhooksPage() {
                     <button
                       type="button"
                       onClick={() => setExpandedId(isExpanded ? null : webhook.id)}
-                      className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-accent transition-colors"
+                      className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-accent transition-colors"
                     >
                       {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </button>
@@ -550,15 +585,15 @@ export default function WebhooksPage() {
                 {isExpanded && (
                   <div className="border-t">
                     {/* Action bar */}
-                    <div className="flex flex-wrap items-center gap-1 px-5 py-3 bg-muted/30">
+                    <div className="flex flex-wrap items-center gap-1 px-5 py-3 bg-muted/50">
                       <button
                         type="button"
                         onClick={() => handleToggleActive(webhook.id, webhook.isActive)}
                         className={cn(
-                          'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                          'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                           webhook.isActive
                             ? 'text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
-                            : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
+                            : 'text-muted-foreground hover:bg-muted',
                         )}
                       >
                         <Power className="h-3.5 w-3.5" />
@@ -569,7 +604,7 @@ export default function WebhooksPage() {
                         type="button"
                         onClick={() => handleTestWebhook(webhook.id)}
                         disabled={testWebhook.isPending}
-                        className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
                       >
                         {testWebhook.isPending && testWebhook.variables === webhook.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -583,7 +618,7 @@ export default function WebhooksPage() {
                         type="button"
                         onClick={() => isEditing ? setEditingId(null) : startEditing(webhook)}
                         className={cn(
-                          'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                          'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                           isEditing
                             ? 'text-primary bg-primary/10'
                             : 'text-muted-foreground hover:bg-accent',
@@ -597,7 +632,7 @@ export default function WebhooksPage() {
                         type="button"
                         onClick={() => toggleLogs(webhook.id)}
                         className={cn(
-                          'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                          'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                           showingLogs
                             ? 'text-primary bg-primary/10'
                             : 'text-muted-foreground hover:bg-accent',
@@ -610,7 +645,7 @@ export default function WebhooksPage() {
                       <button
                         type="button"
                         onClick={() => handleRegenerateSecret(webhook.id)}
-                        className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                         {t('regenerateSecret')}
@@ -619,7 +654,7 @@ export default function WebhooksPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(webhook.id)}
-                        className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                         {t('deleteWebhook')}
@@ -663,7 +698,7 @@ export default function WebhooksPage() {
                                   )}
                                 >
                                   <div className={cn(
-                                    'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md',
+                                    'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg',
                                     isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
                                   )}>
                                     <Icon className="h-3 w-3" />
@@ -733,7 +768,7 @@ export default function WebhooksPage() {
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2.5">
                                     <span className={cn(
-                                      'inline-flex items-center justify-center rounded-md px-2 py-0.5 font-mono font-bold',
+                                      'inline-flex items-center justify-center rounded-lg px-2 py-0.5 font-mono font-bold',
                                       log.success
                                         ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-400'
                                         : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-400',
@@ -752,7 +787,7 @@ export default function WebhooksPage() {
                                   </div>
                                 </div>
                                 {log.error && (
-                                  <p className="mt-2 rounded-md bg-red-100/50 px-2 py-1 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                                  <p className="mt-2 rounded-lg bg-red-100/50 px-2 py-1 text-red-600 dark:bg-red-900/30 dark:text-red-400">
                                     {log.error}
                                   </p>
                                 )}

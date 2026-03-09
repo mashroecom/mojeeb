@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.socket.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' wss: ws: https:; img-src 'self' data: https:;">
 <title>Mojeeb Chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -851,7 +852,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 2px;
+    flex: 1;
+    min-width: 0;
   }
 
   .mj-conv-item-preview {
@@ -1303,6 +1305,26 @@
     // Set powered by
     var poweredText = isRtl ? 'مدعوم من' : 'Powered by';
     $poweredBy.innerHTML = poweredText + ' <a href="' + config.frontendUrl + '" target="_blank" rel="noopener noreferrer">Mojeeb</a>';
+
+    // Localize aria-labels
+    $menuBtn.setAttribute('aria-label', isRtl ? 'القائمة' : 'Menu');
+    $newConvBtn.setAttribute('aria-label', isRtl ? 'محادثة جديدة' : 'New conversation');
+    $newConvBtn.title = isRtl ? 'محادثة جديدة' : 'New conversation';
+    $closeBtn.setAttribute('aria-label', isRtl ? 'إغلاق المحادثة' : 'Close chat');
+    $convListCloseBtn.setAttribute('aria-label', isRtl ? 'إغلاق القائمة' : 'Close list');
+    $scrollBtn.setAttribute('aria-label', isRtl ? 'انتقل للأسفل' : 'Scroll to bottom');
+    $attachBtn.setAttribute('aria-label', isRtl ? 'إرفاق ملف' : 'Attach file');
+    $sendBtn.setAttribute('aria-label', isRtl ? 'إرسال' : 'Send');
+  }
+
+  // ─── Status Text Update ────────────────────────────────
+  function updateStatusText(status) {
+    var isRtl = config.direction === 'rtl';
+    if (status === 'HANDED_OFF') {
+      $statusText.textContent = isRtl ? 'بانتظار وكيل الدعم' : 'Waiting for agent';
+    } else if (status === 'ACTIVE') {
+      $statusText.textContent = isRtl ? 'متصل' : 'Online';
+    }
   }
 
   // ─── Header Setup ───────────────────────────────────────
@@ -1480,6 +1502,7 @@
         if (data.conversationId !== state.conversationId) return;
         if (data.status) {
           state.conversationStatus = data.status;
+          updateStatusText(data.status);
           // If handed off, hide any active typing indicator
           if (data.status === 'HANDED_OFF') {
             hideTyping();
@@ -1608,6 +1631,14 @@
 
   // ─── Message Rendering ─────────────────────────────────
   function addMessageToUI(msg) {
+    // Hide internal-only messages (e.g. escalation reasons) from customer view
+    var meta = msg.metadata;
+    if (meta && meta.visibility === 'internal') {
+      state.knownMessageIds[msg.id] = true;
+      displayedMessageIds[msg.id] = true;
+      return;
+    }
+
     // Deduplication: prevent duplicate messages from socket+polling overlap
     if (displayedMessageIds[msg.id]) return;
     if (state.knownMessageIds[msg.id]) return;
@@ -1643,7 +1674,7 @@
         var img = document.createElement('img');
         img.className = 'mj-msg-image';
         img.src = imgSrc;
-        img.alt = msg.content || 'Image';
+        img.alt = msg.content || (config.direction === 'rtl' ? 'صورة' : 'Image');
         img.loading = 'lazy';
         img.addEventListener('click', function() {
           window.open(imgSrc, '_blank');
@@ -1667,7 +1698,7 @@
       fileInfo.className = 'mj-msg-file-info';
       var fileName = document.createElement('div');
       fileName.className = 'mj-msg-file-name';
-      fileName.textContent = (meta && meta.fileName) || msg.content || 'File';
+      fileName.textContent = (meta && meta.fileName) || msg.content || (config.direction === 'rtl' ? 'ملف' : 'File');
       fileInfo.appendChild(fileName);
       if (meta && meta.fileSize) {
         var fileSize = document.createElement('div');
@@ -1689,7 +1720,7 @@
     if (msgRole !== 'system' && msg.content) {
       var copyBtn = document.createElement('button');
       copyBtn.className = 'mj-msg-copy';
-      copyBtn.setAttribute('aria-label', 'Copy');
+      copyBtn.setAttribute('aria-label', config.direction === 'rtl' ? 'نسخ' : 'Copy');
       copyBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
       // For images, copy the image blob; for files, copy the URL; for text, copy the text
       if (contentType === 'IMAGE') {
@@ -1803,7 +1834,7 @@
         var star = document.createElement('button');
         star.className = 'mj-rating-star';
         star.textContent = '\u2B50';
-        star.setAttribute('aria-label', rating + ' stars');
+        star.setAttribute('aria-label', config.direction === 'rtl' ? rating + ' نجوم' : rating + ' stars');
         star.addEventListener('mouseenter', function() {
           for (var j = 0; j < starButtons.length; j++) {
             starButtons[j].classList.toggle('mj-star-active', j < rating);
@@ -2037,18 +2068,13 @@
         var body = document.createElement('div');
         body.className = 'mj-conv-item-body';
 
-        var titleRow = document.createElement('div');
-        titleRow.className = 'mj-conv-item-title';
-        titleRow.textContent = (isRtl ? 'محادثة #' : 'Conversation #') + convNumber;
-        body.appendChild(titleRow);
-
         var topRow = document.createElement('div');
         topRow.className = 'mj-conv-item-top';
 
-        var statusBadge = document.createElement('span');
-        statusBadge.className = 'mj-conv-item-status ' + getStatusClass(conv.status);
-        statusBadge.textContent = conv.status;
-        topRow.appendChild(statusBadge);
+        var titleRow = document.createElement('div');
+        titleRow.className = 'mj-conv-item-title';
+        titleRow.textContent = (isRtl ? 'محادثة #' : 'Conversation #') + convNumber;
+        topRow.appendChild(titleRow);
 
         var dateSpan = document.createElement('span');
         dateSpan.className = 'mj-conv-item-date';
@@ -2136,6 +2162,7 @@
     if (state.csatTimer) { clearTimeout(state.csatTimer); state.csatTimer = null; }
 
     stopPolling();
+    updateStatusText(status || 'ACTIVE');
 
     // Clear the message area
     var children = Array.prototype.slice.call($messagesContainer.children);
@@ -2429,6 +2456,7 @@
         state.conversationStatus = result.conversation.status || null;
         storeConversationId(result.conversation.id);
         joinConversationRoom(result.conversation.id);
+        updateStatusText(result.conversation.status || 'ACTIVE');
 
         // Load existing messages
         return apiGetMessages(result.conversation.id).then(function(msgResult) {

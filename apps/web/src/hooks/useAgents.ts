@@ -31,6 +31,23 @@ export interface AgentChannelLink {
   };
 }
 
+export interface DataCollectionConfig {
+  requiredFields: string[];
+  collectionStrategy: 'natural' | 'upfront' | 'end';
+  customFields: { name: string; type: string; label: string; labelAr: string }[];
+  confirmationEnabled: boolean;
+}
+
+export interface QuickRepliesConfig {
+  enabled: boolean;
+  maxButtons: number;
+  aiSuggestions: boolean;
+  predefinedSets: {
+    trigger: string;
+    buttons: { text: string; textAr: string }[];
+  }[];
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -46,6 +63,13 @@ export interface Agent {
   enableEmotionDetection: boolean;
   enableLeadExtraction: boolean;
   enableHumanHandoff: boolean;
+  tone: string;
+  responseLength: string;
+  dataCollectionConfig: DataCollectionConfig | null;
+  escalationKeywords: string[];
+  sentimentEscalation: boolean;
+  escalationMessageCount: number;
+  quickRepliesConfig: QuickRepliesConfig | null;
   knowledgeBases?: AgentKnowledgeBaseLink[];
   channels?: AgentChannelLink[];
   _count?: { conversations: number };
@@ -68,6 +92,13 @@ export interface CreateAgentInput {
   enableLeadExtraction?: boolean;
   enableHumanHandoff?: boolean;
   handoffThreshold?: number;
+  tone?: string;
+  responseLength?: string;
+  dataCollectionConfig?: DataCollectionConfig;
+  escalationKeywords?: string[];
+  sentimentEscalation?: boolean;
+  escalationMessageCount?: number;
+  quickRepliesConfig?: QuickRepliesConfig;
 }
 
 export type UpdateAgentInput = Partial<CreateAgentInput> & { id: string };
@@ -297,9 +328,10 @@ export function useConnectChannelForAgent() {
       const { data } = await api.post(`/organizations/${orgId}/agents/${agentId}/channels`, { type, name, credentials });
       return data.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       if (orgId) {
         queryClient.invalidateQueries({ queryKey: agentKeys.all(orgId) });
+        queryClient.invalidateQueries({ queryKey: agentKeys.detail(orgId, variables.agentId) });
         queryClient.invalidateQueries({ queryKey: ['organizations', orgId, 'channels'] });
       }
     },

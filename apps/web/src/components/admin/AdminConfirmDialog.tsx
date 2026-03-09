@@ -20,14 +20,16 @@ export function AdminConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   variant = 'default',
   loading = false,
   onConfirm,
   onCancel,
 }: AdminConfirmDialogProps) {
   const t = useTranslations('admin.common');
+  const resolvedConfirmLabel = confirmLabel ?? t('confirm');
+  const resolvedCancelLabel = cancelLabel ?? t('cancel');
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,21 +49,22 @@ export function AdminConfirmDialog({
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div
         ref={ref}
-        className="relative w-full max-w-md rounded-lg border bg-card p-6 shadow-xl mx-4"
+        className="relative w-full max-w-md rounded-xl border bg-card p-6 shadow-xl mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onCancel}
           className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Close"
         >
           <X className="h-4 w-4" />
         </button>
 
         <div className="flex items-start gap-3 mb-4">
           {isDanger && (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 flex-shrink-0">
-              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
           )}
           <div>
@@ -75,20 +78,20 @@ export function AdminConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+            className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
             disabled={loading}
             className={cn(
-              'rounded-md px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50',
-              isDanger ? 'bg-red-600 hover:bg-red-700' : 'bg-primary hover:bg-primary/90'
+              'rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50',
+              isDanger ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-primary text-primary-foreground hover:bg-primary/90'
             )}
           >
-            {loading ? t('processing') : confirmLabel}
+            {loading ? t('processing') : resolvedConfirmLabel}
           </button>
         </div>
       </div>

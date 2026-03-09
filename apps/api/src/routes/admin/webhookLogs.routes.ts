@@ -24,7 +24,8 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { page, limit, webhookId, event, success, startDate, endDate, search } =
-        (req as any).validatedQuery;
+        // BUG FIX: validate middleware sets data on req.query, not validatedQuery
+        req.query as any;
 
       const where: Record<string, unknown> = {};
 

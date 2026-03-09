@@ -268,7 +268,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
         type="button"
         onClick={() => { setOpen(!open); setSearch(''); }}
         className={cn(
-          'mt-1 w-full flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm outline-none hover:bg-muted/50 transition-colors text-start',
+          'mt-1 w-full flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm outline-none hover:bg-muted/50 transition-colors text-start focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
           open && 'ring-2 ring-primary/40 border-primary',
         )}
       >
@@ -285,6 +285,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
             type="button"
             onClick={(e) => { e.stopPropagation(); onChange(''); }}
             className="ms-auto shrink-0 rounded p-0.5 hover:bg-muted"
+            aria-label="Clear icon"
           >
             <X className="h-3 w-3 text-muted-foreground" />
           </button>
@@ -303,7 +304,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search icons..."
                 autoFocus
-                className="w-full rounded-md border bg-background ps-8 pe-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-primary/30"
+                className="w-full rounded-lg border bg-background ps-8 pe-3 py-1.5 text-sm outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
               />
             </div>
           </div>
@@ -326,7 +327,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
                       title={entry.name}
                       onClick={() => { onChange(entry.name); setOpen(false); }}
                       className={cn(
-                        'flex items-center justify-center rounded-md p-2 transition-colors',
+                        'flex items-center justify-center rounded-lg p-2 transition-colors',
                         isSelected
                           ? 'bg-primary text-primary-foreground'
                           : 'hover:bg-muted text-muted-foreground hover:text-foreground',

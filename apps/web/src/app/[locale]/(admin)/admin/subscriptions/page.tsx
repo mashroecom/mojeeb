@@ -139,7 +139,7 @@ function SubscriptionDetail({ id, t }: { id: string; t: ReturnType<typeof useTra
             {invoices.map((inv: any) => (
               <div
                 key={inv.id}
-                className="flex items-center justify-between text-sm rounded-md border bg-card px-3 py-2"
+                className="flex items-center justify-between text-sm rounded-lg border bg-card px-3 py-2"
               >
                 <div>
                   <span className="font-medium">
@@ -153,10 +153,10 @@ function SubscriptionDetail({ id, t }: { id: string; t: ReturnType<typeof useTra
                   <span
                     className={cn(
                       'inline-block rounded-full px-2 py-0.5 text-[10px] font-medium',
-                      INVOICE_STATUS_COLORS[inv.status] ?? 'bg-gray-100 text-gray-700',
+                      INVOICE_STATUS_COLORS[inv.status] ?? 'bg-muted text-muted-foreground',
                     )}
                   >
-                    {inv.status}
+                    {t(`invoiceStatus_${inv.status}`)}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {fmtDate(inv.createdAt, locale)}
@@ -238,32 +238,32 @@ export default function SubscriptionsPage() {
   function handleExport() {
     if (!subscriptions.length) return;
     const rows = subscriptions.map((sub: any) => ({
-      Organization: sub.org?.name ?? '',
-      Plan: sub.plan,
-      Status: sub.status,
-      'Messages Used': sub.messagesUsed ?? 0,
-      'Messages Limit': sub.messagesLimit ?? 0,
-      'Agents Used': sub.agentsUsed ?? 0,
-      'Agents Limit': sub.agentsLimit ?? 0,
-      'Period Start': fmtDate(sub.currentPeriodStart, locale),
-      'Period End': fmtDate(sub.currentPeriodEnd, locale),
+      [t('csvOrganization')]: sub.org?.name ?? '',
+      [t('csvPlan')]: sub.plan,
+      [t('csvStatus')]: sub.status,
+      [t('csvMessagesUsed')]: sub.messagesUsed ?? 0,
+      [t('csvMessagesLimit')]: sub.messagesLimit ?? 0,
+      [t('csvAgentsUsed')]: sub.agentsUsed ?? 0,
+      [t('csvAgentsLimit')]: sub.agentsLimit ?? 0,
+      [t('csvPeriodStart')]: fmtDate(sub.currentPeriodStart, locale),
+      [t('csvPeriodEnd')]: fmtDate(sub.currentPeriodEnd, locale),
     }));
     exportToCsv('admin-subscriptions', rows);
   }
 
   const planOptions: { value: PlanFilter; label: string }[] = [
     { value: '', label: t('all') },
-    { value: 'FREE', label: 'Free' },
-    { value: 'STARTER', label: 'Starter' },
-    { value: 'PROFESSIONAL', label: 'Professional' },
-    { value: 'ENTERPRISE', label: 'Enterprise' },
+    { value: 'FREE', label: t('planFree') },
+    { value: 'STARTER', label: t('planStarter') },
+    { value: 'PROFESSIONAL', label: t('planProfessional') },
+    { value: 'ENTERPRISE', label: t('planEnterprise') },
   ];
 
   const statusOptions: { value: StatusFilter; label: string }[] = [
     { value: '', label: t('all') },
-    { value: 'ACTIVE', label: 'Active' },
-    { value: 'PAST_DUE', label: 'Past Due' },
-    { value: 'CANCELED', label: 'Canceled' },
+    { value: 'ACTIVE', label: t('statusActive') },
+    { value: 'PAST_DUE', label: t('statusPastDue') },
+    { value: 'CANCELED', label: t('statusCanceled') },
   ];
 
   if (error) {
@@ -292,7 +292,7 @@ export default function SubscriptionsPage() {
               setPlanFilter(e.target.value as PlanFilter);
               setPage(1);
             }}
-            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
           >
             {planOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -309,7 +309,7 @@ export default function SubscriptionsPage() {
               setStatusFilter(e.target.value as StatusFilter);
               setPage(1);
             }}
-            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
           >
             {statusOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -380,18 +380,18 @@ export default function SubscriptionsPage() {
                         <span
                           className={cn(
                             'inline-block rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0',
-                            PLAN_COLORS[sub.plan] ?? 'bg-gray-100 text-gray-700',
+                            PLAN_COLORS[sub.plan] ?? 'bg-muted text-muted-foreground',
                           )}
                         >
-                          {sub.plan}
+                          {t(`plan_${sub.plan}`)}
                         </span>
                         <span
                           className={cn(
                             'inline-block rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0',
-                            STATUS_COLORS[sub.status] ?? 'bg-gray-100 text-gray-700',
+                            STATUS_COLORS[sub.status] ?? 'bg-muted text-muted-foreground',
                           )}
                         >
-                          {sub.status}
+                          {t(`status_${sub.status}`)}
                         </span>
                       </div>
                       <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
@@ -419,7 +419,7 @@ export default function SubscriptionsPage() {
                             onChange={(e) =>
                               setEditState((s) => ({ ...s, messagesLimit: Number(e.target.value) }))
                             }
-                            className="w-20 rounded-md border bg-background px-2 py-1 text-xs text-center outline-none focus:border-primary"
+                            className="w-20 rounded-lg border bg-background px-2 py-1 text-xs text-center outline-none focus-visible:border-primary"
                           />
                         ) : (
                           <p className="font-medium">
@@ -439,7 +439,7 @@ export default function SubscriptionsPage() {
                             onChange={(e) =>
                               setEditState((s) => ({ ...s, agentsLimit: Number(e.target.value) }))
                             }
-                            className="w-20 rounded-md border bg-background px-2 py-1 text-xs text-center outline-none focus:border-primary"
+                            className="w-20 rounded-lg border bg-background px-2 py-1 text-xs text-center outline-none focus-visible:border-primary"
                           />
                         ) : (
                           <p className="font-medium">

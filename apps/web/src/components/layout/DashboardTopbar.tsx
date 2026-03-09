@@ -14,7 +14,6 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   dashboard: 'overview',
   conversations: 'conversations',
   agents: 'agents',
-  channels: 'channels',
   'knowledge-base': 'knowledgeBase',
   'message-templates': 'messageTemplates',
   analytics: 'analytics',
@@ -30,8 +29,8 @@ export function DashboardTopbar() {
   const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations('dashboard.sidebar');
-  const isAr = locale === 'ar';
-  const siteName = isAr ? 'موجيب' : 'Mojeeb';
+  const tc = useTranslations('common');
+  const siteName = tc('appName');
   const { toggle, isOpen: sidebarOpen } = useSidebar();
 
   // Enable global keyboard shortcuts
@@ -68,14 +67,14 @@ export function DashboardTopbar() {
     .filter((b) => b.label);
 
   return (
-    <header className="flex h-14 md:h-16 items-center justify-between border-b bg-card px-4 md:px-6">
+    <header role="banner" className="flex h-14 md:h-16 items-center justify-between border-b bg-card px-4 md:px-6">
       {/* Hamburger menu + Breadcrumbs */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
           onClick={toggle}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary md:hidden"
-          aria-label="Toggle menu"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hidden"
+          aria-label={t('toggleMenu')}
           aria-expanded={sidebarOpen}
         >
           <Menu className="h-5 w-5" />

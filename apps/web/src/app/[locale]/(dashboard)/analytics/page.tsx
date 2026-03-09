@@ -67,51 +67,51 @@ export default function AnalyticsPage() {
       label: t('totalConversations'),
       value: overview?.totalConversations ?? 0,
       icon: MessageSquare,
-      color: 'text-blue-600',
-      bg: 'bg-blue-100',
+      color: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-blue-100 dark:bg-blue-900/30',
     },
     {
       label: t('totalMessages'),
       value: overview?.totalMessages ?? 0,
       icon: Mail,
-      color: 'text-indigo-600',
-      bg: 'bg-indigo-100',
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bg: 'bg-indigo-100 dark:bg-indigo-900/30',
     },
     {
       label: t('totalLeads'),
       value: overview?.totalLeads ?? 0,
       icon: Users,
-      color: 'text-green-600',
-      bg: 'bg-green-100',
+      color: 'text-green-600 dark:text-green-400',
+      bg: 'bg-green-100 dark:bg-green-900/30',
     },
     {
       label: t('activeConversations'),
       value: overview?.activeConversations ?? 0,
       icon: Activity,
-      color: 'text-orange-600',
-      bg: 'bg-orange-100',
+      color: 'text-orange-600 dark:text-orange-400',
+      bg: 'bg-orange-100 dark:bg-orange-900/30',
     },
     {
       label: t('resolvedConversations'),
       value: overview?.resolvedConversations ?? 0,
       icon: CheckCircle,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-100',
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bg: 'bg-emerald-100 dark:bg-emerald-900/30',
     },
     {
       label: t('avgResponseTime'),
       value: formatResponseTime(overview?.averageResponseTimeMs ?? 0),
       icon: Clock,
-      color: 'text-purple-600',
-      bg: 'bg-purple-100',
+      color: 'text-purple-600 dark:text-purple-400',
+      bg: 'bg-purple-100 dark:bg-purple-900/30',
       isText: true,
     },
     {
       label: t('handoffRate'),
       value: `${Math.round((overview?.handoffRate ?? 0) * 100)}%`,
       icon: ArrowRightLeft,
-      color: 'text-red-600',
-      bg: 'bg-red-100',
+      color: 'text-red-600 dark:text-red-400',
+      bg: 'bg-red-100 dark:bg-red-900/30',
       isText: true,
     },
   ];
@@ -170,7 +170,7 @@ export default function AnalyticsPage() {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-lg border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="h-10 rounded-lg border bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             placeholder={t('startDate')}
           />
           <span className="text-muted-foreground text-sm">{t('to')}</span>
@@ -178,7 +178,7 @@ export default function AnalyticsPage() {
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-lg border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="h-10 rounded-lg border bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             placeholder={t('endDate')}
           />
         </div>
@@ -213,7 +213,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <p className="text-2xl font-bold">
-                  {stat.isText ? stat.value : Number(stat.value).toLocaleString()}
+                  {stat.isText ? stat.value : Number(stat.value).toLocaleString(locale)}
                 </p>
               </>
             )}
@@ -287,9 +287,9 @@ export default function AnalyticsPage() {
                   {agentPerformance.agents.map((agent) => (
                     <tr key={agent.id} className="hover:bg-muted/50 transition-colors">
                       <td className="py-3 font-medium">{agent.name}</td>
-                      <td className="py-3">{agent.conversations.toLocaleString()}</td>
-                      <td className="py-3">{agent.messages.toLocaleString()}</td>
-                      <td className="py-3">{agent.resolved.toLocaleString()}</td>
+                      <td className="py-3">{agent.conversations.toLocaleString(locale)}</td>
+                      <td className="py-3">{agent.messages.toLocaleString(locale)}</td>
+                      <td className="py-3">{agent.resolved.toLocaleString(locale)}</td>
                       <td className="py-3">{formatResponseTime(agent.averageResponseTimeMs)}</td>
                     </tr>
                   ))}
@@ -330,7 +330,7 @@ export default function AnalyticsPage() {
                     <div className="flex items-center justify-between text-sm mb-1.5">
                       <span className="font-medium capitalize">{ch.channel}</span>
                       <span className="text-muted-foreground">
-                        {ch.conversations.toLocaleString()} {t('conversations').toLowerCase()}
+                        {ch.conversations.toLocaleString(locale)} {t('conversations').toLowerCase()}
                       </span>
                     </div>
                     <div className="h-3 w-full rounded-full bg-muted">
@@ -381,7 +381,7 @@ export default function AnalyticsPage() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium">{label}</span>
                         <span className="font-semibold">
-                          {stage.count.toLocaleString()} ({stage.percentage}%)
+                          {stage.count.toLocaleString(locale)} ({stage.percentage}%)
                         </span>
                       </div>
                     </div>

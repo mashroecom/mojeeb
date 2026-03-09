@@ -6,6 +6,7 @@ import { prisma } from './config/database';
 import { redis } from './config/redis';
 import { setupWebSocket, getIO } from './websocket';
 import { inboundQueue, aiQueue, outboundQueue, analyticsQueue, webhookQueue, bulkEmailQueue, emailQueue, deadLetterQueue } from './queues';
+import { configService } from './services/config.service';
 
 // Import workers (named exports for graceful shutdown)
 import { inboundWorker } from './queues/workers/inbound.worker';
@@ -34,6 +35,10 @@ async function main() {
     logger.error({ err }, 'Failed to connect to Redis');
     process.exit(1);
   }
+
+  // Warm config cache into Redis
+  await configService.warmCache();
+  logger.info('Config cache warmed');
 
   // Validate configuration (throws in production if required env vars are missing)
   validateConfig();

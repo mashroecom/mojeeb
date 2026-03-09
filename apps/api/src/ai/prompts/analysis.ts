@@ -1,7 +1,18 @@
-export function buildAnalysisPrompt(language?: string, agentDescription?: string, agentName?: string): string {
+export function buildAnalysisPrompt(
+  language?: string,
+  agentDescription?: string,
+  agentName?: string,
+  dataCollectionFields?: string[],
+): string {
   const contextSection = agentDescription
     ? `\nBusiness context — Agent: ${agentName || 'Support Agent'}, Description: ${agentDescription}\n`
     : '';
+
+  const dataFieldsNote = dataCollectionFields?.length
+    ? `\nPRIORITY fields to extract: ${dataCollectionFields.join(', ')}`
+    : '';
+
+  const replyLang = language === 'ar' ? 'Arabic' : 'English';
 
   return `You are a customer support conversation analyzer. Perform ALL of the following analyses on the latest customer message in context of the conversation.
 
@@ -34,6 +45,33 @@ Set handoff: true ONLY if:
 
 When in doubt, ALWAYS return handoff: false.
 
+## 4. Conversation Categorization
+Classify the conversation into one of the following categories based on the customer's intent:
+- "complaint": Customer is reporting a problem or expressing dissatisfaction with a product/service
+- "inquiry": Customer is asking for information or has general questions
+- "purchase_request": Customer wants to buy something or is asking about pricing/availability
+- "feedback": Customer is providing feedback, suggestions, or reviews
+- "support": Customer needs technical help or troubleshooting assistance
+- "other": Does not fit any of the above categories
+
+## 5. Customer Data Extraction
+Extract ANY customer information mentioned in the conversation, even casually mentioned.
+Look for:
+- Full name (from greetings, signatures, or self-introductions in any language)
+- Email addresses (any format)
+- Phone numbers (any format: Egyptian +20/01x, Saudi +966, international)
+- Company/organization name
+- Physical address or location
+- Order/reference numbers (alphanumeric patterns with "order", "طلب", "#", etc.)${dataFieldsNote}
+
+## 6. Quick Reply Suggestions
+Suggest 2-4 short quick-reply buttons the customer might want to click next.
+Rules:
+- Each reply should be under 40 characters
+- Make them contextually relevant to the conversation
+- Include at least one that progresses the conversation forward
+- Reply in ${replyLang}
+
 Respond in JSON:
 {
   "emotion": {
@@ -57,7 +95,20 @@ Respond in JSON:
     "handoff": boolean,
     "reason": "brief explanation",
     "confidence": 0-1
-  }
+  },
+  "category": {
+    "category": "complaint"|"inquiry"|"purchase_request"|"feedback"|"support"|"other",
+    "confidence": 0-1
+  },
+  "extractedData": {
+    "name": string|null,
+    "email": string|null,
+    "phone": string|null,
+    "company": string|null,
+    "address": string|null,
+    "orderNumber": string|null
+  },
+  "quickReplies": ["button text 1", "button text 2", "button text 3"]
 }`;
 }
 

@@ -2,6 +2,7 @@
 
 import React, { useState, FormEvent } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { fmtDate } from '@/lib/dateFormat';
 import {
   BookOpen,
@@ -19,8 +20,11 @@ import {
   Pencil,
   Save,
   X as XIcon,
+  Search,
+  Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/useToast';
 import {
   useKnowledgeBases,
   useKnowledgeBase,
@@ -29,8 +33,11 @@ import {
   useDeleteKnowledgeBase,
   useAddDocument,
   useDeleteDocument,
+  useSearchKB,
+  useBulkImportDocuments,
   type KnowledgeBase,
   type KBDocument,
+  type SearchResult,
 } from '@/hooks/useKnowledgeBase';
 
 // ---------------------------------------------------------------------------
@@ -71,7 +78,7 @@ function StatusBadge({ status, label }: { status: KBDocument['embeddingStatus'];
 
 function ContentTypeBadge({ type, label }: { type: KBDocument['contentType']; label: string }) {
   const colorMap: Record<string, string> = {
-    TEXT: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+    TEXT: 'bg-muted text-muted-foreground',
     FAQ: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
     PDF: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
     URL: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
@@ -109,6 +116,8 @@ function KBListView({
 }) {
   const t = useTranslations('dashboard.knowledgeBase');
   const tc = useTranslations('common');
+  const ts = useTranslations('dashboard.sidebar');
+  const tb = useTranslations('dashboard.breadcrumb');
   const locale = useLocale();
 
   // Create form state
@@ -142,7 +151,13 @@ function KBListView({
     if (!editingKbId || !editName.trim()) return;
     updateMutation.mutate(
       { kbId: editingKbId, name: editName.trim(), description: editDescription.trim() || undefined },
-      { onSuccess: () => cancelEditing() },
+      {
+        onSuccess: () => {
+          cancelEditing();
+          toast.success(tc('toast.kbUpdated'));
+        },
+        onError: () => toast.error(tc('toast.kbUpdateFailed')),
+      },
     );
   }
 
@@ -156,26 +171,40 @@ function KBListView({
           setName('');
           setDescription('');
           onHideCreate();
+          toast.success(tc('toast.kbCreated'));
         },
+        onError: () => toast.error(tc('toast.kbCreateFailed')),
       },
     );
   }
 
   function handleDelete(kbId: string) {
     deleteMutation.mutate(kbId, {
-      onSuccess: () => setConfirmDeleteId(null),
+      onSuccess: () => {
+        setConfirmDeleteId(null);
+        toast.success(tc('toast.kbDeleted'));
+      },
+      onError: () => toast.error(tc('toast.kbDeleteFailed')),
     });
   }
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: tb('dashboard'), href: '/dashboard' },
+          { label: ts('knowledgeBase') },
+        ]}
+        className="mb-4"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         {!showCreateForm && (
           <button
             onClick={onShowCreate}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Plus className="h-4 w-4" />
             {t('createKb')}
@@ -203,7 +232,7 @@ function KBListView({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('namePlaceholder')}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-10 w-full rounded-lg border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
 
@@ -217,7 +246,7 @@ function KBListView({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t('descriptionPlaceholder')}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-10 w-full rounded-lg border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
           </div>
@@ -226,7 +255,7 @@ function KBListView({
             <button
               type="submit"
               disabled={createMutation.isPending || !name.trim()}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {createMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               {tc('create')}
@@ -238,7 +267,7 @@ function KBListView({
                 setDescription('');
                 onHideCreate();
               }}
-              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+              className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
             >
               {tc('cancel')}
             </button>
@@ -292,7 +321,7 @@ function KBListView({
                       e.stopPropagation();
                       startEditing(kb);
                     }}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                     aria-label={tc('edit')}
                   >
                     <Pencil className="h-4 w-4" />
@@ -302,7 +331,7 @@ function KBListView({
                       e.stopPropagation();
                       setConfirmDeleteId(kb.id);
                     }}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                     aria-label={tc('delete')}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -330,7 +359,7 @@ function KBListView({
                       <button
                         onClick={() => handleDelete(kb.id)}
                         disabled={deleteMutation.isPending}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
                       >
                         {deleteMutation.isPending && (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -339,7 +368,7 @@ function KBListView({
                       </button>
                       <button
                         onClick={() => setConfirmDeleteId(null)}
-                        className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
+                        className="rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
                       >
                         {tc('cancel')}
                       </button>
@@ -362,7 +391,7 @@ function KBListView({
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         placeholder={t('namePlaceholder')}
-                        className="w-full rounded-md border bg-background px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full rounded-lg border bg-background px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         autoFocus
                       />
                     </div>
@@ -372,14 +401,14 @@ function KBListView({
                         value={editDescription}
                         onChange={(e) => setEditDescription(e.target.value)}
                         placeholder={t('descriptionPlaceholder')}
-                        className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full rounded-lg border bg-background px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       />
                     </div>
                     <div className="flex items-center justify-center gap-2">
                       <button
                         type="submit"
                         disabled={updateMutation.isPending || !editName.trim()}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
                       >
                         {updateMutation.isPending ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -391,7 +420,7 @@ function KBListView({
                       <button
                         type="button"
                         onClick={cancelEditing}
-                        className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
+                        className="rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
                       >
                         {tc('cancel')}
                       </button>
@@ -453,6 +482,18 @@ function KBDetailView({
     URL: t('contentTypeUrl'),
   };
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
+  const searchMutation = useSearchKB();
+
+  // Bulk import state
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [bulkJson, setBulkJson] = useState('');
+  const [bulkError, setBulkError] = useState('');
+  const [bulkSuccess, setBulkSuccess] = useState(false);
+  const bulkImportMutation = useBulkImportDocuments();
+
   const addDocMutation = useAddDocument();
   const deleteDocMutation = useDeleteDocument();
 
@@ -474,7 +515,13 @@ function KBDetailView({
     if (!editName.trim()) return;
     updateKbMutation.mutate(
       { kbId, name: editName.trim(), description: editDescription.trim() || undefined },
-      { onSuccess: () => setIsEditing(false) },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+          toast.success(tc('toast.kbUpdated'));
+        },
+        onError: () => toast.error(tc('toast.kbUpdateFailed')),
+      },
     );
   }
 
@@ -494,7 +541,13 @@ function KBDetailView({
             contentType: 'PDF',
             fileBase64: base64,
           },
-          { onSuccess: resetForm },
+          {
+            onSuccess: () => {
+              resetForm();
+              toast.success(tc('toast.docAdded'));
+            },
+            onError: () => toast.error(tc('toast.docAddFailed')),
+          },
         );
       };
       reader.readAsDataURL(pdfFile);
@@ -510,7 +563,13 @@ function KBDetailView({
           contentType: 'URL',
           sourceUrl: docSourceUrl.trim(),
         },
-        { onSuccess: resetForm },
+        {
+          onSuccess: () => {
+            resetForm();
+            toast.success(tc('toast.docAdded'));
+          },
+          onError: () => toast.error(tc('toast.docAddFailed')),
+        },
       );
       return;
     }
@@ -524,7 +583,13 @@ function KBDetailView({
         contentType: docContentType,
         sourceUrl: docSourceUrl.trim() || undefined,
       },
-      { onSuccess: resetForm },
+      {
+        onSuccess: () => {
+          resetForm();
+          toast.success(tc('toast.docAdded'));
+        },
+        onError: () => toast.error(tc('toast.docAddFailed')),
+      },
     );
   }
 
@@ -540,8 +605,62 @@ function KBDetailView({
   function handleDeleteDocument(docId: string) {
     deleteDocMutation.mutate(
       { kbId, docId },
-      { onSuccess: () => setConfirmDeleteDocId(null) },
+      {
+        onSuccess: () => {
+          setConfirmDeleteDocId(null);
+          toast.success(tc('toast.docDeleted'));
+        },
+        onError: () => toast.error(tc('toast.docDeleteFailed')),
+      },
     );
+  }
+
+  function handleSearch(e: FormEvent) {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    searchMutation.mutate(
+      { kbId, query: searchQuery.trim() },
+      { onSuccess: (results) => setSearchResults(results) },
+    );
+  }
+
+  function clearSearch() {
+    setSearchQuery('');
+    setSearchResults(null);
+    searchMutation.reset();
+  }
+
+  function handleBulkImport(e: FormEvent) {
+    e.preventDefault();
+    setBulkError('');
+    setBulkSuccess(false);
+    try {
+      const parsed = JSON.parse(bulkJson);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        setBulkError(t('importError'));
+        return;
+      }
+      bulkImportMutation.mutate(
+        { kbId, documents: parsed },
+        {
+          onSuccess: () => {
+            setBulkSuccess(true);
+            setBulkJson('');
+            setTimeout(() => {
+              setShowBulkImport(false);
+              setBulkSuccess(false);
+            }, 1500);
+            toast.success(tc('toast.docsImported'));
+          },
+          onError: () => {
+            setBulkError(t('importError'));
+            toast.error(tc('toast.docsImportFailed'));
+          },
+        },
+      );
+    } catch {
+      setBulkError(t('importError'));
+    }
   }
 
   if (isLoading) {
@@ -558,9 +677,9 @@ function KBDetailView({
         <p className="text-muted-foreground">{tc('error')}</p>
         <button
           onClick={onBack}
-          className="mt-4 inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+          className="mt-4 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
           {tc('back')}
         </button>
       </div>
@@ -593,7 +712,7 @@ function KBDetailView({
                 required
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-10 w-full rounded-lg border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
             <div>
@@ -606,14 +725,14 @@ function KBDetailView({
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder={t('descriptionPlaceholder')}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-10 w-full rounded-lg border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="submit"
                 disabled={updateKbMutation.isPending || !editName.trim()}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
               >
                 {updateKbMutation.isPending ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -625,7 +744,7 @@ function KBDetailView({
               <button
                 type="button"
                 onClick={cancelEditing}
-                className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
               >
                 <XIcon className="h-3.5 w-3.5" />
                 {tc('cancel')}
@@ -639,7 +758,7 @@ function KBDetailView({
                 <h1 className="text-2xl font-bold">{kb.name}</h1>
                 <button
                   onClick={startEditing}
-                  className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   aria-label={tc('edit')}
                 >
                   <Pencil className="h-4 w-4" />
@@ -650,17 +769,170 @@ function KBDetailView({
               )}
             </div>
             {!showAddDocForm && (
-              <button
-                onClick={() => setShowAddDocForm(true)}
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                {t('addDocument')}
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => {
+                    setShowBulkImport(true);
+                    setBulkJson('');
+                    setBulkError('');
+                    setBulkSuccess(false);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                >
+                  <Package className="h-4 w-4" />
+                  {t('bulkImport')}
+                </button>
+                <button
+                  onClick={() => setShowAddDocForm(true)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t('addDocument')}
+                </button>
+              </div>
             )}
           </div>
         )}
       </div>
+
+      {/* Search bar */}
+      <form onSubmit={handleSearch} className="mb-6">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('searchKb')}
+              className="h-10 w-full rounded-lg border bg-background ps-9 pe-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={searchMutation.isPending || !searchQuery.trim()}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {searchMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
+          </button>
+          {searchResults !== null && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+            >
+              <XIcon className="h-4 w-4" />
+              {t('clearSearch')}
+            </button>
+          )}
+        </div>
+      </form>
+
+      {/* Search results */}
+      {searchResults !== null && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-3">{t('searchResults')}</h2>
+          {searchResults.length === 0 ? (
+            <div className="rounded-xl border bg-card p-8 text-center shadow-sm">
+              <Search className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+              <p className="text-muted-foreground">{t('noSearchResults')}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {searchResults.map((result) => (
+                <div
+                  key={result.id}
+                  className="rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold truncate">{result.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
+                        {result.content}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary shrink-0">
+                      {t('relevance')}: {Math.round(result.score * 100)}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Bulk import modal */}
+      {showBulkImport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-lg mx-4 rounded-xl border bg-card p-6 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">{t('bulkImportTitle')}</h2>
+              <button
+                onClick={() => setShowBulkImport(false)}
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('bulkImportHelp')}
+            </p>
+
+            <form onSubmit={handleBulkImport}>
+              <textarea
+                rows={8}
+                value={bulkJson}
+                onChange={(e) => {
+                  setBulkJson(e.target.value);
+                  setBulkError('');
+                  setBulkSuccess(false);
+                }}
+                placeholder={t('bulkImportPlaceholder')}
+                dir="ltr"
+                className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
+              />
+
+              {bulkError && (
+                <div className="mt-2 flex items-center gap-2 text-sm text-destructive">
+                  <XCircle className="h-4 w-4 shrink-0" />
+                  {bulkError}
+                </div>
+              )}
+
+              {bulkSuccess && (
+                <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                  <CheckCircle className="h-4 w-4 shrink-0" />
+                  {t('importSuccess')}
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 mt-4">
+                <button
+                  type="submit"
+                  disabled={bulkImportMutation.isPending || !bulkJson.trim()}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {bulkImportMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {bulkImportMutation.isPending ? t('importing') : t('bulkImport')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBulkImport(false)}
+                  className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                >
+                  {tc('cancel')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Add document form */}
       {showAddDocForm && (
@@ -711,7 +983,7 @@ function KBDetailView({
                 value={docTitle}
                 onChange={(e) => setDocTitle(e.target.value)}
                 placeholder={t('documentTitlePlaceholder')}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-10 w-full rounded-lg border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
 
@@ -727,7 +999,7 @@ function KBDetailView({
                     type="file"
                     accept=".pdf"
                     onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-sm file:font-medium file:text-primary"
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm file:me-3 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-sm file:font-medium file:text-primary"
                   />
                 </div>
                 {pdfFile && (
@@ -752,7 +1024,7 @@ function KBDetailView({
                   onChange={(e) => setDocSourceUrl(e.target.value)}
                   placeholder="https://example.com/page"
                   dir="ltr"
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="h-10 w-full rounded-lg border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t('urlHint')}
@@ -773,7 +1045,7 @@ function KBDetailView({
                   value={docContent}
                   onChange={(e) => setDocContent(e.target.value)}
                   placeholder={t('documentContentPlaceholder')}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                  className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
                 />
               </div>
             )}
@@ -783,7 +1055,7 @@ function KBDetailView({
             <button
               type="submit"
               disabled={addDocMutation.isPending || !docTitle.trim()}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {addDocMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               {t('addDocument')}
@@ -791,7 +1063,7 @@ function KBDetailView({
             <button
               type="button"
               onClick={resetForm}
-              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+              className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
             >
               {tc('cancel')}
             </button>
@@ -800,7 +1072,7 @@ function KBDetailView({
       )}
 
       {/* Empty state */}
-      {documents.length === 0 && (
+      {searchResults === null && documents.length === 0 && (
         <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
           <FileText className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
           <p className="text-muted-foreground">{t('noDocuments')}</p>
@@ -808,7 +1080,7 @@ function KBDetailView({
       )}
 
       {/* Documents table */}
-      {documents.length > 0 && (
+      {searchResults === null && documents.length > 0 && (
         <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -829,7 +1101,7 @@ function KBDetailView({
                     <React.Fragment key={doc.id}>
                       <tr
                         className={cn(
-                          'hover:bg-muted/30 transition-colors cursor-pointer',
+                          'hover:bg-muted/50 transition-colors cursor-pointer',
                           isExpanded ? 'bg-muted/20' : 'border-b last:border-b-0',
                         )}
                         onClick={() => setExpandedDocId(isExpanded ? null : doc.id)}
@@ -865,7 +1137,7 @@ function KBDetailView({
                                 <button
                                   onClick={() => handleDeleteDocument(doc.id)}
                                   disabled={deleteDocMutation.isPending}
-                                  className="inline-flex items-center gap-1 rounded-md bg-destructive px-2.5 py-1 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                                  className="inline-flex items-center gap-1 rounded-lg bg-destructive px-2.5 py-1 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
                                 >
                                   {deleteDocMutation.isPending && (
                                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -874,7 +1146,7 @@ function KBDetailView({
                                 </button>
                                 <button
                                   onClick={() => setConfirmDeleteDocId(null)}
-                                  className="rounded-md border px-2.5 py-1 text-xs font-medium hover:bg-accent transition-colors"
+                                  className="rounded-lg border px-2.5 py-1 text-xs font-medium hover:bg-accent transition-colors"
                                 >
                                   {tc('cancel')}
                                 </button>
@@ -882,7 +1154,7 @@ function KBDetailView({
                             ) : (
                               <button
                                 onClick={() => setConfirmDeleteDocId(doc.id)}
-                                className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                                 aria-label={tc('delete')}
                               >
                                 <Trash2 className="h-4 w-4" />

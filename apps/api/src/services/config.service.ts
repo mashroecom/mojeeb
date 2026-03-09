@@ -1,54 +1,45 @@
 import { prisma } from '../config/database';
+import { redis } from '../config/redis';
 import { logger } from '../config/logger';
 
-interface CacheEntry {
-  value: string;
-  expiresAt: number;
-}
-
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const REDIS_PREFIX = 'config:';
+const REDIS_TTL = 3600; // 1 hour
 
 const VALID_CATEGORIES = ['ai', 'payment', 'email', 'meta', 'oauth', 'general', 'security', 'notifications', 'org_defaults', 'token_pricing'] as const;
 type ConfigCategory = (typeof VALID_CATEGORIES)[number];
 
 export class ConfigService {
-  private cache: Map<string, CacheEntry> = new Map();
-
-  /**
-   * Load all configs for a given category into cache.
-   */
-  async loadCategory(category: ConfigCategory): Promise<void> {
-    const configs = await prisma.systemConfig.findMany({
-      where: { category },
-    });
-
-    const now = Date.now();
-    for (const cfg of configs) {
-      this.cache.set(cfg.key, {
-        value: cfg.value,
-        expiresAt: now + CACHE_TTL_MS,
-      });
+  async warmCache(): Promise<void> {
+    try {
+      const configs = await prisma.systemConfig.findMany();
+      const pipeline = redis.pipeline();
+      for (const cfg of configs) {
+        pipeline.setex(`${REDIS_PREFIX}${cfg.key}`, REDIS_TTL, cfg.value);
+      }
+      await pipeline.exec();
+      logger.info(`Config cache warmed with ${configs.length} keys`);
+    } catch (err) {
+      logger.warn({ err }, 'Failed to warm config cache');
     }
   }
 
-  /**
-   * Get a single config value by key.
-   * Falls back: cache -> DB -> process.env
-   */
   async get(key: string): Promise<string> {
-    // Check cache first
-    const cached = this.cache.get(key);
-    if (cached && cached.expiresAt > Date.now()) {
-      return cached.value;
+    // Try Redis first
+    try {
+      const cached = await redis.get(`${REDIS_PREFIX}${key}`);
+      if (cached !== null) return cached;
+    } catch (err) {
+      logger.debug({ err }, 'Redis config read failed');
     }
 
     // Try DB
     const record = await prisma.systemConfig.findUnique({ where: { key } });
     if (record) {
-      this.cache.set(key, {
-        value: record.value,
-        expiresAt: Date.now() + CACHE_TTL_MS,
-      });
+      try {
+        await redis.setex(`${REDIS_PREFIX}${key}`, REDIS_TTL, record.value);
+      } catch {
+        // ignore write-back failure
+      }
       return record.value;
     }
 
@@ -56,24 +47,19 @@ export class ConfigService {
     return process.env[key] || '';
   }
 
-  /**
-   * Set a config value in the database and update cache.
-   */
   async set(key: string, value: string): Promise<void> {
     await prisma.systemConfig.update({
       where: { key },
       data: { value },
     });
 
-    this.cache.set(key, {
-      value,
-      expiresAt: Date.now() + CACHE_TTL_MS,
-    });
+    try {
+      await redis.setex(`${REDIS_PREFIX}${key}`, REDIS_TTL, value);
+    } catch (err) {
+      logger.debug({ err }, 'Redis config write failed');
+    }
   }
 
-  /**
-   * Get all configs for a category from the database.
-   */
   async getByCategory(category: ConfigCategory) {
     const configs = await prisma.systemConfig.findMany({
       where: { category },
@@ -83,11 +69,6 @@ export class ConfigService {
     return configs;
   }
 
-  /**
-   * Mask a config value for display.
-   * Shows first 4 + last 4 chars with *** in between.
-   * Returns empty string if value is empty.
-   */
   maskValue(value: string, isSecret: boolean): string {
     if (!isSecret) {
       return value;
@@ -101,12 +82,16 @@ export class ConfigService {
     return `${value.substring(0, 4)}***${value.substring(value.length - 4)}`;
   }
 
-  /**
-   * Clear all cached values.
-   */
-  clearCache(): void {
-    this.cache.clear();
-    logger.debug('Config cache cleared');
+  async clearCache(): Promise<void> {
+    try {
+      const keys = await redis.keys(`${REDIS_PREFIX}*`);
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+      logger.debug('Config cache cleared');
+    } catch (err) {
+      logger.debug({ err }, 'Failed to clear config cache');
+    }
   }
 }
 

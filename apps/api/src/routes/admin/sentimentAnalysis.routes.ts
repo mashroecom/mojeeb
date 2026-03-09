@@ -6,55 +6,37 @@ const router: Router = Router();
 // GET /stats - Emotion/sentiment statistics
 router.get('/stats', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const [emotionDistribution, negativeConversations, totalWithEmotion] = await Promise.all([
-      prisma.message.groupBy({
-        by: ['emotion'],
-        where: { emotion: { not: null } },
-        _count: { _all: true },
-        orderBy: { _count: { emotion: 'desc' } },
-      }),
-      prisma.conversation.findMany({
-        where: {
-          lastEmotion: { in: ['angry', 'frustrated'] },
-        },
-        orderBy: { lastMessageAt: 'desc' },
-        take: 10,
-        select: {
-          id: true,
-          customerName: true,
-          lastEmotion: true,
-          lastMessageAt: true,
-          messages: {
-            orderBy: { createdAt: 'desc' },
-            take: 1,
-            select: { content: true },
-          },
-        },
-      }),
-      prisma.conversation.count({
-        where: { lastEmotion: { not: null } },
-      }),
-    ]);
+    const emotionDistribution = await prisma.message.groupBy({
+      by: ['emotion'],
+      where: { emotion: { not: null } },
+      _count: { _all: true },
+      orderBy: { _count: { emotion: 'desc' } },
+    });
 
     const emotionMap: Record<string, number> = {};
+    let totalAnalyzed = 0;
     for (const row of emotionDistribution) {
       if (row.emotion) {
         emotionMap[row.emotion] = row._count._all;
+        totalAnalyzed += row._count._all;
       }
     }
+
+    const positiveEmotions = ['happy', 'satisfied'];
+    const negativeEmotions = ['angry', 'frustrated', 'sad'];
+
+    const positiveCount = positiveEmotions.reduce((sum, e) => sum + (emotionMap[e] || 0), 0);
+    const negativeCount = negativeEmotions.reduce((sum, e) => sum + (emotionMap[e] || 0), 0);
+    const neutralCount = totalAnalyzed - positiveCount - negativeCount;
 
     res.json({
       success: true,
       data: {
+        totalAnalyzed,
+        positivePct: totalAnalyzed > 0 ? (positiveCount / totalAnalyzed) * 100 : 0,
+        negativePct: totalAnalyzed > 0 ? (negativeCount / totalAnalyzed) * 100 : 0,
+        neutralPct: totalAnalyzed > 0 ? (neutralCount / totalAnalyzed) * 100 : 0,
         emotionDistribution: emotionMap,
-        negativeConversations: negativeConversations.map((c) => ({
-          id: c.id,
-          customerName: c.customerName,
-          lastEmotion: c.lastEmotion,
-          lastMessageAt: c.lastMessageAt,
-          lastMessagePreview: c.messages[0]?.content?.substring(0, 120) || '',
-        })),
-        totalWithEmotion,
       },
     });
   } catch (err) {
@@ -62,27 +44,40 @@ router.get('/stats', async (_req: Request, res: Response, next: NextFunction) =>
   }
 });
 
-// GET /trends - Last 30 days emotion distribution by day
+// GET /trends - Recent negative conversations
 router.get('/trends', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const trends = await prisma.$queryRaw<{ date: string; emotion: string; count: number }[]>`
-      SELECT DATE("createdAt") as date,
-             emotion,
-             COUNT(*)::int as count
-      FROM "messages"
-      WHERE "createdAt" >= NOW() - INTERVAL '30 days'
-        AND emotion IS NOT NULL
-      GROUP BY DATE("createdAt"), emotion
-      ORDER BY date ASC, count DESC
-    `;
+    const negativeConversations = await prisma.conversation.findMany({
+      where: {
+        lastEmotion: { in: ['angry', 'frustrated', 'sad'] },
+      },
+      orderBy: { lastMessageAt: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        customerName: true,
+        lastEmotion: true,
+        lastMessageAt: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { content: true },
+        },
+      },
+    });
 
     res.json({
       success: true,
-      data: trends.map((r) => ({
-        date: r.date,
-        emotion: r.emotion,
-        count: Number(r.count),
-      })),
+      data: {
+        recentNegative: negativeConversations.map((c) => ({
+          id: c.id,
+          visitorName: c.customerName,
+          conversationId: c.id,
+          emotion: c.lastEmotion,
+          messagePreview: c.messages[0]?.content?.substring(0, 120) || '',
+          createdAt: c.lastMessageAt,
+        })),
+      },
     });
   } catch (err) {
     next(err);

@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 import { config } from '../config';
 import { logger } from '../config/logger';
 import { configService } from './config.service';
+import { prisma } from '../config/database';
 
 /** Escape HTML entities to prevent XSS in email templates. */
 function escapeHtml(str: string): string {
@@ -59,6 +60,27 @@ async function getFromAddress(): Promise<string> {
 }
 
 export class EmailService {
+  private async getBranding(): Promise<{ siteName: string; primaryColor: string; logoUrl: string | null }> {
+    try {
+      const settings = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } });
+      const rawName = settings?.siteName || 'Mojeeb';
+      const rawColor = settings?.primaryColor || '#6366f1';
+      const rawLogo = settings?.logoUrl || null;
+
+      return {
+        siteName: escapeHtml(rawName),
+        // Validate color is a safe CSS value (hex, rgb, hsl, named color)
+        primaryColor: /^(#[0-9a-fA-F]{3,8}|rgb\([\d\s,.%]+\)|hsl\([\d\s,.%]+\)|[a-zA-Z]{1,20})$/.test(rawColor)
+          ? rawColor
+          : '#6366f1',
+        // Validate URL protocol (prevent javascript: / data: injection)
+        logoUrl: rawLogo && /^https?:\/\//i.test(rawLogo) ? escapeHtml(rawLogo) : null,
+      };
+    } catch {
+      return { siteName: 'Mojeeb', primaryColor: '#6366f1', logoUrl: null };
+    }
+  }
+
   async sendEmailVerification(to: string, verifyToken: string, locale: string = 'en') {
     const verifyUrl = `${config.frontendUrl}/${locale}/verify-email?token=${verifyToken}`;
 
@@ -68,27 +90,29 @@ export class EmailService {
       return;
     }
 
+    const branding = await this.getBranding();
     const fromAddress = await getFromAddress();
     await resend.emails.send({
       from: fromAddress,
       to,
       subject: locale === 'ar'
-        ? 'Mojeeb - تأكيد بريدك الإلكتروني'
-        : 'Verify Your Email - Mojeeb',
+        ? `${branding.siteName} - تأكيد بريدك الإلكتروني`
+        : `Verify Your Email - ${branding.siteName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
+            ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="${branding.siteName}" style="max-height: 48px; margin-bottom: 8px;" />` : ''}
+            <h1 style="color: ${branding.primaryColor}; font-size: 28px; margin: 0;">${branding.siteName}</h1>
           </div>
 
           <!-- English -->
           <div style="margin-bottom: 32px;">
             <h2 style="color: #1f2937; font-size: 20px;">Verify Your Email</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              Welcome to Mojeeb! Please verify your email address by clicking the button below.
+              Welcome to ${branding.siteName}! Please verify your email address by clicking the button below.
             </p>
             <div style="text-align: center; margin: 24px 0;">
-              <a href="${verifyUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+              <a href="${verifyUrl}" style="display: inline-block; background: ${branding.primaryColor}; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
                 Verify Email
               </a>
             </div>
@@ -103,10 +127,10 @@ export class EmailService {
           <div dir="rtl" style="text-align: right;">
             <h2 style="color: #1f2937; font-size: 20px;">تأكيد بريدك الإلكتروني</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.8;">
-              مرحباً بك في موجيب! يرجى تأكيد بريدك الإلكتروني بالضغط على الزر أدناه.
+              مرحباً بك في ${branding.siteName}! يرجى تأكيد بريدك الإلكتروني بالضغط على الزر أدناه.
             </p>
             <div style="text-align: center; margin: 24px 0;">
-              <a href="${verifyUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+              <a href="${verifyUrl}" style="display: inline-block; background: ${branding.primaryColor}; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
                 تأكيد البريد الإلكتروني
               </a>
             </div>
@@ -117,7 +141,7 @@ export class EmailService {
 
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
           <p style="color: #9ca3af; font-size: 11px; text-align: center;">
-            Mojeeb AI Customer Support Platform
+            ${branding.siteName} AI Customer Support Platform
           </p>
         </div>
       `,
@@ -133,17 +157,19 @@ export class EmailService {
       return;
     }
 
+    const branding = await this.getBranding();
     const fromAddress = await getFromAddress();
     await resend.emails.send({
       from: fromAddress,
       to,
       subject: locale === 'ar'
-        ? 'Mojeeb - إعادة تعيين كلمة المرور'
-        : 'Reset Your Password - Mojeeb',
+        ? `${branding.siteName} - إعادة تعيين كلمة المرور`
+        : `Reset Your Password - ${branding.siteName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
+            ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="${branding.siteName}" style="max-height: 48px; margin-bottom: 8px;" />` : ''}
+            <h1 style="color: ${branding.primaryColor}; font-size: 28px; margin: 0;">${branding.siteName}</h1>
           </div>
 
           <!-- English -->
@@ -153,7 +179,7 @@ export class EmailService {
               You requested a password reset. Click the button below to set a new password.
             </p>
             <div style="text-align: center; margin: 24px 0;">
-              <a href="${resetUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+              <a href="${resetUrl}" style="display: inline-block; background: ${branding.primaryColor}; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
                 Reset Password
               </a>
             </div>
@@ -171,7 +197,7 @@ export class EmailService {
               لقد طلبت إعادة تعيين كلمة المرور. اضغط على الزر أدناه لتعيين كلمة مرور جديدة.
             </p>
             <div style="text-align: center; margin: 24px 0;">
-              <a href="${resetUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+              <a href="${resetUrl}" style="display: inline-block; background: ${branding.primaryColor}; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
                 إعادة تعيين كلمة المرور
               </a>
             </div>
@@ -182,7 +208,7 @@ export class EmailService {
 
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
           <p style="color: #9ca3af; font-size: 11px; text-align: center;">
-            Mojeeb AI Customer Support Platform
+            ${branding.siteName} AI Customer Support Platform
           </p>
         </div>
       `,
@@ -196,30 +222,32 @@ export class EmailService {
       return;
     }
 
+    const branding = await this.getBranding();
     const fromAddress = await getFromAddress();
     await resend.emails.send({
       from: fromAddress,
       to,
       subject: locale === 'ar'
-        ? 'Mojeeb - مرحباً بك!'
-        : 'Welcome to Mojeeb!',
+        ? `${branding.siteName} - مرحباً بك!`
+        : `Welcome to ${branding.siteName}!`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
+            ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="${branding.siteName}" style="max-height: 48px; margin-bottom: 8px;" />` : ''}
+            <h1 style="color: ${branding.primaryColor}; font-size: 28px; margin: 0;">${branding.siteName}</h1>
           </div>
 
           <!-- English -->
           <div style="margin-bottom: 32px;">
             <h2 style="color: #1f2937; font-size: 20px;">Welcome, ${escapeHtml(firstName)}!</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              Your email has been verified successfully. You're all set to start using Mojeeb AI Customer Support.
+              Your email has been verified successfully. You're all set to start using ${branding.siteName} AI Customer Support.
             </p>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
               Get started by creating your first AI agent and connecting a channel.
             </p>
             <div style="text-align: center; margin: 24px 0;">
-              <a href="${config.frontendUrl}/en/agents" style="display: inline-block; background: #6366f1; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+              <a href="${config.frontendUrl}/en/agents" style="display: inline-block; background: ${branding.primaryColor}; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
                 Get Started
               </a>
             </div>
@@ -231,13 +259,13 @@ export class EmailService {
           <div dir="rtl" style="text-align: right;">
             <h2 style="color: #1f2937; font-size: 20px;">مرحباً، ${escapeHtml(firstName)}!</h2>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.8;">
-              تم تأكيد بريدك الإلكتروني بنجاح. أنت الآن جاهز لبدء استخدام موجيب لدعم العملاء بالذكاء الاصطناعي.
+              تم تأكيد بريدك الإلكتروني بنجاح. أنت الآن جاهز لبدء استخدام ${branding.siteName} لدعم العملاء بالذكاء الاصطناعي.
             </p>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.8;">
               ابدأ بإنشاء أول وكيل ذكاء اصطناعي وربط قناة اتصال.
             </p>
             <div style="text-align: center; margin: 24px 0;">
-              <a href="${config.frontendUrl}/ar/agents" style="display: inline-block; background: #6366f1; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+              <a href="${config.frontendUrl}/ar/agents" style="display: inline-block; background: ${branding.primaryColor}; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
                 ابدأ الآن
               </a>
             </div>
@@ -245,7 +273,7 @@ export class EmailService {
 
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
           <p style="color: #9ca3af; font-size: 11px; text-align: center;">
-            Mojeeb AI Customer Support Platform
+            ${branding.siteName} AI Customer Support Platform
           </p>
         </div>
       `,
@@ -264,8 +292,8 @@ export class EmailService {
       return;
     }
 
+    const branding = await this.getBranding();
     const fromAddress = await getFromAddress();
-    // Notify the Mojeeb team
     await resend.emails.send({
       from: fromAddress,
       to: (await configService.get('SALES_EMAIL')) || 'sales@mojeeb.app',
@@ -273,7 +301,8 @@ export class EmailService {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
+            ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="${branding.siteName}" style="max-height: 48px; margin-bottom: 8px;" />` : ''}
+            <h1 style="color: ${branding.primaryColor}; font-size: 28px; margin: 0;">${branding.siteName}</h1>
           </div>
           <h2 style="color: #1f2937; font-size: 20px;">New Demo Call Request</h2>
           <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
@@ -284,20 +313,20 @@ export class EmailService {
             ${data.message ? `<tr><td style="padding: 8px; color: #6b7280; font-size: 14px;">Message</td><td style="padding: 8px; font-size: 14px;">${escapeHtml(data.message)}</td></tr>` : ''}
           </table>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-          <p style="color: #9ca3af; font-size: 11px; text-align: center;">Mojeeb AI Customer Support Platform</p>
+          <p style="color: #9ca3af; font-size: 11px; text-align: center;">${branding.siteName} AI Customer Support Platform</p>
         </div>
       `,
     });
 
-    // Send confirmation to the requester
     await resend.emails.send({
       from: fromAddress,
       to: data.email,
-      subject: 'Demo Request Received - Mojeeb',
+      subject: `Demo Request Received - ${branding.siteName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
+            ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="${branding.siteName}" style="max-height: 48px; margin-bottom: 8px;" />` : ''}
+            <h1 style="color: ${branding.primaryColor}; font-size: 28px; margin: 0;">${branding.siteName}</h1>
           </div>
           <div style="margin-bottom: 32px;">
             <h2 style="color: #1f2937; font-size: 20px;">Thank you, ${escapeHtml(data.name)}!</h2>
@@ -309,7 +338,7 @@ export class EmailService {
             <p style="color: #4b5563; font-size: 14px; line-height: 1.8;">لقد استلمنا طلبك للعرض التوضيحي. سيتواصل معك فريقنا خلال 24 ساعة لتحديد موعد المكالمة.</p>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-          <p style="color: #9ca3af; font-size: 11px; text-align: center;">Mojeeb AI Customer Support Platform</p>
+          <p style="color: #9ca3af; font-size: 11px; text-align: center;">${branding.siteName} AI Customer Support Platform</p>
         </div>
       `,
     });
@@ -326,6 +355,7 @@ export class EmailService {
       return;
     }
 
+    const branding = await this.getBranding();
     const fromAddress = await getFromAddress();
     await resend.emails.send({
       from: fromAddress,
@@ -334,7 +364,8 @@ export class EmailService {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
+            ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="${branding.siteName}" style="max-height: 48px; margin-bottom: 8px;" />` : ''}
+            <h1 style="color: ${branding.primaryColor}; font-size: 28px; margin: 0;">${branding.siteName}</h1>
           </div>
           <h2 style="color: #1f2937; font-size: 20px;">New Contact Message</h2>
           <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
@@ -346,20 +377,20 @@ export class EmailService {
             <p style="color: #1f2937; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(data.message)}</p>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-          <p style="color: #9ca3af; font-size: 11px; text-align: center;">Mojeeb AI Customer Support Platform</p>
+          <p style="color: #9ca3af; font-size: 11px; text-align: center;">${branding.siteName} AI Customer Support Platform</p>
         </div>
       `,
     });
 
-    // Auto-reply to sender
     await resend.emails.send({
       from: fromAddress,
       to: data.email,
-      subject: 'We received your message - Mojeeb',
+      subject: `We received your message - ${branding.siteName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
+            ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="${branding.siteName}" style="max-height: 48px; margin-bottom: 8px;" />` : ''}
+            <h1 style="color: ${branding.primaryColor}; font-size: 28px; margin: 0;">${branding.siteName}</h1>
           </div>
           <div style="margin-bottom: 32px;">
             <h2 style="color: #1f2937; font-size: 20px;">Thank you, ${escapeHtml(data.name)}!</h2>
@@ -371,7 +402,7 @@ export class EmailService {
             <p style="color: #4b5563; font-size: 14px; line-height: 1.8;">لقد استلمنا رسالتك وسنرد عليك في أقرب وقت ممكن.</p>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-          <p style="color: #9ca3af; font-size: 11px; text-align: center;">Mojeeb AI Customer Support Platform</p>
+          <p style="color: #9ca3af; font-size: 11px; text-align: center;">${branding.siteName} AI Customer Support Platform</p>
         </div>
       `,
     });
@@ -383,22 +414,24 @@ export class EmailService {
       return;
     }
 
+    const branding = await this.getBranding();
     const fromAddress = await getFromAddress();
     await resend.emails.send({
       from: fromAddress,
       to,
-      subject: `${subject} - Mojeeb`,
+      subject: `${subject} - ${branding.siteName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #6366f1; font-size: 28px; margin: 0;">Mojeeb</h1>
+            ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="${branding.siteName}" style="max-height: 48px; margin-bottom: 8px;" />` : ''}
+            <h1 style="color: ${branding.primaryColor}; font-size: 28px; margin: 0;">${branding.siteName}</h1>
           </div>
           <div style="margin-bottom: 32px;">
             ${firstName ? `<p style="color: #1f2937; font-size: 16px; font-weight: 600;">Hi ${escapeHtml(firstName)},</p>` : ''}
             <div style="color: #4b5563; font-size: 14px; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(body)}</div>
           </div>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-          <p style="color: #9ca3af; font-size: 11px; text-align: center;">Mojeeb AI Customer Support Platform</p>
+          <p style="color: #9ca3af; font-size: 11px; text-align: center;">${branding.siteName} AI Customer Support Platform</p>
         </div>
       `,
     });

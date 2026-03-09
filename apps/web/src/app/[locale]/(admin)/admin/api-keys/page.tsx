@@ -76,7 +76,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 function StatSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm animate-pulse">
+    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
       <div className="h-3 w-20 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -145,7 +145,7 @@ export default function AdminApiKeysPage() {
   const revokeKey = useRevokeAdminApiKey();
   const deleteKey = useDeleteAdminApiKey();
 
-  const entries: ApiKeyEntry[] = data?.apiKeys ?? data?.data ?? [];
+  const entries: ApiKeyEntry[] = data?.apiKeys ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   // Handlers
@@ -202,28 +202,28 @@ export default function AdminApiKeysPage() {
           </>
         ) : (
           <>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Key className="h-4 w-4" />
                 {t('totalKeys')}
               </div>
               <p className="text-2xl font-bold">{stats?.total ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 {t('activeKeys')}
               </div>
               <p className="text-2xl font-bold text-green-600">{stats?.active ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <XCircle className="h-4 w-4 text-red-500" />
                 {t('revokedKeys')}
               </div>
               <p className="text-2xl font-bold text-red-600">{stats?.revoked ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Clock className="h-4 w-4 text-amber-500" />
                 {t('expiredKeys')}
@@ -243,7 +243,7 @@ export default function AdminApiKeysPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-md border bg-background ps-9 pe-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            className="w-full rounded-lg border bg-background ps-9 pe-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ export default function AdminApiKeysPage() {
               setStatusFilter(e.target.value as StatusFilter);
               setPage(1);
             }}
-            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
           >
             <option value="">{t('allStatuses')}</option>
             <option value="active">{t('active')}</option>
@@ -277,11 +277,11 @@ export default function AdminApiKeysPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1000px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('name')}
                 </th>
@@ -331,7 +331,7 @@ export default function AdminApiKeysPage() {
                   return (
                     <tr
                       key={entry.id}
-                      className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
+                      className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
                     >
                       {/* Name */}
                       <td className="px-4 py-3">
@@ -397,7 +397,7 @@ export default function AdminApiKeysPage() {
                         <span
                           className={cn(
                             'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                            STATUS_BADGE[status] ?? 'bg-gray-100 text-gray-700',
+                            STATUS_BADGE[status] ?? 'bg-muted text-muted-foreground',
                           )}
                         >
                           {t(status)}
@@ -416,7 +416,7 @@ export default function AdminApiKeysPage() {
                             <button
                               onClick={() => handleRevoke(entry.id)}
                               disabled={revokeKey.isPending}
-                              className="inline-flex items-center gap-1 rounded-md border border-orange-200 px-2.5 py-1 text-xs font-medium text-orange-600 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-900/20 transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-1 rounded-lg border border-orange-200 px-2.5 py-1 text-xs font-medium text-orange-600 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-900/20 transition-colors disabled:opacity-50"
                             >
                               <ShieldAlert className="h-3 w-3" />
                               {t('revoke')}
@@ -425,7 +425,7 @@ export default function AdminApiKeysPage() {
                           <button
                             onClick={() => handleDelete(entry.id)}
                             disabled={deleteKey.isPending}
-                            className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
                           >
                             <Trash2 className="h-3 w-3" />
                             {tc('delete')}

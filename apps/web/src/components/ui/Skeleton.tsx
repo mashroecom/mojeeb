@@ -21,7 +21,7 @@ export function Skeleton({
     text: 'h-4 w-full rounded',
     circle: 'h-10 w-10 rounded-full',
     card: 'h-32 w-full rounded-lg',
-    rect: 'h-20 w-full rounded-md',
+    rect: 'h-20 w-full rounded-lg',
   };
 
   return (
@@ -70,7 +70,7 @@ export function SkeletonCard({ className }: SkeletonCardProps) {
   return (
     <div
       className={cn(
-        'rounded-lg border bg-card p-6 space-y-4',
+        'rounded-xl border bg-card p-6 space-y-4',
         className,
       )}
     >

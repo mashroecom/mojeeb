@@ -9,10 +9,10 @@ import { logger } from '../../config/logger';
 
 const router: Router = Router();
 
-const VALID_CATEGORIES = ['ai', 'payment', 'email', 'meta', 'oauth', 'general'] as const;
+const VALID_CATEGORIES = ['ai', 'payment', 'email', 'meta', 'oauth', 'general', 'notifications', 'security'] as const;
 
 // Default config keys to seed if they don't exist
-const CONFIG_DEFAULTS: Record<string, { category: string; label: string; description: string; isSecret: boolean }> = {
+const CONFIG_DEFAULTS: Record<string, { category: string; label: string; description: string; isSecret: boolean; defaultValue?: string }> = {
   // AI Providers
   OPENAI_API_KEY: { category: 'ai', label: 'OpenAI API Key', description: 'API key for OpenAI GPT models', isSecret: true },
   OPENAI_MODEL: { category: 'ai', label: 'OpenAI Model', description: 'Default OpenAI model (e.g. gpt-4o)', isSecret: false },
@@ -39,6 +39,23 @@ const CONFIG_DEFAULTS: Record<string, { category: string; label: string; descrip
   APP_URL: { category: 'general', label: 'Application URL', description: 'Public URL of the application (e.g. https://mojeeb.app)', isSecret: false },
   API_URL: { category: 'general', label: 'API URL', description: 'Public URL of the API server (e.g. https://api.mojeeb.app)', isSecret: false },
   JWT_SECRET: { category: 'general', label: 'JWT Secret', description: 'Secret key for signing JWT tokens (min 32 chars)', isSecret: true },
+  // Notifications
+  NOTIFY_NEW_USER: { category: 'notifications', label: 'New User Signup', description: 'Notify when a new user signs up', isSecret: false, defaultValue: 'true' },
+  NOTIFY_NEW_ORG: { category: 'notifications', label: 'New Organization', description: 'Notify when a new organization is created', isSecret: false, defaultValue: 'true' },
+  NOTIFY_FAILED_PAYMENT: { category: 'notifications', label: 'Failed Payment', description: 'Notify on failed payment attempts', isSecret: false, defaultValue: 'true' },
+  NOTIFY_SYSTEM_ERRORS: { category: 'notifications', label: 'System Errors', description: 'Notify on critical system errors', isSecret: false, defaultValue: 'true' },
+  NOTIFY_NEW_CONTACT: { category: 'notifications', label: 'New Contact Message', description: 'Notify on new contact form submissions', isSecret: false, defaultValue: 'true' },
+  NOTIFY_NEW_DEMO: { category: 'notifications', label: 'New Demo Request', description: 'Notify on new demo requests', isSecret: false, defaultValue: 'true' },
+  DAILY_SUMMARY: { category: 'notifications', label: 'Daily Summary', description: 'Send a daily summary email to admin', isSecret: false, defaultValue: 'false' },
+  ADMIN_ALERT_EMAIL: { category: 'notifications', label: 'Admin Alert Email', description: 'Email address for admin notifications', isSecret: false },
+  // Security
+  MIN_PASSWORD_LENGTH: { category: 'security', label: 'Min Password Length', description: 'Minimum password length required', isSecret: false, defaultValue: '8' },
+  REQUIRE_UPPERCASE: { category: 'security', label: 'Require Uppercase', description: 'Require at least one uppercase letter in passwords', isSecret: false, defaultValue: 'true' },
+  REQUIRE_NUMBERS: { category: 'security', label: 'Require Numbers', description: 'Require at least one number in passwords', isSecret: false, defaultValue: 'true' },
+  REQUIRE_SPECIAL_CHARS: { category: 'security', label: 'Require Special Characters', description: 'Require at least one special character in passwords', isSecret: false, defaultValue: 'false' },
+  SESSION_TIMEOUT_MINUTES: { category: 'security', label: 'Session Timeout', description: 'Session timeout in minutes', isSecret: false, defaultValue: '60' },
+  MAX_LOGIN_ATTEMPTS: { category: 'security', label: 'Max Login Attempts', description: 'Maximum failed login attempts before lockout', isSecret: false, defaultValue: '5' },
+  LOCKOUT_DURATION_MINUTES: { category: 'security', label: 'Lockout Duration', description: 'Account lockout duration in minutes', isSecret: false, defaultValue: '15' },
 };
 
 async function ensureConfigDefaults() {
@@ -49,7 +66,7 @@ async function ensureConfigDefaults() {
     .filter(([key]) => !existingKeys.has(key))
     .map(([key, def]) => ({
       key,
-      value: process.env[key] || '',
+      value: process.env[key] || def.defaultValue || '',
       category: def.category,
       label: def.label,
       description: def.description,

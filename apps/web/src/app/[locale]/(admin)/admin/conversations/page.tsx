@@ -10,6 +10,8 @@ import {
   useAdminConversations,
   useAdminConversationStats,
   useBulkUpdateConversationStatus,
+  useDeleteAdminConversation,
+  useBulkDeleteConversations,
 } from '@/hooks/useAdmin';
 import { cn } from '@/lib/utils';
 import { exportToCsv } from '@/lib/exportCsv';
@@ -33,7 +35,7 @@ const STATUS_COLORS: Record<string, string> = {
   HANDED_OFF: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
   WAITING:    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
   RESOLVED:   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  ARCHIVED:   'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  ARCHIVED:   'bg-muted text-muted-foreground',
 };
 
 const STATUS_OPTIONS = ['ACTIVE', 'HANDED_OFF', 'WAITING', 'RESOLVED', 'ARCHIVED'] as const;
@@ -84,6 +86,8 @@ export default function AdminConversationsPage() {
 
   const { data: stats, isLoading: statsLoading } = useAdminConversationStats();
   const bulkStatus = useBulkUpdateConversationStatus();
+  const deleteConversation = useDeleteAdminConversation();
+  const bulkDelete = useBulkDeleteConversations();
 
   const conversations = data?.conversations ?? [];
   const totalPages = data?.totalPages ?? 1;
@@ -123,6 +127,33 @@ export default function AdminConversationsPage() {
       variant: 'default',
       onConfirm: () => {
         bulkStatus.mutate({ conversationIds: ids, status: 'RESOLVED' }, {
+          onSuccess: () => setSelectedIds(new Set()),
+        });
+      },
+    });
+  }
+
+  function handleDeleteSingle(id: string) {
+    setConfirmDialog({
+      open: true,
+      title: tc('delete'),
+      message: t('confirmDelete'),
+      variant: 'danger',
+      onConfirm: () => {
+        deleteConversation.mutate(id);
+      },
+    });
+  }
+
+  function handleBulkDelete() {
+    const ids = Array.from(selectedIds);
+    setConfirmDialog({
+      open: true,
+      title: t('bulkDelete', { count: ids.length }),
+      message: t('confirmBulkDelete', { count: ids.length }),
+      variant: 'danger',
+      onConfirm: () => {
+        bulkDelete.mutate(ids, {
           onSuccess: () => setSelectedIds(new Set()),
         });
       },
@@ -171,15 +202,15 @@ export default function AdminConversationsPage() {
   function handleExport() {
     if (!conversations.length) return;
     const rows = conversations.map((conv: any) => ({
-      Customer: conv.customerName ?? conv.lead?.name ?? conv.customer?.name ?? '',
-      Email: conv.customerEmail ?? conv.lead?.email ?? conv.customer?.email ?? '',
-      Organization: conv.org?.name ?? '',
-      Channel: conv.channel?.name ?? '',
-      'Channel Type': conv.channel?.type ?? '',
-      Messages: conv._count?.messages ?? 0,
-      Status: conv.status,
-      Emotion: conv.emotion ?? '',
-      'Last Message': fmtDateTime(conv.lastMessageAt, locale),
+      [t('csvCustomer')]: conv.customerName ?? conv.leads?.[0]?.name ?? '',
+      [t('csvEmail')]: conv.customerEmail ?? conv.leads?.[0]?.email ?? '',
+      [t('csvOrganization')]: conv.org?.name ?? '',
+      [t('csvChannel')]: conv.channel?.name ?? '',
+      [t('csvChannelType')]: conv.channel?.type ?? '',
+      [t('csvMessages')]: conv._count?.messages ?? 0,
+      [t('csvStatus')]: conv.status,
+      [t('csvEmotion')]: conv.lastEmotion ?? '',
+      [t('csvLastMessage')]: fmtDateTime(conv.lastMessageAt, locale),
     }));
     exportToCsv('admin-conversations', rows);
   }
@@ -241,7 +272,7 @@ export default function AdminConversationsPage() {
             color: 'text-primary',
           },
         ].map((card, idx) => (
-          <div key={idx} className="rounded-lg border bg-card p-4">
+          <div key={idx} className="rounded-xl border bg-card p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <card.icon className={cn('h-4 w-4', card.color)} />
               <span className="text-sm">{card.label}</span>
@@ -265,7 +296,7 @@ export default function AdminConversationsPage() {
             placeholder={t('search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border bg-card ps-10 pe-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-lg border bg-card ps-10 pe-4 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
 
@@ -294,7 +325,7 @@ export default function AdminConversationsPage() {
 
       {/* ── Expanded filters ────────────────────────────── */}
       {showFilters && (
-        <div className="flex flex-col sm:flex-row gap-4 mb-6 rounded-lg border bg-card p-4">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 rounded-xl border bg-card p-4">
           {/* Status */}
           <div className="flex-1">
             <label className="block text-xs font-medium text-muted-foreground mb-1">
@@ -303,7 +334,7 @@ export default function AdminConversationsPage() {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">{t('allStatuses')}</option>
               {STATUS_OPTIONS.map((s) => (
@@ -321,7 +352,7 @@ export default function AdminConversationsPage() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
@@ -334,7 +365,7 @@ export default function AdminConversationsPage() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
@@ -353,7 +384,7 @@ export default function AdminConversationsPage() {
       )}
 
       {/* ── Table ───────────────────────────────────────── */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="rounded-xl border bg-card overflow-hidden">
         {isLoading ? (
           /* Loading skeleton */
           <div className="divide-y">
@@ -389,7 +420,7 @@ export default function AdminConversationsPage() {
                         if (el) el.indeterminate = someSelected && !allSelected;
                       }}
                       onChange={toggleSelectAll}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                      className="h-4 w-4 rounded border text-primary focus-visible:ring-primary cursor-pointer"
                       title={t('selectAll')}
                     />
                   </th>
@@ -419,7 +450,7 @@ export default function AdminConversationsPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleSelect(conv.id)}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                          className="h-4 w-4 rounded border text-primary focus-visible:ring-primary cursor-pointer"
                         />
                       </td>
 
@@ -427,10 +458,10 @@ export default function AdminConversationsPage() {
                       <td className="px-4 py-3">
                         <div>
                           <p className="font-medium">
-                            {conv.customerName ?? conv.lead?.name ?? conv.customer?.name ?? '\u2014'}
+                            {conv.customerName ?? conv.leads?.[0]?.name ?? '\u2014'}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {conv.customerEmail ?? conv.lead?.email ?? conv.customer?.email ?? ''}
+                            {conv.customerEmail ?? conv.leads?.[0]?.email ?? ''}
                           </p>
                         </div>
                       </td>
@@ -446,7 +477,7 @@ export default function AdminConversationsPage() {
                           <span>{conv.channel?.name ?? '\u2014'}</span>
                           {conv.channel?.type && (
                             <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                              {conv.channel.type}
+                              {t(`channel_${conv.channel.type}`)}
                             </span>
                           )}
                         </div>
@@ -471,7 +502,7 @@ export default function AdminConversationsPage() {
 
                       {/* Emotion */}
                       <td className="px-4 py-3 text-muted-foreground">
-                        {conv.emotion ?? '\u2014'}
+                        {conv.lastEmotion ? t(`emotion_${conv.lastEmotion}`) : '\u2014'}
                       </td>
 
                       {/* Last message */}
@@ -481,14 +512,22 @@ export default function AdminConversationsPage() {
 
                       {/* Actions */}
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-end">
+                        <div className="flex items-center justify-end gap-1">
                           <Link
                             href={`/${locale}/admin/conversations/${conv.id}`}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 text-xs font-medium transition-colors"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 text-xs font-medium transition-colors"
                           >
                             <Eye className="h-3.5 w-3.5" />
                             {t('viewDetail')}
                           </Link>
+                          <button
+                            onClick={() => handleDeleteSingle(conv.id)}
+                            disabled={deleteConversation.isPending}
+                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            {tc('delete')}
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -525,7 +564,7 @@ export default function AdminConversationsPage() {
           <button
             onClick={handleBulkResolve}
             disabled={bulkStatus.isPending}
-            className="inline-flex items-center gap-1.5 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
           >
             <CheckCircle className="h-3.5 w-3.5" />
             {t('bulkResolve', { count: selectedIds.size })}
@@ -533,14 +572,22 @@ export default function AdminConversationsPage() {
           <button
             onClick={handleBulkArchive}
             disabled={bulkStatus.isPending}
-            className="inline-flex items-center gap-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-accent px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
           >
             <Archive className="h-3.5 w-3.5" />
             {t('bulkArchive', { count: selectedIds.size })}
           </button>
           <button
+            onClick={handleBulkDelete}
+            disabled={bulkDelete.isPending}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {t('bulkDelete', { count: selectedIds.size })}
+          </button>
+          <button
             onClick={clearSelection}
-            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
           >
             <X className="h-3.5 w-3.5" />
             {t('clearSelection')}

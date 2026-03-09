@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../../config/database';
 import { auditLogService } from '../../services/auditLog.service';
+import { subscriptionService } from '../../services/subscription.service';
 import { validate } from '../../middleware/validate';
 
 const router: Router = Router();
@@ -153,6 +154,9 @@ router.delete('/:agentId', async (req: Request, res: Response, next: NextFunctio
     }
 
     await prisma.agent.delete({ where: { id: agentId } });
+
+    // Decrement agent usage counter and clear subscription cache
+    await subscriptionService.decrementUsage(agent.orgId, 'agents');
 
     await auditLogService.log({
       userId: req.user!.userId,

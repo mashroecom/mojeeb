@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Search,
@@ -9,8 +9,11 @@ import {
   Loader2,
   Star,
   AlertTriangle,
+  Filter,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useChannels } from '@/hooks/useChannels';
 import type { Conversation } from '@/hooks/useConversations';
 import {
   relativeTime,
@@ -21,6 +24,8 @@ import {
   CHANNEL_BADGE,
   CHANNEL_TRANSLATION_KEY,
   EMOTION_TRANSLATION_KEY,
+  categoryBadgeClass,
+  CATEGORY_TRANSLATION_KEY,
   type StatusFilter,
 } from '../_lib/constants';
 
@@ -31,6 +36,16 @@ interface ConversationListProps {
   onSearchChange: (q: string) => void;
   statusFilter: StatusFilter;
   onStatusFilterChange: (f: StatusFilter) => void;
+  channelId: string;
+  onChannelChange: (id: string) => void;
+  sentiment: string;
+  onSentimentChange: (s: string) => void;
+  category: string;
+  onCategoryChange: (c: string) => void;
+  startDate: string;
+  onStartDateChange: (d: string) => void;
+  endDate: string;
+  onEndDateChange: (d: string) => void;
   isLoading: boolean;
   isError?: boolean;
   isFetching: boolean;
@@ -45,6 +60,13 @@ const STATUS_TABS: { key: StatusFilter; labelKey: string }[] = [
   { key: 'resolved', labelKey: 'filterResolved' },
 ];
 
+const SENTIMENT_OPTIONS = [
+  { key: '', labelKey: 'sentimentAll' },
+  { key: 'positive', labelKey: 'sentimentPositive' },
+  { key: 'neutral', labelKey: 'sentimentNeutral' },
+  { key: 'negative', labelKey: 'sentimentNegative' },
+];
+
 export const ConversationList = React.memo(function ConversationList({
   conversations,
   selectedId,
@@ -52,6 +74,16 @@ export const ConversationList = React.memo(function ConversationList({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  channelId,
+  onChannelChange,
+  sentiment,
+  onSentimentChange,
+  category,
+  onCategoryChange,
+  startDate,
+  onStartDateChange,
+  endDate,
+  onEndDateChange,
   isLoading,
   isError,
   isFetching,
@@ -60,6 +92,18 @@ export const ConversationList = React.memo(function ConversationList({
 }: ConversationListProps) {
   const t = useTranslations('dashboard.conversations');
   const tc = useTranslations('common');
+  const [showFilters, setShowFilters] = useState(false);
+  const { data: channels = [] } = useChannels();
+
+  const hasActiveFilters = channelId || sentiment || category || startDate || endDate;
+
+  const clearFilters = () => {
+    onChannelChange('');
+    onSentimentChange('');
+    onCategoryChange('');
+    onStartDateChange('');
+    onEndDateChange('');
+  };
 
   return (
     <aside
@@ -68,7 +112,7 @@ export const ConversationList = React.memo(function ConversationList({
         selectedId ? 'hidden md:flex' : 'flex',
       )}
     >
-      {/* Search + Refresh */}
+      {/* Search + Filter Toggle + Refresh */}
       <div className="border-b p-3">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -78,9 +122,19 @@ export const ConversationList = React.memo(function ConversationList({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full rounded-lg border bg-background py-2 ps-9 pe-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full rounded-lg border bg-background py-2 ps-9 pe-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             />
           </div>
+          <button
+            onClick={() => setShowFilters((v) => !v)}
+            className={cn(
+              'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-muted',
+              (showFilters || hasActiveFilters) && 'bg-primary/10 border-primary/30 text-primary',
+            )}
+            title={t('filters')}
+          >
+            <Filter className="h-4 w-4" />
+          </button>
           <button
             onClick={onRefresh}
             disabled={isFetching}
@@ -104,7 +158,7 @@ export const ConversationList = React.memo(function ConversationList({
             key={tab.key}
             onClick={() => onStatusFilterChange(tab.key)}
             className={cn(
-              'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+              'rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
               statusFilter === tab.key
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-muted',
@@ -114,6 +168,110 @@ export const ConversationList = React.memo(function ConversationList({
           </button>
         ))}
       </div>
+
+      {/* Expandable filters panel */}
+      {showFilters && (
+        <div className="border-b p-3 space-y-3 bg-muted/30">
+          {/* Channel filter */}
+          <div>
+            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              {t('filterChannel')}
+            </label>
+            <select
+              value={channelId}
+              onChange={(e) => onChannelChange(e.target.value)}
+              className="mt-1 w-full rounded-lg border bg-background px-2.5 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            >
+              <option value="">{t('allChannels')}</option>
+              {channels.map((ch: any) => (
+                <option key={ch.id} value={ch.id}>
+                  {ch.name} ({ch.type})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sentiment filter */}
+          <div>
+            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              {t('filterSentiment')}
+            </label>
+            <div className="mt-1 flex gap-1">
+              {SENTIMENT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => onSentimentChange(opt.key)}
+                  className={cn(
+                    'rounded-lg px-2 py-1 text-[11px] font-medium transition-colors',
+                    sentiment === opt.key
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted border',
+                  )}
+                >
+                  {t(opt.labelKey)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Category filter */}
+          <div>
+            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              {t('filterCategory')}
+            </label>
+            <select
+              value={category}
+              onChange={(e) => onCategoryChange(e.target.value)}
+              className="mt-1 w-full rounded-lg border bg-background px-2.5 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            >
+              <option value="">{t('allCategories')}</option>
+              <option value="complaint">{t('categoryComplaint')}</option>
+              <option value="inquiry">{t('categoryInquiry')}</option>
+              <option value="purchase_request">{t('categoryPurchaseRequest')}</option>
+              <option value="feedback">{t('categoryFeedback')}</option>
+              <option value="support">{t('categorySupport')}</option>
+              <option value="other">{t('categoryOther')}</option>
+            </select>
+          </div>
+
+          {/* Date range filter */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                {t('filterFrom')}
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => onStartDateChange(e.target.value)}
+                className="mt-1 w-full rounded-lg border bg-background px-2 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                {t('filterTo')}
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => onEndDateChange(e.target.value)}
+                className="mt-1 w-full rounded-lg border bg-background px-2 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              />
+            </div>
+          </div>
+
+          {/* Clear filters */}
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1 text-xs text-destructive hover:underline"
+            >
+              <X className="h-3 w-3" />
+              {t('clearFilters')}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Conversation list */}
       <div className="flex-1 overflow-y-auto">
@@ -130,7 +288,7 @@ export const ConversationList = React.memo(function ConversationList({
             <span className="mt-1 text-xs">{tc('errorDescription')}</span>
             <button
               onClick={onRefresh}
-              className="mt-3 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="mt-3 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               {tc('tryAgain')}
             </button>
@@ -232,12 +390,24 @@ export const ConversationList = React.memo(function ConversationList({
                         className={cn(
                           'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium',
                           CHANNEL_BADGE[channelType] ??
-                            'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+                            'bg-muted text-muted-foreground',
                         )}
                       >
                         {CHANNEL_TRANSLATION_KEY[channelType]
                           ? t(CHANNEL_TRANSLATION_KEY[channelType])
                           : conv.channel.type}
+                      </span>
+                    )}
+
+                    {/* Category badge */}
+                    {conv.category && (
+                      <span
+                        className={cn(
+                          'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium',
+                          categoryBadgeClass(conv.category),
+                        )}
+                      >
+                        {t(CATEGORY_TRANSLATION_KEY[conv.category] || 'categoryOther')}
                       </span>
                     )}
 

@@ -4,7 +4,7 @@ import { authService } from '../services/auth.service';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
 import { authLimiter } from '../middleware/rateLimiter';
-import { registerSchema, loginSchema } from '@mojeeb/shared-utils';
+import { registerSchema, loginSchema, passwordSchema } from '@mojeeb/shared-utils';
 import { z } from 'zod';
 import { prisma } from '../config/database';
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
@@ -136,10 +136,11 @@ router.post(
 // POST /api/v1/auth/reset-password
 router.post(
   '/reset-password',
+  authLimiter,
   validate({
     body: z.object({
       token: z.string(),
-      password: z.string().min(8),
+      password: passwordSchema,
     }),
   }),
   async (req, res, next) => {

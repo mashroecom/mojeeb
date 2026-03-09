@@ -74,3 +74,40 @@ export interface AIGenerationParams {
   maxTokens: number;
   model?: string;
 }
+
+// ========================
+// Enterprise AI Types
+// ========================
+
+export interface ExtractedCustomerData {
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
+  address: string | null;
+  orderNumber: string | null;
+}
+
+export interface DataCollectionConfig {
+  requiredFields: string[];
+  collectionStrategy: 'natural' | 'upfront' | 'end';
+  customFields: { name: string; type: string; label: string; labelAr: string }[];
+  confirmationEnabled: boolean;
+}
+
+export interface QuickRepliesConfig {
+  enabled: boolean;
+  maxButtons: number;
+  aiSuggestions: boolean;
+  predefinedSets: {
+    trigger: string;
+    buttons: { text: string; textAr: string }[];
+  }[];
+}
+
+export interface EnhancedSummary {
+  summary: string;
+  topics: string[];
+  customerIntent: string;
+  resolutionStatus: string;
+}

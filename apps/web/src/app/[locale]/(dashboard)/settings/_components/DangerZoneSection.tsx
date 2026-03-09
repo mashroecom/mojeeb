@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { AlertTriangle, Loader2, Trash2, X } from 'lucide-react';
 
 const inputClass =
-  'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
+  'w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
 
 interface DangerZoneSectionProps {
   orgId: string | undefined;
@@ -33,6 +33,7 @@ export function DangerZoneSection({
   const [deleteAccountConfirmText, setDeleteAccountConfirmText] = useState('');
   const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
   const [deleteAccountError, setDeleteAccountError] = useState('');
+  const deleteKeyword = t('deleteKeyword');
 
   return (
     <>
@@ -50,7 +51,7 @@ export function DangerZoneSection({
           disabled={deleteLoading}
           onClick={onDeleteOrg}
           className={cn(
-            'inline-flex items-center gap-2 rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950',
+            'inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10',
             deleteLoading && 'cursor-not-allowed opacity-50',
           )}
         >
@@ -75,7 +76,7 @@ export function DangerZoneSection({
         <button
           type="button"
           onClick={() => setShowDeleteAccountModal(true)}
-          className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+          className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90"
         >
           <Trash2 className="h-4 w-4" />
           {t('deleteAccountButton')}
@@ -105,10 +106,10 @@ export function DangerZoneSection({
             </button>
 
             <div className="flex items-center gap-2 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
               </div>
-              <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">
+              <h3 className="text-lg font-semibold text-destructive">
                 {t('deleteAccount')}
               </h3>
             </div>
@@ -129,14 +130,14 @@ export function DangerZoneSection({
                 type="text"
                 value={deleteAccountConfirmText}
                 onChange={(e) => setDeleteAccountConfirmText(e.target.value)}
-                placeholder={locale === 'ar' ? '\u062d\u0630\u0641' : 'DELETE'}
+                placeholder={t('deleteKeyword')}
                 className={inputClass}
                 dir={locale === 'ar' ? 'rtl' : 'ltr'}
               />
             </div>
 
             {deleteAccountError && (
-              <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
                 {deleteAccountError}
               </div>
             )}
@@ -146,8 +147,7 @@ export function DangerZoneSection({
                 type="button"
                 disabled={
                   deleteAccountLoading ||
-                  (deleteAccountConfirmText !== 'DELETE' &&
-                    deleteAccountConfirmText !== '\u062d\u0630\u0641')
+                  deleteAccountConfirmText !== deleteKeyword
                 }
                 onClick={async () => {
                   setDeleteAccountLoading(true);
@@ -162,10 +162,9 @@ export function DangerZoneSection({
                   }
                 }}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800',
+                  'inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90',
                   (deleteAccountLoading ||
-                    (deleteAccountConfirmText !== 'DELETE' &&
-                      deleteAccountConfirmText !== '\u062d\u0630\u0641')) &&
+                    deleteAccountConfirmText !== deleteKeyword) &&
                     'cursor-not-allowed opacity-50',
                 )}
               >
@@ -182,7 +181,7 @@ export function DangerZoneSection({
                   setShowDeleteAccountModal(false);
                   setDeleteAccountConfirmText('');
                 }}
-                className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
               >
                 {t('deleteAccountCancel')}
               </button>

@@ -12,8 +12,8 @@ import { SubscriptionPlan } from '@mojeeb/shared-types';
 import { planConfigService } from './planConfig.service';
 import { emailQueue } from '../queues';
 import { verificationService } from './verification.service';
-import { logger } from '../config/logger';
 import { adminNotificationService } from './adminNotification.service';
+import { logger } from '../config/logger';
 
 // Cached Google OAuth client that is recreated when the client ID changes
 let cachedGoogleClient: OAuth2Client = new OAuth2Client(config.google.clientId);
@@ -85,6 +85,7 @@ export class AuthService {
             passwordHash,
             firstName: data.firstName,
             lastName: data.lastName,
+            onboardingCompleted: false,
           },
         });
 
@@ -121,6 +122,13 @@ export class AuthService {
       // Send verification email (non-blocking)
       verificationService.resendVerificationEmail(result.user.id).catch(err => logger.warn({ err }, 'Background task failed'));
 
+      // Notify admins (fire-and-forget)
+      adminNotificationService.create({
+        type: 'NEW_USER',
+        title: 'New User Registration',
+        body: `${data.firstName} ${data.lastName} (${data.email}) registered and created organization "${data.organizationName}".`,
+      }).catch(err => logger.debug({ err }, 'Admin notification failed'));
+
       const tokens = await this.generateTokens(result.user.id, result.user.email);
 
       return {
@@ -130,6 +138,7 @@ export class AuthService {
           firstName: result.user.firstName,
           lastName: result.user.lastName,
           avatarUrl: result.user.avatarUrl,
+          onboardingCompleted: result.user.onboardingCompleted,
         },
         tokens,
         organization: {
@@ -197,6 +206,13 @@ export class AuthService {
     // Send verification email (non-blocking) via the VerificationToken model
     verificationService.resendVerificationEmail(result.user.id).catch(err => logger.warn({ err }, 'Background task failed'));
 
+    // Notify admins (fire-and-forget)
+    adminNotificationService.create({
+      type: 'NEW_USER',
+      title: 'New User Registration',
+      body: `${data.firstName} ${data.lastName} (${data.email}) registered and created organization "${data.organizationName}".`,
+    }).catch(err => logger.debug({ err }, 'Admin notification failed'));
+
     // Generate tokens
     const tokens = await this.generateTokens(result.user.id, result.user.email);
 
@@ -207,6 +223,7 @@ export class AuthService {
         firstName: result.user.firstName,
         lastName: result.user.lastName,
         avatarUrl: result.user.avatarUrl,
+        onboardingCompleted: result.user.onboardingCompleted,
       },
       tokens,
       organization: {
@@ -258,6 +275,7 @@ export class AuthService {
         lastName: user.lastName,
         avatarUrl: user.avatarUrl,
         isSuperAdmin: user.isSuperAdmin,
+        onboardingCompleted: user.onboardingCompleted,
       },
       tokens,
       organization: org
@@ -409,6 +427,7 @@ export class AuthService {
         avatarUrl: true,
         isSuperAdmin: true,
         emailVerified: true,
+        onboardingCompleted: true,
         createdAt: true,
         memberships: {
           include: {
@@ -424,7 +443,17 @@ export class AuthService {
       throw new NotFoundError('User not found');
     }
 
-    return user;
+    // Check if the user's primary org has any agents
+    const primaryOrg = user.memberships[0]?.org;
+    let hasAgents = false;
+    if (primaryOrg) {
+      const agentCount = await prisma.agent.count({
+        where: { orgId: primaryOrg.id },
+      });
+      hasAgents = agentCount > 0;
+    }
+
+    return { ...user, hasAgents };
   }
 
   async deleteAccount(userId: string) {
@@ -524,6 +553,7 @@ export class AuthService {
           lastName: existingUser.lastName,
           avatarUrl: existingUser.avatarUrl || avatarUrl,
           isSuperAdmin: existingUser.isSuperAdmin,
+          onboardingCompleted: existingUser.onboardingCompleted,
         },
         tokens,
         organization: org
@@ -619,7 +649,7 @@ export class AuthService {
   }
 
   /** Generate tokens using a specific Prisma client (or transaction). */
-  private async generateTokensInTx(tx: typeof prisma, userId: string, email: string) {
+  private async generateTokensInTx(tx: Pick<typeof prisma, 'session'>, userId: string, email: string) {
     const jti = crypto.randomUUID();
     const payload: JwtPayload = { userId, email, jti };
 

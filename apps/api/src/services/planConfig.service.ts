@@ -71,48 +71,53 @@ export class PlanConfigService {
   }
 
   /**
-   * Get the monthly price for a plan.
+   * Get the price for a plan based on billing cycle.
    * Cached for 5 minutes. Falls back to hardcoded FALLBACK_PRICES.
    */
-  async getPrice(plan: string): Promise<number> {
-    return cache.getOrSet(`${CACHE_PREFIX}:price:${plan}`, CACHE_TTL, async () => {
+  async getPrice(plan: string, billingCycle: 'monthly' | 'yearly' = 'monthly'): Promise<number> {
+    return cache.getOrSet(`${CACHE_PREFIX}:price:${plan}:${billingCycle}`, CACHE_TTL, async () => {
       try {
         const row = await prisma.planConfig.findUnique({
           where: { plan: plan as SubscriptionPlan },
-          select: { monthlyPrice: true },
+          select: { monthlyPrice: true, yearlyPrice: true },
         });
 
-        if (row) return row.monthlyPrice;
+        if (row) return billingCycle === 'yearly' ? row.yearlyPrice : row.monthlyPrice;
       } catch (err) {
         logger.warn({ err, plan }, 'Failed to load plan price from DB, using fallback');
       }
 
-      return FALLBACK_PRICES[plan] ?? 0;
+      const monthly = FALLBACK_PRICES[plan] ?? 0;
+      return billingCycle === 'yearly' ? monthly * 10 : monthly;
     });
   }
 
   /**
-   * Given a payment amount, return the matching SubscriptionPlan.
-   * Loads all plan configs from cache, finds the plan whose monthlyPrice matches.
+   * Given a payment amount, return the matching SubscriptionPlan and billing cycle.
+   * Loads all plan configs from cache, finds the plan whose price matches.
    * Falls back to hardcoded price comparison.
    */
-  async getPlanByPrice(amount: number): Promise<SubscriptionPlan | null> {
+  async getPlanByPrice(amount: number): Promise<{ plan: SubscriptionPlan; billingCycle: 'monthly' | 'yearly' } | null> {
     try {
       const plans = await cache.getOrSet(ALL_PLANS_KEY, CACHE_TTL, async () => {
         return prisma.planConfig.findMany({
-          select: { plan: true, monthlyPrice: true },
+          select: { plan: true, monthlyPrice: true, yearlyPrice: true },
         });
       });
 
-      const match = plans.find((p) => p.monthlyPrice === amount);
-      if (match) return match.plan as SubscriptionPlan;
+      const monthlyMatch = plans.find((p) => p.monthlyPrice === amount);
+      if (monthlyMatch) return { plan: monthlyMatch.plan as SubscriptionPlan, billingCycle: 'monthly' };
+
+      const yearlyMatch = plans.find((p) => p.yearlyPrice === amount);
+      if (yearlyMatch) return { plan: yearlyMatch.plan as SubscriptionPlan, billingCycle: 'yearly' };
     } catch (err) {
       logger.warn({ err, amount }, 'Failed to match plan by price from DB, using fallback');
     }
 
     // Fallback to hardcoded prices
     for (const [plan, price] of Object.entries(FALLBACK_PRICES)) {
-      if (price === amount) return plan as SubscriptionPlan;
+      if (price === amount) return { plan: plan as SubscriptionPlan, billingCycle: 'monthly' };
+      if (price * 10 === amount) return { plan: plan as SubscriptionPlan, billingCycle: 'yearly' };
     }
 
     return null;

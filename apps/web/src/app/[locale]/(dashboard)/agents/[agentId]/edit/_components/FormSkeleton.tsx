@@ -7,7 +7,7 @@ export function FormSkeleton() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="mb-4">
             <div className="mb-1.5 h-4 w-24 rounded bg-muted" />
-            <div className="h-10 w-full rounded-md bg-muted" />
+            <div className="h-10 w-full rounded-lg bg-muted" />
           </div>
         ))}
       </div>

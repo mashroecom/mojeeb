@@ -43,7 +43,7 @@ type StatusFilter = '' | 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 
 function StatSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm animate-pulse">
+    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
       <div className="h-3 w-20 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -80,9 +80,9 @@ const STATUS_BADGE: Record<string, string> = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatCurrency(amount: number, currency: string): string {
+function formatCurrency(amount: number, currency: string, locale: string): string {
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-US', {
       style: 'currency',
       currency: currency || 'USD',
       minimumFractionDigits: 2,
@@ -122,7 +122,7 @@ export default function AdminInvoicesPage() {
   const { data: stats, isLoading: statsLoading } = useAdminInvoiceStats();
   const updateInvoice = useUpdateAdminInvoice();
 
-  const entries: InvoiceEntry[] = data?.invoices ?? data?.data ?? [];
+  const entries: InvoiceEntry[] = data?.invoices ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   // Handle status update
@@ -155,14 +155,14 @@ export default function AdminInvoicesPage() {
           </>
         ) : (
           <>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Receipt className="h-4 w-4" />
                 {t('totalInvoices')}
               </div>
               <p className="text-2xl font-bold">{stats?.total ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <DollarSign className="h-4 w-4 text-green-500" />
                 {t('totalRevenue')}
@@ -171,7 +171,7 @@ export default function AdminInvoicesPage() {
                 ${stats?.totalRevenue ?? 0}
               </p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Clock className="h-4 w-4 text-yellow-500" />
                 {t('pendingAmount')}
@@ -180,7 +180,7 @@ export default function AdminInvoicesPage() {
                 ${stats?.pendingAmount ?? 0}
               </p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <RefreshCw className="h-4 w-4 text-blue-500" />
                 {t('refundedAmount')}
@@ -203,13 +203,13 @@ export default function AdminInvoicesPage() {
               setStatusFilter(e.target.value as StatusFilter);
               setPage(1);
             }}
-            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
           >
             <option value="">{t('allStatuses')}</option>
-            <option value="PENDING">PENDING</option>
-            <option value="PAID">PAID</option>
-            <option value="FAILED">FAILED</option>
-            <option value="REFUNDED">REFUNDED</option>
+            <option value="PENDING">{t('status_PENDING')}</option>
+            <option value="PAID">{t('status_PAID')}</option>
+            <option value="FAILED">{t('status_FAILED')}</option>
+            <option value="REFUNDED">{t('status_REFUNDED')}</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
@@ -221,7 +221,7 @@ export default function AdminInvoicesPage() {
               setStartDate(e.target.value);
               setPage(1);
             }}
-            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -233,7 +233,7 @@ export default function AdminInvoicesPage() {
               setEndDate(e.target.value);
               setPage(1);
             }}
-            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
           />
         </div>
         {(statusFilter || startDate || endDate) && (
@@ -265,11 +265,11 @@ export default function AdminInvoicesPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('invoiceId')}
                 </th>
@@ -314,7 +314,7 @@ export default function AdminInvoicesPage() {
                 entries.map((entry) => (
                   <tr
                     key={entry.id}
-                    className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
+                    className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
                   >
                     {/* Invoice ID (truncated) */}
                     <td className="px-4 py-3">
@@ -333,7 +333,7 @@ export default function AdminInvoicesPage() {
                     {/* Amount */}
                     <td className="px-4 py-3">
                       <span className="text-sm font-semibold">
-                        {formatCurrency(entry.amount, entry.currency)}
+                        {formatCurrency(entry.amount, entry.currency, locale)}
                       </span>
                     </td>
 
@@ -342,10 +342,10 @@ export default function AdminInvoicesPage() {
                       <span
                         className={cn(
                           'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                          STATUS_BADGE[entry.status] ?? 'bg-gray-100 text-gray-700',
+                          STATUS_BADGE[entry.status] ?? 'bg-muted text-muted-foreground',
                         )}
                       >
-                        {entry.status}
+                        {t(`status_${entry.status}`)}
                       </span>
                     </td>
 
@@ -363,7 +363,7 @@ export default function AdminInvoicesPage() {
                     <td className="px-4 py-3">
                       {entry.subscription?.plan ? (
                         <span className="inline-block rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 text-[10px] font-medium">
-                          {entry.subscription.plan}
+                          {t(`plan_${entry.subscription.plan}`)}
                         </span>
                       ) : (
                         <span className="text-xs text-muted-foreground">--</span>
@@ -377,12 +377,12 @@ export default function AdminInvoicesPage() {
                           value={entry.status}
                           onChange={(e) => handleStatusChange(entry.id, e.target.value)}
                           disabled={updateInvoice.isPending}
-                          className="rounded-md border bg-background px-2 py-1 text-xs outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50"
+                          className="rounded-lg border bg-background px-2 py-1 text-xs outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:opacity-50"
                         >
-                          <option value="PENDING">PENDING</option>
-                          <option value="PAID">PAID</option>
-                          <option value="FAILED">FAILED</option>
-                          <option value="REFUNDED">REFUNDED</option>
+                          <option value="PENDING">{t('status_PENDING')}</option>
+                          <option value="PAID">{t('status_PAID')}</option>
+                          <option value="FAILED">{t('status_FAILED')}</option>
+                          <option value="REFUNDED">{t('status_REFUNDED')}</option>
                         </select>
                         {updateInvoice.isPending && (
                           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />

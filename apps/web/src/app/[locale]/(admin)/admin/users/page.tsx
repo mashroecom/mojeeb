@@ -170,11 +170,11 @@ export default function AdminUsersPage() {
   function handleExport() {
     if (!users.length) return;
     const rows = users.map((user: any) => ({
-      Name: `${user.firstName} ${user.lastName}`,
-      Email: user.email,
-      Organizations: user._count?.memberships ?? 0,
-      Status: user.suspendedAt ? 'Suspended' : 'Active',
-      Joined: fmtDate(user.createdAt, locale),
+      [t('name')]: `${user.firstName} ${user.lastName}`,
+      [t('email')]: user.email,
+      [t('organizations')]: user._count?.memberships ?? 0,
+      [t('status')]: user.suspendedAt ? t('suspended') : t('active'),
+      [t('joined')]: fmtDate(user.createdAt, locale),
     }));
     exportToCsv('admin-users', rows);
   }
@@ -216,7 +216,7 @@ export default function AdminUsersPage() {
             placeholder={t('search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border bg-card ps-10 pe-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-lg border bg-card ps-10 pe-4 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
 
@@ -250,7 +250,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="rounded-xl border bg-card overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -273,7 +273,7 @@ export default function AdminUsersPage() {
                         if (el) el.indeterminate = someSelected && !allSelected;
                       }}
                       onChange={toggleSelectAll}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                      className="h-4 w-4 rounded border text-primary focus-visible:ring-primary cursor-pointer"
                       title={t('selectAll')}
                     />
                   </th>
@@ -314,7 +314,7 @@ export default function AdminUsersPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleSelect(user.id)}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                          className="h-4 w-4 rounded border text-primary focus-visible:ring-primary cursor-pointer"
                         />
                       </td>
                       <td className="px-4 py-3 font-medium">
@@ -354,7 +354,7 @@ export default function AdminUsersPage() {
                             }
                             disabled={toggleSuspension.isPending}
                             className={cn(
-                              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                              'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                               isSuspended
                                 ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
                                 : 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50'
@@ -375,7 +375,7 @@ export default function AdminUsersPage() {
                           <button
                             onClick={() => handleDelete(user.id)}
                             disabled={deleteUser.isPending}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             {t('delete')}
@@ -408,7 +408,7 @@ export default function AdminUsersPage() {
           <button
             onClick={handleBulkSuspend}
             disabled={bulkSuspend.isPending}
-            className="inline-flex items-center gap-1.5 rounded-md bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
           >
             <UserX className="h-3.5 w-3.5" />
             {t('bulkSuspend', { count: selectedIds.size })}
@@ -416,7 +416,7 @@ export default function AdminUsersPage() {
           <button
             onClick={handleBulkUnsuspend}
             disabled={bulkUnsuspend.isPending}
-            className="inline-flex items-center gap-1.5 rounded-md bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
           >
             <UserCheck className="h-3.5 w-3.5" />
             {t('bulkUnsuspend', { count: selectedIds.size })}
@@ -424,14 +424,14 @@ export default function AdminUsersPage() {
           <button
             onClick={handleBulkDelete}
             disabled={bulkDelete.isPending}
-            className="inline-flex items-center gap-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
           >
             <Trash2 className="h-3.5 w-3.5" />
             {t('bulkDelete', { count: selectedIds.size })}
           </button>
           <button
             onClick={clearSelection}
-            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
           >
             <X className="h-3.5 w-3.5" />
             {t('clearSelection')}

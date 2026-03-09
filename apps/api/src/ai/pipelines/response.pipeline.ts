@@ -11,6 +11,8 @@ import type {
   LeadResult,
   ConversationMessage,
   ContentPart,
+  ExtractedCustomerData,
+  DataCollectionConfig,
 } from '@mojeeb/shared-types';
 import { imageToBase64DataUrl, isSupportedImageFile } from '../utils/image.utils';
 
@@ -29,6 +31,13 @@ interface Agent {
   enableHumanHandoff: boolean;
   handoffThreshold: number;
   knowledgeBases: { knowledgeBaseId: string }[];
+  tone?: string;
+  responseLength?: string;
+  dataCollectionConfig?: DataCollectionConfig | null;
+  escalationKeywords?: string[];
+  sentimentEscalation?: boolean;
+  escalationMessageCount?: number;
+  quickRepliesConfig?: { enabled?: boolean; maxButtons?: number; aiSuggestions?: boolean } | null;
 }
 
 interface ResponseResult {
@@ -36,6 +45,9 @@ interface ResponseResult {
   emotion: EmotionResult | null;
   routingDecision: RoutingDecision;
   lead: LeadResult | null;
+  category: string | null;
+  extractedData: ExtractedCustomerData | null;
+  quickReplies: string[];
 }
 
 export class ResponsePipeline {
@@ -88,16 +100,73 @@ export class ResponsePipeline {
     );
     textOnlyMessages.push({ role: 'user', content: annotatedMessage });
 
-    // 2. Retrieve knowledge base context + last known emotion in parallel
+    // 2. Retrieve knowledge base context + conversation data in parallel
     const [kbContext, conversation] = await Promise.all([
       this.retrieveKBContext(params.agent, params.incomingMessage),
       prisma.conversation.findUnique({
         where: { id: params.conversationId },
-        select: { lastEmotion: true, emotionScore: true },
+        select: {
+          lastEmotion: true,
+          emotionScore: true,
+          customerName: true,
+          customerEmail: true,
+          customerPhone: true,
+          customerMeta: true,
+          customerId: true,
+          channelId: true,
+          topics: true,
+        },
       }),
     ]);
 
-    // 3. Build system prompt (with emotion-aware tone)
+    // Determine returning customer context
+    let conversationCount = 0;
+    let previousTopics: string[] = [];
+    if (conversation) {
+      const [countResult, recentConvs] = await Promise.all([
+        prisma.conversation.count({
+          where: { customerId: conversation.customerId, channelId: conversation.channelId },
+        }),
+        prisma.conversation.findMany({
+          where: {
+            customerId: conversation.customerId,
+            channelId: conversation.channelId,
+            id: { not: params.conversationId },
+          },
+          orderBy: { lastMessageAt: 'desc' },
+          take: 3,
+          select: { topics: true },
+        }),
+      ]);
+      conversationCount = countResult;
+      previousTopics = recentConvs.flatMap((c) => c.topics || []).slice(0, 5);
+    }
+
+    // Compute missing required fields for data collection
+    const dataCollectionConfig = params.agent.dataCollectionConfig as DataCollectionConfig | null;
+    let missingRequiredFields: string[] = [];
+    const collectedFields: Record<string, string> = {};
+
+    if (dataCollectionConfig?.requiredFields?.length) {
+      const fieldMap: Record<string, string | null | undefined> = {
+        name: conversation?.customerName,
+        email: conversation?.customerEmail,
+        phone: conversation?.customerPhone,
+        company: (conversation?.customerMeta as Record<string, string> | null)?.company,
+        address: (conversation?.customerMeta as Record<string, string> | null)?.address,
+        orderNumber: (conversation?.customerMeta as Record<string, string> | null)?.orderNumber,
+      };
+
+      for (const field of dataCollectionConfig.requiredFields) {
+        if (fieldMap[field]) {
+          collectedFields[field] = fieldMap[field]!;
+        } else {
+          missingRequiredFields.push(field);
+        }
+      }
+    }
+
+    // 3. Build system prompt (with emotion-aware tone + customer context)
     const systemPrompt = buildSystemPrompt({
       agentName: params.agent.name,
       agentDescription: params.agent.description || undefined,
@@ -106,6 +175,17 @@ export class ResponsePipeline {
       customInstructions: params.agent.systemPrompt,
       customerEmotion: conversation?.lastEmotion || undefined,
       emotionScore: conversation?.emotionScore || undefined,
+      customerName: conversation?.customerName || undefined,
+      customerEmail: conversation?.customerEmail || undefined,
+      customerPhone: conversation?.customerPhone || undefined,
+      isReturningCustomer: conversationCount > 1,
+      conversationCount,
+      previousTopics,
+      tone: params.agent.tone,
+      responseLength: params.agent.responseLength,
+      dataCollectionConfig: dataCollectionConfig || undefined,
+      missingRequiredFields,
+      collectedFields,
     });
 
     // 4. Generate AI response + run combined analysis in parallel
@@ -131,6 +211,11 @@ export class ResponsePipeline {
           language: params.agent.language,
           agentDescription: params.agent.description || undefined,
           agentName: params.agent.name,
+          dataCollectionFields: dataCollectionConfig?.requiredFields || [],
+          escalationKeywords: params.agent.escalationKeywords || [],
+          sentimentEscalation: params.agent.sentimentEscalation || false,
+          escalationMessageCount: params.agent.escalationMessageCount || 5,
+          enableQuickReplies: !!(params.agent.quickRepliesConfig as any)?.enabled,
         },
       ),
     ]);
@@ -146,6 +231,9 @@ export class ResponsePipeline {
       emotion: analysis.emotion,
       routingDecision: analysis.routing,
       lead: analysis.lead,
+      category: analysis.category,
+      extractedData: analysis.extractedData,
+      quickReplies: analysis.quickReplies,
     };
   }
 

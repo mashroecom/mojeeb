@@ -10,6 +10,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { apiLimiter } from './middleware/rateLimiter';
 import { maintenanceGuard } from './middleware/maintenance';
 import { ipBlockGuard } from './middleware/ipBlock';
+import { settingsMiddleware } from './middleware/settings';
 import routes from './routes';
 
 const app: Express = express();
@@ -104,6 +105,9 @@ app.use(ipBlockGuard);
 
 // Maintenance mode guard
 app.use(maintenanceGuard);
+
+// Settings middleware (populate req.settings for site & org config)
+app.use(settingsMiddleware);
 
 // API routes
 app.use('/api/v1', routes);

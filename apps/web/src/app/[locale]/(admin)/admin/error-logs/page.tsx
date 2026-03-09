@@ -64,7 +64,7 @@ function levelBadge(level: string) {
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
+        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
           {level}
         </span>
       );
@@ -123,17 +123,17 @@ export default function ErrorLogsPage() {
   const { data, isLoading, isError, refetch } = useAdminErrorLogs(params);
   const cleanupMutation = useCleanupErrorLogs();
 
-  const entries: ErrorLogEntry[] = data?.data ?? [];
+  const entries: ErrorLogEntry[] = data?.logs ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   function handleExport() {
     if (!entries.length) return;
     const rows = entries.map((entry) => ({
-      Level: entry.level,
-      Message: entry.message,
-      Source: entry.source || '',
-      Path: entry.path || '',
-      Time: fmtDateTime(entry.createdAt, locale),
+      [t('csvLevel')]: entry.level,
+      [t('csvMessage')]: entry.message,
+      [t('csvSource')]: entry.source || '',
+      [t('csvPath')]: entry.path || '',
+      [t('csvTime')]: fmtDateTime(entry.createdAt, locale),
     }));
     exportToCsv('admin-error-logs', rows);
   }
@@ -175,7 +175,7 @@ export default function ErrorLogsPage() {
           </button>
           <button
             onClick={() => setShowCleanup(!showCleanup)}
-            className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            className="inline-flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
           >
             <Trash2 className="h-4 w-4" />
             {t('cleanup')}
@@ -185,7 +185,7 @@ export default function ErrorLogsPage() {
 
       {/* Cleanup Panel */}
       {showCleanup && (
-        <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">
+        <div className="mb-6 rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium">{t('deleteOldLogs')}</h3>
             <button onClick={() => setShowCleanup(false)} aria-label={tc('close')} className="text-muted-foreground hover:text-foreground">
@@ -202,13 +202,13 @@ export default function ErrorLogsPage() {
                 value={cleanupDays}
                 onChange={(e) => setCleanupDays(e.target.value)}
                 min={1}
-                className="w-32 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                className="w-32 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               />
             </div>
             <button
               onClick={handleCleanup}
               disabled={cleanupMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 disabled:pointer-events-none"
+              className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50 disabled:pointer-events-none"
             >
               <Trash2 className="h-4 w-4" />
               {cleanupMutation.isPending ? t('deleting') : tc('delete')}
@@ -224,7 +224,7 @@ export default function ErrorLogsPage() {
       )}
 
       {/* Filters */}
-      <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">
+      <div className="mb-6 rounded-xl border bg-card p-4 shadow-sm">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
           <Filter className="h-4 w-4" />
           {t('filters')}
@@ -236,7 +236,7 @@ export default function ErrorLogsPage() {
             <select
               value={level}
               onChange={(e) => updateFilter(setLevel)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             >
               <option value="">{t('all')}</option>
               <option value="error">{t('error')}</option>
@@ -253,7 +253,7 @@ export default function ErrorLogsPage() {
               value={source}
               onChange={(e) => updateFilter(setSource)(e.target.value)}
               placeholder={t('sourcePlaceholder')}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -267,7 +267,7 @@ export default function ErrorLogsPage() {
               type="date"
               value={startDate}
               onChange={(e) => updateFilter(setStartDate)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -281,7 +281,7 @@ export default function ErrorLogsPage() {
               type="date"
               value={endDate}
               onChange={(e) => updateFilter(setEndDate)(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -296,7 +296,7 @@ export default function ErrorLogsPage() {
               value={search}
               onChange={(e) => updateFilter(setSearch)(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
         </div>
@@ -316,11 +316,11 @@ export default function ErrorLogsPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('level')}
                 </th>
@@ -357,7 +357,7 @@ export default function ErrorLogsPage() {
                   <Fragment key={entry.id}>
                     <tr
                       onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
-                      className="border-b last:border-b-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                      className="border-b last:border-b-0 hover:bg-muted/50 transition-colors cursor-pointer"
                     >
                       <td className="px-4 py-3">{levelBadge(entry.level)}</td>
                       <td className="px-4 py-3">
@@ -385,7 +385,7 @@ export default function ErrorLogsPage() {
                     {expandedId === entry.id && entry.stack && (
                       <tr className="border-b last:border-b-0 bg-muted/10">
                         <td colSpan={5} className="px-4 py-3">
-                          <div className="rounded-md border bg-background p-3">
+                          <div className="rounded-lg border bg-background p-3">
                             <p className="text-xs font-medium text-muted-foreground mb-2">{t('stackTrace')}</p>
                             <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all max-h-64 overflow-y-auto">
                               {entry.stack}

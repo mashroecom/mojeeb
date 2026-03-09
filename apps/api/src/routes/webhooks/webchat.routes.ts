@@ -95,54 +95,6 @@ async function validateChannel(req: Request, res: Response, next: NextFunction) 
   }
 }
 
-// ──────────────────────────────────────────────────────────
-// GET /api/v1/webchat/discover
-// Public endpoint - returns the first active webchat channel
-// Used by the ChatWidget component to auto-detect channel
-// ──────────────────────────────────────────────────────────
-router.get('/discover', async (_req: Request, res: Response) => {
-  try {
-    const channel = await prisma.channel.findFirst({
-      where: { type: 'WEBCHAT', isActive: true },
-      include: {
-        agents: {
-          where: { isPrimary: true },
-          include: { agent: true },
-        },
-      },
-      orderBy: { createdAt: 'asc' },
-    });
-
-    if (!channel) {
-      return res.status(404).json({ success: false, error: 'No active webchat channel found' });
-    }
-
-    const credentials = channel.credentials as Record<string, any> || {};
-    const primaryAgent = channel.agents?.[0]?.agent;
-
-    const agentLang = primaryAgent?.language || 'ar';
-    const defaultDirection = agentLang === 'ar' ? 'rtl' : 'ltr';
-    const defaultGreeting = agentLang === 'ar'
-      ? 'أهلاً! 😊 كيف أقدر أساعدك؟'
-      : 'Hi! How can I help you today? 😊';
-
-    res.json({
-      success: true,
-      data: {
-        channelId: channel.id,
-        agentName: primaryAgent?.name || credentials.agentName || 'Support Agent',
-        greeting: credentials.greeting || defaultGreeting,
-        primaryColor: credentials.primaryColor || '#6366f1',
-        position: credentials.position || 'bottom-right',
-        direction: credentials.direction || defaultDirection,
-      },
-    });
-  } catch (err) {
-    logger.error({ err }, 'Error discovering webchat channel');
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
-
 // Apply channel validation to all routes with :channelId
 router.use('/:channelId', validateChannel as any);
 
@@ -314,8 +266,14 @@ router.get(
         },
       });
 
-      const hasMore = messages.length > limit;
-      const results = hasMore ? messages.slice(0, limit) : messages;
+      // Filter out internal-only messages (e.g. escalation reasons) from customer view
+      const filtered = messages.filter((m) => {
+        const meta = m.metadata as Record<string, unknown> | null;
+        return meta?.visibility !== 'internal';
+      });
+
+      const hasMore = filtered.length > limit;
+      const results = hasMore ? filtered.slice(0, limit) : filtered;
       const nextCursor = hasMore && results.length > 0 ? results[results.length - 1]!.createdAt.toISOString() : null;
 
       res.json({
@@ -448,6 +406,7 @@ router.get(
 // ──────────────────────────────────────────────────────────
 router.post('/:channelId/conversations/:conversationId/rate', async (req: Request, res: Response) => {
   try {
+    const channel = (req as any).channel;
     const conversationId = req.params.conversationId as string;
     const { rating, feedback, customerId } = req.body;
 
@@ -457,6 +416,15 @@ router.post('/:channelId/conversations/:conversationId/rate', async (req: Reques
 
     if (!customerId) {
       return res.status(400).json({ success: false, error: 'customerId is required' });
+    }
+
+    // Verify conversation belongs to this channel
+    const conversation = await prisma.conversation.findFirst({
+      where: { id: conversationId, channelId: channel.id },
+      select: { id: true },
+    });
+    if (!conversation) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
     }
 
     const result = await prisma.conversationRating.upsert({

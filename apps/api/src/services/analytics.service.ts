@@ -55,14 +55,15 @@ export class AnalyticsService {
     return new Date();
   }
 
-  private dateTruncExpr(groupBy: GroupBy): string {
+  private dateTruncExpr(groupBy: GroupBy, timezone: string = 'UTC'): string {
+    const safeTz = timezone.replace(/[^a-zA-Z0-9/_+-]/g, '');
     switch (groupBy) {
       case 'day':
-        return `date_trunc('day', "createdAt")`;
+        return `date_trunc('day', "createdAt" AT TIME ZONE '${safeTz}')`;
       case 'week':
-        return `date_trunc('week', "createdAt")`;
+        return `date_trunc('week', "createdAt" AT TIME ZONE '${safeTz}')`;
       case 'month':
-        return `date_trunc('month', "createdAt")`;
+        return `date_trunc('month', "createdAt" AT TIME ZONE '${safeTz}')`;
     }
   }
 
@@ -159,7 +160,7 @@ export class AnalyticsService {
     `;
 
     const messagesPerPeriod = await prisma.$queryRaw<TimeBucket[]>`
-      SELECT ${Prisma.raw(trunc)} AS "date",
+      SELECT ${Prisma.raw(trunc.replace(/"createdAt"/g, 'm."createdAt"'))} AS "date",
              COUNT(*)::bigint      AS "count"
         FROM "messages" m
         JOIN "conversations" c ON c."id" = m."conversationId"

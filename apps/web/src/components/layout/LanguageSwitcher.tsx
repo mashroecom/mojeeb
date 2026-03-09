@@ -17,7 +17,7 @@ export function LanguageSwitcher() {
   return (
     <button
       onClick={toggleLocale}
-      className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       title={locale === 'ar' ? 'Switch to English' : 'التبديل للعربية'}
     >
       <Globe className="h-4 w-4" />

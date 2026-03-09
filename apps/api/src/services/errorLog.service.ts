@@ -73,6 +73,7 @@ export class ErrorLogService {
           id: true,
           level: true,
           message: true,
+          stack: true,
           source: true,
           path: true,
           method: true,

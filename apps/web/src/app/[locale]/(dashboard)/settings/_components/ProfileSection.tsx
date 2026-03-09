@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 const inputClass =
-  'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
+  'w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
 
 interface ProfileSectionProps {
   profileLoading: boolean;
@@ -92,7 +92,7 @@ export function ProfileSection({
         <div className="animate-pulse space-y-3">
           <div className="h-16 w-16 rounded-full bg-muted" />
           <div className="h-4 w-24 rounded bg-muted" />
-          <div className="h-10 w-full rounded-md bg-muted" />
+          <div className="h-10 w-full rounded-lg bg-muted" />
         </div>
       ) : (
         <>
@@ -216,7 +216,7 @@ export function ProfileSection({
                 type="submit"
                 disabled={updateProfileIsPending || !profileFirstName.trim()}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
+                  'inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
                   (updateProfileIsPending || !profileFirstName.trim()) &&
                     'cursor-not-allowed opacity-50',
                 )}
@@ -344,7 +344,7 @@ export function ProfileSection({
                     !confirmNewPassword
                   }
                   className={cn(
-                    'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
+                    'inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
                     (changePasswordIsPending ||
                       !currentPassword ||
                       !newPassword ||

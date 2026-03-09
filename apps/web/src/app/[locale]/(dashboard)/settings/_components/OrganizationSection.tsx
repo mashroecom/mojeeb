@@ -6,10 +6,10 @@ import { Section } from './SectionWrapper';
 import { Building2, Save, Loader2, CheckCircle } from 'lucide-react';
 
 const inputClass =
-  'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
+  'w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
 
 const selectClass =
-  'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
+  'w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
 
 const TIMEZONE_OPTIONS = [
   'Asia/Riyadh',
@@ -75,7 +75,7 @@ export function OrganizationSection({
       {isLoading ? (
         <div className="animate-pulse space-y-3">
           <div className="h-4 w-24 rounded bg-muted" />
-          <div className="h-10 w-full rounded-md bg-muted" />
+          <div className="h-10 w-full rounded-lg bg-muted" />
         </div>
       ) : (
         <form onSubmit={handleSave} className="space-y-4">
@@ -160,7 +160,7 @@ export function OrganizationSection({
               type="submit"
               disabled={updateOrgIsPending || !orgName.trim()}
               className={cn(
-                'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
+                'inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
                 (updateOrgIsPending || !orgName.trim()) &&
                   'cursor-not-allowed opacity-50',
               )}

@@ -32,7 +32,7 @@ function typeBadge(type: string, t: ReturnType<typeof useTranslations>) {
     case 'system':
     case 'config':
       return (
-        <span className={`${baseClasses} bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400`}>
+        <span className={`${baseClasses} bg-muted text-muted-foreground`}>
           <Settings className="h-3 w-3" />
           {label}
         </span>
@@ -100,7 +100,7 @@ export default function ActivityMonitorPage() {
         <button
           onClick={clearEvents}
           disabled={events.length === 0}
-          className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:pointer-events-none"
+          className="inline-flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:pointer-events-none"
         >
           <Trash2 className="h-4 w-4" />
           {t('clearEvents')}
@@ -129,7 +129,7 @@ export default function ActivityMonitorPage() {
       {/* Events Feed */}
       <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
         {events.length === 0 && (
-          <div className="rounded-lg border bg-card p-16 text-center shadow-sm">
+          <div className="rounded-xl border bg-card p-16 text-center shadow-sm">
             <Radio className="mx-auto h-12 w-12 text-muted-foreground/40 mb-4" />
             <p className="text-sm text-muted-foreground">{t('noEvents')} {t('noEventsDescription')}</p>
           </div>
@@ -138,7 +138,7 @@ export default function ActivityMonitorPage() {
         {events.map((event) => (
           <div
             key={event.id}
-            className="rounded-lg border bg-card p-4 shadow-sm hover:bg-muted/30 transition-colors"
+            className="rounded-xl border bg-card p-4 shadow-sm hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3 min-w-0">
@@ -153,8 +153,8 @@ export default function ActivityMonitorPage() {
               </span>
             </div>
             {event.metadata && Object.keys(event.metadata).length > 0 && (
-              <div className="mt-2 pl-[calc(theme(spacing.3)+theme(spacing.2))]">
-                <div className="rounded-md border bg-background px-3 py-2">
+              <div className="mt-2 ps-[calc(theme(spacing.3)+theme(spacing.2))]">
+                <div className="rounded-lg border bg-background px-3 py-2">
                   <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all">
                     {JSON.stringify(event.metadata, null, 2)}
                   </pre>

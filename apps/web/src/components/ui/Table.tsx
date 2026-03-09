@@ -78,7 +78,7 @@ export function Table<T extends Record<string, unknown>>({
   })();
 
   return (
-    <div className={cn('w-full overflow-x-auto rounded-lg border', className)}>
+    <div className={cn('w-full overflow-x-auto rounded-xl border', className)}>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b bg-muted/50">
@@ -86,7 +86,7 @@ export function Table<T extends Record<string, unknown>>({
               <th
                 key={col.key}
                 className={cn(
-                  'px-4 py-3 text-start font-medium text-muted-foreground',
+                  'px-4 py-3 text-start text-xs font-medium uppercase tracking-wider text-muted-foreground',
                   col.sortable && 'cursor-pointer select-none hover:text-foreground',
                   col.className,
                 )}

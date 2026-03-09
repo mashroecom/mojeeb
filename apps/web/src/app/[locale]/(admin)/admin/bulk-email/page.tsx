@@ -44,7 +44,7 @@ interface Campaign {
 
 
 const statusBadge: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  DRAFT: 'bg-muted text-muted-foreground',
   SENDING: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   COMPLETED: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   FAILED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
@@ -106,7 +106,7 @@ export default function BulkEmailPage() {
     emailVerified: filterEmailVerified || undefined,
   });
 
-  const campaigns: Campaign[] = campaignsData?.data ?? campaignsData?.campaigns ?? [];
+  const campaigns: Campaign[] = campaignsData?.campaigns ?? [];
   const totalPages = campaignsData?.totalPages ?? 1;
 
   // --- Compose handlers ---
@@ -214,7 +214,7 @@ export default function BulkEmailPage() {
       {activeTab === 'compose' && (
         <form
           onSubmit={handleCreateCampaign}
-          className="rounded-lg border bg-card p-5 shadow-sm space-y-5"
+          className="rounded-xl border bg-card p-5 shadow-sm space-y-5"
         >
           {/* Subject */}
           <div>
@@ -225,7 +225,7 @@ export default function BulkEmailPage() {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder={t('compose.subjectPlaceholder')}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
             />
           </div>
 
@@ -238,7 +238,7 @@ export default function BulkEmailPage() {
               value={bodyHtml}
               onChange={(e) => setBodyHtml(e.target.value)}
               placeholder={t('compose.bodyHtmlPlaceholder')}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm font-mono outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors resize-none"
             />
           </div>
 
@@ -251,7 +251,7 @@ export default function BulkEmailPage() {
                 <select
                   value={filterPlan}
                   onChange={(e) => setFilterPlan(e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
                 >
                   {planOptions.map((p) => (
                     <option key={p} value={p}>
@@ -265,7 +265,7 @@ export default function BulkEmailPage() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
                 >
                   {statusOptions.map((s) => (
                     <option key={s} value={s}>
@@ -280,7 +280,7 @@ export default function BulkEmailPage() {
                     type="checkbox"
                     checked={filterEmailVerified}
                     onChange={(e) => setFilterEmailVerified(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border"
                   />
                   <span className="text-sm">{t('compose.emailVerifiedOnly')}</span>
                 </label>
@@ -294,7 +294,7 @@ export default function BulkEmailPage() {
               type="button"
               onClick={handlePreviewCount}
               disabled={recipientQuery.isFetching}
-              className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
             >
               {recipientQuery.isFetching ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -315,7 +315,7 @@ export default function BulkEmailPage() {
             <button
               type="submit"
               disabled={createCampaign.isPending || !subject.trim() || !bodyHtml.trim()}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
               {createCampaign.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -346,13 +346,13 @@ export default function BulkEmailPage() {
 
           {/* Detail View */}
           {detailId && (
-            <div className="mb-4 rounded-lg border bg-card p-4 shadow-sm">
+            <div className="mb-4 rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold">{t('campaigns.campaignDetail')}</h3>
                 <button
                   onClick={() => setDetailId(null)}
                   aria-label={tc('close')}
-                  className="rounded-md p-1 text-muted-foreground hover:bg-muted transition-colors"
+                  className="rounded-lg p-1 text-muted-foreground hover:bg-muted transition-colors"
                 >
                   <XCircle className="h-4 w-4" />
                 </button>
@@ -369,7 +369,7 @@ export default function BulkEmailPage() {
                     <div>
                       <span className="text-muted-foreground">{t('campaigns.status')}:</span>{' '}
                       <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', statusBadge[campaign.status])}>
-                        {campaign.status}
+                        {t(`campaigns.status_${campaign.status}`)}
                       </span>
                     </div>
                     <div>
@@ -395,11 +395,11 @@ export default function BulkEmailPage() {
           )}
 
           {/* Table */}
-          <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+          <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px]">
                 <thead>
-                  <tr className="border-b bg-muted/30">
+                  <tr className="border-b bg-muted/50">
                     <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {t('campaigns.subject')}
                     </th>
@@ -441,7 +441,7 @@ export default function BulkEmailPage() {
                     campaigns.map((campaign) => {
                       const progress = getProgress(campaign);
                       return (
-                        <tr key={campaign.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+                        <tr key={campaign.id} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
                           <td className="px-4 py-3">
                             <span className="text-sm font-medium truncate block max-w-[250px]">
                               {campaign.subject}
@@ -454,7 +454,7 @@ export default function BulkEmailPage() {
                                 statusBadge[campaign.status],
                               )}
                             >
-                              {campaign.status}
+                              {t(`campaigns.status_${campaign.status}`)}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-sm text-muted-foreground">
@@ -486,7 +486,7 @@ export default function BulkEmailPage() {
                               {/* View Detail */}
                               <button
                                 onClick={() => setDetailId(detailId === campaign.id ? null : campaign.id)}
-                                className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                                 title={t('campaigns.viewDetail')}
                               >
                                 <Eye className="h-3.5 w-3.5" />
@@ -500,14 +500,14 @@ export default function BulkEmailPage() {
                                       <button
                                         onClick={() => handleSend(campaign.id)}
                                         disabled={sendCampaign.isPending}
-                                        className="inline-flex items-center gap-1 rounded-md bg-blue-500 px-2 py-1 text-[10px] font-medium text-white hover:bg-blue-600 transition-colors disabled:opacity-50"
+                                        className="inline-flex items-center gap-1 rounded-lg bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
                                       >
                                         {sendCampaign.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                                         {t('campaigns.confirm')}
                                       </button>
                                       <button
                                         onClick={() => setSendConfirmId(null)}
-                                        className="rounded-md px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
+                                        className="rounded-lg px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
                                       >
                                         {t('campaigns.cancel')}
                                       </button>
@@ -515,7 +515,7 @@ export default function BulkEmailPage() {
                                   ) : (
                                     <button
                                       onClick={() => setSendConfirmId(campaign.id)}
-                                      className="inline-flex items-center gap-1 rounded-md border border-blue-200 px-2.5 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/20 transition-colors"
+                                      className="inline-flex items-center gap-1 rounded-lg border border-blue-200 px-2.5 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-900/20 transition-colors"
                                     >
                                       <Send className="h-3 w-3" />
                                       {t('campaigns.send')}
@@ -532,14 +532,14 @@ export default function BulkEmailPage() {
                                       <button
                                         onClick={() => handleCancel(campaign.id)}
                                         disabled={cancelCampaign.isPending}
-                                        className="inline-flex items-center gap-1 rounded-md bg-red-500 px-2 py-1 text-[10px] font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                                        className="inline-flex items-center gap-1 rounded-lg bg-destructive px-2 py-1 text-[10px] font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
                                       >
                                         {cancelCampaign.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                                         {t('campaigns.confirm')}
                                       </button>
                                       <button
                                         onClick={() => setCancelConfirmId(null)}
-                                        className="rounded-md px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
+                                        className="rounded-lg px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
                                       >
                                         {t('campaigns.no')}
                                       </button>
@@ -547,7 +547,7 @@ export default function BulkEmailPage() {
                                   ) : (
                                     <button
                                       onClick={() => setCancelConfirmId(campaign.id)}
-                                      className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors"
+                                      className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors"
                                     >
                                       <XCircle className="h-3 w-3" />
                                       {t('campaigns.cancel')}

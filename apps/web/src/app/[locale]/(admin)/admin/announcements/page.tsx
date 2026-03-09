@@ -84,7 +84,7 @@ function toInputDate(dateStr: string | null) {
 
 function CardSkeleton() {
   return (
-    <div className="animate-pulse rounded-lg border bg-card p-5">
+    <div className="animate-pulse rounded-xl border bg-card p-5">
       <div className="flex items-start justify-between mb-3">
         <div className="h-5 w-48 rounded bg-muted" />
         <div className="h-5 w-16 rounded-full bg-muted" />
@@ -121,7 +121,7 @@ export default function AnnouncementsPage() {
   const updateMutation = useUpdateAnnouncement();
   const deleteMutation = useDeleteAnnouncement();
 
-  const announcements: Announcement[] = data?.data ?? [];
+  const announcements: Announcement[] = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   // --- Form handlers ---
@@ -188,7 +188,7 @@ export default function AnnouncementsPage() {
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
           {t('create')}
@@ -199,7 +199,7 @@ export default function AnnouncementsPage() {
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="mb-6 rounded-lg border bg-card p-5 shadow-sm space-y-4"
+          className="mb-6 rounded-xl border bg-card p-5 shadow-sm space-y-4"
         >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
@@ -209,7 +209,7 @@ export default function AnnouncementsPage() {
               type="button"
               onClick={closeForm}
               aria-label={tc('close')}
-              className="rounded-md p-1 text-muted-foreground hover:bg-muted transition-colors"
+              className="rounded-lg p-1 text-muted-foreground hover:bg-muted transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -224,7 +224,7 @@ export default function AnnouncementsPage() {
                 required
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               />
             </div>
 
@@ -236,7 +236,7 @@ export default function AnnouncementsPage() {
                 rows={3}
                 value={form.body}
                 onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors resize-none"
               />
             </div>
 
@@ -246,7 +246,7 @@ export default function AnnouncementsPage() {
               <select
                 value={form.type}
                 onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as FormData['type'] }))}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               >
                 <option value="INFO">{t('info')}</option>
                 <option value="WARNING">{t('warning')}</option>
@@ -259,10 +259,9 @@ export default function AnnouncementsPage() {
               <label className="block text-sm font-medium mb-1">{t('startsAt')}</label>
               <input
                 type="date"
-                required
                 value={form.startsAt}
                 onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               />
             </div>
 
@@ -270,13 +269,13 @@ export default function AnnouncementsPage() {
             <div>
               <label className="block text-sm font-medium mb-1">
                 {t('endsAt')}
-                <span className="text-muted-foreground font-normal ms-1">(optional)</span>
+                <span className="text-muted-foreground font-normal ms-1">{t('optional')}</span>
               </label>
               <input
                 type="date"
                 value={form.endsAt}
                 onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               />
             </div>
           </div>
@@ -286,14 +285,14 @@ export default function AnnouncementsPage() {
             <button
               type="button"
               onClick={closeForm}
-              className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
               {t('cancel')}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {t('save')}
@@ -326,7 +325,7 @@ export default function AnnouncementsPage() {
 
       {/* Empty State */}
       {!isLoading && !isError && announcements.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border bg-card py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-16 text-center">
           <Megaphone className="h-12 w-12 text-muted-foreground/40 mb-4" />
           <p className="text-sm text-muted-foreground">{t('noAnnouncements')}</p>
         </div>
@@ -341,7 +340,7 @@ export default function AnnouncementsPage() {
               <div
                 key={ann.id}
                 className={cn(
-                  'rounded-lg border bg-card p-5 shadow-sm transition-colors',
+                  'rounded-xl border bg-card p-5 shadow-sm transition-colors',
                   !ann.isActive && 'opacity-60',
                 )}
               >
@@ -415,7 +414,7 @@ export default function AnnouncementsPage() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => openEdit(ann)}
-                      className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                       title={t('edit')}
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -426,14 +425,14 @@ export default function AnnouncementsPage() {
                         <button
                           onClick={() => handleDelete(ann.id)}
                           disabled={deleteMutation.isPending}
-                          className="inline-flex items-center gap-1 rounded-md bg-red-500 px-2 py-1 text-[10px] font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-lg bg-destructive px-2 py-1 text-[10px] font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
                         >
                           {deleteMutation.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                           {tc('confirm')}
                         </button>
                         <button
                           onClick={() => setDeleteConfirmId(null)}
-                          className="rounded-md px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
+                          className="rounded-lg px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
                         >
                           {tc('cancel')}
                         </button>
@@ -441,7 +440,7 @@ export default function AnnouncementsPage() {
                     ) : (
                       <button
                         onClick={() => setDeleteConfirmId(ann.id)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 transition-colors"
+                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 transition-colors"
                         title={t('delete')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />

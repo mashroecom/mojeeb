@@ -10,7 +10,7 @@ interface AdminFilterBarProps {
 export function AdminFilterBar({ children }: AdminFilterBarProps) {
   const t = useTranslations('admin.common');
   return (
-    <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">
+    <div className="mb-6 rounded-xl border bg-card p-4 shadow-sm">
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
         <Filter className="h-4 w-4" />
         {t('filters')}

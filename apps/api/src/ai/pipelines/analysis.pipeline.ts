@@ -1,30 +1,46 @@
 import { getAIProvider } from '../index';
 import { buildAnalysisPrompt } from '../prompts/analysis';
-import type { EmotionResult, RoutingDecision, LeadResult, ConversationMessage } from '@mojeeb/shared-types';
+import type { EmotionResult, RoutingDecision, LeadResult, ConversationMessage, ExtractedCustomerData } from '@mojeeb/shared-types';
 import { logger } from '../../config/logger';
 
 /**
  * Human-request patterns checked before AI call (zero cost).
  */
 const HUMAN_REQUEST_PATTERNS = [
+  // English patterns
   /talk to (a |an )?(human|agent|person|representative)/i,
   /speak (to|with) (a )?(human|agent|person|someone)/i,
   /real person/i,
-  /اريد التحدث مع (شخص|موظف|إنسان|انسان)/,
-  /ممكن (احد|أحد) يساعدني/,
+  /transfer (me )?(to )?(a )?(human|agent|person|support)/i,
+  /connect me (to|with) (a )?(human|agent|person|support)/i,
+  /i (want|need) (a )?human/i,
+  /don'?t want (to talk to )?(a |the )?(bot|ai|robot|machine)/i,
+  // Arabic patterns — MSA
+  /اريد التحدث مع (شخص|موظف|إنسان|انسان|حد|أحد|احد)/,
   /أريد (شخص|موظف) حقيقي/,
-  /وصلني (بـ|ب)(موظف|شخص)/,
-  /كلم(ني|وني)? (موظف|شخص)/,
-  /تحدث مع (موظف|شخص|إنسان|انسان)/,
-  /ابي (اتكلم|أتكلم|اكلم|أكلم) (مع )?(موظف|شخص)/,
-  /عايز (اتكلم|أتكلم|اكلم|أكلم) (مع )?(موظف|شخص)/,
-  /حول(ني|لي) (على|ل)(موظف|شخص|الدعم)/,
+  /وصلني (بـ?|ب)(موظف|شخص|حد|أحد|الدعم)/,
+  /كلم(ني|وني)? (موظف|شخص|حد|أحد)/,
+  /تحدث مع (موظف|شخص|إنسان|انسان|حد|أحد)/,
+  /حول(ني|لي) (على|ل|إلى|الى)(موظف|شخص|الدعم|حد)/,
+  /ممكن (احد|أحد|حد) يساعدني/,
+  // Arabic patterns — Egyptian dialect
+  /عايز (اتكلم|أتكلم|اكلم|أكلم) (مع )?(موظف|شخص|حد|أحد)/,
+  /عايز (حد|أحد) (يساعدني|من الدعم|حقيقي)/,
+  /مش عايز (اتكلم|أتكلم|اكلم) (مع )?(بوت|روبوت|ذكاء)/,
+  // Arabic patterns — Gulf/Saudi dialect
+  /ابي (اتكلم|أتكلم|اكلم|أكلم) (مع )?(موظف|شخص|حد|أحد)/,
+  /ابغى (اتكلم|أتكلم|اكلم|أكلم) (مع )?(موظف|شخص|حد|أحد)/,
+  // Generic "I don't want a bot" in Arabic
+  /(مش |ما |لا )?(عايز|أريد|اريد|ابي|ابغى) (بوت|روبوت)/,
 ];
 
 export interface AnalysisResult {
   emotion: EmotionResult | null;
   lead: LeadResult | null;
   routing: RoutingDecision;
+  category: string | null;
+  extractedData: ExtractedCustomerData | null;
+  quickReplies: string[];
 }
 
 interface CombinedJSON {
@@ -42,11 +58,30 @@ interface CombinedJSON {
     notes: string;
   };
   routing: { handoff: boolean; reason: string; confidence: number };
+  category: { category: string; confidence: number };
+  extractedData: {
+    name: string | null;
+    email: string | null;
+    phone: string | null;
+    company: string | null;
+    address: string | null;
+    orderNumber: string | null;
+  };
+  quickReplies: string[];
 }
+
+const DEFAULT_RESULT: AnalysisResult = {
+  emotion: null,
+  lead: null,
+  routing: { shouldHandoff: false, reason: '', confidence: 0 },
+  category: null,
+  extractedData: null,
+  quickReplies: [],
+};
 
 export class AnalysisPipeline {
   /**
-   * Run emotion + lead + routing in a single GPT-4o-mini call.
+   * Run emotion + lead + routing + data extraction + quick replies in a single GPT-4o-mini call.
    * Falls back gracefully if the call fails.
    */
   async analyze(
@@ -60,14 +95,36 @@ export class AnalysisPipeline {
       language?: string;
       agentDescription?: string;
       agentName?: string;
+      dataCollectionFields?: string[];
+      escalationKeywords?: string[];
+      sentimentEscalation?: boolean;
+      escalationMessageCount?: number;
+      enableQuickReplies?: boolean;
     },
   ): Promise<AnalysisResult> {
     // Fast rule-based routing check first (no API call)
     if (options.enableRouting) {
+      // Custom keyword-based escalation
+      if (options.escalationKeywords?.length) {
+        const lowerMessage = message.toLowerCase();
+        const matchedKeyword = options.escalationKeywords.find((kw) =>
+          lowerMessage.includes(kw.toLowerCase()),
+        );
+        if (matchedKeyword) {
+          return {
+            ...DEFAULT_RESULT,
+            routing: {
+              shouldHandoff: true,
+              reason: `Escalation keyword detected: "${matchedKeyword}"`,
+              confidence: 0.9,
+            },
+          };
+        }
+      }
+
       if (HUMAN_REQUEST_PATTERNS.some((p) => p.test(message))) {
         return {
-          emotion: null,
-          lead: null,
+          ...DEFAULT_RESULT,
           routing: {
             shouldHandoff: true,
             reason: 'Customer explicitly requested human agent',
@@ -83,8 +140,7 @@ export class AnalysisPipeline {
         .map((m) => (typeof m.content === 'string' ? m.content : '').toLowerCase().trim());
       if (customerMessages.length >= 3 && new Set(customerMessages).size === 1) {
         return {
-          emotion: null,
-          lead: null,
+          ...DEFAULT_RESULT,
           routing: {
             shouldHandoff: true,
             reason: 'Customer repeating same message - AI likely unhelpful',
@@ -97,11 +153,7 @@ export class AnalysisPipeline {
     // If nothing is enabled, skip the API call entirely
     const needsAny = options.enableEmotion || options.enableLead || options.enableRouting;
     if (!needsAny) {
-      return {
-        emotion: null,
-        lead: null,
-        routing: { shouldHandoff: false, reason: '', confidence: 0 },
-      };
+      return { ...DEFAULT_RESULT };
     }
 
     try {
@@ -111,13 +163,18 @@ export class AnalysisPipeline {
       const trimmedHistory = history.slice(-5);
 
       const result = await provider.generateJSON<CombinedJSON>({
-        systemPrompt: buildAnalysisPrompt(options.language, options.agentDescription, options.agentName),
+        systemPrompt: buildAnalysisPrompt(
+          options.language,
+          options.agentDescription,
+          options.agentName,
+          options.dataCollectionFields,
+        ),
         messages: [
           ...trimmedHistory,
           { role: 'user', content: message },
         ],
         temperature: 0.1,
-        maxTokens: 400,
+        maxTokens: 500,
         model: 'gpt-4o-mini',
       });
 
@@ -156,21 +213,44 @@ export class AnalysisPipeline {
         };
       }
 
-      // Cross-check: high anger → handoff (only if enough messages exchanged)
+      // Parse category
+      const category = result.category?.category || null;
+
+      // Parse extracted customer data
+      const extractedData: ExtractedCustomerData | null = result.extractedData
+        ? {
+            name: result.extractedData.name || null,
+            email: result.extractedData.email || null,
+            phone: result.extractedData.phone || null,
+            company: result.extractedData.company || null,
+            address: result.extractedData.address || null,
+            orderNumber: result.extractedData.orderNumber || null,
+          }
+        : null;
+
+      // Parse quick replies
+      const quickReplies = Array.isArray(result.quickReplies)
+        ? result.quickReplies.filter((r) => typeof r === 'string' && r.length > 0).slice(0, 4)
+        : [];
+
+      // Cross-check: high anger → handoff (configurable message threshold)
       const customerMsgCount = history.filter((m) => m.role === 'user').length;
+      const minMessagesForEscalation = options.escalationMessageCount || 5;
 
       logger.info(
         { customerMsgCount, aiWantsHandoff: routing.shouldHandoff, aiReason: routing.reason },
         'Handoff decision debug',
       );
 
+      // Sentiment-based escalation: only trigger after enough messages
       if (
         emotion &&
         options.enableRouting &&
+        options.sentimentEscalation &&
         !routing.shouldHandoff &&
         ['angry', 'frustrated'].includes(emotion.emotion) &&
         emotion.score > Math.max(options.handoffThreshold, 0.7) &&
-        customerMsgCount >= 5
+        customerMsgCount >= minMessagesForEscalation
       ) {
         routing = {
           shouldHandoff: true,
@@ -179,28 +259,10 @@ export class AnalysisPipeline {
         };
       }
 
-      // Safety: ALWAYS suppress AI-based handoff if fewer than 5 customer messages
-      // (explicit human requests are already caught by rule-based check above)
-      if (routing.shouldHandoff && customerMsgCount < 5) {
-        logger.info(
-          { customerMsgCount, suppressedReason: routing.reason },
-          'Handoff SUPPRESSED - too few customer messages',
-        );
-        routing = {
-          shouldHandoff: false,
-          reason: 'Handoff suppressed - too few messages to determine need',
-          confidence: 0,
-        };
-      }
-
-      return { emotion, lead, routing };
+      return { emotion, lead, routing, category, extractedData, quickReplies };
     } catch (err) {
       logger.error({ err }, 'Combined analysis failed');
-      return {
-        emotion: null,
-        lead: null,
-        routing: { shouldHandoff: false, reason: 'Analysis failed', confidence: 0 },
-      };
+      return { ...DEFAULT_RESULT };
     }
   }
 }

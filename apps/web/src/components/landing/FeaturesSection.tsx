@@ -25,18 +25,20 @@ export function FeaturesSection() {
 
   const { data: cms } = useLandingPageContent();
 
-  const cmsFeatures = parseLandingFeatures(isAr ? cms?.featuresAr : cms?.features);
+  // Features are stored as a single bilingual array (each item has title + titleAr, etc.)
+  const cmsFeatures = parseLandingFeatures(cms?.features);
   const hasCmsFeatures = cmsFeatures.length > 0;
 
-  // CMS override for title, fallback to translation
+  // CMS override for title/subtitle, fallback to translation
   const sectionTitle = (isAr ? cms?.featuresTitleAr : cms?.featuresTitle) || t('title');
+  const sectionSubtitle = (isAr ? cms?.featuresSubtitleAr : cms?.featuresSubtitle) || t('subtitle');
 
   return (
     <section id="features" className="py-20 bg-muted/30 scroll-mt-16">
       <div className="container">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold sm:text-4xl">{sectionTitle}</h2>
-          <p className="mt-4 text-lg text-muted-foreground">{t('subtitle')}</p>
+          <p className="mt-4 text-lg text-muted-foreground">{sectionSubtitle}</p>
         </div>
 
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -51,8 +53,8 @@ export function FeaturesSection() {
                     <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                       <Icon className="h-6 w-6" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+                    <h3 className="text-lg font-semibold mb-2">{(isAr ? feature.titleAr : feature.title) || feature.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{(isAr ? feature.descriptionAr : feature.description) || feature.description}</p>
                   </div>
                 );
               })

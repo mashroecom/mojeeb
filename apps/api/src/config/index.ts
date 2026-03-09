@@ -81,6 +81,7 @@ export function validateConfig() {
       ['DATABASE_URL', process.env.DATABASE_URL],
       ['JWT_SECRET', process.env.JWT_SECRET],
       ['ENCRYPTION_KEY', process.env.ENCRYPTION_KEY],
+      ['REDIS_URL', process.env.REDIS_URL],
     ];
     const missing = required.filter(([, val]) => !val).map(([name]) => name);
     if (missing.length > 0) {

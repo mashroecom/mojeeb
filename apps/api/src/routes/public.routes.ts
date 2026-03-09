@@ -26,7 +26,15 @@ router.get('/site-settings', async (_req: Request, res: Response, next: NextFunc
           supportEmail: null,
           twitterUrl: null,
           linkedinUrl: null,
+          facebookUrl: null,
+          instagramUrl: null,
           githubUrl: null,
+          supportChatEnabled: false,
+          supportChatChannelId: null,
+          supportChatPosition: 'right',
+          supportChatColor: '#6366f1',
+          supportChatWelcome: null,
+          supportChatWelcomeAr: null,
         },
       });
     }
@@ -44,7 +52,15 @@ router.get('/site-settings', async (_req: Request, res: Response, next: NextFunc
         supportEmail: settings.supportEmail,
         twitterUrl: settings.twitterUrl,
         linkedinUrl: settings.linkedinUrl,
+        facebookUrl: settings.facebookUrl,
+        instagramUrl: settings.instagramUrl,
         githubUrl: settings.githubUrl,
+        supportChatEnabled: settings.supportChatEnabled,
+        supportChatChannelId: settings.supportChatChannelId,
+        supportChatPosition: settings.supportChatPosition,
+        supportChatColor: settings.supportChatColor,
+        supportChatWelcome: settings.supportChatWelcome,
+        supportChatWelcomeAr: settings.supportChatWelcomeAr,
       },
     });
   } catch (err) {
@@ -98,6 +114,88 @@ router.get('/landing-page', async (_req: Request, res: Response, next: NextFunct
     const content = await landingPageService.get();
     // Cache for 5 minutes
     res.set('Cache-Control', 'public, max-age=300');
+
+    // Check both LandingPage.maintenanceEnabled AND SiteSettings.maintenanceMode
+    let isMaintenanceOn = content.maintenanceEnabled;
+    let mTitle = content.maintenanceTitle;
+    let mTitleAr = content.maintenanceTitleAr;
+    let mMessage = content.maintenanceMessage;
+    let mMessageAr = content.maintenanceMessageAr;
+
+    if (!isMaintenanceOn) {
+      // Also check SiteSettings.maintenanceMode (admin settings toggle)
+      const siteSettings = await prisma.siteSettings.findUnique({
+        where: { id: 'singleton' },
+        select: { maintenanceMode: true, maintenanceMessage: true },
+      });
+      if (siteSettings?.maintenanceMode) {
+        isMaintenanceOn = true;
+        mMessage = siteSettings.maintenanceMessage || '';
+        mMessageAr = siteSettings.maintenanceMessage || '';
+      }
+    }
+
+    if (isMaintenanceOn) {
+      return res.json({
+        success: true,
+        data: {
+          maintenanceEnabled: true,
+          maintenanceTitle: mTitle,
+          maintenanceTitleAr: mTitleAr,
+          maintenanceMessage: mMessage,
+          maintenanceMessageAr: mMessageAr,
+        },
+      });
+    }
+
+    res.json({ success: true, data: content });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /faq - Public FAQ
+router.get('/faq', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const faqs = await prisma.fAQ.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    res.json({ success: true, data: faqs });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /testimonials - Public testimonials
+router.get('/testimonials', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const testimonials = await prisma.testimonial.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    res.json({ success: true, data: testimonials });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /legal/:type - Public legal content (privacy-policy or terms)
+router.get('/legal/:type', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { type } = req.params;
+    if (type !== 'privacy-policy' && type !== 'terms') {
+      return res.status(400).json({ success: false, error: 'Invalid type.' });
+    }
+
+    const content = await prisma.legalContent.findUnique({
+      where: { id: type },
+    });
+
+    if (!content) {
+      return res.json({ success: true, data: { id: type, contentEn: '', contentAr: '', updatedAt: null } });
+    }
+
     res.json({ success: true, data: content });
   } catch (err) {
     next(err);

@@ -40,7 +40,8 @@ router.get(
   validate({ query: recipientCountSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const filter = (req as any).validatedQuery;
+      // BUG FIX: validate middleware sets data on req.query, not validatedQuery
+      const filter = req.query as any;
       const count = await bulkEmailService.getRecipientCount(filter);
       res.json({ success: true, data: { count } });
     } catch (err) {

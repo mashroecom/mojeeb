@@ -45,7 +45,7 @@ interface AgentEntry {
 
 function StatSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm animate-pulse">
+    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
       <div className="h-3 w-20 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -163,28 +163,28 @@ export default function AgentsPage() {
           </>
         ) : (
           <>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Bot className="h-4 w-4" />
                 {t('totalAgents')}
               </div>
               <p className="text-2xl font-bold">{stats?.total ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 {t('active')}
               </div>
               <p className="text-2xl font-bold">{stats?.active ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <XCircle className="h-4 w-4 text-red-500" />
                 {t('inactive')}
               </div>
               <p className="text-2xl font-bold">{stats?.inactive ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Cpu className="h-4 w-4" />
                 {t('byProvider')}
@@ -205,19 +205,19 @@ export default function AgentsPage() {
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-md border bg-background ps-9 pe-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            className="w-full rounded-lg border bg-background ps-9 pe-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
           />
         </div>
         <button
           onClick={handleSearch}
-          className="inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+          className="inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
         >
           <Search className="h-4 w-4" />
         </button>
         <select
           value={provider}
           onChange={(e) => { setProvider(e.target.value); setPage(1); }}
-          className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+          className="rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
         >
           <option value="">{t('allProviders')}</option>
           <option value="OPENAI">OpenAI</option>
@@ -226,7 +226,7 @@ export default function AgentsPage() {
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-          className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+          className="rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
         >
           <option value="">{t('allStatuses')}</option>
           <option value="active">{t('active')}</option>
@@ -248,11 +248,11 @@ export default function AgentsPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1000px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('name')}
                 </th>
@@ -298,7 +298,7 @@ export default function AgentsPage() {
               {!isLoading &&
                 !isError &&
                 entries.map((agent) => (
-                  <tr key={agent.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+                  <tr key={agent.id} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium truncate max-w-[180px] block">
                         {agent.name}
@@ -342,7 +342,7 @@ export default function AgentsPage() {
                         <button
                           onClick={() => handleToggleActive(agent)}
                           disabled={updateAgent.isPending}
-                          className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${agent.isActive ? 'border-orange-200 text-orange-600 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-900/20' : 'border-green-200 text-green-600 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-900/20'}`}
+                          className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${agent.isActive ? 'border-orange-200 text-orange-600 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-900/20' : 'border-green-200 text-green-600 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-900/20'}`}
                         >
                           {agent.isActive ? <XCircle className="h-3 w-3" /> : <CheckCircle className="h-3 w-3" />}
                           {agent.isActive ? t('inactive') : t('active')}
@@ -350,7 +350,7 @@ export default function AgentsPage() {
                         <button
                           onClick={() => handleDelete(agent.id)}
                           disabled={deleteAgent.isPending}
-                          className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
                         >
                           <Trash2 className="h-3 w-3" />
                           {tc('delete')}

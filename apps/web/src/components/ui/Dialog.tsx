@@ -55,9 +55,9 @@ export function Dialog({
           <div className={cn(title || description ? 'mt-4' : '')}>{children}</div>
           <DialogPrimitive.Close
             className={cn(
-              'absolute end-4 top-4 inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors',
+              'absolute end-4 top-4 inline-flex h-7 w-7 items-center justify-center rounded-lg transition-colors',
               'text-muted-foreground hover:text-foreground hover:bg-muted',
-              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
             )}
             aria-label="Close"
           >

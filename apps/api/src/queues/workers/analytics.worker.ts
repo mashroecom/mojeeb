@@ -2,6 +2,7 @@ import { Worker } from 'bullmq';
 import { redis } from '../../config/redis';
 import { prisma } from '../../config/database';
 import { logger } from '../../config/logger';
+import { moveToDeadLetterQueue } from '../dlq';
 
 interface AnalyticsJobData {
   orgId: string;
@@ -35,6 +36,7 @@ export const analyticsWorker = new Worker(
 
 analyticsWorker.on('failed', (job, err) => {
   logger.error({ jobId: job?.id, err }, 'Analytics event processing failed');
+  moveToDeadLetterQueue('analytics', job, err, 3);
 });
 
 analyticsWorker.on('error', (err) => {

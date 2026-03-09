@@ -26,7 +26,22 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       endDate,
     });
 
-    res.json({ success: true, data: result });
+    const mapped = {
+      ...result,
+      logs: result.logs.map((log: any) => ({
+        id: log.id,
+        userId: log.userId,
+        userEmail: log.user?.email,
+        userName: log.user ? `${log.user.firstName ?? ''} ${log.user.lastName ?? ''}`.trim() : undefined,
+        action: log.action,
+        targetType: log.targetType,
+        targetId: log.targetId,
+        metadata: log.metadata,
+        createdAt: log.createdAt,
+      })),
+    };
+
+    res.json({ success: true, data: mapped });
   } catch (err) {
     next(err);
   }

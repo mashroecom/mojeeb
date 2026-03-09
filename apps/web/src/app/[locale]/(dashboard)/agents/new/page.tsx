@@ -39,7 +39,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 
 const labelClass = 'block text-sm font-medium mb-1.5';
 const inputClass =
-  'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
+  'w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
 
 export default function CreateAgentPage() {
   const t = useTranslations('dashboard.agents');
@@ -92,9 +92,9 @@ export default function CreateAgentPage() {
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/agents"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors hover:bg-muted"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors hover:bg-muted"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
         </Link>
         <h1 className="text-2xl font-bold">{t('createAgent')}</h1>
       </div>
@@ -148,7 +148,7 @@ export default function CreateAgentPage() {
             onClick={() => setSelectedTemplate(null)}
             className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
             {t('changeTemplate')}
           </button>
 
@@ -239,7 +239,7 @@ export default function CreateAgentPage() {
                   <span
                     className={cn(
                       'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
-                      enableLeadExtraction ? 'translate-x-5' : 'translate-x-0',
+                      enableLeadExtraction ? 'ltr:translate-x-5 rtl:-translate-x-5' : 'translate-x-0',
                     )}
                   />
                 </button>
@@ -254,7 +254,7 @@ export default function CreateAgentPage() {
             <div className="flex items-center justify-end gap-3">
               <Link
                 href="/agents"
-                className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
               >
                 {t('cancel')}
               </Link>
@@ -262,7 +262,7 @@ export default function CreateAgentPage() {
                 type="submit"
                 disabled={createAgent.isPending || !name.trim()}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
+                  'inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
                   (createAgent.isPending || !name.trim()) &&
                     'cursor-not-allowed opacity-50',
                 )}
@@ -278,12 +278,10 @@ export default function CreateAgentPage() {
 
             {/* Error display */}
             {createAgent.isError && (
-              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
                 {isAxiosError(createAgent.error) && createAgent.error.response?.status === 402
                   ? t('limitReached')
-                  : createAgent.error instanceof Error
-                    ? createAgent.error.message
-                    : t('somethingWentWrong')}
+                  : t('somethingWentWrong')}
               </div>
             )}
           </form>

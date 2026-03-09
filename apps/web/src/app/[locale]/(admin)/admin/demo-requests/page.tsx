@@ -62,19 +62,19 @@ export default function DemoRequestsPage() {
   const deleteDemoRequest = useDeleteDemoRequest();
   const { confirmProps, confirm } = useConfirmDialog();
 
-  const requests = data?.data ?? [];
-  const pagination = data?.pagination;
+  const requests = data?.items ?? [];
+  const pagination = data ? { page: data.page, totalPages: data.totalPages, total: data.total } : undefined;
 
   function handleExport() {
     if (!requests.length) return;
     const rows = requests.map((req: any) => ({
-      Name: req.name || '',
-      Email: req.email || '',
-      Phone: req.phone || '',
-      Company: req.company || '',
-      Status: req.status,
-      Message: req.message || '',
-      Date: fmtDate(req.createdAt, locale),
+      [t('csvName')]: req.name || '',
+      [t('csvEmail')]: req.email || '',
+      [t('csvPhone')]: req.phone || '',
+      [t('csvCompany')]: req.company || '',
+      [t('csvStatus')]: req.status,
+      [t('csvMessage')]: req.message || '',
+      [t('csvDate')]: fmtDate(req.createdAt, locale),
     }));
     exportToCsv('admin-demo-requests', rows);
   }
@@ -153,7 +153,7 @@ export default function DemoRequestsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-lg border bg-card ps-9 pe-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            className="w-full rounded-lg border bg-card ps-9 pe-4 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
           />
         </div>
 
@@ -229,7 +229,7 @@ export default function DemoRequestsPage() {
                   {requests.map((req: any) => (
                     <Fragment key={req.id}>
                       <tr
-                        className="hover:bg-muted/30 transition-colors cursor-pointer"
+                        className="hover:bg-muted/50 transition-colors cursor-pointer"
                         onClick={() => toggleExpand(req.id)}
                       >
                         <td className="px-4 py-3">
@@ -256,8 +256,8 @@ export default function DemoRequestsPage() {
                             value={req.status}
                             onChange={(e) => handleStatusChange(req.id, e.target.value)}
                             className={cn(
-                              'rounded-md px-2 py-1 text-xs font-medium border-0 cursor-pointer',
-                              STATUS_BADGE[req.status] ?? 'bg-gray-100 text-gray-700',
+                              'rounded-lg px-2 py-1 text-xs font-medium border-0 cursor-pointer',
+                              STATUS_BADGE[req.status] ?? 'bg-muted text-muted-foreground',
                             )}
                           >
                             {ALL_STATUSES.map((s) => (
@@ -321,7 +321,7 @@ export default function DemoRequestsPage() {
                       <span
                         className={cn(
                           'rounded-full px-2.5 py-0.5 text-xs font-medium',
-                          STATUS_BADGE[req.status] ?? 'bg-gray-100 text-gray-700',
+                          STATUS_BADGE[req.status] ?? 'bg-muted text-muted-foreground',
                         )}
                       >
                         {statusLabel(req.status)}
@@ -338,7 +338,7 @@ export default function DemoRequestsPage() {
                         <select
                           value={req.status}
                           onChange={(e) => handleStatusChange(req.id, e.target.value)}
-                          className="rounded-md px-2 py-1 text-xs border bg-background"
+                          className="rounded-lg px-2 py-1 text-xs border bg-background"
                         >
                           {ALL_STATUSES.map((s) => (
                             <option key={s} value={s}>

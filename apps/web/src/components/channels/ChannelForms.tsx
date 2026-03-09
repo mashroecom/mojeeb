@@ -86,8 +86,10 @@ export function Modal({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">{title}</h3>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-md p-1 hover:bg-muted transition-colors"
+            className="rounded-lg p-1 hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label="Close"
           >
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -121,7 +123,7 @@ export function FormField({
     <div>
       <label className="mb-1.5 block text-sm font-medium">
         {label}
-        {required && <span className="text-red-500 ms-0.5">*</span>}
+        {required && <span className="text-destructive ms-0.5">*</span>}
       </label>
       <input
         type={type}
@@ -129,7 +131,7 @@ export function FormField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+        className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
       />
     </div>
   );
@@ -168,7 +170,7 @@ export function WhatsAppForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+      <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
         {t('whatsappInstructions')}
       </div>
       <FormField
@@ -199,7 +201,7 @@ export function WhatsAppForm({
         type="submit"
         disabled={!isValid || isPending}
         className={cn(
-          'w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
+          'w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
           (!isValid || isPending) && 'cursor-not-allowed opacity-50',
         )}
       >
@@ -240,7 +242,7 @@ export function MessengerForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+      <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
         {t('messengerInstructions')}
       </div>
       <FormField
@@ -259,7 +261,7 @@ export function MessengerForm({
         type="submit"
         disabled={!isValid || isPending}
         className={cn(
-          'w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
+          'w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
           (!isValid || isPending) && 'cursor-not-allowed opacity-50',
         )}
       >
@@ -300,7 +302,7 @@ export function InstagramForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+      <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
         {t('instagramInstructions')}
       </div>
       <FormField
@@ -319,7 +321,7 @@ export function InstagramForm({
         type="submit"
         disabled={!isValid || isPending}
         className={cn(
-          'w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
+          'w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
           (!isValid || isPending) && 'cursor-not-allowed opacity-50',
         )}
       >
@@ -362,7 +364,7 @@ export function WebChatForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+      <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
         {t('webchatInstructions')}
       </div>
       <FormField
@@ -397,7 +399,7 @@ export function WebChatForm({
             }}
             dir="ltr"
             maxLength={7}
-            className="w-24 rounded border bg-background px-2 py-1 text-xs font-mono outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className="w-24 rounded border bg-background px-2 py-1 text-xs font-mono outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             placeholder="#000000"
           />
         </div>
@@ -413,7 +415,7 @@ export function WebChatForm({
           onChange={(e) => setGreeting(e.target.value)}
           placeholder={t('greetingPlaceholder')}
           rows={3}
-          className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+          className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary resize-none"
         />
       </div>
 
@@ -425,7 +427,7 @@ export function WebChatForm({
         <select
           value={position}
           onChange={(e) => setPosition(e.target.value)}
-          className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+          className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
         >
           <option value="bottom-right">{t('positionBottomRight')}</option>
           <option value="bottom-left">{t('positionBottomLeft')}</option>
@@ -436,7 +438,7 @@ export function WebChatForm({
         type="submit"
         disabled={!isValid || isPending}
         className={cn(
-          'w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
+          'w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
           (!isValid || isPending) && 'cursor-not-allowed opacity-50',
         )}
       >
@@ -512,7 +514,7 @@ export function WebChatSettingsPanel({
             }}
             dir="ltr"
             maxLength={7}
-            className="w-24 rounded border bg-background px-2 py-1 text-xs font-mono outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className="w-24 rounded border bg-background px-2 py-1 text-xs font-mono outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             placeholder="#000000"
           />
         </div>
@@ -528,7 +530,7 @@ export function WebChatSettingsPanel({
           onChange={(e) => setGreeting(e.target.value)}
           placeholder={t('greetingPlaceholder')}
           rows={3}
-          className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+          className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary resize-none"
         />
       </div>
 
@@ -540,7 +542,7 @@ export function WebChatSettingsPanel({
         <select
           value={position}
           onChange={(e) => setPosition(e.target.value)}
-          className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+          className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
         >
           <option value="bottom-right">{t('positionBottomRight')}</option>
           <option value="bottom-left">{t('positionBottomLeft')}</option>
@@ -552,7 +554,7 @@ export function WebChatSettingsPanel({
         onClick={handleSave}
         disabled={isPending}
         className={cn(
-          'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
+          'inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
           isPending && 'cursor-not-allowed opacity-50',
         )}
       >
@@ -648,7 +650,7 @@ export function DisconnectModal({
   return (
     <Modal open={open} onClose={onClose} title={t('disconnect')}>
       <div className="space-y-4">
-        <div className="flex items-start gap-3 rounded-md bg-yellow-50 p-3 dark:bg-yellow-950/40">
+        <div className="flex items-start gap-3 rounded-lg bg-yellow-50 p-3 dark:bg-yellow-950/40">
           <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
           <p className="text-sm text-yellow-700 dark:text-yellow-300">
             {t('disconnectConfirm')}
@@ -657,7 +659,7 @@ export function DisconnectModal({
         <div className="flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
           >
             {t('close')}
           </button>
@@ -665,7 +667,7 @@ export function DisconnectModal({
             onClick={onConfirm}
             disabled={isPending}
             className={cn(
-              'inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700',
+              'inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90',
               isPending && 'cursor-not-allowed opacity-50',
             )}
           >
@@ -735,7 +737,7 @@ export function EmbedCodeBlock({ channel }: { channel: Channel }) {
       <div className="mb-2 flex gap-2">
         <button
           onClick={() => setEmbedMode('default')}
-          className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
             embedMode === 'default'
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -745,7 +747,7 @@ export function EmbedCodeBlock({ channel }: { channel: Channel }) {
         </button>
         <button
           onClick={() => setEmbedMode('headless')}
-          className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
             embedMode === 'headless'
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -756,12 +758,12 @@ export function EmbedCodeBlock({ channel }: { channel: Channel }) {
       </div>
 
       <div className="relative">
-        <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs leading-relaxed">
+        <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs leading-relaxed">
           <code>{embedCode}</code>
         </pre>
         <button
           onClick={handleCopy}
-          className="absolute top-2 end-2 inline-flex items-center gap-1 rounded-md bg-background border px-2 py-1 text-xs font-medium transition-colors hover:bg-muted"
+          className="absolute top-2 end-2 inline-flex items-center gap-1 rounded-lg bg-background border px-2 py-1 text-xs font-medium transition-colors hover:bg-muted"
         >
           {copied ? (
             <>

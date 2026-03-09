@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useRouter } from '@/i18n/navigation';
 import { useAuthStore } from '@/stores/authStore';
-import { setAuthCookie } from '@/lib/auth-cookies';
+import { setAuthCookie, setOnboardingCookie } from '@/lib/auth-cookies';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 export default function RegisterPage() {
@@ -35,19 +35,30 @@ export default function RegisterPage() {
 
     try {
       const response = await api.post('/auth/register', form);
-      const { tokens, user, organization } = response.data.data;
+      const { tokens, user, organization, organizations } = response.data.data;
 
       localStorage.setItem('accessToken', tokens.accessToken);
       localStorage.setItem('refreshToken', tokens.refreshToken);
       setAuthCookie(tokens.accessToken);
+      setOnboardingCookie(false); // new user always needs onboarding
 
       if (user && organization) {
-        setAuth(user, organization);
+        // Force onboardingCompleted to false — this is a new registration
+        setAuth({ ...user, onboardingCompleted: false }, organization, organizations);
       }
 
       router.push('/onboarding');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed');
+      const data = err.response?.data;
+      if (data?.details?.body?.fieldErrors) {
+        const fieldErrors = data.details.body.fieldErrors as Record<string, string[]>;
+        const msgs = Object.values(fieldErrors).flat();
+        setError(msgs.join(', '));
+      } else {
+        const msg = data?.error || '';
+        if (msg.includes('already registered')) setError(t('emailAlreadyRegistered'));
+        else setError(t('registrationFailed'));
+      }
     } finally {
       setLoading(false);
     }
@@ -62,67 +73,72 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="mb-1.5 block text-sm font-medium">{t('firstName')}</label>
+            <label htmlFor="reg-firstName" className="mb-1.5 block text-sm font-medium">{t('firstName')}</label>
             <input
+              id="reg-firstName"
               type="text"
               value={form.firstName}
               onChange={(e) => updateField('firstName', e.target.value)}
               required
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium">{t('lastName')}</label>
+            <label htmlFor="reg-lastName" className="mb-1.5 block text-sm font-medium">{t('lastName')}</label>
             <input
+              id="reg-lastName"
               type="text"
               value={form.lastName}
               onChange={(e) => updateField('lastName', e.target.value)}
               required
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium">{t('organizationName')}</label>
+          <label htmlFor="reg-orgName" className="mb-1.5 block text-sm font-medium">{t('organizationName')}</label>
           <input
+            id="reg-orgName"
             type="text"
             value={form.organizationName}
             onChange={(e) => updateField('organizationName', e.target.value)}
             required
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium">{t('email')}</label>
+          <label htmlFor="reg-email" className="mb-1.5 block text-sm font-medium">{t('email')}</label>
           <input
+            id="reg-email"
             type="email"
             value={form.email}
             onChange={(e) => updateField('email', e.target.value)}
             required
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             placeholder="name@company.com"
             dir="ltr"
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium">{t('password')}</label>
+          <label htmlFor="reg-password" className="mb-1.5 block text-sm font-medium">{t('password')}</label>
           <input
+            id="reg-password"
             type="password"
             value={form.password}
             onChange={(e) => updateField('password', e.target.value)}
             required
             minLength={8}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             dir="ltr"
           />
         </div>
@@ -130,9 +146,9 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          className="w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
-          {loading ? '...' : t('submit')}
+          {loading ? t('submitting') : t('submit')}
         </button>
       </form>
 

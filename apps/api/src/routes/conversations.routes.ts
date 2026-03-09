@@ -56,6 +56,10 @@ router.get('/', async (req, res, next) => {
       status: req.query.status as string,
       channelId: req.query.channelId as string,
       search: req.query.search as string,
+      startDate: req.query.startDate as string,
+      endDate: req.query.endDate as string,
+      sentiment: req.query.sentiment as string,
+      category: req.query.category as string,
     });
     res.json({ success: true, data: result.conversations, pagination: result.pagination });
   } catch (err) {
@@ -227,7 +231,7 @@ router.post(
     try {
       const { orgId, convId } = req.params as ConvParams;
       // Verify conversation belongs to this organization
-      const existingConv = await prisma.conversation.findFirst({ where: { id: convId, orgId }, select: { id: true } });
+      const existingConv = await prisma.conversation.findFirst({ where: { id: convId, orgId }, select: { id: true, status: true } });
       if (!existingConv) return res.status(404).json({ success: false, error: 'Conversation not found' });
       const file = req.file;
 
@@ -250,13 +254,18 @@ router.post(
         },
       });
 
+      // Keep HANDED_OFF status — only "Return to AI" button should change it back
+      const convUpdateData: Record<string, unknown> = {
+        messageCount: { increment: 1 },
+        lastMessageAt: new Date(),
+      };
+      if (existingConv.status !== 'HANDED_OFF') {
+        convUpdateData.status = 'ACTIVE';
+      }
+
       await prisma.conversation.update({
         where: { id: convId },
-        data: {
-          messageCount: { increment: 1 },
-          lastMessageAt: new Date(),
-          status: 'ACTIVE',
-        },
+        data: convUpdateData,
       });
 
       emitToConversation(convId, 'message:new', {

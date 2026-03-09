@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { fmtDate } from '@/lib/dateFormat';
 import {
   useLeads,
@@ -14,12 +15,11 @@ import {
   type CreateLeadInput,
 } from '@/hooks/useLeads';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { toast } from '@/hooks/useToast';
 import { exportToCsv } from '@/lib/exportCsv';
 import {
   Users,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
   Download,
   Search,
   SlidersHorizontal,
@@ -28,13 +28,14 @@ import {
   X,
   AlertCircle,
 } from 'lucide-react';
+import { Pagination } from '@/components/ui/Pagination';
 
 const STATUS_COLORS: Record<Lead['status'], string> = {
-  NEW: 'bg-blue-100 text-blue-700',
-  CONTACTED: 'bg-yellow-100 text-yellow-700',
-  QUALIFIED: 'bg-purple-100 text-purple-700',
-  CONVERTED: 'bg-green-100 text-green-700',
-  LOST: 'bg-red-100 text-red-700',
+  NEW: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  CONTACTED: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  QUALIFIED: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  CONVERTED: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  LOST: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
 const ALL_STATUSES: Lead['status'][] = ['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'LOST'];
@@ -52,6 +53,8 @@ const EMPTY_FORM: CreateLeadInput = {
 export default function LeadsPage() {
   const t = useTranslations('dashboard.leads');
   const tc = useTranslations('common');
+  const ts = useTranslations('dashboard.sidebar');
+  const tb = useTranslations('dashboard.breadcrumb');
   const locale = useLocale();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<Lead['status'] | undefined>(undefined);
@@ -116,7 +119,13 @@ export default function LeadsPage() {
   }, [allLeads]);
 
   function handleStatusChange(leadId: string, newStatus: Lead['status']) {
-    updateStatus.mutate({ leadId, status: newStatus });
+    updateStatus.mutate(
+      { leadId, status: newStatus },
+      {
+        onSuccess: () => toast.success(tc('toast.leadStatusUpdated')),
+        onError: () => toast.error(tc('toast.leadStatusUpdateFailed')),
+      },
+    );
   }
 
   function handleDelete(leadId: string) {
@@ -127,7 +136,13 @@ export default function LeadsPage() {
       cancelLabel: t('cancel'),
       variant: 'danger',
       onConfirm: () => {
-        deleteLead.mutate({ leadId });
+        deleteLead.mutate(
+          { leadId },
+          {
+            onSuccess: () => toast.success(tc('toast.leadDeleted')),
+            onError: () => toast.error(tc('toast.leadDeleteFailed')),
+          },
+        );
       },
     });
   }
@@ -140,8 +155,8 @@ export default function LeadsPage() {
       phone: lead.phone ?? '',
       company: lead.company ?? '',
       confidence: Math.round(lead.confidence * 100) + '%',
-      status: lead.status,
-      source: lead.source ?? '',
+      status: statusLabel(lead.status),
+      source: lead.source ? sourceLabel(lead.source) : '',
       createdAt: fmtDate(lead.createdAt, locale),
     }));
     exportToCsv('leads', rows);
@@ -187,10 +202,22 @@ export default function LeadsPage() {
     if (editingLead) {
       updateLead.mutate(
         { leadId: editingLead.id, ...cleaned },
-        { onSuccess: () => closeDialog() },
+        {
+          onSuccess: () => {
+            closeDialog();
+            toast.success(tc('toast.leadUpdated'));
+          },
+          onError: () => toast.error(tc('toast.leadUpdateFailed')),
+        },
       );
     } else {
-      createLead.mutate(cleaned, { onSuccess: () => closeDialog() });
+      createLead.mutate(cleaned, {
+        onSuccess: () => {
+          closeDialog();
+          toast.success(tc('toast.leadCreated'));
+        },
+        onError: () => toast.error(tc('toast.leadCreateFailed')),
+      });
     }
   }
 
@@ -203,6 +230,19 @@ export default function LeadsPage() {
       LOST: t('statusLost'),
     };
     return map[status];
+  }
+
+  function sourceLabel(source: string): string {
+    const map: Record<string, string> = {
+      WEBCHAT: t('sourceWebchat'),
+      WHATSAPP: t('sourceWhatsapp'),
+      EMAIL: t('sourceEmail'),
+      MESSENGER: t('sourceMessenger'),
+      INSTAGRAM: t('sourceInstagram'),
+      MANUAL: t('sourceManual'),
+      API: t('sourceApi'),
+    };
+    return map[source] || source;
   }
 
   function confidenceColor(c: number): string {
@@ -225,6 +265,14 @@ export default function LeadsPage() {
   return (
     <>
     <div>
+      <Breadcrumb
+        items={[
+          { label: tb('dashboard'), href: '/dashboard' },
+          { label: ts('leads') },
+        ]}
+        className="mb-4"
+      />
+
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -267,7 +315,7 @@ export default function LeadsPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder={t('searchLeads')}
-            className="w-full rounded-lg border bg-card ps-9 pe-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full rounded-lg border bg-card ps-9 pe-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           />
         </div>
 
@@ -296,12 +344,12 @@ export default function LeadsPage() {
           <select
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value)}
-            className="rounded-lg border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="rounded-lg border bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           >
             <option value="">{t('allSources')}</option>
             {distinctSources.map((src) => (
               <option key={src} value={src}>
-                {src}
+                {sourceLabel(src)}
               </option>
             ))}
           </select>
@@ -395,7 +443,7 @@ export default function LeadsPage() {
               </thead>
               <tbody className="divide-y">
                 {leads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-muted/30 transition-colors">
+                  <tr key={lead.id} className="hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium">
                       {lead.name || t('unknown')}
                     </td>
@@ -419,7 +467,7 @@ export default function LeadsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {lead.source || '\u2014'}
+                      {lead.source ? sourceLabel(lead.source) : '\u2014'}
                     </td>
                     <td className="px-4 py-3">
                       <select
@@ -427,7 +475,7 @@ export default function LeadsPage() {
                         onChange={(e) =>
                           handleStatusChange(lead.id, e.target.value as Lead['status'])
                         }
-                        className={`rounded-md px-2 py-1 text-xs font-medium border-0 cursor-pointer ${STATUS_COLORS[lead.status]}`}
+                        className={`rounded-lg px-2 py-1 text-xs font-medium border-0 cursor-pointer ${STATUS_COLORS[lead.status]}`}
                       >
                         {ALL_STATUSES.map((s) => (
                           <option key={s} value={s}>
@@ -502,7 +550,7 @@ export default function LeadsPage() {
                       onChange={(e) =>
                         handleStatusChange(lead.id, e.target.value as Lead['status'])
                       }
-                      className="rounded-md px-2 py-1 text-xs border bg-background"
+                      className="rounded-lg px-2 py-1 text-xs border bg-background"
                     >
                       {ALL_STATUSES.map((s) => (
                         <option key={s} value={s}>
@@ -530,25 +578,12 @@ export default function LeadsPage() {
 
           {/* Pagination */}
           {pagination && pagination.totalPages > 1 && (
-            <div className="flex items-center justify-center gap-4 mt-6">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="rounded-lg p-2 border bg-card hover:bg-muted disabled:opacity-50 disabled:pointer-events-none transition-colors"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <span className="text-sm text-muted-foreground">
-                {page} / {pagination.totalPages}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                disabled={page >= pagination.totalPages}
-                className="rounded-lg p-2 border bg-card hover:bg-muted disabled:opacity-50 disabled:pointer-events-none transition-colors"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
+            <Pagination
+              page={page}
+              totalPages={pagination.totalPages}
+              onPageChange={setPage}
+              className="mt-6"
+            />
           )}
         </>
       )}
@@ -575,73 +610,79 @@ export default function LeadsPage() {
           <div className="p-5 space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium mb-1.5">{t('name')}</label>
+              <label htmlFor="lead-name" className="block text-sm font-medium mb-1.5">{t('name')}</label>
               <input
+                id="lead-name"
                 type="text"
                 value={form.name ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder={t('namePlaceholder')}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               />
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium mb-1.5">{t('email')}</label>
+              <label htmlFor="lead-email" className="block text-sm font-medium mb-1.5">{t('email')}</label>
               <input
+                id="lead-email"
                 type="email"
                 value={form.email ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 placeholder="email@example.com"
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 dir="ltr"
               />
             </div>
 
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium mb-1.5">{t('phone')}</label>
+              <label htmlFor="lead-phone" className="block text-sm font-medium mb-1.5">{t('phone')}</label>
               <input
+                id="lead-phone"
                 type="tel"
                 value={form.phone ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                 placeholder="+20 1xx xxx xxxx"
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 dir="ltr"
               />
             </div>
 
             {/* Company */}
             <div>
-              <label className="block text-sm font-medium mb-1.5">{t('company')}</label>
+              <label htmlFor="lead-company" className="block text-sm font-medium mb-1.5">{t('company')}</label>
               <input
+                id="lead-company"
                 type="text"
                 value={form.company ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
                 placeholder={t('companyPlaceholder')}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               />
             </div>
 
             {/* Source */}
             <div>
-              <label className="block text-sm font-medium mb-1.5">{t('source')}</label>
+              <label htmlFor="lead-source" className="block text-sm font-medium mb-1.5">{t('source')}</label>
               <input
+                id="lead-source"
                 type="text"
                 value={form.source ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
                 placeholder={t('sourcePlaceholder')}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               />
             </div>
 
             {/* Status */}
             <div>
-              <label className="block text-sm font-medium mb-1.5">{t('status')}</label>
+              <label htmlFor="lead-status" className="block text-sm font-medium mb-1.5">{t('status')}</label>
               <select
+                id="lead-status"
                 value={form.status ?? 'NEW'}
                 onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as Lead['status'] }))}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 {ALL_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -653,13 +694,14 @@ export default function LeadsPage() {
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium mb-1.5">{t('notes')}</label>
+              <label htmlFor="lead-notes" className="block text-sm font-medium mb-1.5">{t('notes')}</label>
               <textarea
+                id="lead-notes"
                 value={form.notes ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                 placeholder={t('notesPlaceholder')}
                 rows={3}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 resize-none"
               />
             </div>
           </div>

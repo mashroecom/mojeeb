@@ -40,6 +40,10 @@ export function useAdminSocket() {
     });
 
     return () => {
+      // BUG FIX: remove event listeners before disconnect to prevent memory leaks
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('admin:event');
       socket.disconnect();
       socketRef.current = null;
     };

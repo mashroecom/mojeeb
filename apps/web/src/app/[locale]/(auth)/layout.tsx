@@ -1,4 +1,5 @@
 import { Link } from '@/i18n/navigation';
+import { AuthRedirect } from '@/components/auth/AuthRedirect';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,7 +10,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
         <span className="text-2xl font-bold">Mojeeb</span>
       </Link>
-      <div className="w-full max-w-md">{children}</div>
+      <div className="w-full max-w-md">
+        <AuthRedirect>{children}</AuthRedirect>
+      </div>
     </div>
   );
 }

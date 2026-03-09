@@ -48,6 +48,13 @@ const updateSchema = z.object({
   customHeadScripts: z.string().max(5000).nullable().optional(),
   maintenanceMode: z.boolean().optional(),
   maintenanceMessage: z.string().max(500).nullable().optional(),
+  // Support chat widget
+  supportChatEnabled: z.boolean().optional(),
+  supportChatChannelId: z.string().max(100).nullable().optional(),
+  supportChatPosition: z.enum(['left', 'right']).optional(),
+  supportChatColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  supportChatWelcome: z.string().max(500).nullable().optional(),
+  supportChatWelcomeAr: z.string().max(500).nullable().optional(),
 });
 
 // GET / - Get site settings
@@ -70,6 +77,28 @@ router.patch(
   validate({ body: updateSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      // Validate supportChatChannelId if provided
+      if (req.body.supportChatChannelId) {
+        const channel = await prisma.channel.findUnique({
+          where: { id: req.body.supportChatChannelId },
+          select: { id: true, type: true, isActive: true },
+        });
+
+        if (!channel || channel.type !== 'WEBCHAT') {
+          return res.status(400).json({
+            success: false,
+            error: 'This Integration ID is not valid or not connected to any Web Chat channel',
+          });
+        }
+
+        if (!channel.isActive) {
+          return res.status(400).json({
+            success: false,
+            error: 'This Web Chat channel is inactive. Please activate it first.',
+          });
+        }
+      }
+
       const settings = await prisma.siteSettings.upsert({
         where: { id: 'singleton' },
         update: req.body,

@@ -32,13 +32,12 @@ export default function RequestDemoPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || t('submitError'));
+        throw new Error('submit failed');
       }
 
       setSent(true);
-    } catch (err: any) {
-      setError(err.message || t('submitError'));
+    } catch {
+      setError(t('submitError'));
     } finally {
       setLoading(false);
     }
@@ -66,7 +65,7 @@ export default function RequestDemoPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border bg-card p-6 sm:p-8">
             {error && (
-              <div className="rounded-md bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 p-3 text-sm text-red-600 dark:text-red-400">
+              <div className="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 p-3 text-sm text-red-600 dark:text-red-400">
                 {error}
               </div>
             )}
@@ -74,33 +73,35 @@ export default function RequestDemoPage() {
             <div className="grid gap-5 sm:grid-cols-2">
               {/* Name */}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+                <label htmlFor="demo-name" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
                   <User className="h-3.5 w-3.5 text-muted-foreground" />
                   {t('name')} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="demo-name"
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  className="w-full rounded-md border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   placeholder={t('namePlaceholder')}
                 />
               </div>
 
               {/* Email */}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+                <label htmlFor="demo-email" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
                   <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                   {t('email')} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="demo-email"
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   required
                   dir="ltr"
-                  className="w-full rounded-md border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   placeholder="you@company.com"
                 />
               </div>
@@ -109,32 +110,34 @@ export default function RequestDemoPage() {
             <div className="grid gap-5 sm:grid-cols-2">
               {/* Phone */}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+                <label htmlFor="demo-phone" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                   {t('phone')} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="demo-phone"
                   type="tel"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   required
                   dir="ltr"
-                  className="w-full rounded-md border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   placeholder="+XX XXX XXX XXXX"
                 />
               </div>
 
               {/* Company */}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+                <label htmlFor="demo-company" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
                   <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                   {t('company')}
                 </label>
                 <input
+                  id="demo-company"
                   type="text"
                   value={form.company}
                   onChange={(e) => setForm({ ...form, company: e.target.value })}
-                  className="w-full rounded-md border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   placeholder={t('companyPlaceholder')}
                 />
               </div>
@@ -142,15 +145,16 @@ export default function RequestDemoPage() {
 
             {/* Message */}
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+              <label htmlFor="demo-message" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
                 <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                 {t('message')}
               </label>
               <textarea
+                id="demo-message"
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
                 rows={3}
-                className="w-full rounded-md border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
+                className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary resize-none"
                 placeholder={t('messagePlaceholder')}
               />
             </div>
@@ -158,7 +162,7 @@ export default function RequestDemoPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-md bg-primary py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-lg bg-primary py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {loading ? t('submitting') : t('submit')}
             </button>

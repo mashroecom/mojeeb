@@ -9,6 +9,7 @@ import { useRouter } from '@/i18n/navigation';
 import {
   useAdminOrgDetail,
   useAdminOrgMembers,
+  useAdminOrgResources,
   useToggleOrgSuspension,
   useDeleteOrganization,
 } from '@/hooks/useAdmin';
@@ -29,6 +30,9 @@ import {
   Mail,
   CreditCard,
   Hash,
+  Package,
+  BookOpen,
+  Key,
 } from 'lucide-react';
 
 export default function AdminOrgDetailPage() {
@@ -41,8 +45,11 @@ export default function AdminOrgDetailPage() {
   const { data: org, isLoading, error } = useAdminOrgDetail(orgId);
   const { data: membersData, isLoading: membersLoading } =
     useAdminOrgMembers(orgId);
+  const { data: resources, isLoading: resourcesLoading } =
+    useAdminOrgResources(orgId);
   const toggleSuspension = useToggleOrgSuspension();
   const deleteOrg = useDeleteOrganization();
+  const [activeTab, setActiveTab] = useState<'members' | 'resources'>('members');
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
 
   function handleToggleSuspension() {
@@ -102,9 +109,9 @@ export default function AdminOrgDetailPage() {
       <div className="flex items-center gap-4 mb-6">
         <button
           onClick={() => router.push('/admin/organizations')}
-          className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+          className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
           {t('orgDetail.backToOrgs')}
         </button>
         <h1 className="text-2xl font-bold">{t('orgDetail.title')}</h1>
@@ -114,7 +121,7 @@ export default function AdminOrgDetailPage() {
         {/* Left column: Organization Card */}
         <div className="lg:col-span-1 space-y-6">
           {/* Org Info */}
-          <div className="rounded-lg border bg-card p-6">
+          <div className="rounded-xl border bg-card p-6">
             <div className="flex flex-col items-center text-center">
               {/* Icon */}
               <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
@@ -158,7 +165,7 @@ export default function AdminOrgDetailPage() {
                 onClick={handleToggleSuspension}
                 disabled={toggleSuspension.isPending}
                 className={cn(
-                  'inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors w-full',
+                  'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full',
                   isSuspended
                     ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
                     : 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50'
@@ -179,7 +186,7 @@ export default function AdminOrgDetailPage() {
               <button
                 onClick={handleDelete}
                 disabled={deleteOrg.isPending}
-                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-2 text-sm font-medium transition-colors w-full"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-2 text-sm font-medium transition-colors w-full"
               >
                 <Trash2 className="h-4 w-4" />
                 {t('organizations.delete')}
@@ -188,7 +195,7 @@ export default function AdminOrgDetailPage() {
           </div>
 
           {/* Subscription Info */}
-          <div className="rounded-lg border bg-card p-6">
+          <div className="rounded-xl border bg-card p-6">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               {t('orgDetail.subscription')}
             </h3>
@@ -204,7 +211,7 @@ export default function AdminOrgDetailPage() {
                     PLAN_COLORS[plan] ?? PLAN_COLORS.FREE
                   )}
                 >
-                  {plan}
+                  {t(`plan_${plan}`)}
                 </span>
               </div>
               {org.subscription?.status && (
@@ -217,10 +224,10 @@ export default function AdminOrgDetailPage() {
                       'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
                       org.subscription.status === 'ACTIVE'
                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                        : 'bg-muted text-muted-foreground'
                     )}
                   >
-                    {org.subscription.status}
+                    {t(`status_${org.subscription.status}`)}
                   </span>
                 </div>
               )}
@@ -252,7 +259,7 @@ export default function AdminOrgDetailPage() {
         {/* Right column: Stats & Members */}
         <div className="lg:col-span-2 space-y-6">
           {/* Stats */}
-          <div className="rounded-lg border bg-card p-6">
+          <div className="rounded-xl border bg-card p-6">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               {t('orgDetail.stats')}
             </h3>
@@ -300,8 +307,69 @@ export default function AdminOrgDetailPage() {
             </div>
           </div>
 
+          {/* Tabs */}
+          <div className="flex border-b mb-0">
+            <button
+              onClick={() => setActiveTab('members')}
+              className={cn(
+                'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
+                activeTab === 'members'
+                  ? 'border-red-600 text-red-600'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {t('orgDetail.membersList')}
+            </button>
+            <button
+              onClick={() => setActiveTab('resources')}
+              className={cn(
+                'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
+                activeTab === 'resources'
+                  ? 'border-red-600 text-red-600'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {t('orgResources.resources')}
+            </button>
+          </div>
+
+          {/* Resources Tab */}
+          {activeTab === 'resources' && (
+            <div className="rounded-xl border bg-card p-6">
+              {resourcesLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {[
+                    { key: 'messages', icon: MessageSquare, value: resources?.messages ?? 0 },
+                    { key: 'conversations', icon: MessageSquare, value: resources?.conversations ?? 0 },
+                    { key: 'agents', icon: Bot, value: resources?.agents ?? 0 },
+                    { key: 'channels', icon: Radio, value: resources?.channels ?? 0 },
+                    { key: 'knowledgeBases', icon: BookOpen, value: resources?.knowledgeBases ?? 0 },
+                    { key: 'members', icon: Users, value: resources?.members ?? 0 },
+                    { key: 'apiKeys', icon: Key, value: resources?.apiKeys ?? 0 },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.key} className="rounded-lg bg-muted/50 p-4">
+                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                          <Icon className="h-4 w-4" />
+                          <span className="text-sm">{t(`orgResources.${item.key}`)}</span>
+                        </div>
+                        <p className="text-2xl font-bold">{item.value}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Members Table */}
-          <div className="rounded-lg border bg-card overflow-hidden">
+          {activeTab === 'members' && (
+          <div className="rounded-xl border bg-card overflow-hidden">
             <div className="px-6 py-4 border-b">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('orgDetail.membersList')}
@@ -367,10 +435,10 @@ export default function AdminOrgDetailPage() {
                                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                   : member.role === 'ADMIN'
                                     ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                                    : 'bg-muted text-muted-foreground'
                               )}
                             >
-                              {member.role}
+                              {t(`role_${member.role}`)}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
@@ -386,6 +454,7 @@ export default function AdminOrgDetailPage() {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
 

@@ -31,13 +31,14 @@ router.post(
   validate({
     body: z.object({
       plan: z.string().min(1),
+      billingCycle: z.enum(['monthly', 'yearly']).optional().default('monthly'),
     }),
   }),
   async (req, res, next) => {
     try {
       const { orgId } = req.params as OrgParams;
-      const { plan } = req.body;
-      const result = await subscriptionService.createCheckout(orgId, plan);
+      const { plan, billingCycle } = req.body;
+      const result = await subscriptionService.createCheckout(orgId, plan, billingCycle);
       res.json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -104,7 +105,8 @@ router.get(
   async (req, res, next) => {
     try {
       const { orgId } = req.params as OrgParams;
-      const { page, limit } = (req as any).validatedQuery;
+      // BUG FIX: validate middleware sets data on req.query, not validatedQuery
+      const { page, limit } = req.query as any;
       const result = await subscriptionService.getInvoices(orgId, { page, limit });
       res.json({ success: true, data: result });
     } catch (err) {
@@ -124,7 +126,8 @@ router.get(
   validate({ params: invoiceParamsSchema }),
   async (req, res, next) => {
     try {
-      const { orgId, invoiceId } = (req as any).validatedParams;
+      // BUG FIX: validate middleware sets data on req.params, not validatedParams
+      const { orgId, invoiceId } = req.params as any;
       const invoice = await subscriptionService.getInvoiceById(orgId, invoiceId);
       res.json({ success: true, data: invoice });
     } catch (err) {
@@ -139,12 +142,13 @@ router.get('/invoices/:invoiceId/pdf', async (req, res, next) => {
     const { orgId, invoiceId } = req.params as { orgId: string; invoiceId: string };
 
     const subscription = await prisma.subscription.findUnique({ where: { orgId } });
-    if (!subscription) { res.status(404).json({ error: 'Subscription not found' }); return; }
+    // BUG FIX: add success:false for consistent error response format
+    if (!subscription) { res.status(404).json({ success: false, error: 'Subscription not found' }); return; }
 
     const invoice = await prisma.invoice.findFirst({
       where: { id: invoiceId, subscriptionId: subscription.id },
     });
-    if (!invoice) { res.status(404).json({ error: 'Invoice not found' }); return; }
+    if (!invoice) { res.status(404).json({ success: false, error: 'Invoice not found' }); return; }
 
     const org = await prisma.organization.findUnique({ where: { id: orgId } });
 

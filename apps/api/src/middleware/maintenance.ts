@@ -35,6 +35,8 @@ const BYPASS_PATHS = [
   '/api/v1/auth',
   '/api/v1/admin',
   '/api/v1/public/site-settings',
+  '/api/v1/public/landing-page',
+  '/api/v1/public/feature-flags',
   '/widget.js',
   '/chat',
   '/uploads',

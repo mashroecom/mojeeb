@@ -40,7 +40,7 @@ export function Tooltip({
           align={align}
           sideOffset={6}
           className={cn(
-            'z-50 overflow-hidden rounded-md px-3 py-1.5 text-xs font-medium shadow-md',
+            'z-50 overflow-hidden rounded-lg px-3 py-1.5 text-xs font-medium shadow-md',
             'bg-popover text-popover-foreground border',
             'animate-in fade-in-0 zoom-in-95',
             'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',

@@ -8,11 +8,13 @@ import {
   useUnlinkKnowledgeBase,
 } from '@/hooks/useAgents';
 import { useKnowledgeBases } from '@/hooks/useKnowledgeBase';
+import { toast } from '@/hooks/useToast';
 import { Link } from '@/i18n/navigation';
 import { BookOpen, Plus, X, Loader2 } from 'lucide-react';
 
 export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
   const t = useTranslations('dashboard.agents');
+  const tc = useTranslations('common');
   const { data: agent } = useAgent(agentId);
   const { data: allKbs } = useKnowledgeBases();
   const linkKb = useLinkKnowledgeBase();
@@ -27,12 +29,21 @@ export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
 
   const handleLink = (knowledgeBaseId: string) => {
     linkKb.mutate({ agentId, knowledgeBaseId }, {
-      onSuccess: () => setShowSelector(false),
+      onSuccess: () => {
+        toast.success(tc('toast.kbLinked'));
+        setShowSelector(false);
+      },
+      onError: () => {
+        toast.error(tc('toast.kbLinkFailed'));
+      },
     });
   };
 
   const handleUnlink = (knowledgeBaseId: string) => {
-    unlinkKb.mutate({ agentId, knowledgeBaseId });
+    unlinkKb.mutate({ agentId, knowledgeBaseId }, {
+      onSuccess: () => toast.success(tc('toast.kbUnlinked')),
+      onError: () => toast.error(tc('toast.kbUnlinkFailed')),
+    });
   };
 
   return (
@@ -52,7 +63,7 @@ export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
             <button
               type="button"
               onClick={() => setShowSelector(!showSelector)}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               <Plus className="h-3 w-3" />
               {t('addKnowledgeBase')}
@@ -72,7 +83,7 @@ export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
                   type="button"
                   onClick={() => handleLink(kb.id)}
                   disabled={linkKb.isPending}
-                  className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted transition-colors text-start"
+                  className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors text-start"
                 >
                   <BookOpen className="h-4 w-4 text-primary shrink-0" />
                   <span>{kb.name}</span>
@@ -94,7 +105,7 @@ export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
                 className="flex items-center justify-between rounded-lg border px-4 py-3"
               >
                 <div className="flex items-center gap-3">
-                  <div className="rounded-md bg-primary/10 p-1.5">
+                  <div className="rounded-lg bg-primary/10 p-1.5">
                     <BookOpen className="h-4 w-4 text-primary" />
                   </div>
                   <span className="text-sm font-medium">
@@ -105,7 +116,7 @@ export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
                   type="button"
                   onClick={() => handleUnlink(akb.knowledgeBaseId)}
                   disabled={unlinkKb.isPending}
-                  className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+                  className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
                 >
                   {unlinkKb.isPending ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -127,7 +138,7 @@ export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
             {allKbs && allKbs.length === 0 && (
               <Link
                 href="/knowledge-base"
-                className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4" />
                 {t('createKnowledgeBase')}

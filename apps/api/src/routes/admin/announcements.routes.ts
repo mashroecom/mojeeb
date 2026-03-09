@@ -47,7 +47,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       data: {
         title,
         body,
-        type: type || 'info',
+        type: type || 'INFO',
         startsAt: startsAt ? new Date(startsAt) : undefined,
         endsAt: endsAt ? new Date(endsAt) : undefined,
         createdBy: req.user!.userId,

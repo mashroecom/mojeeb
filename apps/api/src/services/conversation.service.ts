@@ -8,6 +8,10 @@ export class ConversationService {
     status?: string;
     channelId?: string;
     search?: string;
+    startDate?: string;
+    endDate?: string;
+    sentiment?: string;
+    category?: string;
   }) {
     const page = Math.max(params.page || 1, 1);
     const limit = Math.min(Math.max(params.limit || 20, 1), 100);
@@ -16,6 +20,31 @@ export class ConversationService {
     const where: Record<string, unknown> = { orgId };
     if (params.status) where.status = params.status;
     if (params.channelId) where.channelId = params.channelId;
+
+    // Date range filters
+    if (params.startDate || params.endDate) {
+      const dateFilter: Record<string, Date> = {};
+      if (params.startDate) dateFilter.gte = new Date(params.startDate);
+      if (params.endDate) dateFilter.lte = new Date(params.endDate);
+      where.createdAt = dateFilter;
+    }
+
+    // Sentiment filter — maps sentiment category to emotion values
+    if (params.sentiment) {
+      const sentimentMap: Record<string, string[]> = {
+        positive: ['happy', 'satisfied', 'grateful', 'excited', 'joy'],
+        negative: ['angry', 'frustrated', 'sad', 'disappointed', 'annoyed', 'upset'],
+        neutral: ['neutral', 'curious', 'confused'],
+      };
+      const emotions = sentimentMap[params.sentiment];
+      if (emotions) {
+        where.lastEmotion = { in: emotions };
+      }
+    }
+
+    if (params.category) {
+      where.category = params.category;
+    }
 
     if (params.search) {
       where.OR = [
@@ -111,13 +140,18 @@ export class ConversationService {
       },
     });
 
+    // Keep HANDED_OFF status — only "Return to AI" button should change it back
+    const updateData: Record<string, unknown> = {
+      messageCount: { increment: 1 },
+      lastMessageAt: new Date(),
+    };
+    if (conversation.status !== 'HANDED_OFF') {
+      updateData.status = 'ACTIVE';
+    }
+
     await prisma.conversation.update({
       where: { id: conversationId },
-      data: {
-        messageCount: { increment: 1 },
-        lastMessageAt: new Date(),
-        status: 'ACTIVE',
-      },
+      data: updateData,
     });
 
     return message;

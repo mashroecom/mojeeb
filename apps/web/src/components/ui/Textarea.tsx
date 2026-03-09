@@ -30,12 +30,12 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           maxLength={maxLength}
           value={value}
           className={cn(
-            'w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-colors',
-            'focus:border-primary focus:ring-1 focus:ring-primary',
+            'w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none transition-colors',
+            'focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'placeholder:text-muted-foreground',
             'min-h-[80px] resize-y',
-            error && 'border-destructive focus:border-destructive focus:ring-destructive',
+            error && 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive',
             className,
           )}
           aria-invalid={error ? true : undefined}

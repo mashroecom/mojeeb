@@ -25,6 +25,7 @@ export interface Conversation {
     | 'ARCHIVED';
   lastEmotion: string | null;
   emotionScore: number | null;
+  category: string | null;
   summary: string | null;
   channel: { id: string; name: string; type: string } | null;
   assignedUser: {
@@ -43,7 +44,7 @@ export interface Message {
   role: 'CUSTOMER' | 'AI_AGENT' | 'HUMAN_AGENT' | 'SYSTEM';
   content: string;
   contentType: 'TEXT' | 'IMAGE' | 'AUDIO' | 'VIDEO' | 'DOCUMENT' | 'LOCATION';
-  metadata?: { fileUrl?: string; fileName?: string } | null;
+  metadata?: { fileUrl?: string; fileName?: string; action?: string; visibility?: string; reason?: string } | null;
   createdAt: string;
 }
 
@@ -70,6 +71,10 @@ export interface ConversationsParams {
   status?: Conversation['status'];
   channelId?: string;
   search?: string;
+  startDate?: string;
+  endDate?: string;
+  sentiment?: string;
+  category?: string;
 }
 
 export interface MessagesParams {
@@ -184,6 +189,10 @@ export function useSendMessage() {
         queryClient.invalidateQueries({
           queryKey: conversationKeys.messages(orgId, variables.conversationId),
         });
+        // BUG FIX: also invalidate conversation list so lastMessageAt/preview updates
+        queryClient.invalidateQueries({
+          queryKey: conversationKeys.all(orgId),
+        });
       }
     },
   });
@@ -218,6 +227,10 @@ export function useUploadFile() {
       if (orgId) {
         queryClient.invalidateQueries({
           queryKey: conversationKeys.messages(orgId, variables.conversationId),
+        });
+        // BUG FIX: also invalidate conversation list so lastMessageAt updates after upload
+        queryClient.invalidateQueries({
+          queryKey: conversationKeys.all(orgId),
         });
       }
     },

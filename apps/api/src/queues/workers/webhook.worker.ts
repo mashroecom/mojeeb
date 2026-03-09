@@ -69,8 +69,9 @@ const worker = new Worker<WebhookJobData>(
             success: false,
           },
         });
-      } catch {
-        // Never let logging break the webhook flow
+      } catch (logErr) {
+        // BUG FIX: log the failure instead of silently swallowing it
+        logger.debug({ logErr, webhookId }, 'Failed to persist webhook delivery log');
       }
       throw fetchErr;
     }
@@ -92,17 +93,22 @@ const worker = new Worker<WebhookJobData>(
           success: res.ok,
         },
       });
-    } catch {
-      // Never let logging break the webhook flow
+    } catch (logErr) {
+      // BUG FIX: log the failure instead of silently swallowing it
+      logger.debug({ logErr, webhookId }, 'Failed to persist webhook delivery log');
     }
 
-    await prisma.webhook.update({
-      where: { id: webhookId },
-      data: {
-        lastTriggeredAt: new Date(),
-        lastError: res.ok ? null : `HTTP ${res.status}`,
-      },
-    });
+    try {
+      await prisma.webhook.update({
+        where: { id: webhookId },
+        data: {
+          lastTriggeredAt: new Date(),
+          lastError: res.ok ? null : `HTTP ${res.status}`,
+        },
+      });
+    } catch (updateErr) {
+      logger.warn({ err: updateErr, webhookId }, 'Failed to update webhook lastTriggeredAt');
+    }
 
     if (!res.ok) {
       throw new Error(`Webhook returned HTTP ${res.status}`);

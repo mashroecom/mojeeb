@@ -33,7 +33,7 @@ const STATUS_COLORS: Record<string, string> = {
   HANDED_OFF: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
   WAITING:    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
   RESOLVED:   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  ARCHIVED:   'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  ARCHIVED:   'bg-muted text-muted-foreground',
 };
 
 const STATUS_OPTIONS = ['ACTIVE', 'HANDED_OFF', 'WAITING', 'RESOLVED', 'ARCHIVED'] as const;
@@ -43,11 +43,11 @@ const ROLE_BUBBLE: Record<string, string> = {
   CUSTOMER:    'bg-blue-50 dark:bg-blue-950',
   AI_AGENT:    'bg-green-50 dark:bg-green-950',
   HUMAN_AGENT: 'bg-purple-50 dark:bg-purple-950',
-  SYSTEM:      'bg-gray-50 dark:bg-gray-950',
+  SYSTEM:      'bg-muted/50',
 };
 
 const ROLE_BADGE_COLORS: Record<string, string> = {
-  CUSTOMER:    'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  CUSTOMER:    'bg-muted text-muted-foreground',
   AI_AGENT:    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   HUMAN_AGENT: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   SYSTEM:      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
@@ -136,9 +136,9 @@ export default function ConversationDetailPage({
       <div className="flex items-center gap-4 mb-6">
         <Link
           href={`/${locale}/admin/conversations`}
-          className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+          className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
           {t('backToConversations')}
         </Link>
         <h1 className="text-2xl font-bold">{t('conversationDetail')}</h1>
@@ -150,7 +150,7 @@ export default function ConversationDetailPage({
             onChange={(e) => handleStatusChange(e.target.value)}
             disabled={updateConversation.isPending}
             className={cn(
-              'rounded-lg border px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring',
+              'rounded-lg border px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               STATUS_COLORS[conversation.status] ?? STATUS_COLORS.ACTIVE,
             )}
           >
@@ -168,7 +168,7 @@ export default function ConversationDetailPage({
         {/* ── Left column: info & sidebar ────────────────── */}
         <div className="lg:col-span-1 space-y-6">
           {/* Customer info card */}
-          <div className="rounded-lg border bg-card p-6">
+          <div className="rounded-xl border bg-card p-6">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               {t('customerInfo')}
             </h3>
@@ -205,7 +205,7 @@ export default function ConversationDetailPage({
                   <span>{conversation.channel.name}</span>
                   {conversation.channel.type && (
                     <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                      {conversation.channel.type}
+                      {t(`channel_${conversation.channel.type}`)}
                     </span>
                   )}
                 </div>
@@ -234,7 +234,7 @@ export default function ConversationDetailPage({
           </div>
 
           {/* Tags card */}
-          <div className="rounded-lg border bg-card p-6">
+          <div className="rounded-xl border bg-card p-6">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               <Tag className="h-4 w-4" />
               {t('tags')}
@@ -260,7 +260,7 @@ export default function ConversationDetailPage({
           </div>
 
           {/* Ratings card */}
-          <div className="rounded-lg border bg-card p-6">
+          <div className="rounded-xl border bg-card p-6">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               <Star className="h-4 w-4" />
               {t('ratings')}
@@ -279,7 +279,7 @@ export default function ConversationDetailPage({
                             'h-4 w-4',
                             starIdx < (rating.score ?? rating.rating ?? 0)
                               ? 'text-amber-400 fill-amber-400'
-                              : 'text-gray-300 dark:text-gray-600',
+                              : 'text-muted-foreground/50',
                           )}
                         />
                       ))}
@@ -299,7 +299,7 @@ export default function ConversationDetailPage({
           </div>
 
           {/* Notes card */}
-          <div className="rounded-lg border bg-card p-6">
+          <div className="rounded-xl border bg-card p-6">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
               <StickyNote className="h-4 w-4" />
               {t('notes')}
@@ -309,7 +309,7 @@ export default function ConversationDetailPage({
             ) : (
               <div className="space-y-3">
                 {notes.map((note: any, idx: number) => (
-                  <div key={note.id ?? idx} className="rounded-md bg-muted/50 p-3">
+                  <div key={note.id ?? idx} className="rounded-lg bg-muted/50 p-3">
                     <p className="text-sm">{note.content ?? note.body ?? note.text}</p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                       {(note.user?.firstName || note.author?.firstName || note.createdBy?.firstName) && (
@@ -332,7 +332,7 @@ export default function ConversationDetailPage({
 
         {/* ── Right column: message thread ───────────────── */}
         <div className="lg:col-span-2">
-          <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="rounded-xl border bg-card overflow-hidden">
             <div className="px-6 py-4 border-b">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 <MessageSquare className="h-4 w-4" />

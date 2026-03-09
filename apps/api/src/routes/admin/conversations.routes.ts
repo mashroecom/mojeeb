@@ -30,10 +30,17 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     if (orgId) where.orgId = orgId;
     if (channelId) where.channelId = channelId;
     if (status) where.status = status;
+    // BUG FIX: validate date strings before creating Date objects
     if (startDate || endDate) {
       where.createdAt = {};
-      if (startDate) where.createdAt.gte = new Date(startDate);
-      if (endDate) where.createdAt.lte = new Date(endDate);
+      if (startDate) {
+        const d = new Date(startDate);
+        if (!isNaN(d.getTime())) where.createdAt.gte = d;
+      }
+      if (endDate) {
+        const d = new Date(endDate);
+        if (!isNaN(d.getTime())) where.createdAt.lte = d;
+      }
     }
 
     const [conversations, total] = await Promise.all([
@@ -42,6 +49,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         include: {
           org: { select: { id: true, name: true } },
           channel: { select: { id: true, name: true, type: true } },
+          leads: { select: { id: true, name: true, email: true, phone: true }, take: 1 },
           _count: { select: { messages: true } },
         },
         orderBy: { lastMessageAt: 'desc' },
@@ -99,7 +107,7 @@ router.get('/:conversationId', async (req: Request, res: Response, next: NextFun
     });
 
     if (!conversation) {
-      return res.status(404).json({ success: false, message: 'Conversation not found' });
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
     }
 
     const [messages, messageTotal] = await Promise.all([
@@ -140,7 +148,7 @@ router.patch(
       const { conversationId } = req.params as { conversationId: string };
       const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
       if (!conversation) {
-        return res.status(404).json({ success: false, message: 'Conversation not found' });
+        return res.status(404).json({ success: false, error: 'Conversation not found' });
       }
 
       const updated = await prisma.conversation.update({
@@ -190,6 +198,74 @@ router.post(
       });
 
       res.json({ success: true, data: { updated: result.count } });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// DELETE /:conversationId - Delete a single conversation
+router.delete('/:conversationId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { conversationId } = req.params as { conversationId: string };
+    const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+    if (!conversation) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+
+    // Delete related records first
+    await prisma.message.deleteMany({ where: { conversationId } });
+    await prisma.conversationRating.deleteMany({ where: { conversationId } });
+    await prisma.conversationTag.deleteMany({ where: { conversationId } });
+    await prisma.conversationNote.deleteMany({ where: { conversationId } });
+    await prisma.lead.deleteMany({ where: { conversationId } });
+    await prisma.conversation.delete({ where: { id: conversationId } });
+
+    await auditLogService.log({
+      userId: req.user!.userId,
+      action: 'ADMIN_CONVERSATION_DELETED',
+      targetType: 'Conversation',
+      targetId: conversationId,
+    });
+
+    res.json({ success: true, data: { deleted: true } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /bulk-delete - Bulk delete conversations
+const bulkDeleteSchema = z.object({
+  conversationIds: z.array(z.string()).min(1).max(100),
+});
+
+router.post(
+  '/bulk-delete',
+  validate({ body: bulkDeleteSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { conversationIds } = req.body;
+
+      // Delete related records first
+      await prisma.message.deleteMany({ where: { conversationId: { in: conversationIds } } });
+      await prisma.conversationRating.deleteMany({ where: { conversationId: { in: conversationIds } } });
+      await prisma.conversationTag.deleteMany({ where: { conversationId: { in: conversationIds } } });
+      await prisma.conversationNote.deleteMany({ where: { conversationId: { in: conversationIds } } });
+      await prisma.lead.deleteMany({ where: { conversationId: { in: conversationIds } } });
+
+      const result = await prisma.conversation.deleteMany({
+        where: { id: { in: conversationIds } },
+      });
+
+      await auditLogService.log({
+        userId: req.user!.userId,
+        action: 'ADMIN_CONVERSATIONS_BULK_DELETED',
+        targetType: 'Conversation',
+        targetId: 'bulk',
+        metadata: { conversationIds, count: result.count },
+      });
+
+      res.json({ success: true, data: { deleted: result.count } });
     } catch (err) {
       next(err);
     }

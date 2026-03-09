@@ -62,10 +62,15 @@ export function useSocket() {
     });
 
     return () => {
+      socket.off('connect');
+      socket.off('message:new');
+      socket.off('conversation:updated');
+      socket.off('typing:start');
+      socket.off('typing:stop');
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [organization, queryClient, isAuthenticated]);
+  }, [organization, isAuthenticated]);
 
   const joinConversation = (conversationId: string) => {
     socketRef.current?.emit('join:conversation', conversationId);

@@ -27,7 +27,7 @@ const ALL_STATUSES = ['NEW', 'READ', 'REPLIED', 'ARCHIVED'] as const;
 
 const STATUS_BADGE: Record<string, string> = {
   NEW: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  READ: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  READ: 'bg-muted text-muted-foreground',
   REPLIED: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   ARCHIVED: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
 };
@@ -61,18 +61,18 @@ export default function ContactMessagesPage() {
   const deleteContactMessage = useDeleteContactMessage();
   const { confirmProps, confirm } = useConfirmDialog();
 
-  const messages = data?.data ?? [];
-  const pagination = data?.pagination;
+  const messages = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   function handleExport() {
     if (!messages.length) return;
     const rows = messages.map((msg: any) => ({
-      Name: msg.name || '',
-      Email: msg.email || '',
-      Subject: msg.subject || '',
-      Message: msg.message || '',
-      Status: msg.status,
-      Date: fmtDate(msg.createdAt, locale),
+      [t('csvName')]: msg.name || '',
+      [t('csvEmail')]: msg.email || '',
+      [t('csvSubject')]: msg.subject || '',
+      [t('csvMessage')]: msg.message || '',
+      [t('csvStatus')]: msg.status,
+      [t('csvDate')]: fmtDate(msg.createdAt, locale),
     }));
     exportToCsv('admin-contact-messages', rows);
   }
@@ -149,7 +149,7 @@ export default function ContactMessagesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-lg border bg-card ps-9 pe-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            className="w-full rounded-lg border bg-card ps-9 pe-4 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
           />
         </div>
 
@@ -223,7 +223,7 @@ export default function ContactMessagesPage() {
                     <Fragment key={msg.id}>
                       <tr
                         className={cn(
-                          'hover:bg-muted/30 transition-colors cursor-pointer',
+                          'hover:bg-muted/50 transition-colors cursor-pointer',
                           msg.status === 'NEW' && 'font-medium',
                         )}
                         onClick={() => toggleExpand(msg.id)}
@@ -249,8 +249,8 @@ export default function ContactMessagesPage() {
                             value={msg.status}
                             onChange={(e) => handleStatusChange(msg.id, e.target.value)}
                             className={cn(
-                              'rounded-md px-2 py-1 text-xs font-medium border-0 cursor-pointer',
-                              STATUS_BADGE[msg.status] ?? 'bg-gray-100 text-gray-700',
+                              'rounded-lg px-2 py-1 text-xs font-medium border-0 cursor-pointer',
+                              STATUS_BADGE[msg.status] ?? 'bg-muted text-muted-foreground',
                             )}
                           >
                             {ALL_STATUSES.map((s) => (
@@ -313,7 +313,7 @@ export default function ContactMessagesPage() {
                       <span
                         className={cn(
                           'rounded-full px-2.5 py-0.5 text-xs font-medium',
-                          STATUS_BADGE[msg.status] ?? 'bg-gray-100 text-gray-700',
+                          STATUS_BADGE[msg.status] ?? 'bg-muted text-muted-foreground',
                         )}
                       >
                         {statusLabel(msg.status)}
@@ -330,7 +330,7 @@ export default function ContactMessagesPage() {
                         <select
                           value={msg.status}
                           onChange={(e) => handleStatusChange(msg.id, e.target.value)}
-                          className="rounded-md px-2 py-1 text-xs border bg-background"
+                          className="rounded-lg px-2 py-1 text-xs border bg-background"
                         >
                           {ALL_STATUSES.map((s) => (
                             <option key={s} value={s}>
@@ -360,8 +360,8 @@ export default function ContactMessagesPage() {
             </div>
 
             {/* Pagination */}
-            {pagination && (
-              <AdminPagination page={page} totalPages={pagination.totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+            {totalPages > 1 && (
+              <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
             )}
           </>
         )}

@@ -2,7 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { useAgents, useDeleteAgent, type Agent } from '@/hooks/useAgents';
+import { toast } from '@/hooks/useToast';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getTemplateById } from '@/lib/agent-templates';
 import { cn } from '@/lib/utils';
@@ -80,6 +82,7 @@ function AgentCardSkeleton() {
 
 function AgentCard({ agent }: { agent: Agent }) {
   const t = useTranslations('dashboard.agents');
+  const tc = useTranslations('common');
   const tt = useTranslations('dashboard.agents.templates');
   const deleteAgent = useDeleteAgent();
   const { confirmProps, confirm } = useConfirmDialog();
@@ -92,7 +95,10 @@ function AgentCard({ agent }: { agent: Agent }) {
       cancelLabel: t('cancel'),
       variant: 'danger',
       onConfirm: () => {
-        deleteAgent.mutate(agent.id);
+        deleteAgent.mutate(agent.id, {
+          onSuccess: () => toast.success(tc('toast.agentDeleted')),
+          onError: () => toast.error(tc('toast.agentDeleteFailed')),
+        });
       },
     });
   };
@@ -132,7 +138,7 @@ function AgentCard({ agent }: { agent: Agent }) {
               'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium shrink-0',
               agent.isActive
                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+                : 'bg-muted text-muted-foreground',
             )}
           >
             <ToggleLeft className="h-3 w-3" />
@@ -144,20 +150,20 @@ function AgentCard({ agent }: { agent: Agent }) {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {/* Template type badge */}
           {template && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
               <Icon className="h-3 w-3" />
               {tt(template.nameKey)}
             </span>
           )}
 
           {/* Language badge */}
-          <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+          <span className="rounded-lg bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
             {agent.language === 'ar' ? t('languageAr') : t('languageEn')}
           </span>
 
           {/* KB count */}
           {agent.knowledgeBases && agent.knowledgeBases.length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-xs text-muted-foreground">
               <BookOpen className="h-3 w-3" />
               {agent.knowledgeBases.length} {t('knowledgeBases')}
             </span>
@@ -165,7 +171,7 @@ function AgentCard({ agent }: { agent: Agent }) {
 
           {/* Channel count */}
           {agent.channels && agent.channels.length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-xs text-muted-foreground">
               <Globe className="h-3 w-3" />
               {agent.channels.length} {t('channels')}
             </span>
@@ -173,7 +179,7 @@ function AgentCard({ agent }: { agent: Agent }) {
 
           {/* Conversation count */}
           {agent._count && agent._count.conversations > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-xs text-muted-foreground">
               <MessageSquare className="h-3 w-3" />
               {agent._count.conversations} {t('conversations')}
             </span>
@@ -184,7 +190,7 @@ function AgentCard({ agent }: { agent: Agent }) {
         <div className="mt-4 flex items-center gap-2 border-t pt-4">
           <Link
             href={`/agents/${agent.id}/edit`}
-            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
           >
             <Pencil className="h-3 w-3" />
             {t('editAgent')}
@@ -194,7 +200,7 @@ function AgentCard({ agent }: { agent: Agent }) {
             onClick={handleDelete}
             disabled={deleteAgent.isPending}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950',
+              'inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950',
               deleteAgent.isPending && 'cursor-not-allowed opacity-50',
             )}
           >
@@ -215,16 +221,26 @@ function AgentCard({ agent }: { agent: Agent }) {
 export default function AgentsPage() {
   const t = useTranslations('dashboard.agents');
   const tc = useTranslations('common');
+  const ts = useTranslations('dashboard.sidebar');
+  const tb = useTranslations('dashboard.breadcrumb');
   const { data: agents, isLoading, isError, refetch } = useAgents();
 
   return (
     <div>
+      <Breadcrumb
+        items={[
+          { label: tb('dashboard'), href: '/dashboard' },
+          { label: ts('agents') },
+        ]}
+        className="mb-4"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         <Link
           href="/agents/new"
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
           {t('createAgent')}
@@ -250,7 +266,7 @@ export default function AgentsPage() {
           <p className="mt-1 text-sm text-muted-foreground">{tc('errorDescription')}</p>
           <button
             onClick={() => refetch()}
-            className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             {tc('tryAgain')}
           </button>
@@ -266,7 +282,7 @@ export default function AgentsPage() {
           <p className="text-muted-foreground">{t('noAgents')}</p>
           <Link
             href="/agents/new"
-            className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <Plus className="h-4 w-4" />
             {t('createAgent')}

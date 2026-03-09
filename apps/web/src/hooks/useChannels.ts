@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-import { toast } from '@/hooks/useToast';
+import { agentKeys } from './useAgents';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,12 +34,6 @@ export interface Channel {
   _count?: { conversations: number };
   createdAt: string;
   updatedAt: string;
-}
-
-export interface ConnectChannelInput {
-  type: ChannelType;
-  name: string;
-  credentials: Record<string, string>;
 }
 
 interface ApiResponse<T> {
@@ -77,53 +71,6 @@ export function useChannels() {
 }
 
 // ---------------------------------------------------------------------------
-// useChannel - get single channel
-// ---------------------------------------------------------------------------
-
-export function useChannel(channelId: string | undefined) {
-  const orgId = useAuthStore((s) => s.organization?.id);
-
-  return useQuery({
-    queryKey: channelKeys.detail(orgId!, channelId!),
-    queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Channel>>(
-        `/organizations/${orgId}/channels/${channelId}`,
-      );
-      return data.data;
-    },
-    enabled: !!orgId && !!channelId,
-  });
-}
-
-// ---------------------------------------------------------------------------
-// useConnectChannel - mutation to connect a new channel
-// ---------------------------------------------------------------------------
-
-export function useConnectChannel() {
-  const orgId = useAuthStore((s) => s.organization?.id);
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: ConnectChannelInput) => {
-      const { data } = await api.post<ApiResponse<Channel>>(
-        `/organizations/${orgId}/channels`,
-        input,
-      );
-      return data.data;
-    },
-    onSuccess: () => {
-      if (orgId) {
-        queryClient.invalidateQueries({ queryKey: channelKeys.all(orgId) });
-      }
-      toast.success('Channel connected');
-    },
-    onError: () => {
-      toast.error('Failed to connect channel');
-    },
-  });
-}
-
-// ---------------------------------------------------------------------------
 // useDisconnectChannel - mutation to disconnect/delete a channel
 // ---------------------------------------------------------------------------
 
@@ -138,11 +85,8 @@ export function useDisconnectChannel() {
     onSuccess: () => {
       if (orgId) {
         queryClient.invalidateQueries({ queryKey: channelKeys.all(orgId) });
+        queryClient.invalidateQueries({ queryKey: agentKeys.all(orgId) });
       }
-      toast.success('Channel disconnected');
-    },
-    onError: () => {
-      toast.error('Failed to disconnect channel');
     },
   });
 }
@@ -165,41 +109,7 @@ export function useToggleChannel() {
     onSuccess: () => {
       if (orgId) {
         queryClient.invalidateQueries({ queryKey: channelKeys.all(orgId) });
-      }
-    },
-    onError: () => {
-      toast.error('Failed to toggle channel');
-    },
-  });
-}
-
-// ---------------------------------------------------------------------------
-// useAssignAgent - mutation to assign an agent to a channel
-// ---------------------------------------------------------------------------
-
-export function useAssignAgent() {
-  const orgId = useAuthStore((s) => s.organization?.id);
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      channelId,
-      agentId,
-      isPrimary = true,
-    }: {
-      channelId: string;
-      agentId: string;
-      isPrimary?: boolean;
-    }) => {
-      const { data } = await api.post<ApiResponse<ChannelAgent>>(
-        `/organizations/${orgId}/channels/${channelId}/agents`,
-        { agentId, isPrimary },
-      );
-      return data.data;
-    },
-    onSuccess: () => {
-      if (orgId) {
-        queryClient.invalidateQueries({ queryKey: channelKeys.all(orgId) });
+        queryClient.invalidateQueries({ queryKey: agentKeys.all(orgId) });
       }
     },
   });
@@ -230,35 +140,9 @@ export function useUpdateChannelSettings() {
     onSuccess: () => {
       if (orgId) {
         queryClient.invalidateQueries({ queryKey: channelKeys.all(orgId) });
+        queryClient.invalidateQueries({ queryKey: agentKeys.all(orgId) });
       }
     },
   });
 }
 
-// ---------------------------------------------------------------------------
-// useRemoveAgent - mutation to remove an agent from a channel
-// ---------------------------------------------------------------------------
-
-export function useRemoveAgent() {
-  const orgId = useAuthStore((s) => s.organization?.id);
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      channelId,
-      agentId,
-    }: {
-      channelId: string;
-      agentId: string;
-    }) => {
-      await api.delete(
-        `/organizations/${orgId}/channels/${channelId}/agents/${agentId}`,
-      );
-    },
-    onSuccess: () => {
-      if (orgId) {
-        queryClient.invalidateQueries({ queryKey: channelKeys.all(orgId) });
-      }
-    },
-  });
-}

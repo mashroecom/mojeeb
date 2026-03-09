@@ -53,7 +53,7 @@ const typeBadge: Record<string, string> = {
 
 function CardSkeleton() {
   return (
-    <div className="animate-pulse rounded-lg border bg-card p-5">
+    <div className="animate-pulse rounded-xl border bg-card p-5">
       <div className="flex items-start justify-between mb-3">
         <div className="h-5 w-24 rounded-full bg-muted" />
         <div className="h-3 w-28 rounded bg-muted" />
@@ -92,7 +92,7 @@ export default function NotificationsPage() {
   const markAllRead = useMarkAllNotificationsRead();
   const deleteNotification = useDeleteNotification();
 
-  const notifications: Notification[] = data?.notifications ?? data?.data ?? [];
+  const notifications: Notification[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   async function handleMarkRead(id: string) {
@@ -135,7 +135,7 @@ export default function NotificationsPage() {
         <button
           onClick={handleMarkAllRead}
           disabled={markAllRead.isPending}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 shrink-0"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 shrink-0"
         >
           {markAllRead.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -202,7 +202,7 @@ export default function NotificationsPage() {
 
       {/* Empty State */}
       {!isLoading && !isError && notifications.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border bg-card py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-16 text-center">
           <Bell className="h-12 w-12 text-muted-foreground/40 mb-4" />
           <p className="text-sm text-muted-foreground">
             {unreadOnly ? t('noUnread') : t('noNotifications')}
@@ -217,7 +217,7 @@ export default function NotificationsPage() {
             <div
               key={n.id}
               className={cn(
-                'rounded-lg border bg-card p-5 shadow-sm transition-colors',
+                'rounded-xl border bg-card p-5 shadow-sm transition-colors',
                 !n.isRead && 'border-primary/30 bg-primary/[0.02]',
               )}
             >
@@ -227,7 +227,7 @@ export default function NotificationsPage() {
                   <span
                     className={cn(
                       'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium',
-                      typeBadge[n.type] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+                      typeBadge[n.type] ?? 'bg-muted text-muted-foreground',
                     )}
                   >
                     {typeLabel(n.type)}
@@ -257,7 +257,7 @@ export default function NotificationsPage() {
                   <button
                     onClick={() => handleMarkRead(n.id)}
                     disabled={markRead.isPending}
-                    className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
                   >
                     <Eye className="h-3 w-3" />
                     {t('markAsRead')}
@@ -269,14 +269,14 @@ export default function NotificationsPage() {
                     <button
                       onClick={() => handleDelete(n.id)}
                       disabled={deleteNotification.isPending}
-                      className="inline-flex items-center gap-1 rounded-md bg-red-500 px-2 py-1 text-[10px] font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded-lg bg-destructive px-2 py-1 text-[10px] font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
                     >
                       {deleteNotification.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                       {tc('confirm')}
                     </button>
                     <button
                       onClick={() => setDeleteConfirmId(null)}
-                      className="rounded-md px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
+                      className="rounded-lg px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
                     >
                       {tc('cancel')}
                     </button>
@@ -284,7 +284,7 @@ export default function NotificationsPage() {
                 ) : (
                   <button
                     onClick={() => setDeleteConfirmId(n.id)}
-                    className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors"
+                    className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors"
                   >
                     <Trash2 className="h-3 w-3" />
                     {tc('delete')}

@@ -1,4 +1,5 @@
 import { prisma } from '../config/database';
+import { cache } from '../config/cache';
 import { NotFoundError } from '../utils/errors';
 
 export class AdminService {
@@ -428,22 +429,33 @@ export class AdminService {
 
   async updateSubscription(subscriptionId: string, data: {
     plan?: string;
+    status?: string;
     messagesLimit?: number;
     agentsLimit?: number;
     integrationsLimit?: number;
+    cancelAtPeriodEnd?: boolean;
   }) {
     const sub = await prisma.subscription.findUnique({ where: { id: subscriptionId } });
     if (!sub) throw new NotFoundError('Subscription not found');
+
+    // Sync agentsUsed with actual agent count to prevent drift
+    const actualAgentCount = await prisma.agent.count({ where: { orgId: sub.orgId } });
 
     const updated = await prisma.subscription.update({
       where: { id: subscriptionId },
       data: {
         ...(data.plan && { plan: data.plan as any }),
+        ...(data.status && { status: data.status as any }),
         ...(data.messagesLimit !== undefined && { messagesLimit: data.messagesLimit }),
         ...(data.agentsLimit !== undefined && { agentsLimit: data.agentsLimit }),
         ...(data.integrationsLimit !== undefined && { integrationsLimit: data.integrationsLimit }),
+        ...(data.cancelAtPeriodEnd !== undefined && { cancelAtPeriodEnd: data.cancelAtPeriodEnd }),
+        agentsUsed: actualAgentCount,
       },
     });
+
+    // Clear the subscription cache so changes take effect immediately
+    await cache.del(`subscription:${sub.orgId}`);
 
     return updated;
   }

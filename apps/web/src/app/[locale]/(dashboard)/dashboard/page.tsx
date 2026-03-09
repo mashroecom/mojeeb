@@ -40,8 +40,8 @@ const STATUS_COLORS: Record<string, string> = {
   ACTIVE: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   HANDED_OFF: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
   WAITING: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  RESOLVED: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  ARCHIVED: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500',
+  RESOLVED: 'bg-muted text-muted-foreground',
+  ARCHIVED: 'bg-muted text-muted-foreground',
 };
 
 export default function DashboardPage() {
@@ -110,14 +110,14 @@ export default function DashboardPage() {
       <div className="flex flex-wrap gap-3">
         <Link
           href="/agents/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           <Bot className="h-4 w-4" />
           {t('createAgent')}
         </Link>
         <Link
           href="/conversations"
-          className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent transition"
+          className="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
         >
           <MessageSquare className="h-4 w-4" />
           {t('viewConversations')}
@@ -133,7 +133,7 @@ export default function DashboardPage() {
             className="text-sm text-primary hover:underline inline-flex items-center gap-1"
           >
             {t('viewConversations')}
-            <ArrowRight className="h-3.5 w-3.5" />
+            <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
           </Link>
         </div>
 
@@ -150,7 +150,7 @@ export default function DashboardPage() {
             {conversations.data.map((conv) => (
               <Link
                 key={conv.id}
-                href={`/conversations/${conv.id}`}
+                href={`/conversations?id=${conv.id}`}
                 className="flex items-center justify-between p-4 hover:bg-accent/50 transition"
               >
                 <div className="min-w-0 flex-1">

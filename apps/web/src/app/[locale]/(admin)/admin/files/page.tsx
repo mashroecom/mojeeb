@@ -66,7 +66,7 @@ interface FileStats {
 
 function StatSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm animate-pulse">
+    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
       <div className="h-3 w-20 rounded bg-muted mb-3" />
       <div className="h-7 w-16 rounded bg-muted" />
     </div>
@@ -188,7 +188,7 @@ export default function FilesPage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {uploadMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -231,21 +231,21 @@ export default function FilesPage() {
           </>
         ) : (
           <>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <FileIcon className="h-4 w-4" />
                 {t('totalFiles')}
               </div>
               <p className="text-2xl font-bold">{fileStats?.totalFiles ?? 0}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <HardDrive className="h-4 w-4" />
                 {t('totalSize')}
               </div>
               <p className="text-2xl font-bold">{formatBytes(fileStats?.totalSize ?? 0)}</p>
             </div>
-            <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <FolderOpen className="h-4 w-4" />
                 {t('byType')}
@@ -280,13 +280,13 @@ export default function FilesPage() {
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-md border bg-background ps-9 pe-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            className="w-full rounded-lg border bg-background ps-9 pe-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
           />
         </div>
         <button
           onClick={handleSearch}
           aria-label={t('searchPlaceholder')}
-          className="inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+          className="inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
         >
           <Search className="h-4 w-4" />
         </button>
@@ -296,7 +296,7 @@ export default function FilesPage() {
             setTypeFilter(e.target.value);
             setPage(1);
           }}
-          className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+          className="rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
         >
           {typeOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -320,11 +320,11 @@ export default function FilesPage() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px]">
             <thead>
-              <tr className="border-b bg-muted/30">
+              <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {t('name')}
                 </th>
@@ -356,7 +356,7 @@ export default function FilesPage() {
               {!isLoading &&
                 !isError &&
                 files.map((file) => (
-                  <tr key={file.relativePath} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+                  <tr key={file.relativePath} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {getFileIcon(file.mimeType)}
@@ -383,14 +383,14 @@ export default function FilesPage() {
                             <button
                               onClick={() => handleDelete(file.relativePath)}
                               disabled={deleteMutation.isPending}
-                              className="inline-flex items-center gap-1 rounded-md bg-red-500 px-2 py-1 text-[10px] font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-1 rounded-lg bg-destructive px-2 py-1 text-[10px] font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
                             >
                               {deleteMutation.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                               {tc('confirm')}
                             </button>
                             <button
                               onClick={() => setDeleteConfirmPath(null)}
-                              className="rounded-md px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
+                              className="rounded-lg px-2 py-1 text-[10px] font-medium border hover:bg-muted transition-colors"
                             >
                               {tc('cancel')}
                             </button>
@@ -398,7 +398,7 @@ export default function FilesPage() {
                         ) : (
                           <button
                             onClick={() => setDeleteConfirmPath(file.relativePath)}
-                            className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors"
+                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors"
                           >
                             <Trash2 className="h-3 w-3" />
                             {tc('delete')}
