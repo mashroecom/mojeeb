@@ -399,6 +399,14 @@
       "notes": "ملاحظات",
       "addNotePlaceholder": "أضف ملاحظة...",
       "noNotes": "لا توجد ملاحظات بعد",
+      "tags": "علامات",
+      "addTag": "إضافة علامة",
+      "removeTag": "إزالة علامة",
+      "createTag": "إنشاء علامة",
+      "tagNamePlaceholder": "اسم العلامة...",
+      "tagColor": "اللون",
+      "noTags": "لا توجد علامات بعد",
+      "noAvailableTags": "لا توجد علامات متاحة",
       "templates": "قوالب الرسائل"
     },
     "messageTemplates": {

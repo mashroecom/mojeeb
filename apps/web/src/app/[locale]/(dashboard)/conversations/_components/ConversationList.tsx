@@ -252,6 +252,21 @@ export const ConversationList = React.memo(function ConversationList({
                       </span>
                     )}
 
+                    {/* Tags */}
+                    {conv.tags?.map((conversationTag) => (
+                      <span
+                        key={conversationTag.id}
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium border"
+                        style={{
+                          backgroundColor: conversationTag.tag.color + '20',
+                          color: conversationTag.tag.color,
+                          borderColor: conversationTag.tag.color + '40',
+                        }}
+                      >
+                        {conversationTag.tag.name}
+                      </span>
+                    ))}
+
                     {/* Rating */}
                     {rating && (
                       <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">

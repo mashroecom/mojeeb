@@ -399,6 +399,14 @@
       "notes": "Notes",
       "addNotePlaceholder": "Add a note...",
       "noNotes": "No notes yet",
+      "tags": "Tags",
+      "addTag": "Add Tag",
+      "removeTag": "Remove Tag",
+      "createTag": "Create Tag",
+      "tagNamePlaceholder": "Tag name...",
+      "tagColor": "Color",
+      "noTags": "No tags yet",
+      "noAvailableTags": "No available tags",
       "templates": "Message Templates"
     },
     "messageTemplates": {
