@@ -31,6 +31,9 @@ import { useToastStore } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import { UserProfileCard } from './_components/UserProfileCard';
 import { UserActionsBar } from './_components/UserActionsBar';
+import { OrganizationsTab } from './_components/OrganizationsTab';
+import { LoginActivityTab } from './_components/LoginActivityTab';
+import { SessionsTab } from './_components/SessionsTab';
 import {
   ArrowLeft,
   Loader2,
@@ -368,261 +371,55 @@ export default function AdminUserDetailPage() {
             <div className="p-6">
               {/* Organizations Tab */}
               {activeTab === 'orgs' && (
-                <>
-                  {user.memberships && user.memberships.length > 0 ? (
-                    <div className="divide-y">
-                      {user.memberships.map((membership: any) => (
-                        <div
-                          key={membership.id || membership.org?.id}
-                          className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                              <Building2 className="h-4 w-4 text-primary" />
-                            </div>
-                            <div>
-                              <button
-                                onClick={() =>
-                                  router.push(`/admin/organizations/${membership.org?.id ?? membership.orgId}`)
-                                }
-                                className="text-sm font-medium hover:text-primary transition-colors"
-                              >
-                                {membership.org?.name ?? '—'}
-                              </button>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                                {membership.org?.slug && <span>{membership.org.slug}</span>}
-                                {membership.org?._count && (
-                                  <>
-                                    <span className="flex items-center gap-1">
-                                      <MessageSquare className="h-3 w-3" />
-                                      {membership.org._count.conversations}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <Bot className="h-3 w-3" />
-                                      {membership.org._count.agents}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <span
-                            className={cn(
-                              'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                              membership.role === 'OWNER'
-                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                : membership.role === 'ADMIN'
-                                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                  : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-                            )}
-                          >
-                            {membership.role}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      {t('userDetail.noOrganizations')}
-                    </p>
-                  )}
-                </>
+                <OrganizationsTab memberships={user.memberships} />
               )}
 
               {/* Login Activity Tab */}
               {activeTab === 'logins' && (
-                <>
-                  {loginsLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : !loginData?.items?.length ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      {t('userDetail.noLoginActivity')}
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {loginData.items.map((item: any) => (
-                        <div
-                          key={item.id}
-                          className={cn(
-                            'flex items-center justify-between rounded-lg border p-3',
-                            item.success
-                              ? 'border-green-200 bg-green-50/50 dark:border-green-900/30 dark:bg-green-900/10'
-                              : 'border-red-200 bg-red-50/50 dark:border-red-900/30 dark:bg-red-900/10'
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={cn(
-                              'h-8 w-8 rounded-full flex items-center justify-center',
-                              item.success
-                                ? 'bg-green-100 dark:bg-green-900/30'
-                                : 'bg-red-100 dark:bg-red-900/30'
-                            )}>
-                              {item.success ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                              ) : (
-                                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium">
-                                {item.success ? t('userDetail.loginSuccess') : t('userDetail.loginFailed')}
-                              </p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                                <span>{item.ipAddress}</span>
-                                {item.failReason && (
-                                  <span className="text-red-500">({item.failReason})</span>
-                                )}
-                              </div>
-                              {(item.country || item.city) && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  <Globe className="w-3 h-3 inline mr-1" />
-                                  {[item.city, item.country].filter(Boolean).join(', ') || t('userDetail.unknownLocation')}
-                                </p>
-                              )}
-                              {item.userAgent && (
-                                <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs" title={item.userAgent}>
-                                  {item.userAgent.substring(0, 60)}...
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {fmtDateTime(item.createdAt, locale)}
-                          </span>
-                        </div>
-                      ))}
-                      {loginData.totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 pt-2">
-                          <button
-                            onClick={() => setLoginPage((p) => Math.max(1, p - 1))}
-                            disabled={loginPage === 1}
-                            className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
-                          >
-                            {t('common.previous')}
-                          </button>
-                          <span className="text-xs text-muted-foreground">
-                            {loginPage} / {loginData.totalPages}
-                          </span>
-                          <button
-                            onClick={() => setLoginPage((p) => Math.min(loginData.totalPages, p + 1))}
-                            disabled={loginPage === loginData.totalPages}
-                            className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
-                          >
-                            {t('common.next')}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
+                <LoginActivityTab
+                  isLoading={loginsLoading}
+                  loginData={loginData}
+                  currentPage={loginPage}
+                  onPageChange={setLoginPage}
+                />
               )}
 
               {/* Active Sessions Tab */}
               {activeTab === 'sessions' && (
-                <>
-                  {sessionsLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : !sessionData?.items?.length ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      {t('userDetail.noSessions')}
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {/* Kill All Sessions button */}
-                      <div className="flex justify-end">
-                        <button
-                          onClick={() => {
-                            setConfirmDialog({
-                              open: true,
-                              title: t('userDetail.killAllSessions'),
-                              message: t('userDetail.confirmKillAllSessions'),
-                              variant: 'danger',
-                              onConfirm: () => {
-                                killUserSessions.mutate(userId, {
-                                  onSuccess: () => addToast('success', t('userDetail.allSessionsKilled')),
-                                });
-                              },
-                            });
-                          }}
-                          disabled={killUserSessions.isPending}
-                          className="inline-flex items-center gap-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors"
-                        >
-                          <LogOut className="h-3.5 w-3.5" />
-                          {t('userDetail.killAllSessions')}
-                        </button>
-                      </div>
-
-                      {sessionData.items.map((session: any) => (
-                        <div
-                          key={session.id}
-                          className="flex items-center justify-between rounded-lg border p-3"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                              <Monitor className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium">
-                                {session.ipAddress || t('userDetail.unknownIP')}
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-0.5 max-w-xs truncate">
-                                {session.userAgent || '—'}
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {t('userDetail.expires')}: {fmtDateTime(session.expiresAt, locale)}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => {
-                              setConfirmDialog({
-                                open: true,
-                                title: t('userDetail.killSession'),
-                                message: t('userDetail.confirmKillSession'),
-                                variant: 'danger',
-                                onConfirm: () => {
-                                  killSession.mutate(session.id, {
-                                    onSuccess: () => addToast('success', t('userDetail.sessionKilled')),
-                                  });
-                                },
-                              });
-                            }}
-                            disabled={killSession.isPending}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-2.5 py-1.5 text-xs font-medium transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                            {t('userDetail.kill')}
-                          </button>
-                        </div>
-                      ))}
-                      {sessionData.totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 pt-2">
-                          <button
-                            onClick={() => setSessionPage((p) => Math.max(1, p - 1))}
-                            disabled={sessionPage === 1}
-                            className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
-                          >
-                            {t('common.previous')}
-                          </button>
-                          <span className="text-xs text-muted-foreground">
-                            {sessionPage} / {sessionData.totalPages}
-                          </span>
-                          <button
-                            onClick={() => setSessionPage((p) => Math.min(sessionData.totalPages, p + 1))}
-                            disabled={sessionPage === sessionData.totalPages}
-                            className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
-                          >
-                            {t('common.next')}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
+                <SessionsTab
+                  isLoading={sessionsLoading}
+                  sessionData={sessionData}
+                  currentPage={sessionPage}
+                  onPageChange={setSessionPage}
+                  onKillSession={(sessionId) => {
+                    setConfirmDialog({
+                      open: true,
+                      title: t('userDetail.killSession'),
+                      message: t('userDetail.confirmKillSession'),
+                      variant: 'danger',
+                      onConfirm: () => {
+                        killSession.mutate(sessionId, {
+                          onSuccess: () => addToast('success', t('userDetail.sessionKilled')),
+                        });
+                      },
+                    });
+                  }}
+                  onKillAllSessions={() => {
+                    setConfirmDialog({
+                      open: true,
+                      title: t('userDetail.killAllSessions'),
+                      message: t('userDetail.confirmKillAllSessions'),
+                      variant: 'danger',
+                      onConfirm: () => {
+                        killUserSessions.mutate(userId, {
+                          onSuccess: () => addToast('success', t('userDetail.allSessionsKilled')),
+                        });
+                      },
+                    });
+                  }}
+                  killSessionPending={killSession.isPending}
+                  killAllSessionsPending={killUserSessions.isPending}
+                />
               )}
 
               {/* Audit Log Tab */}
