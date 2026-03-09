@@ -8,33 +8,42 @@ import { useRouter } from '@/i18n/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { setAuthCookie } from '@/lib/auth-cookies';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
+import { useZodForm } from '@/hooks/useZodForm';
+import { registerSchema } from '@mojeeb/shared-utils';
 
 export default function RegisterPage() {
   const t = useTranslations('auth.register');
   const tLogin = useTranslations('auth.login');
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    organizationName: '',
-  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const updateField = (field: string, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
+  const form = useZodForm({
+    schema: registerSchema,
+    initialValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      organizationName: '',
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate form
+    const isValid = await form.handleSubmit();
+    if (!isValid) {
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/register', form);
+      const response = await api.post('/auth/register', form.values);
       const { tokens, user, organization } = response.data.data;
 
       localStorage.setItem('accessToken', tokens.accessToken);
@@ -72,21 +81,27 @@ export default function RegisterPage() {
             <label className="mb-1.5 block text-sm font-medium">{t('firstName')}</label>
             <input
               type="text"
-              value={form.firstName}
-              onChange={(e) => updateField('firstName', e.target.value)}
-              required
+              value={form.values.firstName || ''}
+              onChange={form.handleChange('firstName')}
+              onBlur={form.handleBlur('firstName')}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             />
+            {form.errors.firstName && (
+              <p className="mt-1 text-xs text-destructive">{form.errors.firstName}</p>
+            )}
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium">{t('lastName')}</label>
             <input
               type="text"
-              value={form.lastName}
-              onChange={(e) => updateField('lastName', e.target.value)}
-              required
+              value={form.values.lastName || ''}
+              onChange={form.handleChange('lastName')}
+              onBlur={form.handleBlur('lastName')}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             />
+            {form.errors.lastName && (
+              <p className="mt-1 text-xs text-destructive">{form.errors.lastName}</p>
+            )}
           </div>
         </div>
 
@@ -94,37 +109,45 @@ export default function RegisterPage() {
           <label className="mb-1.5 block text-sm font-medium">{t('organizationName')}</label>
           <input
             type="text"
-            value={form.organizationName}
-            onChange={(e) => updateField('organizationName', e.target.value)}
-            required
+            value={form.values.organizationName || ''}
+            onChange={form.handleChange('organizationName')}
+            onBlur={form.handleBlur('organizationName')}
             className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
           />
+          {form.errors.organizationName && (
+            <p className="mt-1 text-xs text-destructive">{form.errors.organizationName}</p>
+          )}
         </div>
 
         <div>
           <label className="mb-1.5 block text-sm font-medium">{t('email')}</label>
           <input
             type="email"
-            value={form.email}
-            onChange={(e) => updateField('email', e.target.value)}
-            required
+            value={form.values.email || ''}
+            onChange={form.handleChange('email')}
+            onBlur={form.handleBlur('email')}
             className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             placeholder="name@company.com"
             dir="ltr"
           />
+          {form.errors.email && (
+            <p className="mt-1 text-xs text-destructive">{form.errors.email}</p>
+          )}
         </div>
 
         <div>
           <label className="mb-1.5 block text-sm font-medium">{t('password')}</label>
           <input
             type="password"
-            value={form.password}
-            onChange={(e) => updateField('password', e.target.value)}
-            required
-            minLength={8}
+            value={form.values.password || ''}
+            onChange={form.handleChange('password')}
+            onBlur={form.handleBlur('password')}
             className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             dir="ltr"
           />
+          {form.errors.password && (
+            <p className="mt-1 text-xs text-destructive">{form.errors.password}</p>
+          )}
         </div>
 
         <button
