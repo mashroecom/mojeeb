@@ -2534,6 +2534,8 @@
     "messageTemplates": {
       "title": "Message Templates",
       "search": "Search templates...",
+      "create": "Create Template",
+      "edit": "Edit Template",
       "templateTitle": "Title",
       "category": "Category",
       "allCategories": "All",
@@ -2546,8 +2548,10 @@
       "confirmDelete": "Are you sure you want to delete this template? This cannot be undone.",
       "deleteTitle": "Delete Template",
       "toasts": {
+        "created": "Template created successfully",
+        "updated": "Template updated successfully",
         "deleted": "Template deleted successfully",
-        "error": "Failed to delete template"
+        "error": "Failed to perform action"
       }
     },
     "tags": {

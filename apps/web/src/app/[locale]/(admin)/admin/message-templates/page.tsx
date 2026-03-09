@@ -6,12 +6,42 @@ import { fmtDate } from '@/lib/dateFormat';
 import { cn } from '@/lib/utils';
 import {
   useAdminMessageTemplates,
+  useCreateMessageTemplate,
+  useUpdateMessageTemplate,
   useDeleteMessageTemplate,
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminConfirmDialog } from '@/components/admin/AdminConfirmDialog';
-import { FileText, Trash2, Search } from 'lucide-react';
+import { FileText, Trash2, Search, Plus, Pencil, X, Loader2 } from 'lucide-react';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface MessageTemplate {
+  id: string;
+  title: string;
+  content: string;
+  category: string | null;
+  shortcut: string | null;
+  createdAt: string;
+  org: { id: string; name: string } | null;
+}
+
+interface FormData {
+  title: string;
+  content: string;
+  category: string;
+  shortcut: string;
+}
+
+const emptyForm: FormData = {
+  title: '',
+  content: '',
+  category: '',
+  shortcut: '',
+};
 
 export default function MessageTemplatesPage() {
   const t = useTranslations('admin.messageTemplates');
@@ -23,6 +53,9 @@ export default function MessageTemplatesPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormData>(emptyForm);
 
   const { data, isLoading, error } = useAdminMessageTemplates({
     page,
@@ -31,15 +64,65 @@ export default function MessageTemplatesPage() {
     category: category || undefined,
   });
 
+  const createMutation = useCreateMessageTemplate();
+  const updateMutation = useUpdateMessageTemplate();
   const deleteMutation = useDeleteMessageTemplate();
 
-  const templates = data?.data ?? [];
+  const templates: MessageTemplate[] = data?.data ?? [];
   const pagination = data?.pagination;
 
   // Collect unique categories from current page for filter tabs
   const categories = Array.from(
-    new Set(templates.map((tpl: any) => tpl.category).filter(Boolean)),
+    new Set(templates.map((tpl) => tpl.category).filter(Boolean)),
   ) as string[];
+
+  // --- Form handlers ---
+
+  function openCreate() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  }
+
+  function openEdit(tpl: MessageTemplate) {
+    setEditingId(tpl.id);
+    setForm({
+      title: tpl.title,
+      content: tpl.content,
+      category: tpl.category || '',
+      shortcut: tpl.shortcut || '',
+    });
+    setShowForm(true);
+  }
+
+  function closeForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyForm);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const payload: Record<string, unknown> = {
+      title: form.title,
+      content: form.content,
+    };
+    if (form.category) payload.category = form.category;
+    if (form.shortcut) payload.shortcut = form.shortcut;
+
+    try {
+      if (editingId) {
+        await updateMutation.mutateAsync({ id: editingId, ...payload } as Parameters<typeof updateMutation.mutateAsync>[0]);
+        addToast('success', t('toasts.updated'));
+      } else {
+        await createMutation.mutateAsync(payload as Parameters<typeof createMutation.mutateAsync>[0]);
+        addToast('success', t('toasts.created'));
+      }
+      closeForm();
+    } catch {
+      addToast('error', t('toasts.error'));
+    }
+  }
 
   function handleDelete() {
     if (!deleteTarget) return;
@@ -54,6 +137,8 @@ export default function MessageTemplatesPage() {
     });
   }
 
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -66,9 +151,112 @@ export default function MessageTemplatesPage() {
     <>
       <div>
         {/* Header */}
-        <div className="mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
           <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" />
+            {t('create')}
+          </button>
         </div>
+
+        {/* Inline Form */}
+        {showForm && (
+          <form
+            onSubmit={handleSubmit}
+            className="mb-6 rounded-lg border bg-card p-5 shadow-sm space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">
+                {editingId ? t('edit') : t('create')}
+              </h2>
+              <button
+                type="button"
+                onClick={closeForm}
+                aria-label={tc('close')}
+                className="rounded-md p-1 text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* Title */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1">{t('templateTitle')}</label>
+                <input
+                  type="text"
+                  required
+                  value={form.title}
+                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                />
+              </div>
+
+              {/* Content */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1">{t('content')}</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={form.content}
+                  onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('category')}
+                  <span className="text-muted-foreground font-normal ms-1">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.category}
+                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                />
+              </div>
+
+              {/* Shortcut */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('shortcut')}
+                  <span className="text-muted-foreground font-normal ms-1">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.shortcut}
+                  onChange={(e) => setForm((f) => ({ ...f, shortcut: e.target.value }))}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                  placeholder="e.g., /greeting"
+                />
+              </div>
+            </div>
+
+            {/* Form Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={closeForm}
+                className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              >
+                {tc('cancel')}
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                {tc('save')}
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* Search + Category Filter */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
@@ -159,7 +347,7 @@ export default function MessageTemplatesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {templates.map((tpl: any) => (
+                  {templates.map((tpl) => (
                     <tr key={tpl.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 text-sm font-medium">{tpl.title}</td>
                       <td className="px-4 py-3 text-sm">
@@ -182,13 +370,22 @@ export default function MessageTemplatesPage() {
                         {fmtDate(tpl.createdAt, locale)}
                       </td>
                       <td className="px-4 py-3 text-end">
-                        <button
-                          onClick={() => setDeleteTarget(tpl.id)}
-                          className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          title={tc('delete')}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEdit(tpl)}
+                            className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            title={tc('edit')}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTarget(tpl.id)}
+                            className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            title={tc('delete')}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -198,7 +395,7 @@ export default function MessageTemplatesPage() {
 
             {/* Mobile Cards */}
             <div className="md:hidden space-y-3">
-              {templates.map((tpl: any) => (
+              {templates.map((tpl) => (
                 <div key={tpl.id} className="rounded-xl border bg-card shadow-sm p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div>
@@ -209,12 +406,20 @@ export default function MessageTemplatesPage() {
                         </span>
                       )}
                     </div>
-                    <button
-                      onClick={() => setDeleteTarget(tpl.id)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openEdit(tpl)}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget(tpl.id)}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{tpl.content}</p>
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">

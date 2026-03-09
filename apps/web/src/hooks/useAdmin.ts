@@ -1992,6 +1992,32 @@ export function useAdminMessageTemplates(params: { page: number; limit: number; 
   });
 }
 
+export function useCreateMessageTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { title: string; content: string; category?: string; shortcut?: string; orgId?: string }) => {
+      const { data } = await api.post('/admin/message-templates-admin', body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'message-templates-admin'] });
+    },
+  });
+}
+
+export function useUpdateMessageTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...body }: { id: string; title?: string; content?: string; category?: string; shortcut?: string; orgId?: string }) => {
+      const { data } = await api.patch(`/admin/message-templates-admin/${id}`, body);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'message-templates-admin'] });
+    },
+  });
+}
+
 export function useDeleteMessageTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
