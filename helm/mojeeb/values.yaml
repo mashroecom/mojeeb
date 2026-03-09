@@ -1,0 +1,444 @@
+# Mojeeb Helm Chart - Default Values
+# This is a YAML-formatted file that declares default values for the Mojeeb chart.
+# Override these values using --values or --set flags.
+
+# Global Configuration
+global:
+  namespace: mojeeb
+  environment: production
+  region: default
+
+  # Data Residency Configuration
+  dataResidency:
+    enabled: false
+    country: ""
+    complianceLevel: "standard" # standard, strict, regulated
+
+  # Image Configuration
+  imageRegistry: docker.io
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets: []
+
+  # Domain Configuration
+  domain: mojeeb.app
+  tlsEnabled: true
+  tlsSecretName: mojeeb-tls
+
+# API Service Configuration
+api:
+  enabled: true
+  replicaCount: 3
+
+  image:
+    repository: mojeeb/api
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 4000
+    targetPort: 4000
+    annotations: {}
+
+  # Resource limits and requests
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+  # Health check configuration
+  livenessProbe:
+    httpGet:
+      path: /api/v1/health
+      port: 4000
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /api/v1/health/ready
+      port: 4000
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  # Auto-scaling configuration
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  # Persistent storage for uploads
+  persistence:
+    enabled: true
+    storageClassName: standard
+    accessMode: ReadWriteMany
+    size: 10Gi
+    mountPath: /app/apps/api/uploads
+
+  # Feature flags
+  features:
+    websocket: true
+    queueProcessing: true
+
+# Worker Service Configuration
+worker:
+  enabled: true
+  replicaCount: 3
+
+  image:
+    repository: mojeeb/worker
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  # Resource limits and requests
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+  # Health check configuration
+  livenessProbe:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - pgrep -f worker.js
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - pgrep -f worker.js
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  # Auto-scaling configuration
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  # Health port configuration
+  healthPort: 4001
+
+# Web (Frontend) Service Configuration
+web:
+  enabled: true
+  replicaCount: 3
+
+  image:
+    repository: mojeeb/web
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+    annotations: {}
+
+  # Resource limits and requests
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+  # Health check configuration
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 15
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# PostgreSQL Configuration
+postgresql:
+  enabled: true
+
+  # Primary database
+  primary:
+    replicas: 1
+    image:
+      repository: pgvector/pgvector
+      tag: pg16
+
+    persistence:
+      enabled: true
+      storageClassName: standard
+      size: 50Gi
+
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+
+  # Read replicas
+  readReplicas:
+    enabled: true
+    replicas: 2
+
+    persistence:
+      enabled: true
+      storageClassName: standard
+      size: 50Gi
+
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+
+  # Database credentials (should be overridden via secrets)
+  auth:
+    database: mojeeb
+    username: mojeeb
+    # password: set via secret or --set flag
+
+  service:
+    port: 5432
+
+# Redis Cluster Configuration
+redis:
+  enabled: true
+  cluster:
+    enabled: true
+    replicas: 3
+
+  image:
+    repository: redis
+    tag: 7-alpine
+
+  persistence:
+    enabled: true
+    storageClassName: standard
+    size: 5Gi
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  service:
+    port: 6379
+
+  # Redis configuration
+  config:
+    maxmemory: "256mb"
+    maxmemoryPolicy: "allkeys-lru"
+    appendonly: "yes"
+    appendfsync: "everysec"
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/hsts: "true"
+    nginx.ingress.kubernetes.io/hsts-max-age: "31536000"
+    nginx.ingress.kubernetes.io/hsts-include-subdomains: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
+
+  hosts:
+    - host: mojeeb.app
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend: api
+        - path: /ws
+          pathType: Prefix
+          backend: api
+        - path: /socket.io
+          pathType: Prefix
+          backend: api
+        - path: /
+          pathType: Prefix
+          backend: web
+    - host: www.mojeeb.app
+      paths:
+        - path: /
+          pathType: Prefix
+          backend: web
+
+  tls:
+    - secretName: mojeeb-tls
+      hosts:
+        - mojeeb.app
+        - www.mojeeb.app
+
+# Configuration (non-sensitive)
+config:
+  nodeEnv: production
+
+  # JWT Configuration
+  jwt:
+    accessExpiry: "15m"
+    refreshExpiry: "7d"
+
+  # Email Configuration
+  email:
+    from: "noreply@mojeeb.app"
+
+  # URLs (will be templated based on global.domain)
+  urls:
+    frontend: "https://mojeeb.app"
+    api: "https://api.mojeeb.app"
+    apiPublic: "https://api.mojeeb.app/api/v1"
+
+# Secrets Configuration (must be provided at deployment time)
+# DO NOT commit actual secrets to version control
+secrets:
+  # Database
+  databaseUrl: ""
+  readReplicaUrl: ""
+  postgresPassword: ""
+
+  # Redis
+  redisUrl: ""
+  redisPassword: ""
+
+  # JWT
+  jwtSecret: ""
+  jwtRefreshSecret: ""
+
+  # Email
+  emailHost: ""
+  emailPort: ""
+  emailUser: ""
+  emailPassword: ""
+
+  # OpenAI
+  openaiApiKey: ""
+
+  # Google OAuth
+  googleClientId: ""
+  googleClientSecret: ""
+
+  # WhatsApp
+  whatsappApiUrl: ""
+  whatsappApiToken: ""
+
+  # Payment (Kashier)
+  kashierApiKey: ""
+  kashierMerchantId: ""
+
+  # Encryption
+  encryptionKey: ""
+
+# Security Configuration
+security:
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    runAsUser: 1000
+    capabilities:
+      drop:
+        - ALL
+
+# Network Policies
+networkPolicy:
+  enabled: false
+  policyTypes:
+    - Ingress
+    - Egress
+
+# Service Account
+serviceAccount:
+  create: true
+  name: mojeeb
+  annotations: {}
+
+# Monitoring and Observability
+monitoring:
+  enabled: false
+  prometheus:
+    enabled: false
+    serviceMonitor:
+      enabled: false
+
+  grafana:
+    enabled: false
+    dashboards:
+      enabled: false
+
+# Node affinity and tolerations
+affinity:
+  podAntiAffinity:
+    enabled: true
+    type: preferred # preferred or required
+    weight: 100
+
+nodeSelector: {}
+
+tolerations: []
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Backup Configuration
+backup:
+  enabled: false
+  schedule: "0 2 * * *" # Daily at 2 AM
+  retention: 7 # days
+
+  postgresql:
+    enabled: false
+
+  redis:
+    enabled: false

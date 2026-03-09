@@ -35,12 +35,16 @@
     ]
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.55.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
+    "node-fetch": "^2.7.0",
     "prettier": "^3.8.1",
     "prisma": "6.19.2",
+    "socket.io-client": "^4.8.0",
+    "tsx": "^4.19.0",
     "turbo": "^2.8.3",
     "typescript-eslint": "^8.55.0"
   },

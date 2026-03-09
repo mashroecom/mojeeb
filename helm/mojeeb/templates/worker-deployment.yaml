@@ -1,0 +1,233 @@
+{{- if .Values.worker.enabled }}
+---
+# Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: mojeeb
+    component: worker
+    role: worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      app: mojeeb
+      component: worker
+      role: worker
+  template:
+    metadata:
+      labels:
+        app: mojeeb
+        component: worker
+        role: worker
+    spec:
+      containers:
+      - name: worker
+        image: "{{ .Values.global.imageRegistry }}/{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}"
+        imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
+        env:
+        # Application Configuration
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: NODE_ENV
+        - name: WORKER_CONCURRENCY
+          value: "5"
+
+        # Database Configuration
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: DATABASE_URL
+        - name: READ_REPLICA_URL
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: READ_REPLICA_URL
+
+        # Redis Configuration
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: REDIS_URL
+
+        # JWT Configuration
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: JWT_SECRET
+        - name: JWT_REFRESH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: JWT_REFRESH_SECRET
+        - name: JWT_ACCESS_EXPIRY
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: JWT_ACCESS_EXPIRY
+        - name: JWT_REFRESH_EXPIRY
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: JWT_REFRESH_EXPIRY
+
+        # Email Configuration
+        - name: EMAIL_HOST
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: EMAIL_HOST
+        - name: EMAIL_PORT
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: EMAIL_PORT
+        - name: EMAIL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: EMAIL_USER
+        - name: EMAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: EMAIL_PASSWORD
+        - name: EMAIL_FROM
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: EMAIL_FROM
+
+        # URLs
+        - name: FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: FRONTEND_URL
+        - name: API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: API_URL
+
+        # OpenAI Configuration
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: OPENAI_API_KEY
+
+        # Google OAuth Configuration
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: GOOGLE_CLIENT_ID
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: GOOGLE_CLIENT_SECRET
+
+        # WhatsApp Configuration
+        - name: WHATSAPP_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: WHATSAPP_API_URL
+        - name: WHATSAPP_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: WHATSAPP_API_TOKEN
+
+        # Payment Configuration
+        - name: KASHIER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: KASHIER_API_KEY
+        - name: KASHIER_MERCHANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: KASHIER_MERCHANT_ID
+
+        # Feature Flags
+        - name: ENABLE_WEBSOCKET
+          value: "false"
+        - name: ENABLE_QUEUE_PROCESSING
+          value: "true"
+
+        livenessProbe:
+          exec:
+            command:
+            {{- range .Values.worker.livenessProbe.exec.command }}
+            - {{ . | quote }}
+            {{- end }}
+          initialDelaySeconds: {{ .Values.worker.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.worker.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.worker.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.worker.livenessProbe.failureThreshold }}
+          successThreshold: 1
+
+        readinessProbe:
+          exec:
+            command:
+            {{- range .Values.worker.readinessProbe.exec.command }}
+            - {{ . | quote }}
+            {{- end }}
+          initialDelaySeconds: {{ .Values.worker.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.worker.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.worker.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.worker.readinessProbe.failureThreshold }}
+          successThreshold: 1
+
+        resources:
+          {{- toYaml .Values.worker.resources | nindent 10 }}
+
+      # Spread pods across different nodes for high availability
+      {{- if .Values.affinity.podAntiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          {{- if eq .Values.affinity.podAntiAffinity.type "preferred" }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: {{ .Values.affinity.podAntiAffinity.weight }}
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - worker
+              topologyKey: kubernetes.io/hostname
+          {{- else if eq .Values.affinity.podAntiAffinity.type "required" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - worker
+            topologyKey: kubernetes.io/hostname
+          {{- end }}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

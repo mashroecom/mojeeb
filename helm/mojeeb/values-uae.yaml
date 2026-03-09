@@ -1,0 +1,233 @@
+# Mojeeb Helm Chart - United Arab Emirates (UAE) Region Values
+# This file contains region-specific overrides for deploying Mojeeb in the UAE.
+# Use with: helm install mojeeb ./mojeeb -f values.yaml -f values-uae.yaml
+
+# Global Configuration for United Arab Emirates Region
+global:
+  namespace: mojeeb-uae
+  environment: production
+  region: uae
+
+  # Data Residency Configuration for United Arab Emirates
+  # Ensures all data remains within UAE borders
+  dataResidency:
+    enabled: true
+    country: "AE"
+    complianceLevel: "regulated" # Strict compliance for UAE regulations
+
+  # Domain Configuration for UAE region
+  domain: uae.mojeeb.app
+  tlsEnabled: true
+  tlsSecretName: mojeeb-uae-tls
+
+# API Service Configuration for UAE
+api:
+  # Increased replica count for high availability in UAE region
+  replicaCount: 4
+
+  # Auto-scaling configuration optimized for UAE traffic patterns
+  autoscaling:
+    enabled: true
+    minReplicas: 4
+    maxReplicas: 25
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  # Persistent storage for uploads with UAE-specific storage class
+  persistence:
+    enabled: true
+    storageClassName: uae-ssd
+    accessMode: ReadWriteMany
+    size: 20Gi # Increased for regional deployment
+    mountPath: /app/apps/api/uploads
+
+# Worker Service Configuration for UAE
+worker:
+  # Increased replica count for processing UAE market load
+  replicaCount: 4
+
+  # Auto-scaling configuration for UAE worker load
+  autoscaling:
+    enabled: true
+    minReplicas: 4
+    maxReplicas: 25
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Web (Frontend) Service Configuration for UAE
+web:
+  # Increased replica count for UAE region
+  replicaCount: 4
+
+# PostgreSQL Configuration for United Arab Emirates
+postgresql:
+  enabled: true
+
+  # Primary database with increased resources for regional deployment
+  primary:
+    replicas: 1
+
+    persistence:
+      enabled: true
+      storageClassName: uae-ssd
+      size: 100Gi # Increased for regional data
+
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1000m"
+      limits:
+        memory: "8Gi"
+        cpu: "4000m"
+
+  # Read replicas for improved performance in UAE
+  readReplicas:
+    enabled: true
+    replicas: 3 # Increased for better read performance
+
+    persistence:
+      enabled: true
+      storageClassName: uae-ssd
+      size: 100Gi
+
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1000m"
+      limits:
+        memory: "8Gi"
+        cpu: "4000m"
+
+  # Database credentials specific to UAE region
+  auth:
+    database: mojeeb_uae
+    username: mojeeb_uae
+    # password: set via secret or --set flag
+
+# Redis Cluster Configuration for UAE
+redis:
+  enabled: true
+  cluster:
+    enabled: true
+    replicas: 4 # Increased for regional deployment
+
+  persistence:
+    enabled: true
+    storageClassName: uae-ssd
+    size: 10Gi # Increased for regional caching
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  # Redis configuration optimized for UAE
+  config:
+    maxmemory: "512mb"
+    maxmemoryPolicy: "allkeys-lru"
+    appendonly: "yes"
+    appendfsync: "everysec"
+
+# Ingress Configuration for UAE region
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/hsts: "true"
+    nginx.ingress.kubernetes.io/hsts-max-age: "31536000"
+    nginx.ingress.kubernetes.io/hsts-include-subdomains: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
+    # UAE-specific annotations
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "uae-route"
+    nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+
+  hosts:
+    - host: uae.mojeeb.app
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend: api
+        - path: /ws
+          pathType: Prefix
+          backend: api
+        - path: /socket.io
+          pathType: Prefix
+          backend: api
+        - path: /
+          pathType: Prefix
+          backend: web
+    - host: www.uae.mojeeb.app
+      paths:
+        - path: /
+          pathType: Prefix
+          backend: web
+
+  tls:
+    - secretName: mojeeb-uae-tls
+      hosts:
+        - uae.mojeeb.app
+        - www.uae.mojeeb.app
+
+# Configuration for United Arab Emirates region
+config:
+  nodeEnv: production
+
+  # URLs for UAE region
+  urls:
+    frontend: "https://uae.mojeeb.app"
+    api: "https://api.uae.mojeeb.app"
+    apiPublic: "https://api.uae.mojeeb.app/api/v1"
+
+# Network Policies - Enabled for enhanced security in UAE
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+# Node affinity for UAE region
+affinity:
+  podAntiAffinity:
+    enabled: true
+    type: required # Required for production in United Arab Emirates
+    weight: 100
+
+# Node selector to ensure pods run in United Arab Emirates region
+nodeSelector:
+  topology.kubernetes.io/region: united-arab-emirates
+  topology.kubernetes.io/zone: uae-central-1
+
+# Backup Configuration for UAE region
+backup:
+  enabled: true
+  schedule: "0 3 * * *" # Daily at 3 AM UAE time (UTC+4)
+  retention: 30 # Extended retention for compliance
+
+  postgresql:
+    enabled: true
+
+  redis:
+    enabled: true
+
+# Monitoring - Enabled for UAE region
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+  grafana:
+    enabled: true
+    dashboards:
+      enabled: true

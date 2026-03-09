@@ -7,17 +7,33 @@ import { redis } from './config/redis';
 import { setupWebSocket, getIO } from './websocket';
 import { inboundQueue, aiQueue, outboundQueue, analyticsQueue, webhookQueue, bulkEmailQueue, emailQueue, deadLetterQueue } from './queues';
 import { configService } from './services/config.service';
-
-// Import workers (named exports for graceful shutdown)
-import { inboundWorker } from './queues/workers/inbound.worker';
-import { aiWorker } from './queues/workers/ai.worker';
-import { outboundWorker } from './queues/workers/outbound.worker';
-import { analyticsWorker } from './queues/workers/analytics.worker';
-import webhookWorker from './queues/workers/webhook.worker';
-import { bulkEmailWorker } from './queues/workers/bulkEmail.worker';
-import { emailWorker } from './queues/workers/email.worker';
+import type { Worker } from 'bullmq';
 
 async function main() {
+  // Conditionally load workers based on ENABLE_WORKERS environment variable
+  let workers: Worker[] = [];
+  if (config.enableWorkers) {
+    const { inboundWorker } = await import('./queues/workers/inbound.worker');
+    const { aiWorker } = await import('./queues/workers/ai.worker');
+    const { outboundWorker } = await import('./queues/workers/outbound.worker');
+    const { analyticsWorker } = await import('./queues/workers/analytics.worker');
+    const { default: webhookWorker } = await import('./queues/workers/webhook.worker');
+    const { bulkEmailWorker } = await import('./queues/workers/bulkEmail.worker');
+    const { emailWorker } = await import('./queues/workers/email.worker');
+
+    workers = [
+      inboundWorker,
+      aiWorker,
+      outboundWorker,
+      analyticsWorker,
+      webhookWorker,
+      bulkEmailWorker,
+      emailWorker,
+    ];
+    logger.info('Queue workers loaded and started');
+  } else {
+    logger.info('Queue workers disabled (ENABLE_WORKERS=false)');
+  }
   // Test database connection
   try {
     await prisma.$connect();
@@ -51,7 +67,7 @@ async function main() {
   httpServer.listen(config.port, () => {
     logger.info(`API server running on port ${config.port}`);
     logger.info(`Environment: ${config.nodeEnv}`);
-    logger.info('Queue workers started');
+    logger.info(`Workers enabled: ${config.enableWorkers}`);
   });
 
   // Graceful shutdown
@@ -84,16 +100,10 @@ async function main() {
     logger.info('HTTP server closed');
 
     // 3. Close BullMQ workers gracefully (finish in-progress jobs)
-    await Promise.allSettled([
-      inboundWorker.close(),
-      aiWorker.close(),
-      outboundWorker.close(),
-      analyticsWorker.close(),
-      webhookWorker.close(),
-      bulkEmailWorker.close(),
-      emailWorker.close(),
-    ]);
-    logger.info('Queue workers closed');
+    if (workers.length > 0) {
+      await Promise.allSettled(workers.map((worker) => worker.close()));
+      logger.info('Queue workers closed');
+    }
 
     // 4. Close BullMQ queues (release Redis connections)
     await Promise.allSettled([

@@ -1,0 +1,21 @@
+apiVersion: v2
+name: mojeeb
+description: Mojeeb - AI-Powered Customer Support Platform with Multi-Region Support
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - mojeeb
+  - customer-support
+  - ai
+  - chatbot
+  - websocket
+  - kubernetes
+  - multi-region
+home: https://mojeeb.app
+sources:
+  - https://github.com/mojeeb/platform
+maintainers:
+  - name: Mojeeb Team
+    email: devops@mojeeb.app
+icon: https://mojeeb.app/logo.png

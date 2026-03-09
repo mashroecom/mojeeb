@@ -1,0 +1,54 @@
+---
+# Horizontal Pod Autoscaler for API Servers
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api
+  namespace: mojeeb
+  labels:
+    app: mojeeb
+    component: api
+    role: backend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  # Scale based on CPU utilization
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  # Scale based on memory utilization
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      # Allow scaling up by up to 100% of current pods every 60 seconds
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      # Or add up to 4 pods every 60 seconds (whichever is higher)
+      - type: Pods
+        value: 4
+        periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      # Scale down by at most 1 pod every 60 seconds to avoid disruption
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Min

@@ -1,0 +1,52 @@
+---
+# Redis Cluster Headless Service (for StatefulSet)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster
+  namespace: mojeeb
+  labels:
+    app: mojeeb
+    component: redis
+    role: cluster
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service for StatefulSet
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+    name: redis
+  selector:
+    app: mojeeb
+    component: redis
+    role: cluster
+  publishNotReadyAddresses: false
+
+---
+# Redis Service (for backward compatibility)
+# This allows existing REDIS_URL to work with "redis" hostname
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: mojeeb
+  labels:
+    app: mojeeb
+    component: redis
+    role: cluster
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+    name: redis
+  selector:
+    app: mojeeb
+    component: redis
+    role: cluster
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800

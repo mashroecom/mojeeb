@@ -6,6 +6,10 @@ import { adminService } from '../../services/admin.service';
 import { prisma } from '../../config/database';
 import { validate } from '../../middleware/validate';
 
+// Analytics routes use database readReplica connections via adminService for better performance
+// and to reduce load on the primary database. See config/database.ts for
+// prismaReadReplica configuration.
+
 const growthQuerySchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),

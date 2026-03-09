@@ -1,0 +1,277 @@
+{{- if .Values.api.enabled }}
+---
+# API Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: mojeeb
+    component: api
+    role: backend
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      app: mojeeb
+      component: api
+      role: backend
+  template:
+    metadata:
+      labels:
+        app: mojeeb
+        component: api
+        role: backend
+    spec:
+      containers:
+      - name: api
+        image: "{{ .Values.global.imageRegistry }}/{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+        imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.api.service.targetPort }}
+          name: http
+          protocol: TCP
+        env:
+        # Application Configuration
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: API_PORT
+
+        # Database Configuration
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: DATABASE_URL
+        - name: READ_REPLICA_URL
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: READ_REPLICA_URL
+
+        # Redis Configuration
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: REDIS_URL
+
+        # JWT Configuration
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: JWT_SECRET
+        - name: JWT_REFRESH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: JWT_REFRESH_SECRET
+        - name: JWT_ACCESS_EXPIRY
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: JWT_ACCESS_EXPIRY
+        - name: JWT_REFRESH_EXPIRY
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: JWT_REFRESH_EXPIRY
+
+        # Email Configuration
+        - name: EMAIL_HOST
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: EMAIL_HOST
+        - name: EMAIL_PORT
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: EMAIL_PORT
+        - name: EMAIL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: EMAIL_USER
+        - name: EMAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: EMAIL_PASSWORD
+        - name: EMAIL_FROM
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: EMAIL_FROM
+
+        # URLs
+        - name: FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: FRONTEND_URL
+        - name: API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: API_URL
+
+        # OpenAI Configuration
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: OPENAI_API_KEY
+
+        # Google OAuth Configuration
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: GOOGLE_CLIENT_ID
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: GOOGLE_CLIENT_SECRET
+
+        # WhatsApp Configuration
+        - name: WHATSAPP_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: WHATSAPP_API_URL
+        - name: WHATSAPP_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: WHATSAPP_API_TOKEN
+
+        # Payment Configuration
+        - name: KASHIER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: KASHIER_API_KEY
+        - name: KASHIER_MERCHANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: KASHIER_MERCHANT_ID
+
+        # Feature Flags
+        - name: ENABLE_WEBSOCKET
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: ENABLE_WEBSOCKET
+        - name: ENABLE_QUEUE_PROCESSING
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: ENABLE_QUEUE_PROCESSING
+
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.api.livenessProbe.httpGet.path }}
+            port: {{ .Values.api.livenessProbe.httpGet.port }}
+            scheme: HTTP
+          initialDelaySeconds: {{ .Values.api.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.api.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.api.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.api.livenessProbe.failureThreshold }}
+          successThreshold: 1
+
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.api.readinessProbe.httpGet.path }}
+            port: {{ .Values.api.readinessProbe.httpGet.port }}
+            scheme: HTTP
+          initialDelaySeconds: {{ .Values.api.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.api.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.api.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.api.readinessProbe.failureThreshold }}
+          successThreshold: 1
+
+        resources:
+          {{- toYaml .Values.api.resources | nindent 10 }}
+
+        {{- if .Values.api.persistence.enabled }}
+        volumeMounts:
+        - name: uploads
+          mountPath: {{ .Values.api.persistence.mountPath }}
+        {{- end }}
+
+      {{- if .Values.api.persistence.enabled }}
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: api-uploads-pvc
+      {{- end }}
+
+      # Spread pods across different nodes for high availability
+      {{- if .Values.affinity.podAntiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          {{- if eq .Values.affinity.podAntiAffinity.type "preferred" }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: {{ .Values.affinity.podAntiAffinity.weight }}
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - api
+              topologyKey: kubernetes.io/hostname
+          {{- else if eq .Values.affinity.podAntiAffinity.type "required" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - api
+            topologyKey: kubernetes.io/hostname
+          {{- end }}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+{{- if .Values.api.persistence.enabled }}
+---
+# Persistent Volume Claim for API uploads
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: api-uploads-pvc
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: mojeeb
+    component: api
+spec:
+  accessModes:
+  - {{ .Values.api.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.api.persistence.size }}
+  storageClassName: {{ .Values.api.persistence.storageClassName }}
+{{- end }}
+{{- end }}

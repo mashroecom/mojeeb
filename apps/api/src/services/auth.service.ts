@@ -2,9 +2,9 @@ import jwt from 'jsonwebtoken';
 import argon2 from 'argon2';
 import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
+import { Prisma } from '@prisma/client';
 import { config } from '../config';
 import { prisma } from '../config/database';
-import type { PrismaClient } from '@prisma/client';
 import { configService } from './config.service';
 import { BadRequestError, UnauthorizedError, ConflictError, NotFoundError } from '../utils/errors';
 import type { JwtPayload } from '../middleware/auth';
@@ -15,7 +15,6 @@ import { emailQueue } from '../queues';
 import { verificationService } from './verification.service';
 import { adminNotificationService } from './adminNotification.service';
 import { logger } from '../config/logger';
-import type { Prisma } from '@prisma/client';
 
 // Cached Google OAuth client that is recreated when the client ID changes
 let cachedGoogleClient: OAuth2Client = new OAuth2Client(config.google.clientId);

@@ -1,0 +1,123 @@
+{{- if .Values.web.enabled }}
+---
+# Web Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: mojeeb
+    component: web
+    role: frontend
+spec:
+  replicas: {{ .Values.web.replicaCount }}
+  selector:
+    matchLabels:
+      app: mojeeb
+      component: web
+      role: frontend
+  template:
+    metadata:
+      labels:
+        app: mojeeb
+        component: web
+        role: frontend
+    spec:
+      containers:
+      - name: web
+        image: "{{ .Values.global.imageRegistry }}/{{ .Values.web.image.repository }}:{{ .Values.web.image.tag }}"
+        imagePullPolicy: {{ .Values.web.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.web.service.targetPort }}
+          name: http
+          protocol: TCP
+        env:
+        # Application Configuration
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: NODE_ENV
+
+        # URLs
+        - name: NEXT_PUBLIC_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: NEXT_PUBLIC_API_URL
+        - name: API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mojeeb-config
+              key: API_URL
+
+        # Google OAuth Configuration (public client ID)
+        - name: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: mojeeb-secrets
+              key: GOOGLE_CLIENT_ID
+
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.web.livenessProbe.httpGet.path }}
+            port: {{ .Values.web.livenessProbe.httpGet.port }}
+            scheme: HTTP
+          initialDelaySeconds: {{ .Values.web.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.web.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.web.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.web.livenessProbe.failureThreshold }}
+          successThreshold: 1
+
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.web.readinessProbe.httpGet.path }}
+            port: {{ .Values.web.readinessProbe.httpGet.port }}
+            scheme: HTTP
+          initialDelaySeconds: {{ .Values.web.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.web.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.web.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.web.readinessProbe.failureThreshold }}
+          successThreshold: 1
+
+        resources:
+          {{- toYaml .Values.web.resources | nindent 10 }}
+
+      # Spread pods across different nodes for high availability
+      {{- if .Values.affinity.podAntiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          {{- if eq .Values.affinity.podAntiAffinity.type "preferred" }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: {{ .Values.affinity.podAntiAffinity.weight }}
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - web
+              topologyKey: kubernetes.io/hostname
+          {{- else if eq .Values.affinity.podAntiAffinity.type "required" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: component
+                operator: In
+                values:
+                - web
+            topologyKey: kubernetes.io/hostname
+          {{- end }}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

@@ -1,4 +1,4 @@
-import { prisma } from '../config/database';
+import { prisma, prismaReadReplica } from '../config/database';
 import { cache } from '../config/cache';
 import { NotFoundError } from '../utils/errors';
 
@@ -16,12 +16,12 @@ export class AdminService {
       activeSubscriptions,
       revenue,
     ] = await Promise.all([
-      prisma.user.count(),
-      prisma.organization.count(),
-      prisma.conversation.count(),
-      prisma.message.count(),
-      prisma.subscription.count({ where: { status: 'ACTIVE', plan: { not: 'FREE' } } }),
-      prisma.invoice.aggregate({
+      prismaReadReplica.user.count(),
+      prismaReadReplica.organization.count(),
+      prismaReadReplica.conversation.count(),
+      prismaReadReplica.message.count(),
+      prismaReadReplica.subscription.count({ where: { status: 'ACTIVE', plan: { not: 'FREE' } } }),
+      prismaReadReplica.invoice.aggregate({
         where: { status: 'PAID' },
         _sum: { amount: true },
       }),
@@ -46,17 +46,17 @@ export class AdminService {
     const dateWhere = Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
 
     const [users, orgs, conversations] = await Promise.all([
-      prisma.user.findMany({
+      prismaReadReplica.user.findMany({
         where: dateWhere,
         select: { createdAt: true },
         orderBy: { createdAt: 'asc' },
       }),
-      prisma.organization.findMany({
+      prismaReadReplica.organization.findMany({
         where: dateWhere,
         select: { createdAt: true },
         orderBy: { createdAt: 'asc' },
       }),
-      prisma.conversation.findMany({
+      prismaReadReplica.conversation.findMany({
         where: dateWhere,
         select: { createdAt: true },
         orderBy: { createdAt: 'asc' },
@@ -466,11 +466,11 @@ export class AdminService {
 
   async getRevenueAnalytics() {
     const [planDistribution, recentInvoices, monthlyRevenue] = await Promise.all([
-      prisma.subscription.groupBy({
+      prismaReadReplica.subscription.groupBy({
         by: ['plan'],
         _count: true,
       }),
-      prisma.invoice.findMany({
+      prismaReadReplica.invoice.findMany({
         where: { status: 'PAID' },
         orderBy: { paidAt: 'desc' },
         take: 20,
@@ -482,7 +482,7 @@ export class AdminService {
           },
         },
       }),
-      prisma.invoice.groupBy({
+      prismaReadReplica.invoice.groupBy({
         by: ['currency'],
         where: { status: 'PAID' },
         _sum: { amount: true },
@@ -498,7 +498,7 @@ export class AdminService {
   // ========================
 
   async getTopOrganizations(limit = 5) {
-    const orgs = await prisma.organization.findMany({
+    const orgs = await prismaReadReplica.organization.findMany({
       select: {
         id: true,
         name: true,
@@ -523,7 +523,7 @@ export class AdminService {
 
     // Get message counts per org
     const orgIds = orgs.map((o) => o.id);
-    const messageCounts = await prisma.message.groupBy({
+    const messageCounts = await prismaReadReplica.message.groupBy({
       by: ['conversationId'],
       where: {
         conversation: { orgId: { in: orgIds } },
@@ -532,7 +532,7 @@ export class AdminService {
     });
 
     // Aggregate message counts by org via conversations
-    const conversations = await prisma.conversation.findMany({
+    const conversations = await prismaReadReplica.conversation.findMany({
       where: { orgId: { in: orgIds } },
       select: { id: true, orgId: true },
     });
@@ -563,7 +563,7 @@ export class AdminService {
 
   async getRecentActivity(limit = 15) {
     const [recentUsers, recentOrgs, recentConversations] = await Promise.all([
-      prisma.user.findMany({
+      prismaReadReplica.user.findMany({
         select: {
           id: true,
           firstName: true,
@@ -574,7 +574,7 @@ export class AdminService {
         orderBy: { createdAt: 'desc' },
         take: limit,
       }),
-      prisma.organization.findMany({
+      prismaReadReplica.organization.findMany({
         select: {
           id: true,
           name: true,
@@ -583,7 +583,7 @@ export class AdminService {
         orderBy: { createdAt: 'desc' },
         take: limit,
       }),
-      prisma.conversation.findMany({
+      prismaReadReplica.conversation.findMany({
         select: {
           id: true,
           status: true,
@@ -643,7 +643,7 @@ export class AdminService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const invoices = await prisma.invoice.findMany({
+    const invoices = await prismaReadReplica.invoice.findMany({
       where: {
         status: 'PAID',
         paidAt: { gte: thirtyDaysAgo },
