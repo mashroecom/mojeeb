@@ -20,6 +20,7 @@ import exportRoutes from './export.routes';
 import webhookMgmtRoutes from './webhook.routes';
 import conversationNotesRoutes from './conversationNotes.routes';
 import messageTemplateRoutes from './messageTemplates.routes';
+import filesRoutes from './files.routes';
 import adminRoutes from './admin';
 import publicRoutes from './public.routes';
 
@@ -103,6 +104,7 @@ router.use('/organizations/:orgId/export', exportRoutes);
 router.use('/organizations/:orgId/webhooks', webhookMgmtRoutes);
 router.use('/organizations/:orgId/conversations/:conversationId/notes', conversationNotesRoutes);
 router.use('/organizations/:orgId/message-templates', messageTemplateRoutes);
+router.use('/organizations/:orgId/files', filesRoutes);
 
 // Incoming webhook routes
 router.use('/webhooks/whatsapp', whatsappWebhook);
