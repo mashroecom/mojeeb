@@ -1,6 +1,7 @@
 import path from 'path';
 import { Router } from 'express';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
 import { conversationService } from '../services/conversation.service';
 import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -8,6 +9,7 @@ import { paginationSchema, sendMessageSchema } from '@mojeeb/shared-utils';
 import { emitToOrg, emitToConversation } from '../websocket';
 import { prisma } from '../config/database';
 import { logger } from '../config/logger';
+import { config } from '../config';
 
 const uploadStorage = multer.diskStorage({
   destination: path.resolve(__dirname, '../../uploads'),
@@ -38,6 +40,24 @@ const dashboardUpload = multer({
     cb(null, allowedTypes.has(file.mimetype) && ALLOWED_EXTENSIONS.has(ext));
   },
 });
+
+/**
+ * Generate a signed URL for dashboard file access
+ * @param filename - The uploaded file's filename
+ * @param userId - The user's ID
+ * @returns Signed file URL with token query parameter
+ */
+function generateSignedFileUrl(filename: string, userId: string): string {
+  const payload = {
+    userId,
+    filename,
+  };
+
+  // Sign token with 7-day expiration
+  const token = jwt.sign(payload, config.jwt.secret, { expiresIn: '7d' });
+
+  return `/files/${filename}?token=${token}`;
+}
 
 interface OrgParams { orgId: string; [key: string]: string; }
 interface ConvParams { orgId: string; convId: string; [key: string]: string; }
@@ -238,7 +258,7 @@ router.post(
       let contentType: 'IMAGE' | 'DOCUMENT' = 'DOCUMENT';
       if (file.mimetype.startsWith('image/')) contentType = 'IMAGE';
 
-      const fileUrl = `/uploads/${file.filename}`;
+      const fileUrl = generateSignedFileUrl(file.filename, req.user!.userId);
 
       const message = await prisma.message.create({
         data: {
