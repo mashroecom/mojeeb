@@ -1,5 +1,5 @@
 import path from 'path';
-import express, { type Express } from 'express';
+import express, { type Express, Request, Response, NextFunction } from 'express';
 import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -11,6 +11,8 @@ import { apiLimiter } from './middleware/rateLimiter';
 import { maintenanceGuard } from './middleware/maintenance';
 import { ipBlockGuard } from './middleware/ipBlock';
 import routes from './routes';
+import { prisma } from './config/database';
+import { redis } from './config/redis';
 
 const app: Express = express();
 
@@ -49,6 +51,57 @@ app.get('/widget-test', cors(), (_req, res) => {
 </html>`);
 });
 }
+
+// ── Health check and readiness probe endpoints (before middleware to bypass rate limiting) ──
+
+// GET /health - Comprehensive health check for load balancers and orchestrators
+app.get('/health', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const checks: Record<string, { status: string; latencyMs?: number; error?: string }> = {};
+
+    // Check database
+    const dbStart = Date.now();
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      checks.database = { status: 'healthy', latencyMs: Date.now() - dbStart };
+    } catch (err: any) {
+      checks.database = { status: 'unhealthy', latencyMs: Date.now() - dbStart, error: err.message };
+    }
+
+    // Check Redis
+    const redisStart = Date.now();
+    try {
+      await redis.ping();
+      checks.redis = { status: 'healthy', latencyMs: Date.now() - redisStart };
+    } catch (err: any) {
+      checks.redis = { status: 'unhealthy', latencyMs: Date.now() - redisStart, error: err.message };
+    }
+
+    const allHealthy = Object.values(checks).every((c) => c.status === 'healthy');
+
+    res.status(allHealthy ? 200 : 503).json({
+      success: true,
+      data: {
+        status: allHealthy ? 'healthy' : 'degraded',
+        timestamp: new Date().toISOString(),
+        checks,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /ready - Lightweight readiness probe (app is running and accepting connections)
+app.get('/ready', (_req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    data: {
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
 
 // ── Compression ──
 app.use(compression());
