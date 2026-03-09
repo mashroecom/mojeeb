@@ -8,6 +8,7 @@ export const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.API_PORT || '4000', 10),
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  enableWorkers: process.env.ENABLE_WORKERS === 'true' || process.env.NODE_ENV !== 'production',
 
   database: {
     url: process.env.DATABASE_URL || 'postgresql://mojeeb:password@localhost:5432/mojeeb',
