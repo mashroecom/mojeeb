@@ -25,13 +25,13 @@ function createMockReqRes(headers: Record<string, string> = {}) {
   } as unknown as Request;
 
   const res = {} as Response;
-  const next = vi.fn() as NextFunction;
+  const next = vi.fn();
 
-  return { req, res, next };
+  return { req, res, next: next as any as NextFunction };
 }
 
 /** Helper: extract the error passed to next() */
-function getNextError(next: ReturnType<typeof vi.fn>): any {
+function getNextError(next: any): any {
   expect(next).toHaveBeenCalledTimes(1);
   return next.mock.calls[0][0];
 }

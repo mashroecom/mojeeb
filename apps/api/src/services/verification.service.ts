@@ -68,10 +68,13 @@ export class VerificationService {
       }),
     ]);
 
-    // Send welcome email (non-blocking)
-    emailService
-      .sendWelcomeEmail(verificationToken.user.email, verificationToken.user.firstName)
-      .catch(err => logger.warn({ err }, 'Failed to send welcome email'));
+    // Send welcome email via queue (non-blocking)
+    emailQueue
+      .add('send-welcome-email', {
+        email: verificationToken.user.email,
+        firstName: verificationToken.user.firstName,
+      })
+      .catch((err: any) => logger.warn({ err }, 'Failed to queue welcome email'));
   }
 
   /**

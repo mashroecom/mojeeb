@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import argon2 from 'argon2';
 import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
+import { Prisma } from '@prisma/client';
 import { config } from '../config';
 import { prisma } from '../config/database';
 import { configService } from './config.service';
@@ -619,7 +620,7 @@ export class AuthService {
   }
 
   /** Generate tokens using a specific Prisma client (or transaction). */
-  private async generateTokensInTx(tx: typeof prisma, userId: string, email: string) {
+  private async generateTokensInTx(tx: Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'>, userId: string, email: string) {
     const jti = crypto.randomUUID();
     const payload: JwtPayload = { userId, email, jti };
 
