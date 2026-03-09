@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { AlertTriangle } from 'lucide-react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -27,66 +28,64 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const ct = useTranslations('common');
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
-    },
-    [onCancel],
-  );
-
-  useEffect(() => {
-    if (open) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [open, handleKeyDown]);
-
-  if (!open) return null;
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === overlayRef.current) onCancel();
-      }}
-    >
-      <div className="mx-4 w-full max-w-md animate-in fade-in zoom-in-95 rounded-xl border bg-card p-6 shadow-lg">
-        <div className="flex items-start gap-3">
-          {variant === 'danger' && (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
-            </div>
+    <DialogPrimitive.Root open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay
+          className={cn(
+            'fixed inset-0 z-50 bg-black/50 backdrop-blur-sm',
+            'data-[state=open]:animate-in data-[state=open]:fade-in-0',
+            'data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
           )}
-          <div className="flex-1">
-            <h3 className="text-base font-semibold">{title}</h3>
-            <p className="mt-1.5 text-sm text-muted-foreground">{message}</p>
-          </div>
-        </div>
-
-        <div className="mt-5 flex justify-end gap-3">
-          <button
-            onClick={onCancel}
-            className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-          >
-            {cancelLabel || ct('cancel')}
-          </button>
-          <button
-            onClick={onConfirm}
-            className={cn(
-              'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-              variant === 'danger'
-                ? 'bg-red-600 text-white hover:bg-red-700'
-                : 'bg-primary text-primary-foreground hover:bg-primary/90',
+        />
+        <DialogPrimitive.Content
+          className={cn(
+            'fixed inset-x-4 top-[50%] z-50 mx-auto w-full max-w-md translate-y-[-50%] rounded-xl border bg-card p-6 shadow-lg',
+            'focus:outline-none',
+            'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-2',
+            'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-bottom-2',
+          )}
+        >
+          <div className="flex items-start gap-3">
+            {variant === 'danger' && (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
             )}
-          >
-            {confirmLabel || ct('confirm')}
-          </button>
-        </div>
-      </div>
-    </div>
+            <div className="flex-1">
+              <DialogPrimitive.Title className="text-base font-semibold">
+                {title}
+              </DialogPrimitive.Title>
+              <DialogPrimitive.Description className="mt-1.5 text-sm text-muted-foreground">
+                {message}
+              </DialogPrimitive.Description>
+            </div>
+          </div>
+
+          <div className="mt-5 flex justify-end gap-3">
+            <button
+              onClick={onCancel}
+              className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              {cancelLabel || ct('cancel')}
+            </button>
+            <button
+              onClick={onConfirm}
+              className={cn(
+                'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+                'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                variant === 'danger'
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90',
+              )}
+            >
+              {confirmLabel || ct('confirm')}
+            </button>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
 
@@ -103,7 +102,6 @@ export function ConfirmDialog({
  *   ...
  *   <ConfirmDialog {...confirmProps} />
  */
-import { useState } from 'react';
 
 interface ConfirmOptions {
   title: string;
