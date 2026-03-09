@@ -79,7 +79,7 @@ export function Table<T extends Record<string, unknown>>({
 
   return (
     <div className={cn('w-full overflow-x-auto rounded-xl border', className)}>
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full border-collapse text-sm" aria-busy={loading || undefined}>
         <thead>
           <tr className="border-b bg-muted/50">
             {columns.map((col) => (
@@ -96,7 +96,9 @@ export function Table<T extends Record<string, unknown>>({
                     ? sortDir === 'asc'
                       ? 'ascending'
                       : 'descending'
-                    : undefined
+                    : col.sortable
+                      ? 'none'
+                      : undefined
                 }
               >
                 <span className="inline-flex items-center gap-1">
@@ -110,6 +112,7 @@ export function Table<T extends Record<string, unknown>>({
                             ? 'text-foreground'
                             : 'text-muted-foreground/40',
                         )}
+                        aria-label="Sort ascending"
                       />
                       <ChevronDown
                         className={cn(
@@ -118,6 +121,7 @@ export function Table<T extends Record<string, unknown>>({
                             ? 'text-foreground'
                             : 'text-muted-foreground/40',
                         )}
+                        aria-label="Sort descending"
                       />
                     </span>
                   )}
