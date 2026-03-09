@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Conversation } from '@/hooks/useConversations';
+import { Badge } from '@/components/ui/Badge';
 import {
   relativeTime,
   getEmotionEmoji,
@@ -240,6 +241,23 @@ export const ConversationList = React.memo(function ConversationList({
                           : conv.channel.type}
                       </span>
                     )}
+
+                    {/* Tags */}
+                    {conv.tags?.map((conversationTag) => (
+                      <Badge
+                        key={conversationTag.id}
+                        size="sm"
+                        className="text-[10px]"
+                        style={{
+                          backgroundColor: conversationTag.tag.color + '20',
+                          color: conversationTag.tag.color,
+                          borderColor: conversationTag.tag.color + '40',
+                          borderWidth: '1px',
+                        }}
+                      >
+                        {conversationTag.tag.name}
+                      </Badge>
+                    ))}
 
                     {/* Rating */}
                     {rating && (
