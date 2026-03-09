@@ -5,6 +5,7 @@ import { logger } from '../../config/logger';
 import { analyticsQueue } from '../index';
 import { moveToDeadLetterQueue } from '../dlq';
 import { getChannelAdapter } from '../../channels';
+import { webhookService } from '../../services/webhook.service';
 
 interface OutboundJobData {
   conversationId: string;
@@ -67,6 +68,24 @@ export const outboundWorker = new Worker(
       data: { conversationId: data.conversationId, success: result.success },
       channelType: data.channelType,
     });
+
+    // Dispatch webhook event for successfully sent messages
+    if (result.success) {
+      const message = await prisma.message.findUnique({
+        where: { id: data.messageId },
+      });
+
+      await webhookService.dispatch(channel.orgId, 'message.sent', {
+        messageId: data.messageId,
+        conversationId: data.conversationId,
+        channelType: data.channelType,
+        content: data.content,
+        contentType: data.contentType,
+        deliveryStatus: message?.deliveryStatus,
+        externalId: message?.externalId,
+        sentAt: message?.createdAt,
+      });
+    }
 
     return result;
   },
