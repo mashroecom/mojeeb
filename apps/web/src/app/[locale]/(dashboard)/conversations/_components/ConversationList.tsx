@@ -53,6 +53,11 @@ interface ConversationListProps {
   onRefresh: () => void;
   onSelect: (id: string) => void;
   onExport: () => void;
+  selectedIds: Set<string>;
+  toggleSelect: (id: string) => void;
+  toggleSelectAll: () => void;
+  allSelected: boolean;
+  someSelected: boolean;
 }
 
 const STATUS_TABS: { key: StatusFilter; labelKey: string }[] = [
@@ -92,6 +97,11 @@ export const ConversationList = React.memo(function ConversationList({
   onRefresh,
   onSelect,
   onExport,
+  selectedIds,
+  toggleSelect,
+  toggleSelectAll,
+  allSelected,
+  someSelected,
 }: ConversationListProps) {
   const t = useTranslations('dashboard.conversations');
   const tc = useTranslations('common');
@@ -284,6 +294,27 @@ export const ConversationList = React.memo(function ConversationList({
         </div>
       )}
 
+      {/* Select all header */}
+      {conversations.length > 0 && (
+        <div className="border-b px-4 py-2 bg-muted/30">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = someSelected && !allSelected;
+              }}
+              onChange={toggleSelectAll}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+              title={t('selectAll')}
+            />
+            <span className="text-xs font-medium text-muted-foreground">
+              {someSelected ? t('selected', { count: selectedIds.size }) : t('selectAll')}
+            </span>
+          </label>
+        </div>
+      )}
+
       {/* Conversation list */}
       <div className="flex-1 overflow-y-auto">
         {isLoading && (
@@ -325,6 +356,7 @@ export const ConversationList = React.memo(function ConversationList({
           const summary = getConversationSummary(conv);
           const channelType = conv.channel?.type?.toLowerCase() ?? '';
           const rating = conv.ratings?.[0]?.rating ?? null;
+          const isSelected = selectedIds.has(conv.id);
 
           return (
             <button
@@ -333,9 +365,24 @@ export const ConversationList = React.memo(function ConversationList({
               className={cn(
                 'w-full border-b px-4 py-3 text-start transition-colors hover:bg-muted/50',
                 selectedId === conv.id && 'bg-muted',
+                isSelected && 'bg-primary/5',
               )}
             >
               <div className="flex items-start gap-3">
+                {/* Checkbox */}
+                <div className="flex items-center pt-2">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(conv.id);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                  />
+                </div>
+
                 {/* Avatar */}
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                   {initials}

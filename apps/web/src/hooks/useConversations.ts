@@ -348,6 +348,84 @@ export function useDeleteConversation() {
 }
 
 // ---------------------------------------------------------------------------
+// useBulkArchive - mutation
+// ---------------------------------------------------------------------------
+
+export function useBulkArchive() {
+  const orgId = useAuthStore((s) => s.organization?.id);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ conversationIds }: { conversationIds: string[] }) => {
+      const { data } = await api.post<ApiResponse<{ count: number }>>(
+        `/organizations/${orgId}/conversations/bulk-archive`,
+        { conversationIds },
+      );
+      return data;
+    },
+    onSuccess: () => {
+      if (orgId) {
+        queryClient.invalidateQueries({
+          queryKey: conversationKeys.all(orgId),
+        });
+      }
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// useBulkResolve - mutation
+// ---------------------------------------------------------------------------
+
+export function useBulkResolve() {
+  const orgId = useAuthStore((s) => s.organization?.id);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ conversationIds }: { conversationIds: string[] }) => {
+      const { data } = await api.post<ApiResponse<{ count: number }>>(
+        `/organizations/${orgId}/conversations/bulk-status`,
+        { conversationIds, status: 'RESOLVED' },
+      );
+      return data;
+    },
+    onSuccess: () => {
+      if (orgId) {
+        queryClient.invalidateQueries({
+          queryKey: conversationKeys.all(orgId),
+        });
+      }
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// useBulkDelete - mutation
+// ---------------------------------------------------------------------------
+
+export function useBulkDelete() {
+  const orgId = useAuthStore((s) => s.organization?.id);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ conversationIds }: { conversationIds: string[] }) => {
+      const { data } = await api.post<ApiResponse<{ count: number }>>(
+        `/organizations/${orgId}/conversations/bulk-delete`,
+        { conversationIds },
+      );
+      return data;
+    },
+    onSuccess: () => {
+      if (orgId) {
+        queryClient.invalidateQueries({
+          queryKey: conversationKeys.all(orgId),
+        });
+      }
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Conversation Notes
 // ---------------------------------------------------------------------------
 
