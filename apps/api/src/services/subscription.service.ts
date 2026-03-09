@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import Stripe from 'stripe';
 import { prisma } from '../config/database';
 import { config } from '../config';
 import { logger } from '../config/logger';
@@ -30,6 +31,18 @@ export interface KashierWebhookPayload {
     status: 'SUCCESS' | 'FAILED' | 'PENDING';
     customerReference: string;
     paymentMethod: string;
+  };
+}
+
+export interface StripeCheckoutSession {
+  id: string;
+  url: string | null;
+}
+
+export interface StripeWebhookEvent extends Stripe.Event {
+  type: string;
+  data: {
+    object: Stripe.Invoice | Stripe.Subscription | Stripe.PaymentIntent | Record<string, unknown>;
   };
 }
 
@@ -85,6 +98,55 @@ async function getKashierConfig(): Promise<{
   }
 
   return { merchantId, apiKey, webhookSecret };
+}
+
+/**
+ * Get Stripe configuration dynamically from configService.
+ * Falls back to static config if configService fails.
+ */
+async function getStripeConfig(): Promise<{
+  secretKey: string;
+  webhookSecret: string;
+}> {
+  let secretKey: string;
+  let webhookSecret: string;
+
+  try {
+    secretKey = await configService.get('STRIPE_SECRET_KEY');
+  } catch {
+    secretKey = '';
+  }
+  if (!secretKey) {
+    secretKey = config.stripe.secretKey;
+  }
+
+  try {
+    webhookSecret = await configService.get('STRIPE_WEBHOOK_SECRET');
+  } catch {
+    webhookSecret = '';
+  }
+  if (!webhookSecret) {
+    webhookSecret = config.stripe.webhookSecret;
+  }
+
+  return { secretKey, webhookSecret };
+}
+
+/**
+ * Get or create Stripe client instance.
+ */
+let stripeClient: Stripe | null = null;
+async function getStripeClient(): Promise<Stripe> {
+  const stripeConfig = await getStripeConfig();
+  if (!stripeConfig.secretKey) {
+    throw new BadRequestError('Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment.');
+  }
+  if (!stripeClient || stripeClient.apiKey !== stripeConfig.secretKey) {
+    stripeClient = new Stripe(stripeConfig.secretKey, {
+      apiVersion: '2024-12-18.acacia',
+    });
+  }
+  return stripeClient;
 }
 
 export class SubscriptionService {
@@ -279,6 +341,190 @@ export class SubscriptionService {
   }
 
   /**
+   * Create a Stripe checkout session for upgrading to a paid plan.
+   */
+  async createStripeCheckout(orgId: string, plan: string) {
+    // Validate the target plan
+    if (plan !== 'STARTER' && plan !== 'PROFESSIONAL') {
+      throw new BadRequestError('Invalid plan. Must be STARTER or PROFESSIONAL.');
+    }
+
+    const subscription = await this.getByOrgId(orgId);
+
+    // Prevent upgrading to the same plan
+    if (subscription.plan === plan) {
+      throw new BadRequestError('You are already on this plan.');
+    }
+
+    const amount = await planConfigService.getPrice(plan);
+    if (!amount) {
+      throw new BadRequestError('Plan price not configured.');
+    }
+
+    const stripe = await getStripeClient();
+    const currency = 'usd';
+
+    // Get or create Stripe customer
+    let customerId = subscription.stripeCustomerId;
+    if (!customerId) {
+      const org = await prisma.organization.findUnique({ where: { id: orgId } });
+      if (!org) throw new NotFoundError('Organization not found');
+
+      const customer = await stripe.customers.create({
+        metadata: {
+          orgId,
+          plan,
+        },
+      });
+      customerId = customer.id;
+
+      await prisma.subscription.update({
+        where: { orgId },
+        data: { stripeCustomerId: customerId },
+      });
+      await cache.del(`subscription:${orgId}`);
+    }
+
+    // Create checkout session
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency,
+            unit_amount: Math.round(amount * 100), // Convert to cents
+            product_data: {
+              name: `Mojeeb ${plan} Plan`,
+              description: `Monthly subscription to Mojeeb ${plan} plan`,
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${config.frontendUrl}/billing?status=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${config.frontendUrl}/billing?status=canceled`,
+      metadata: {
+        orgId,
+        plan,
+        subscriptionId: subscription.id,
+      },
+    });
+
+    // Store the pending invoice
+    await prisma.invoice.create({
+      data: {
+        subscriptionId: subscription.id,
+        amount,
+        currency: currency.toUpperCase(),
+        status: 'PENDING',
+        paymentGateway: 'STRIPE',
+        stripeInvoiceId: session.id,
+        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h from now
+      },
+    });
+
+    logger.info({ orgId, plan, sessionId: session.id }, 'Stripe checkout session created');
+
+    return {
+      checkoutUrl: session.url,
+      sessionId: session.id,
+    };
+  }
+
+  /**
+   * Confirm a Stripe payment from checkout session.
+   */
+  async confirmStripePayment(orgId: string, sessionId: string) {
+    const stripe = await getStripeClient();
+
+    logger.info({ orgId, sessionId }, 'Confirming Stripe payment from checkout');
+
+    // Retrieve the checkout session
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (session.payment_status !== 'paid') {
+      throw new BadRequestError('Payment was not successful.');
+    }
+
+    // Find the invoice by Stripe session ID
+    const invoice = await prisma.invoice.findUnique({
+      where: { stripeInvoiceId: sessionId },
+      include: { subscription: true },
+    });
+
+    if (!invoice) {
+      throw new NotFoundError('Invoice not found for this payment.');
+    }
+
+    // Ensure invoice belongs to this organization
+    if (invoice.subscription.orgId !== orgId) {
+      throw new BadRequestError('Invoice does not belong to this organization.');
+    }
+
+    // Already processed
+    if (invoice.status === 'PAID') {
+      return this.getByOrgId(orgId);
+    }
+
+    // Verify amount matches
+    const paidAmountNum = (session.amount_total || 0) / 100; // Convert from cents
+    const invoiceAmountNum = parseFloat(String(invoice.amount));
+    logger.info({ paidAmountNum, invoiceAmountNum }, 'Comparing payment amounts');
+    if (Math.abs(paidAmountNum - invoiceAmountNum) > 0.01) {
+      throw new BadRequestError(`Payment amount (${paidAmountNum}) does not match invoice amount (${invoiceAmountNum}).`);
+    }
+
+    // Determine the new plan from the payment amount
+    const newPlan = await planConfigService.getPlanByPrice(invoiceAmountNum);
+    if (!newPlan) {
+      throw new BadRequestError('Unknown payment amount — cannot determine plan.');
+    }
+
+    const limits = await planConfigService.getLimits(newPlan);
+    const now = new Date();
+    const periodEnd = new Date(now);
+    periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+    // Update subscription with new plan
+    await prisma.subscription.update({
+      where: { id: invoice.subscriptionId },
+      data: {
+        plan: newPlan,
+        status: 'ACTIVE',
+        paymentGateway: 'STRIPE',
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        cancelAtPeriodEnd: false,
+        messagesUsed: 0,
+        messagesLimit: safeLimit(limits.messagesPerMonth),
+        agentsLimit: safeLimit(limits.maxAgents),
+        integrationsLimit: safeLimit(limits.maxChannels),
+      },
+    });
+
+    // Mark the invoice as paid
+    await prisma.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        status: 'PAID',
+        stripePaymentIntentId: session.payment_intent as string,
+        paidAt: now,
+      },
+    });
+
+    await cache.del(`subscription:${orgId}`);
+
+    logger.info(
+      { orgId, newPlan, sessionId },
+      'Stripe payment confirmed, subscription upgraded',
+    );
+
+    return this.getByOrgId(orgId);
+  }
+
+  /**
    * Verify a Kashier webhook signature.
    */
   async verifyWebhookSignature(rawBody: string, signature: string): Promise<boolean> {
@@ -375,6 +621,187 @@ export class SubscriptionService {
       );
     }
     // PENDING status: do nothing, wait for final status
+  }
+
+  /**
+   * Verify a Stripe webhook signature.
+   */
+  async verifyStripeWebhookSignature(rawBody: string, signature: string): Promise<Stripe.Event> {
+    const stripe = await getStripeClient();
+    const stripeConfig = await getStripeConfig();
+
+    if (!stripeConfig.webhookSecret) {
+      throw new BadRequestError('Stripe webhook secret is not configured.');
+    }
+
+    try {
+      return stripe.webhooks.constructEvent(rawBody, signature, stripeConfig.webhookSecret);
+    } catch (error) {
+      logger.error({ error }, 'Stripe webhook signature verification failed');
+      throw new BadRequestError('Invalid Stripe webhook signature.');
+    }
+  }
+
+  /**
+   * Handle a Stripe webhook event.
+   */
+  async handleStripeWebhook(event: Stripe.Event) {
+    logger.info({ type: event.type, id: event.id }, 'Processing Stripe webhook');
+
+    switch (event.type) {
+      case 'checkout.session.completed':
+        await this.handleStripeCheckoutCompleted(event);
+        break;
+      case 'payment_intent.succeeded':
+        await this.handleStripePaymentSucceeded(event);
+        break;
+      case 'payment_intent.payment_failed':
+        await this.handleStripePaymentFailed(event);
+        break;
+      case 'invoice.paid':
+        await this.handleStripeInvoicePaid(event);
+        break;
+      case 'invoice.payment_failed':
+        await this.handleStripeInvoicePaymentFailed(event);
+        break;
+      default:
+        logger.info({ type: event.type }, 'Unhandled Stripe webhook event type');
+    }
+  }
+
+  /**
+   * Handle checkout.session.completed event.
+   */
+  private async handleStripeCheckoutCompleted(event: Stripe.Event) {
+    const session = event.data.object as Stripe.Checkout.Session;
+
+    logger.info({ sessionId: session.id }, 'Stripe checkout session completed');
+
+    if (session.payment_status !== 'paid') {
+      logger.info({ sessionId: session.id, status: session.payment_status }, 'Payment not completed yet');
+      return;
+    }
+
+    // Find the invoice by Stripe session ID
+    const invoice = await prisma.invoice.findUnique({
+      where: { stripeInvoiceId: session.id },
+      include: { subscription: true },
+    });
+
+    if (!invoice) {
+      logger.warn({ sessionId: session.id }, 'Invoice not found for Stripe checkout session');
+      return;
+    }
+
+    // Already processed
+    if (invoice.status === 'PAID') {
+      logger.info({ sessionId: session.id }, 'Invoice already marked as paid');
+      return;
+    }
+
+    // Determine the new plan from the payment amount
+    const amount = parseFloat(String(invoice.amount));
+    const newPlan = await planConfigService.getPlanByPrice(amount);
+    if (!newPlan) {
+      logger.error({ amount }, 'Unknown payment amount - cannot determine plan');
+      return;
+    }
+
+    const limits = await planConfigService.getLimits(newPlan);
+    const now = new Date();
+    const periodEnd = new Date(now);
+    periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+    // Update subscription with new plan and reset usage counters
+    await prisma.subscription.update({
+      where: { id: invoice.subscriptionId },
+      data: {
+        plan: newPlan,
+        status: 'ACTIVE',
+        paymentGateway: 'STRIPE',
+        stripeCustomerId: session.customer as string,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        cancelAtPeriodEnd: false,
+        messagesUsed: 0,
+        messagesLimit: safeLimit(limits.messagesPerMonth),
+        agentsLimit: safeLimit(limits.maxAgents),
+        integrationsLimit: safeLimit(limits.maxChannels),
+      },
+    });
+
+    // Mark the invoice as paid
+    await prisma.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        status: 'PAID',
+        stripePaymentIntentId: session.payment_intent as string,
+        paidAt: now,
+      },
+    });
+
+    await cache.del(`subscription:${invoice.subscription.orgId}`);
+
+    logger.info(
+      { orgId: invoice.subscription.orgId, newPlan },
+      'Subscription upgraded successfully via Stripe',
+    );
+  }
+
+  /**
+   * Handle payment_intent.succeeded event.
+   */
+  private async handleStripePaymentSucceeded(event: Stripe.Event) {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+
+    logger.info({ paymentIntentId: paymentIntent.id }, 'Stripe payment intent succeeded');
+
+    // This is typically handled by checkout.session.completed
+    // but we log it for completeness
+  }
+
+  /**
+   * Handle payment_intent.payment_failed event.
+   */
+  private async handleStripePaymentFailed(event: Stripe.Event) {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+
+    logger.warn({ paymentIntentId: paymentIntent.id }, 'Stripe payment intent failed');
+
+    // Find invoice by payment intent ID
+    const invoice = await prisma.invoice.findFirst({
+      where: { stripePaymentIntentId: paymentIntent.id },
+    });
+
+    if (invoice && invoice.status !== 'FAILED') {
+      await prisma.invoice.update({
+        where: { id: invoice.id },
+        data: { status: 'FAILED' },
+      });
+
+      logger.info({ invoiceId: invoice.id }, 'Invoice marked as failed');
+    }
+  }
+
+  /**
+   * Handle invoice.paid event.
+   */
+  private async handleStripeInvoicePaid(event: Stripe.Event) {
+    const stripeInvoice = event.data.object as Stripe.Invoice;
+
+    logger.info({ invoiceId: stripeInvoice.id }, 'Stripe invoice paid');
+
+    // This is typically handled by checkout.session.completed
+    // but we log it for completeness
+  }
+
+  /**
+   * Handle invoice.payment_failed event.
+   */
+  private async handleStripeInvoicePaymentFailed(event: Stripe.Event) {
+    const stripeInvoice = event.data.object as Stripe.Invoice;
+
+    logger.warn({ invoiceId: stripeInvoice.id }, 'Stripe invoice payment failed');
   }
 
   /**
