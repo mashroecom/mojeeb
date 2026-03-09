@@ -13,12 +13,39 @@ interface AdminEvent {
   timestamp: string;
 }
 
+interface AgentAvailability {
+  agentId: string;
+  agentName: string;
+  status: 'online' | 'offline';
+  activeConversations: number;
+  lastActiveAt: Date | null;
+}
+
+interface TeamMetrics {
+  activeConversations: number;
+  queueDepth: number;
+  averageWaitTimeMs: number;
+  agentsOnline: number;
+  activeAgents: AgentAvailability[];
+}
+
 export function useAdminSocket() {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [connected, setConnected] = useState(false);
+  const [teamMetrics, setTeamMetrics] = useState<TeamMetrics | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   const clearEvents = useCallback(() => setEvents([]), []);
+
+  const subscribeTeamMetrics = useCallback((orgId: string) => {
+    if (!socketRef.current) return;
+    socketRef.current.emit('team:metrics:subscribe', orgId);
+  }, []);
+
+  const unsubscribeTeamMetrics = useCallback(() => {
+    if (!socketRef.current) return;
+    socketRef.current.emit('team:metrics:unsubscribe');
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -39,11 +66,22 @@ export function useAdminSocket() {
       setEvents((prev) => [event, ...prev].slice(0, 200));
     });
 
+    socket.on('team:metrics:update', (metrics: TeamMetrics) => {
+      setTeamMetrics(metrics);
+    });
+
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
   }, []);
 
-  return { events, connected, clearEvents };
+  return {
+    events,
+    connected,
+    clearEvents,
+    teamMetrics,
+    subscribeTeamMetrics,
+    unsubscribeTeamMetrics,
+  };
 }
