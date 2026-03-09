@@ -112,6 +112,7 @@ export function Table<T extends Record<string, unknown>>({
                             ? 'text-foreground'
                             : 'text-muted-foreground/40',
                         )}
+                        aria-label="Sort ascending"
                       />
                       <ChevronDown
                         className={cn(
@@ -120,6 +121,7 @@ export function Table<T extends Record<string, unknown>>({
                             ? 'text-foreground'
                             : 'text-muted-foreground/40',
                         )}
+                        aria-label="Sort descending"
                       />
                     </span>
                   )}
