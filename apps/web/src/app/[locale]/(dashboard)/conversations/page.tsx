@@ -252,6 +252,7 @@ export default function ConversationsPage() {
           isFetching={conversationsQuery.isFetching}
           onRefresh={() => conversationsQuery.refetch()}
           onSelect={handleSelectConversation}
+          onExport={handleExport}
         />
 
         {/* CENTER PANEL - Chat Window */}
