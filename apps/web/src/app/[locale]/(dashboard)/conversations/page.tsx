@@ -39,6 +39,7 @@ export default function ConversationsPage() {
   const [insightsOpen, setInsightsOpen] = useState(true);
   const [mobileInsightsOpen, setMobileInsightsOpen] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // ---- Socket ----
   const { joinConversation, leaveConversation, emitTyping } = useSocket();
@@ -53,6 +54,11 @@ export default function ConversationsPage() {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // ---- Clear selection when search or status filter changes ----
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [debouncedSearch, statusFilter]);
 
   // ---- React Query ----
   const conversationsQuery = useConversations({
@@ -133,6 +139,31 @@ export default function ConversationsPage() {
     setSelectedConversationId((prev) => (prev === id ? prev : id));
     setMessageInput('');
   }, []);
+
+  // ---- Multi-select handlers ----
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === conversations.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(conversations.map((c) => c.id)));
+    }
+  }, [selectedIds.size, conversations]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const allSelected = conversations.length > 0 && selectedIds.size === conversations.length;
+  const someSelected = selectedIds.size > 0;
 
   const handleSend = useCallback(() => {
     if (!messageInput.trim() || !selectedConversationId) return;
