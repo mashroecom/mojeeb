@@ -12,6 +12,7 @@ import channelRoutes from './channel.routes';
 import notificationRoutes from './notifications.routes';
 import whatsappWebhook from './webhooks/whatsapp.webhook';
 import kashierWebhook from './webhooks/kashier.webhook';
+import stripeWebhook from './webhooks/stripe.webhook';
 import webchatRoutes from './webhooks/webchat.routes';
 import demoRequestRoutes from './demoRequests.routes';
 import contactMessageRoutes from './contactMessages.routes';
@@ -107,6 +108,7 @@ router.use('/organizations/:orgId/message-templates', messageTemplateRoutes);
 // Incoming webhook routes
 router.use('/webhooks/whatsapp', whatsappWebhook);
 router.use('/webhooks/kashier', kashierWebhook);
+router.use('/webhooks/stripe', stripeWebhook);
 
 // Webchat routes (public, no auth required)
 router.use('/webchat', webchatRoutes);
