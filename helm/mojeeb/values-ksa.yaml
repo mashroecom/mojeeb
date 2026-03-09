@@ -1,0 +1,233 @@
+# Mojeeb Helm Chart - Saudi Arabia (KSA) Region Values
+# This file contains region-specific overrides for deploying Mojeeb in Saudi Arabia.
+# Use with: helm install mojeeb ./mojeeb -f values.yaml -f values-ksa.yaml
+
+# Global Configuration for Saudi Arabia Region
+global:
+  namespace: mojeeb-ksa
+  environment: production
+  region: ksa
+
+  # Data Residency Configuration for Saudi Arabia
+  # Ensures all data remains within Saudi Arabia borders
+  dataResidency:
+    enabled: true
+    country: "SA"
+    complianceLevel: "regulated" # Strict compliance for Saudi regulations
+
+  # Domain Configuration for KSA region
+  domain: ksa.mojeeb.app
+  tlsEnabled: true
+  tlsSecretName: mojeeb-ksa-tls
+
+# API Service Configuration for KSA
+api:
+  # Increased replica count for high availability in KSA region
+  replicaCount: 4
+
+  # Auto-scaling configuration optimized for KSA traffic patterns
+  autoscaling:
+    enabled: true
+    minReplicas: 4
+    maxReplicas: 25
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  # Persistent storage for uploads with KSA-specific storage class
+  persistence:
+    enabled: true
+    storageClassName: ksa-ssd
+    accessMode: ReadWriteMany
+    size: 20Gi # Increased for regional deployment
+    mountPath: /app/apps/api/uploads
+
+# Worker Service Configuration for KSA
+worker:
+  # Increased replica count for processing Saudi market load
+  replicaCount: 4
+
+  # Auto-scaling configuration for KSA worker load
+  autoscaling:
+    enabled: true
+    minReplicas: 4
+    maxReplicas: 25
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Web (Frontend) Service Configuration for KSA
+web:
+  # Increased replica count for KSA region
+  replicaCount: 4
+
+# PostgreSQL Configuration for Saudi Arabia
+postgresql:
+  enabled: true
+
+  # Primary database with increased resources for regional deployment
+  primary:
+    replicas: 1
+
+    persistence:
+      enabled: true
+      storageClassName: ksa-ssd
+      size: 100Gi # Increased for regional data
+
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1000m"
+      limits:
+        memory: "8Gi"
+        cpu: "4000m"
+
+  # Read replicas for improved performance in KSA
+  readReplicas:
+    enabled: true
+    replicas: 3 # Increased for better read performance
+
+    persistence:
+      enabled: true
+      storageClassName: ksa-ssd
+      size: 100Gi
+
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1000m"
+      limits:
+        memory: "8Gi"
+        cpu: "4000m"
+
+  # Database credentials specific to KSA region
+  auth:
+    database: mojeeb_ksa
+    username: mojeeb_ksa
+    # password: set via secret or --set flag
+
+# Redis Cluster Configuration for KSA
+redis:
+  enabled: true
+  cluster:
+    enabled: true
+    replicas: 4 # Increased for regional deployment
+
+  persistence:
+    enabled: true
+    storageClassName: ksa-ssd
+    size: 10Gi # Increased for regional caching
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  # Redis configuration optimized for KSA
+  config:
+    maxmemory: "512mb"
+    maxmemoryPolicy: "allkeys-lru"
+    appendonly: "yes"
+    appendfsync: "everysec"
+
+# Ingress Configuration for KSA region
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/hsts: "true"
+    nginx.ingress.kubernetes.io/hsts-max-age: "31536000"
+    nginx.ingress.kubernetes.io/hsts-include-subdomains: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
+    # KSA-specific annotations
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "ksa-route"
+    nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+
+  hosts:
+    - host: ksa.mojeeb.app
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend: api
+        - path: /ws
+          pathType: Prefix
+          backend: api
+        - path: /socket.io
+          pathType: Prefix
+          backend: api
+        - path: /
+          pathType: Prefix
+          backend: web
+    - host: www.ksa.mojeeb.app
+      paths:
+        - path: /
+          pathType: Prefix
+          backend: web
+
+  tls:
+    - secretName: mojeeb-ksa-tls
+      hosts:
+        - ksa.mojeeb.app
+        - www.ksa.mojeeb.app
+
+# Configuration for Saudi Arabia region
+config:
+  nodeEnv: production
+
+  # URLs for KSA region
+  urls:
+    frontend: "https://ksa.mojeeb.app"
+    api: "https://api.ksa.mojeeb.app"
+    apiPublic: "https://api.ksa.mojeeb.app/api/v1"
+
+# Network Policies - Enabled for enhanced security in KSA
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+# Node affinity for KSA region
+affinity:
+  podAntiAffinity:
+    enabled: true
+    type: required # Required for production in Saudi Arabia
+    weight: 100
+
+# Node selector to ensure pods run in Saudi Arabia region
+nodeSelector:
+  topology.kubernetes.io/region: saudi-arabia
+  topology.kubernetes.io/zone: ksa-central-1
+
+# Backup Configuration for KSA region
+backup:
+  enabled: true
+  schedule: "0 3 * * *" # Daily at 3 AM Saudi time (UTC+3)
+  retention: 30 # Extended retention for compliance
+
+  postgresql:
+    enabled: true
+
+  redis:
+    enabled: true
+
+# Monitoring - Enabled for KSA region
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+  grafana:
+    enabled: true
+    dashboards:
+      enabled: true
