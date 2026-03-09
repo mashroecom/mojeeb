@@ -1,5 +1,6 @@
 import { prisma } from '../config/database';
 import { NotFoundError } from '../utils/errors';
+import { webhookService } from './webhook.service';
 
 export class ConversationService {
   async list(orgId: string, params: {
@@ -138,13 +139,22 @@ export class ConversationService {
   }
 
   async resolve(conversationId: string) {
-    return prisma.conversation.update({
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+    if (!conversation) throw new NotFoundError('Conversation not found');
+
+    const updated = await prisma.conversation.update({
       where: { id: conversationId },
       data: {
         status: 'RESOLVED',
         resolvedAt: new Date(),
       },
     });
+
+    await webhookService.dispatch(conversation.orgId, 'conversation.closed', updated);
+
+    return updated;
   }
 
   async returnToAI(conversationId: string) {
