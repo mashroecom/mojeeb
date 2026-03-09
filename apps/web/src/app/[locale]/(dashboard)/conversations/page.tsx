@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { MessageSquare, Loader2, CheckCircle, Archive, X, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   useConversations,
@@ -14,6 +14,9 @@ import {
   useResolve,
   useReturnToAI,
   useDeleteConversation,
+  useBulkArchive,
+  useBulkResolve,
+  useBulkDelete,
   type Conversation,
   type Message,
 } from '@/hooks/useConversations';
@@ -116,6 +119,9 @@ export default function ConversationsPage() {
   const resolve = useResolve();
   const returnToAI = useReturnToAI();
   const deleteConversation = useDeleteConversation();
+  const bulkArchive = useBulkArchive();
+  const bulkResolve = useBulkResolve();
+  const bulkDelete = useBulkDelete();
   const { confirmProps, confirm } = useConfirmDialog();
 
   // ---- Auto-scroll messages ----
@@ -246,6 +252,58 @@ export default function ConversationsPage() {
     },
     [selectedConversationId, uploadFile],
   );
+
+  // ---- Bulk action handlers ----
+  const handleBulkResolve = useCallback(() => {
+    const ids = Array.from(selectedIds);
+    confirm({
+      title: t('bulkResolve', { count: ids.length }),
+      message: t('confirmBulkResolve', { count: ids.length }),
+      confirmLabel: t('bulkResolve', { count: ids.length }),
+      cancelLabel: t('cancel'),
+      variant: 'default',
+      onConfirm: () => {
+        bulkResolve.mutate(
+          { conversationIds: ids },
+          { onSuccess: () => setSelectedIds(new Set()) },
+        );
+      },
+    });
+  }, [selectedIds, bulkResolve, t, confirm]);
+
+  const handleBulkArchive = useCallback(() => {
+    const ids = Array.from(selectedIds);
+    confirm({
+      title: t('bulkArchive', { count: ids.length }),
+      message: t('confirmBulkArchive', { count: ids.length }),
+      confirmLabel: t('bulkArchive', { count: ids.length }),
+      cancelLabel: t('cancel'),
+      variant: 'danger',
+      onConfirm: () => {
+        bulkArchive.mutate(
+          { conversationIds: ids },
+          { onSuccess: () => setSelectedIds(new Set()) },
+        );
+      },
+    });
+  }, [selectedIds, bulkArchive, t, confirm]);
+
+  const handleBulkDelete = useCallback(() => {
+    const ids = Array.from(selectedIds);
+    confirm({
+      title: t('bulkDelete', { count: ids.length }),
+      message: t('confirmBulkDelete', { count: ids.length }),
+      confirmLabel: t('bulkDelete', { count: ids.length }),
+      cancelLabel: t('cancel'),
+      variant: 'danger',
+      onConfirm: () => {
+        bulkDelete.mutate(
+          { conversationIds: ids },
+          { onSuccess: () => setSelectedIds(new Set()) },
+        );
+      },
+    });
+  }, [selectedIds, bulkDelete, t, confirm]);
 
   // =====================================================================
   // RENDER
@@ -387,6 +445,47 @@ export default function ConversationsPage() {
           emotionScore={emotionScore}
           currentSummary={currentSummary}
         />
+      )}
+
+      {/* Bulk Action Toolbar */}
+      {someSelected && (
+        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg border bg-card px-4 py-3 shadow-lg">
+          <span className="text-sm font-medium text-muted-foreground">
+            {t('selected', { count: selectedIds.size })}
+          </span>
+          <div className="h-4 w-px bg-border" />
+          <button
+            onClick={handleBulkResolve}
+            disabled={bulkResolve.isPending}
+            className="inline-flex items-center gap-1.5 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <CheckCircle className="h-3.5 w-3.5" />
+            {t('bulkResolve', { count: selectedIds.size })}
+          </button>
+          <button
+            onClick={handleBulkArchive}
+            disabled={bulkArchive.isPending}
+            className="inline-flex items-center gap-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <Archive className="h-3.5 w-3.5" />
+            {t('bulkArchive', { count: selectedIds.size })}
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            disabled={bulkDelete.isPending}
+            className="inline-flex items-center gap-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {t('bulkDelete', { count: selectedIds.size })}
+          </button>
+          <button
+            onClick={clearSelection}
+            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+          >
+            <X className="h-3.5 w-3.5" />
+            {t('clearSelection')}
+          </button>
+        </div>
       )}
 
       <ConfirmDialog {...confirmProps} />
