@@ -487,14 +487,17 @@
           "description": "Test gateway auto-selection logic",
           "service": "api",
           "files_to_modify": [],
-          "files_to_create": [],
+          "files_to_create": [
+            "apps/api/src/services/paymentGateway.service.test.ts"
+          ],
           "patterns_from": [],
           "verification": {
             "type": "manual",
             "instructions": "Test that: 1) Organizations in SA/AE/EG default to Kashier, 2) Organizations in US/EU default to Stripe, 3) Manual gateway override works, 4) Currency-based selection works (SAR/AED/EGP → Kashier, USD/EUR → Stripe/PayPal)"
           },
-          "status": "pending",
-          "notes": "Create test cases for different country/currency combinations. Verify correct gateway selected automatically."
+          "status": "completed",
+          "notes": "Successfully created comprehensive test suite for payment gateway auto-selection at apps/api/src/services/paymentGateway.service.test.ts with 47 test cases covering:\n\n1. Timezone-based selection:\n   - MENA region organizations (SA/AE/EG/KW/QA/BH) default to Kashier\n   - Tests for Asia/Riyadh, Asia/Dubai, Africa/Cairo, Asia/Kuwait, Asia/Qatar, Asia/Bahrain\n   - International organizations (US/UK/EU) default to Stripe\n   - Tests for America/New_York, America/Los_Angeles, Europe/London, Europe/Berlin, Europe/Paris\n\n2. Manual gateway override:\n   - preferredGateway parameter correctly overrides auto-selection\n   - Tests for STRIPE override on MENA timezone\n   - Tests for PAYPAL override on International timezone\n   - Invalid gateway values throw BadRequestError\n\n3. Currency-based selection:\n   - MENA currencies (SAR/AED/EGP) select Kashier\n   - International currencies (USD/EUR/GBP) select Stripe\n   - Lowercase currency codes handled correctly\n   - Unknown currencies default to Stripe\n\n4. Priority order verification:\n   - preferredGateway > currency > timezone\n   - Tests confirm correct precedence in selection logic\n\n5. Additional helper methods tested:\n   - getAvailableGateways() - returns list with recommended gateway first\n   - getGatewayForCurrency() - maps currencies to optimal gateway\n   - getSupportedCurrencies() - returns supported currencies per gateway\n   - isCurrencySupported() - validates currency support\n\nAll 47 tests passing successfully. Test suite uses Vitest with proper mocks for database and logger. Work already completed and merged in commit 002ea66 (merged via 3d9be19).",
+          "updated_at": "2026-03-10T00:54:00.000000+00:00"
         }
       ]
     }
