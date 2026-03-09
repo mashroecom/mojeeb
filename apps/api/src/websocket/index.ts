@@ -1,8 +1,11 @@
 import { Server as HttpServer } from 'http';
 import { Namespace, Server } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import Redis from 'ioredis';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { logger } from '../config/logger';
+import { redis } from '../config/redis';
 import type { JwtPayload } from '../middleware/auth';
 
 let io: Server;
@@ -73,6 +76,28 @@ export function setupWebSocket(httpServer: HttpServer) {
     },
     path: '/ws',
   });
+
+  // ── Configure Redis adapter for horizontal scaling ──
+  const pubClient = redis;
+  const subClient = new Redis(config.redis.url, {
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+    retryStrategy(times) {
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+  });
+
+  subClient.on('connect', () => {
+    logger.info('Redis subscriber connected for Socket.IO');
+  });
+
+  subClient.on('error', (err) => {
+    logger.error({ err }, 'Redis subscriber connection error');
+  });
+
+  io.adapter(createAdapter(pubClient, subClient));
+  logger.info('Socket.IO configured with Redis adapter');
 
   // ── Default namespace (dashboard - requires origin check + JWT) ──
   io.use((socket, next) => {
