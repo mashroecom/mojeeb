@@ -181,6 +181,18 @@ export class ConversationService {
     return { archivedCount: result.count };
   }
 
+  async bulkUpdateStatus(orgId: string, conversationIds: string[], status: string) {
+    const result = await prisma.conversation.updateMany({
+      where: {
+        id: { in: conversationIds },
+        orgId,
+      },
+      data: { status },
+    });
+
+    return { updatedCount: result.count };
+  }
+
   async delete(orgId: string, conversationId: string) {
     const conversation = await prisma.conversation.findFirst({
       where: { id: conversationId, orgId },
