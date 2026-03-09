@@ -2,12 +2,14 @@ import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { fileAccessService } from '../services/fileAccess.service';
+import { tokenBlacklistService } from '../services/tokenBlacklist.service';
 import { UnauthorizedError, ForbiddenError } from '../utils/errors';
 import { logger } from '../config/logger';
 
 interface VisitorTokenPayload {
   visitorId: string;
   filename: string;
+  jti?: string;
   exp?: number;
 }
 
@@ -27,7 +29,13 @@ export async function validateFileAccess(req: Request, _res: Response, next: Nex
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       try {
-        const payload = jwt.verify(token, config.jwt.secret) as { userId: string; email: string };
+        const payload = jwt.verify(token, config.jwt.secret) as { userId: string; email: string; jti?: string };
+
+        // Check if token has been revoked
+        if (payload.jti && await tokenBlacklistService.isBlacklisted(payload.jti)) {
+          return next(new UnauthorizedError('Token has been revoked'));
+        }
+
         userId = payload.userId;
       } catch (err) {
         if (err instanceof jwt.TokenExpiredError) {
@@ -43,6 +51,11 @@ export async function validateFileAccess(req: Request, _res: Response, next: Nex
     if (visitorToken && !userId) {
       try {
         const payload = jwt.verify(visitorToken, config.jwt.secret) as VisitorTokenPayload;
+
+        // Check if token has been revoked
+        if (payload.jti && await tokenBlacklistService.isBlacklisted(payload.jti)) {
+          return next(new UnauthorizedError('Token has been revoked'));
+        }
 
         // Verify the token is for this specific file
         if (payload.filename !== filename) {
