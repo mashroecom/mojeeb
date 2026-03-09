@@ -83,3 +83,33 @@ export const apiKeyLimiter = rateLimit({
     code: 'RATE_LIMITED',
   },
 });
+
+/** Token refresh rate limiter — prevents abuse of refresh token endpoint. */
+export const tokenRefreshLimiter = rateLimit({
+  store: createRedisStore('token-refresh'),
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isDev ? 5 : 3, // Very strict: 3 refreshes per 15 minutes in production
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: getClientKey,
+  message: {
+    success: false,
+    error: 'Too many token refresh attempts, please try again later',
+    code: 'RATE_LIMITED',
+  },
+});
+
+/** Destructive action rate limiter — prevents abuse of account deletion and session revocation. */
+export const destructiveActionLimiter = rateLimit({
+  store: createRedisStore('destructive'),
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: isDev ? 10 : 5, // Very strict: 5 destructive actions per hour in production
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: getClientKey,
+  message: {
+    success: false,
+    error: 'Too many destructive actions, please try again later',
+    code: 'RATE_LIMITED',
+  },
+});

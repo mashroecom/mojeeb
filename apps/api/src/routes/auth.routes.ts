@@ -3,7 +3,7 @@ import argon2 from 'argon2';
 import { authService } from '../services/auth.service';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
-import { authLimiter } from '../middleware/rateLimiter';
+import { authLimiter, tokenRefreshLimiter, destructiveActionLimiter } from '../middleware/rateLimiter';
 import { registerSchema, loginSchema, passwordSchema } from '@mojeeb/shared-utils';
 import { z } from 'zod';
 import { prisma } from '../config/database';
@@ -91,7 +91,7 @@ router.post(
 );
 
 // POST /api/v1/auth/refresh
-router.post('/refresh', async (req, res, next) => {
+router.post('/refresh', tokenRefreshLimiter, async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken) {
@@ -342,7 +342,7 @@ router.get('/sessions', authenticate, async (req, res, next) => {
 });
 
 // DELETE /api/v1/auth/sessions/:sessionId - revoke a specific session
-router.delete('/sessions/:sessionId', authenticate, async (req, res, next) => {
+router.delete('/sessions/:sessionId', destructiveActionLimiter, authenticate, async (req, res, next) => {
   try {
     const sessionId = req.params.sessionId as string;
     const session = await prisma.session.findFirst({
@@ -359,7 +359,7 @@ router.delete('/sessions/:sessionId', authenticate, async (req, res, next) => {
 });
 
 // DELETE /api/v1/auth/me - delete account
-router.delete('/me', authenticate, async (req, res, next) => {
+router.delete('/me', destructiveActionLimiter, authenticate, async (req, res, next) => {
   try {
     // Audit log BEFORE deletion (user will be gone after)
     await auditLogService.log({
