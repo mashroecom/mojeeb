@@ -2547,6 +2547,14 @@
       "noTemplates": "No message templates found",
       "confirmDelete": "Are you sure you want to delete this template? This cannot be undone.",
       "deleteTitle": "Delete Template",
+      "uncategorized": "Uncategorized",
+      "analytics": {
+        "totalTemplates": "Total Templates",
+        "activeTemplates": "Active Templates",
+        "sharedTemplates": "Shared Templates",
+        "mostUsed": "Most Used Templates",
+        "byCategory": "By Category"
+      },
       "toasts": {
         "created": "Template created successfully",
         "updated": "Template updated successfully",
@@ -2590,6 +2598,7 @@
       "noDataFound": "No data found.",
       "close": "Close",
       "refresh": "Refresh",
+      "uses": "uses",
       "notifications": "Notifications",
       "viewAll": "View All",
       "noNotifications": "No notifications",

@@ -78,6 +78,7 @@ export const adminKeys = {
   ratingStats: ['admin', 'rating-stats'] as const,
   // Message Templates (admin)
   messageTemplatesAdmin: (params?: Record<string, unknown>) => ['admin', 'message-templates-admin', params] as const,
+  messageTemplateAnalytics: ['admin', 'message-template-analytics'] as const,
   // Tags (admin)
   tagsAdmin: (params?: Record<string, unknown>) => ['admin', 'tags-admin', params] as const,
 };
@@ -2027,6 +2028,16 @@ export function useDeleteMessageTemplate() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'message-templates-admin'] });
+    },
+  });
+}
+
+export function useAdminMessageTemplateAnalytics() {
+  return useQuery({
+    queryKey: adminKeys.messageTemplateAnalytics,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/message-templates/analytics');
+      return data.data;
     },
   });
 }

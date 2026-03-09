@@ -2547,6 +2547,14 @@
       "noTemplates": "لا توجد قوالب رسائل",
       "confirmDelete": "هل أنت متأكد من حذف هذا القالب؟ لا يمكن التراجع عن هذا الإجراء.",
       "deleteTitle": "حذف القالب",
+      "uncategorized": "غير مصنف",
+      "analytics": {
+        "totalTemplates": "إجمالي القوالب",
+        "activeTemplates": "القوالب النشطة",
+        "sharedTemplates": "القوالب المشتركة",
+        "mostUsed": "القوالب الأكثر استخداماً",
+        "byCategory": "حسب الفئة"
+      },
       "toasts": {
         "created": "تم إنشاء القالب بنجاح",
         "updated": "تم تحديث القالب بنجاح",
@@ -2590,6 +2598,7 @@
       "noDataFound": "لا توجد بيانات.",
       "close": "إغلاق",
       "refresh": "تحديث",
+      "uses": "استخدام",
       "notifications": "الإشعارات",
       "viewAll": "عرض الكل",
       "noNotifications": "لا توجد إشعارات",

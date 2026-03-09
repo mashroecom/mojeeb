@@ -9,11 +9,12 @@ import {
   useCreateMessageTemplate,
   useUpdateMessageTemplate,
   useDeleteMessageTemplate,
+  useAdminMessageTemplateAnalytics,
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminConfirmDialog } from '@/components/admin/AdminConfirmDialog';
-import { FileText, Trash2, Search, Plus, Pencil, X, Loader2 } from 'lucide-react';
+import { FileText, Trash2, Search, Plus, Pencil, X, Loader2, BarChart3, Users, Share2 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -43,6 +44,20 @@ const emptyForm: FormData = {
   shortcut: '',
 };
 
+function StatSkeleton() {
+  return (
+    <div className="animate-pulse rounded-lg border bg-card p-6">
+      <div className="flex items-center gap-4">
+        <div className="h-10 w-10 rounded-lg bg-muted" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3 w-20 rounded bg-muted" />
+          <div className="h-6 w-16 rounded bg-muted" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MessageTemplatesPage() {
   const t = useTranslations('admin.messageTemplates');
   const tc = useTranslations('admin.common');
@@ -67,6 +82,8 @@ export default function MessageTemplatesPage() {
   const createMutation = useCreateMessageTemplate();
   const updateMutation = useUpdateMessageTemplate();
   const deleteMutation = useDeleteMessageTemplate();
+
+  const { data: analytics, isLoading: loadingAnalytics } = useAdminMessageTemplateAnalytics();
 
   const templates: MessageTemplate[] = data?.data ?? [];
   const pagination = data?.pagination;
@@ -161,6 +178,111 @@ export default function MessageTemplatesPage() {
             {t('create')}
           </button>
         </div>
+
+        {/* Analytics Section */}
+        {loadingAnalytics ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 mb-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <StatSkeleton key={i} />
+            ))}
+          </div>
+        ) : analytics ? (
+          <>
+            {/* Stat Cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 mb-6">
+              <div className="rounded-lg border bg-card p-6">
+                <div className="flex items-center gap-4">
+                  <div className={cn('rounded-lg p-2.5 bg-blue-100 dark:bg-blue-900/30')}>
+                    <FileText className={cn('h-5 w-5 text-blue-600 dark:text-blue-400')} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('analytics.totalTemplates')}</p>
+                    <p className="text-2xl font-bold mt-0.5">
+                      {Number(analytics.totalTemplates ?? 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border bg-card p-6">
+                <div className="flex items-center gap-4">
+                  <div className={cn('rounded-lg p-2.5 bg-green-100 dark:bg-green-900/30')}>
+                    <BarChart3 className={cn('h-5 w-5 text-green-600 dark:text-green-400')} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('analytics.activeTemplates')}</p>
+                    <p className="text-2xl font-bold mt-0.5">
+                      {Number(analytics.activeTemplates ?? 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border bg-card p-6">
+                <div className="flex items-center gap-4">
+                  <div className={cn('rounded-lg p-2.5 bg-purple-100 dark:bg-purple-900/30')}>
+                    <Share2 className={cn('h-5 w-5 text-purple-600 dark:text-purple-400')} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('analytics.sharedTemplates')}</p>
+                    <p className="text-2xl font-bold mt-0.5">
+                      {Number(analytics.sharedTemplates ?? 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Top Templates & Category Distribution */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-6">
+              {/* Most Used Templates */}
+              <div className="rounded-lg border bg-card p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                  <h2 className="text-lg font-semibold">{t('analytics.mostUsed')}</h2>
+                </div>
+                {analytics.mostUsedTemplates && analytics.mostUsedTemplates.length > 0 ? (
+                  <div className="space-y-3">
+                    {analytics.mostUsedTemplates.slice(0, 5).map((tpl: any) => (
+                      <div key={tpl.id} className="flex items-center justify-between pb-3 border-b last:border-0">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{tpl.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{tpl.org?.name || '—'}</p>
+                        </div>
+                        <div className="text-right ms-3">
+                          <p className="font-semibold">{tpl.usageCount}</p>
+                          <p className="text-xs text-muted-foreground">{tc('uses')}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">{tc('noData')}</p>
+                )}
+              </div>
+
+              {/* Category Distribution */}
+              <div className="rounded-lg border bg-card p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <h2 className="text-lg font-semibold">{t('analytics.byCategory')}</h2>
+                </div>
+                {analytics.categoryStats && analytics.categoryStats.length > 0 ? (
+                  <div className="space-y-3">
+                    {analytics.categoryStats.map((cat: any) => (
+                      <div key={cat.category || 'uncategorized'} className="flex items-center justify-between pb-3 border-b last:border-0">
+                        <p className="font-medium">{cat.category || t('uncategorized')}</p>
+                        <p className="font-semibold">{cat._count}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">{tc('noData')}</p>
+                )}
+              </div>
+            </div>
+          </>
+        ) : null}
 
         {/* Inline Form */}
         {showForm && (
