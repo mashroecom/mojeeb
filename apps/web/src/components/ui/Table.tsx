@@ -96,7 +96,9 @@ export function Table<T extends Record<string, unknown>>({
                     ? sortDir === 'asc'
                       ? 'ascending'
                       : 'descending'
-                    : undefined
+                    : col.sortable
+                      ? 'none'
+                      : undefined
                 }
               >
                 <span className="inline-flex items-center gap-1">
