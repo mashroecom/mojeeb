@@ -60,6 +60,126 @@ Tests include:
 - `nginx-local.conf` - Nginx configuration for local testing
 - `nginx.conf` - Production nginx configuration
 
+## Load Testing (10,000+ Concurrent Connections)
+
+### Quick Start
+
+Run predefined load test scenarios:
+
+```bash
+# Baseline test (1,000 connections)
+./scripts/run-load-test.sh baseline
+
+# Standard test (10,000 connections) - Main acceptance criteria
+./scripts/run-load-test.sh standard
+
+# Stress test (20,000 connections) - Find system limits
+./scripts/run-load-test.sh stress
+
+# Spike test (10,000 connections, rapid ramp-up)
+./scripts/run-load-test.sh spike
+```
+
+### Custom Load Test
+
+Run with custom parameters:
+
+```bash
+./scripts/run-load-test.sh custom \
+  --connections 15000 \
+  --ramp-up 90 \
+  --duration 600 \
+  --api-url http://localhost:80
+```
+
+### Direct Script Usage
+
+Run the load test script directly with full control:
+
+```bash
+pnpm tsx scripts/load-test.ts \
+  --connections 10000 \
+  --ramp-up 60 \
+  --duration 300 \
+  --batch-size 100 \
+  --message-interval 5000
+```
+
+### Load Test Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--connections` | 10000 | Target concurrent connections |
+| `--ramp-up` | 60 | Ramp-up time (seconds) |
+| `--duration` | 300 | Test duration (seconds) |
+| `--api-url` | http://localhost:80 | API endpoint |
+| `--batch-size` | 100 | Connections per batch |
+| `--message-interval` | 5000 | Message send interval (ms) |
+
+### Prerequisites
+
+Before running load tests:
+
+1. **Start scaled services:**
+   ```bash
+   docker-compose -f docker-compose.scale-test.yml up -d --scale api=3
+   ```
+
+2. **Configure test credentials in `.env`:**
+   ```env
+   TEST_USER_EMAIL=admin@test.com
+   TEST_USER_PASSWORD=Test123!@#
+   TEST_ORG_ID=test-org-id
+   ```
+
+3. **Ensure sufficient resources:**
+   - RAM: 16GB+ recommended
+   - CPU: 8+ cores
+   - Redis max_connections: 20000+
+   - PostgreSQL max_connections: 500+
+
+### Monitoring During Load Tests
+
+**Kubernetes:**
+```bash
+# Watch HPA scaling
+watch kubectl get hpa -n mojeeb
+
+# Monitor pods
+kubectl top pods -n mojeeb
+
+# View logs
+kubectl logs -f -n mojeeb -l app=api
+```
+
+**Docker Compose:**
+```bash
+# Container stats
+docker stats
+
+# View logs
+docker-compose -f docker-compose.scale-test.yml logs -f api
+```
+
+### Understanding Results
+
+The load test reports:
+- Connection success rate (target: 95%+)
+- Connection time percentiles (P95 target: < 5s)
+- Message delivery rate (target: 95%+)
+- Errors and failures
+
+**Acceptance Criteria:**
+- ✅ 10,000+ concurrent connections maintained
+- ✅ P95 connection time < 5 seconds
+- ✅ Message delivery rate > 95%
+- ✅ HPA scales API pods (Kubernetes only)
+
+### Detailed Documentation
+
+For comprehensive load testing guide, see:
+- [Load Testing Guide](../docs/deployment/load-testing-guide.md)
+
 ## Other Scripts
 
 ### Database Backup
