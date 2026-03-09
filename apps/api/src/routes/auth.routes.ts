@@ -3,7 +3,7 @@ import argon2 from 'argon2';
 import { authService } from '../services/auth.service';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
-import { authLimiter, tokenRefreshLimiter } from '../middleware/rateLimiter';
+import { authLimiter, tokenRefreshLimiter, destructiveActionLimiter } from '../middleware/rateLimiter';
 import { registerSchema, loginSchema } from '@mojeeb/shared-utils';
 import { z } from 'zod';
 import { prisma } from '../config/database';
@@ -358,7 +358,7 @@ router.delete('/sessions/:sessionId', authenticate, async (req, res, next) => {
 });
 
 // DELETE /api/v1/auth/me - delete account
-router.delete('/me', authenticate, async (req, res, next) => {
+router.delete('/me', destructiveActionLimiter, authenticate, async (req, res, next) => {
   try {
     // Audit log BEFORE deletion (user will be gone after)
     await auditLogService.log({
