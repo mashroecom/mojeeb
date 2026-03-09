@@ -2,8 +2,10 @@
 
 import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Send, ImagePlus, Loader2, FileText, Zap } from 'lucide-react';
-import { useMessageTemplates, type MessageTemplate } from '@/hooks/useMessageTemplates';
+import { Send, ImagePlus, Loader2, FileText } from 'lucide-react';
+import { TemplatePicker, type Template } from '@/components/templates/TemplatePicker';
+import { Dialog } from '@/components/ui/Dialog';
+import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
 
 interface MessageInputProps {
@@ -15,6 +17,8 @@ interface MessageInputProps {
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isSending: boolean;
   isUploading: boolean;
+  conversationId?: string | null;
+  customerName?: string | null;
 }
 
 export function MessageInput({
@@ -26,60 +30,76 @@ export function MessageInput({
   onFileUpload,
   isSending,
   isUploading,
+  conversationId,
+  customerName,
 }: MessageInputProps) {
   const t = useTranslations('dashboard.conversations');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showTemplates, setShowTemplates] = useState(false);
-  const { data: templates } = useMessageTemplates();
+  const user = useAuthStore((s) => s.user);
 
-  function insertTemplate(tpl: MessageTemplate) {
-    onChange(tpl.content);
+  // Detect "/" to open template picker
+  function handleChange(newValue: string) {
+    // Check if "/" was just typed at the start or after a space
+    if (newValue.endsWith('/') && (newValue.length === 1 || newValue[newValue.length - 2] === ' ')) {
+      setShowTemplates(true);
+      // Remove the "/" from the input
+      onChange(newValue.slice(0, -1));
+      return;
+    }
+
+    onChange(newValue);
+    onTyping(newValue.length > 0);
+  }
+
+  // Interpolate variables in template content
+  function interpolateTemplate(template: Template): string {
+    let content = template.content;
+
+    // Build variables object
+    const variables: Record<string, string> = {
+      customer_name: customerName || '{{customer_name}}',
+      agent_name: user ? `${user.firstName} ${user.lastName}`.trim() : '{{agent_name}}',
+      conversation_id: conversationId || '{{conversation_id}}',
+      order_number: '{{order_number}}', // Not available in current context
+    };
+
+    // Replace all variables in the template
+    template.variables.forEach((varName) => {
+      const regex = new RegExp(`\\{\\{${varName}\\}\\}`, 'g');
+      const replacement = variables[varName] || `{{${varName}}}`;
+      content = content.replace(regex, replacement);
+    });
+
+    return content;
+  }
+
+  function handleTemplateSelect(template: Template) {
+    const interpolated = interpolateTemplate(template);
+    onChange(interpolated);
     onTyping(true);
     setShowTemplates(false);
+
+    // Focus back on textarea
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 100);
   }
 
   return (
-    <div className="border-t bg-card px-3 md:px-5 py-3">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
-        onChange={onFileUpload}
-        className="hidden"
-      />
+    <>
+      <div className="border-t bg-card px-3 md:px-5 py-3">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+          onChange={onFileUpload}
+          className="hidden"
+        />
 
-      {/* Template picker popup */}
-      {showTemplates && templates && templates.length > 0 && (
-        <div className="mb-2 max-h-48 overflow-y-auto rounded-lg border bg-card shadow-lg">
-          <div className="p-1">
-            {templates.map((tpl) => (
-              <button
-                key={tpl.id}
-                type="button"
-                onClick={() => insertTemplate(tpl)}
-                className="flex w-full items-start gap-2 rounded-md px-3 py-2 text-start text-sm hover:bg-accent transition-colors"
-              >
-                <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-xs truncate">{tpl.title}</span>
-                    {tpl.shortcut && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-mono text-muted-foreground bg-muted px-1 py-0.5 rounded">
-                        <Zap className="h-2 w-2" />/{tpl.shortcut}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">{tpl.content}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-end gap-3">
-        {/* Template button */}
-        {templates && templates.length > 0 && (
+        <div className="flex items-end gap-3">
+          {/* Template button */}
           <button
             type="button"
             onClick={() => setShowTemplates(!showTemplates)}
@@ -91,44 +111,55 @@ export function MessageInput({
           >
             <FileText className="h-4 w-4" />
           </button>
-        )}
 
-        <textarea
-          value={value}
-          onChange={(e) => {
-            onChange(e.target.value);
-            onTyping(e.target.value.length > 0);
-          }}
-          onKeyDown={onKeyDown}
-          placeholder={t('messagePlaceholder')}
-          rows={1}
-          className="flex-1 resize-none rounded-lg border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-        />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-background text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
-          title={t('uploadImage')}
-        >
-          {isUploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <ImagePlus className="h-4 w-4" />
-          )}
-        </button>
-        <button
-          onClick={onSend}
-          disabled={!value.trim() || isSending}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-        >
-          {isSending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-        </button>
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder={t('messagePlaceholder')}
+            rows={1}
+            className="flex-1 resize-none rounded-lg border bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-background text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
+            title={t('uploadImage')}
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImagePlus className="h-4 w-4" />
+            )}
+          </button>
+          <button
+            onClick={onSend}
+            disabled={!value.trim() || isSending}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          >
+            {isSending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* Template Picker Dialog */}
+      <Dialog
+        open={showTemplates}
+        onOpenChange={setShowTemplates}
+        size="xl"
+      >
+        <TemplatePicker
+          conversationId={conversationId || undefined}
+          onSelect={handleTemplateSelect}
+          onClose={() => setShowTemplates(false)}
+        />
+      </Dialog>
+    </>
   );
 }

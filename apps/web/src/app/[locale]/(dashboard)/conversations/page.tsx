@@ -342,6 +342,8 @@ export default function ConversationsPage() {
                 onFileUpload={handleFileUpload}
                 isSending={sendMessage.isPending}
                 isUploading={uploadFile.isPending}
+                conversationId={selectedConversationId}
+                customerName={selectedConversation?.customerName}
               />
             </>
           )}
