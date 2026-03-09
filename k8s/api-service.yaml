@@ -1,0 +1,47 @@
+---
+# API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: mojeeb
+  labels:
+    app: mojeeb
+    component: api
+    role: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: mojeeb
+    component: api
+    role: backend
+  ports:
+  - name: http
+    port: 4000
+    targetPort: 4000
+    protocol: TCP
+  sessionAffinity: None
+
+---
+# API Headless Service (for StatefulSet if needed later)
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-headless
+  namespace: mojeeb
+  labels:
+    app: mojeeb
+    component: api
+    role: backend
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: mojeeb
+    component: api
+    role: backend
+  ports:
+  - name: http
+    port: 4000
+    targetPort: 4000
+    protocol: TCP
