@@ -210,6 +210,34 @@ export class ConversationService {
 
     return conversation;
   }
+
+  async bulkDelete(orgId: string, conversationIds: string[]) {
+    const result = await prisma.$transaction([
+      prisma.conversationTag.deleteMany({
+        where: { conversationId: { in: conversationIds } }
+      }),
+      prisma.conversationRating.deleteMany({
+        where: { conversationId: { in: conversationIds } }
+      }),
+      prisma.conversationNote.deleteMany({
+        where: { conversationId: { in: conversationIds } }
+      }),
+      prisma.message.deleteMany({
+        where: { conversationId: { in: conversationIds } }
+      }),
+      prisma.lead.deleteMany({
+        where: { conversationId: { in: conversationIds } }
+      }),
+      prisma.conversation.deleteMany({
+        where: {
+          id: { in: conversationIds },
+          orgId
+        }
+      }),
+    ]);
+
+    return { deletedCount: result[5].count };
+  }
 }
 
 export const conversationService = new ConversationService();
