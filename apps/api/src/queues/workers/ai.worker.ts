@@ -10,6 +10,7 @@ import { emitToOrg, emitToConversation } from '../../websocket/index';
 import { tokenUsageService } from '../../services/tokenUsage.service';
 import { notificationService } from '../../services/notification.service';
 import { webhookService } from '../../services/webhook.service';
+import { aiConversationTrackingService } from '../../services/aiConversationTracking.service';
 
 interface AIJobData {
   conversationId: string;
@@ -390,6 +391,26 @@ export const aiWorker = new Worker(
       } catch (leadErr) {
         logger.warn({ err: leadErr, conversationId: data.conversationId }, 'Lead extraction save failed');
       }
+    }
+
+    // Track AI conversation (first AI response in conversation)
+    try {
+      // Check if this is the first AI response in the conversation
+      const previousAiMessages = await prisma.message.count({
+        where: {
+          conversationId: data.conversationId,
+          role: 'AI_AGENT',
+          id: { not: aiMessage.id }, // Exclude the message we just created
+        },
+      });
+
+      if (previousAiMessages === 0) {
+        // This is the first AI response, increment AI conversation counter
+        await aiConversationTrackingService.incrementAiConversation(data.orgId);
+        logger.info({ orgId: data.orgId, conversationId: data.conversationId }, 'AI conversation tracked');
+      }
+    } catch (trackingErr) {
+      logger.warn({ err: trackingErr }, 'AI conversation tracking failed');
     }
 
     // Track events (non-critical — don't fail the job if analytics queue is down)
