@@ -38,7 +38,7 @@ export default function ApiKeysPage() {
   const locale = useLocale();
   const orgId = useAuthStore((s) => s.organization?.id);
 
-  const { data: apiKeys, isLoading: apiKeysLoading, error, isError, refetch } = useApiKeys();
+  const { data: apiKeys, isLoading: apiKeysLoading, isError, refetch } = useApiKeys();
   const createApiKey = useCreateApiKey();
   const revokeApiKey = useRevokeApiKey();
   const { confirmProps, confirm } = useConfirmDialog();
