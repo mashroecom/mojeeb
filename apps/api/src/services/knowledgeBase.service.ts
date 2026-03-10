@@ -6,6 +6,7 @@ import { logger } from '../config/logger';
 import pdfParse from 'pdf-parse';
 import { crawlerService } from './crawler.service';
 import { crawlerQueue } from '../queues/index';
+import { scheduleRepeatableCrawl, cancelRepeatableCrawl } from '../queues/workers/crawler.worker';
 
 export class KnowledgeBaseService {
   async create(orgId: string, data: { name: string; description?: string }) {
@@ -428,12 +429,12 @@ export class KnowledgeBaseService {
       });
     }
 
-    // TODO: In subtask-5-2, add BullMQ repeatable job logic here
-    // if (data.enabled) {
-    //   await this.scheduleRepeatableCrawl(config);
-    // } else {
-    //   await this.cancelRepeatableCrawl(config.id);
-    // }
+    // Schedule or cancel repeatable crawl job
+    if (data.enabled) {
+      await scheduleRepeatableCrawl(config.id);
+    } else {
+      await cancelRepeatableCrawl(config.id);
+    }
 
     logger.info(
       { kbId, configId: config.id, enabled: data.enabled, frequency: data.frequency },
