@@ -37,6 +37,9 @@ import {
   Variable,
 } from 'lucide-react';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SkeletonCard } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 const CATEGORIES = ['greeting', 'closing', 'support', 'sales', 'billing', 'general'] as const;
 
@@ -599,26 +602,52 @@ export default function MessageTemplatesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div>
+        <Breadcrumb
+          items={[{ label: tb('dashboard'), href: '/dashboard' }, { label: tb('messageTemplates') }]}
+          className="mb-4"
+        />
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <FileText className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold">{t('title')}</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-          <AlertCircle className="h-6 w-6 text-destructive" />
+      <div>
+        <Breadcrumb
+          items={[{ label: tb('dashboard'), href: '/dashboard' }, { label: tb('messageTemplates') }]}
+          className="mb-4"
+        />
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <FileText className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold">{t('title')}</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
         </div>
-        <p className="font-medium">{tc('somethingWentWrong')}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{tc('errorDescription')}</p>
-        <button
-          onClick={() => refetchTemplates()}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          {tc('tryAgain')}
-        </button>
+        <div className="rounded-xl border bg-card shadow-sm">
+          <ErrorState
+            title={tc('somethingWentWrong')}
+            description={tc('errorDescription')}
+            retryLabel={tc('tryAgain')}
+            onRetry={() => refetchTemplates()}
+          />
+        </div>
       </div>
     );
   }
@@ -798,15 +827,27 @@ export default function MessageTemplatesPage() {
           ))}
         </div>
       ) : templates && templates.length > 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Search className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">{t('noResults')}</p>
+        <div className="rounded-xl border bg-card shadow-sm">
+          <EmptyState
+            icon={Search}
+            title={t('noResults')}
+            description={t('noResultsDesc')}
+          />
         </div>
       ) : (
-        <div className="text-center py-16 text-muted-foreground">
-          <Inbox className="h-12 w-12 mx-auto mb-3 opacity-40" />
-          <p className="text-sm font-medium">{t('empty')}</p>
-          <p className="text-xs mt-1">{t('emptyDesc')}</p>
+        <div className="rounded-xl border bg-card shadow-sm">
+          <EmptyState
+            icon={FileText}
+            title={t('empty')}
+            description={t('emptyDesc')}
+            action={{
+              label: t('addTemplate'),
+              onClick: () => {
+                setShowForm(true);
+                setEditingTemplate(null);
+              },
+            }}
+          />
         </div>
       )}
     </div>
