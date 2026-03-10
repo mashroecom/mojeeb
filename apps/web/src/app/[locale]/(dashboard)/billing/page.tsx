@@ -311,6 +311,7 @@ export default function BillingPage() {
       yearlyPrice: cfg.yearlyPrice,
       popular: cfg.isPopular,
       features: parseFeatures(isAr ? cfg.featuresAr : cfg.features),
+      overagePrice: cfg.overagePricePerConversation,
     };
   });
 
@@ -552,7 +553,7 @@ export default function BillingPage() {
                         </span>
                       )}
                     </div>
-                    <ul className="space-y-2 mb-5">
+                    <ul className="space-y-2 mb-4">
                       {plan.features.map((feature) => (
                         <li key={feature} className="flex items-center gap-2 text-sm">
                           <Check className="h-4 w-4 text-green-600 shrink-0" />
@@ -560,6 +561,24 @@ export default function BillingPage() {
                         </li>
                       ))}
                     </ul>
+                    {plan.overagePrice > 0 && (
+                      <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-3">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+                              {t('overagePricing')}
+                            </p>
+                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                              {t('overagePrice', { price: plan.overagePrice.toFixed(2) })}
+                            </p>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                              {t('overageDescription')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {isCurrent ? (
                       <button
                         disabled

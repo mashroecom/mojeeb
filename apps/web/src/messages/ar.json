@@ -1034,7 +1034,10 @@
       "spendingCapAmountHint": "أدخل الحد الأقصى للمبلغ الذي تريد إنفاقه على الاستخدام الزائد لكل دورة فوترة",
       "spendingCapAmountError": "يرجى إدخال مبلغ صالح أكبر من 0",
       "saveChanges": "حفظ التغييرات",
-      "saved": "تم الحفظ"
+      "saved": "تم الحفظ",
+      "overagePricing": "تسعير الاستخدام الزائد",
+      "overagePrice": "${price} لكل محادثة ذكاء اصطناعي",
+      "overageDescription": "رسوم إضافية بعد الوصول إلى حد خطتك"
     },
     "customers": {
       "title": "العملاء",

@@ -1085,7 +1085,10 @@
       "spendingCapAmountHint": "Enter the maximum amount you want to spend on overages per billing cycle",
       "spendingCapAmountError": "Please enter a valid amount greater than 0",
       "saveChanges": "Save Changes",
-      "saved": "Saved"
+      "saved": "Saved",
+      "overagePricing": "Overage Pricing",
+      "overagePrice": "${price} per AI conversation",
+      "overageDescription": "Additional charges after reaching your plan limit"
     },
     "team": {
       "title": "Team Management",

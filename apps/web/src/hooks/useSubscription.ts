@@ -112,6 +112,8 @@ export interface PlanData {
   isPopular: boolean;
   features: string;
   featuresAr: string;
+  aiConversationsPerMonth: number;
+  overagePricePerConversation: number;
 }
 
 export function usePlans() {
