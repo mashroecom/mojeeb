@@ -1,0 +1,290 @@
+import { Router } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
+import { prisma } from '../config/database';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+
+const router: Router = Router();
+
+// All mobile routes require authentication
+router.use(authenticate);
+
+// GET /inbox - List conversations across all user's organizations
+router.get('/inbox', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    const status = req.query.status as string | undefined;
+    const search = req.query.search as string | undefined;
+    const orgId = req.query.orgId as string | undefined;
+
+    // Get all organizations the user belongs to
+    const memberships = await prisma.orgMembership.findMany({
+      where: { userId },
+      select: { orgId: true },
+    });
+    const orgIds = memberships.map((m) => m.orgId);
+
+    if (orgIds.length === 0) {
+      return res.json({
+        success: true,
+        data: { conversations: [], total: 0, page, limit, totalPages: 0 },
+      });
+    }
+
+    // Build query filter
+    const where: any = {
+      orgId: orgId ? orgId : { in: orgIds },
+    };
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (search) {
+      where.OR = [
+        { customerName: { contains: search, mode: 'insensitive' } },
+        { customerEmail: { contains: search, mode: 'insensitive' } },
+        { customerPhone: { contains: search, mode: 'insensitive' } },
+        { summary: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [conversations, total] = await Promise.all([
+      prisma.conversation.findMany({
+        where,
+        include: {
+          org: { select: { id: true, name: true, logoUrl: true } },
+          channel: { select: { id: true, name: true, type: true } },
+          agent: { select: { id: true, name: true } },
+          _count: { select: { messages: true } },
+        },
+        orderBy: { lastMessageAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.conversation.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        conversations,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /stats - Dashboard statistics
+router.get('/stats', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const orgId = req.query.orgId as string | undefined;
+
+    // Get all organizations the user belongs to
+    const memberships = await prisma.orgMembership.findMany({
+      where: { userId },
+      select: { orgId: true },
+    });
+    const orgIds = memberships.map((m) => m.orgId);
+
+    if (orgIds.length === 0) {
+      return res.json({
+        success: true,
+        data: { total: 0, byStatus: [], activeOrgs: 0 },
+      });
+    }
+
+    const whereFilter: any = {
+      orgId: orgId ? orgId : { in: orgIds },
+    };
+
+    const [total, byStatus, activeOrgs] = await Promise.all([
+      prisma.conversation.count({ where: whereFilter }),
+      prisma.conversation.groupBy({
+        by: ['status'],
+        where: whereFilter,
+        _count: true,
+      }),
+      orgId ? Promise.resolve(1) : prisma.organization.count({
+        where: { id: { in: orgIds } },
+      }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        total,
+        byStatus,
+        activeOrgs,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /conversations/:conversationId - Get conversation details
+router.get('/conversations/:conversationId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const { conversationId } = req.params as { conversationId: string };
+    const msgPage = parseInt(req.query.msgPage as string) || 1;
+    const msgLimit = Math.min(parseInt(req.query.msgLimit as string) || 50, 200);
+
+    // Get user's organizations
+    const memberships = await prisma.orgMembership.findMany({
+      where: { userId },
+      select: { orgId: true },
+    });
+    const orgIds = memberships.map((m) => m.orgId);
+
+    const conversation = await prisma.conversation.findFirst({
+      where: {
+        id: conversationId,
+        orgId: { in: orgIds },
+      },
+      include: {
+        org: { select: { id: true, name: true, logoUrl: true } },
+        channel: { select: { id: true, name: true, type: true } },
+        agent: { select: { id: true, name: true } },
+        ratings: true,
+        tags: { include: { tag: true } },
+        notes: {
+          orderBy: { createdAt: 'desc' as const },
+        },
+      },
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+
+    const [messages, messageTotal] = await Promise.all([
+      prisma.message.findMany({
+        where: { conversationId },
+        orderBy: { createdAt: 'asc' },
+        skip: (msgPage - 1) * msgLimit,
+        take: msgLimit,
+      }),
+      prisma.message.count({ where: { conversationId } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        ...conversation,
+        messages,
+        messageTotal,
+        messagePage: msgPage,
+        messageTotalPages: Math.ceil(messageTotal / msgLimit),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const quickActionSchema = z.object({
+  action: z.enum(['resolve', 'archive', 'activate', 'handoff', 'waiting']),
+});
+
+// POST /conversations/:conversationId/quick-actions - Quick status updates
+router.post(
+  '/conversations/:conversationId/quick-actions',
+  validate({ body: quickActionSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.userId;
+      const { conversationId } = req.params as { conversationId: string };
+      const { action } = req.body;
+
+      // Get user's organizations
+      const memberships = await prisma.orgMembership.findMany({
+        where: { userId },
+        select: { orgId: true },
+      });
+      const orgIds = memberships.map((m) => m.orgId);
+
+      const conversation = await prisma.conversation.findFirst({
+        where: {
+          id: conversationId,
+          orgId: { in: orgIds },
+        },
+      });
+
+      if (!conversation) {
+        return res.status(404).json({ success: false, error: 'Conversation not found' });
+      }
+
+      // Map action to status
+      const statusMap: Record<string, string> = {
+        resolve: 'RESOLVED',
+        archive: 'ARCHIVED',
+        activate: 'ACTIVE',
+        handoff: 'HANDED_OFF',
+        waiting: 'WAITING',
+      };
+
+      const newStatus = statusMap[action];
+      const updateData: any = { status: newStatus };
+
+      if (action === 'resolve') {
+        updateData.resolvedAt = new Date();
+      }
+
+      const updated = await prisma.conversation.update({
+        where: { id: conversationId },
+        data: updateData,
+      });
+
+      res.json({ success: true, data: updated });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// GET /organizations - List user's organizations
+router.get('/organizations', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+
+    const memberships = await prisma.orgMembership.findMany({
+      where: { userId },
+      include: {
+        org: {
+          select: {
+            id: true,
+            name: true,
+            logoUrl: true,
+            timezone: true,
+            defaultLanguage: true,
+          },
+        },
+      },
+    });
+
+    const organizations = memberships.map((m) => ({
+      ...m.org,
+      role: m.role,
+    }));
+
+    res.json({
+      success: true,
+      data: { organizations },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+export default router;
