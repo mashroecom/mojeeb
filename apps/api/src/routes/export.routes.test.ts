@@ -46,6 +46,8 @@ function createMockReqRes(params: Record<string, string> = {}) {
   const res = {
     setHeader: vi.fn(),
     send: vi.fn(),
+    write: vi.fn(),
+    end: vi.fn(),
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
   } as unknown as Response;
@@ -55,9 +57,18 @@ function createMockReqRes(params: Record<string, string> = {}) {
   return { req, res, next };
 }
 
-/** Helper: extract the CSV sent in res.send() */
+/** Helper: extract the CSV sent in res.send() or streamed via res.write() */
 function getSentCsv(res: Response): string {
   const sendMock = res.send as ReturnType<typeof vi.fn>;
+  const writeMock = res.write as ReturnType<typeof vi.fn>;
+
+  // Check if streaming (res.write) was used
+  if (writeMock.mock.calls.length > 0) {
+    // Collect all chunks from write() calls
+    return writeMock.mock.calls.map((call: any) => call[0]).join('');
+  }
+
+  // Otherwise, use the old res.send() method
   expect(sendMock).toHaveBeenCalledOnce();
   return sendMock.mock.calls[0][0];
 }

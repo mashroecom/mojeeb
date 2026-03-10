@@ -70,21 +70,25 @@ router.get('/conversations', async (req, res, next) => {
       'resolvedAt',
     ];
 
-    const rows = conversations.map((c) => [
-      c.id,
-      c.customerName ?? '',
-      c.channel.type,
-      c.status,
-      String(c.messageCount),
-      c.createdAt.toISOString(),
-      c.resolvedAt ? c.resolvedAt.toISOString() : '',
-    ]);
-
-    const csv = buildCsv(headers, rows);
+    // Async generator that yields rows one at a time
+    async function* generateRows() {
+      for (const c of conversations) {
+        yield [
+          c.id,
+          c.customerName ?? '',
+          c.channel.type,
+          c.status,
+          String(c.messageCount),
+          c.createdAt.toISOString(),
+          c.resolvedAt ? c.resolvedAt.toISOString() : '',
+        ];
+      }
+    }
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="conversations-export.csv"');
-    res.send(csv);
+
+    await streamCsv(headers, generateRows(), res);
   } catch (err) {
     next(err);
   }
