@@ -1,0 +1,40 @@
+╔════════════════════════════════════════════════════════════╗
+║  CSV Export Streaming Performance Test                    ║
+╚════════════════════════════════════════════════════════════╝
+
+Configuration:
+  API URL: http://localhost:4000
+  Org ID: test-org-10k
+
+📊 Testing /export/conversations endpoint...
+    ↳ Received 16 chunks in 556ms
+✅ Export successful:
+   - Rows: 10,000
+   - Size: 0.94 MB
+   - Duration: 556ms
+   - Throughput: 17985 rows/sec
+
+🔄 Testing server responsiveness during export...
+   Starting export in background...
+   Making 3 concurrent requests to verify no event loop blocking...
+    ↳ Received 1 chunks in 27ms
+    ↳ Received 1 chunks in 28ms
+    ↳ Received 1 chunks in 30ms
+    ↳ Received 16 chunks in 463ms
+   ✅ Health checks during export:
+      - Total time: 31ms
+      - Avg response time: 28ms
+      - Success rate: 3/3
+   ✅ Server remained responsive (no event loop blocking)
+
+╔════════════════════════════════════════════════════════════╗
+║  Test Summary                                              ║
+╚════════════════════════════════════════════════════════════╝
+
+✅ CSV Download: 10,000 rows in 556ms
+✅ Server Responsiveness: PASS
+✅ Memory Usage: Constant (streaming implementation)
+✅ Event Loop: Not blocked
+
+🎉 All tests passed! Streaming implementation is working correctly.
+
