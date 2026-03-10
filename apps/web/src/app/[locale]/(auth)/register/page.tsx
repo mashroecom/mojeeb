@@ -82,7 +82,13 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+          <div
+            role="alert"
+            aria-live="polite"
+            className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+          >
+            {error}
+          </div>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -97,9 +103,17 @@ export default function RegisterPage() {
               onChange={form.handleChange('firstName')}
               onBlur={form.handleBlur('firstName')}
               className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              aria-invalid={form.errors.firstName ? true : undefined}
+              aria-describedby={form.errors.firstName ? 'reg-firstName-error' : undefined}
             />
             {form.errors.firstName && (
-              <p className="mt-1 text-xs text-destructive">{form.errors.firstName}</p>
+              <p
+                id="reg-firstName-error"
+                className="mt-1 text-xs text-destructive"
+                aria-live="polite"
+              >
+                {form.errors.firstName}
+              </p>
             )}
           </div>
           <div>
@@ -113,9 +127,17 @@ export default function RegisterPage() {
               onChange={form.handleChange('lastName')}
               onBlur={form.handleBlur('lastName')}
               className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              aria-invalid={form.errors.lastName ? true : undefined}
+              aria-describedby={form.errors.lastName ? 'reg-lastName-error' : undefined}
             />
             {form.errors.lastName && (
-              <p className="mt-1 text-xs text-destructive">{form.errors.lastName}</p>
+              <p
+                id="reg-lastName-error"
+                className="mt-1 text-xs text-destructive"
+                aria-live="polite"
+              >
+                {form.errors.lastName}
+              </p>
             )}
           </div>
         </div>
@@ -131,9 +153,17 @@ export default function RegisterPage() {
             onChange={form.handleChange('organizationName')}
             onBlur={form.handleBlur('organizationName')}
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-invalid={form.errors.organizationName ? true : undefined}
+            aria-describedby={form.errors.organizationName ? 'reg-orgName-error' : undefined}
           />
           {form.errors.organizationName && (
-            <p className="mt-1 text-xs text-destructive">{form.errors.organizationName}</p>
+            <p
+              id="reg-orgName-error"
+              className="mt-1 text-xs text-destructive"
+              aria-live="polite"
+            >
+              {form.errors.organizationName}
+            </p>
           )}
         </div>
 
@@ -150,9 +180,17 @@ export default function RegisterPage() {
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             placeholder="name@company.com"
             dir="ltr"
+            aria-invalid={form.errors.email ? true : undefined}
+            aria-describedby={form.errors.email ? 'reg-email-error' : undefined}
           />
           {form.errors.email && (
-            <p className="mt-1 text-xs text-destructive">{form.errors.email}</p>
+            <p
+              id="reg-email-error"
+              className="mt-1 text-xs text-destructive"
+              aria-live="polite"
+            >
+              {form.errors.email}
+            </p>
           )}
         </div>
 
@@ -168,9 +206,17 @@ export default function RegisterPage() {
             onBlur={form.handleBlur('password')}
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             dir="ltr"
+            aria-invalid={form.errors.password ? true : undefined}
+            aria-describedby={form.errors.password ? 'reg-password-error' : undefined}
           />
           {form.errors.password && (
-            <p className="mt-1 text-xs text-destructive">{form.errors.password}</p>
+            <p
+              id="reg-password-error"
+              className="mt-1 text-xs text-destructive"
+              aria-live="polite"
+            >
+              {form.errors.password}
+            </p>
           )}
         </div>
 

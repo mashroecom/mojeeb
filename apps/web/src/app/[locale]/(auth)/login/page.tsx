@@ -75,7 +75,9 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+          <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive" role="alert" aria-live="polite">
+            {error}
+          </div>
         )}
 
         <div>
@@ -91,9 +93,13 @@ export default function LoginPage() {
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             placeholder="name@company.com"
             dir="ltr"
+            aria-invalid={form.errors.email ? true : undefined}
+            aria-describedby={form.errors.email ? 'login-email-error' : undefined}
           />
           {form.errors.email && (
-            <p className="mt-1 text-xs text-destructive">{form.errors.email}</p>
+            <p id="login-email-error" className="mt-1 text-xs text-destructive" aria-live="polite">
+              {form.errors.email}
+            </p>
           )}
         </div>
 
@@ -114,9 +120,13 @@ export default function LoginPage() {
             onBlur={form.handleBlur('password')}
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             dir="ltr"
+            aria-invalid={form.errors.password ? true : undefined}
+            aria-describedby={form.errors.password ? 'login-password-error' : undefined}
           />
           {form.errors.password && (
-            <p className="mt-1 text-xs text-destructive">{form.errors.password}</p>
+            <p id="login-password-error" className="mt-1 text-xs text-destructive" aria-live="polite">
+              {form.errors.password}
+            </p>
           )}
         </div>
 
