@@ -18,6 +18,8 @@ export interface Subscription {
   messagesLimit: number;
   agentsUsed: number;
   agentsLimit: number;
+  aiConversationsUsed: number;
+  aiConversationsLimit: number;
   integrationsUsed: number;
   integrationsLimit: number;
   currentPeriodStart: string;

@@ -266,6 +266,14 @@ export default function BillingPage() {
           color: 'text-purple-600',
           bg: 'bg-purple-100',
         },
+        {
+          label: t('aiConversations'),
+          icon: Zap,
+          used: subscription.aiConversationsUsed,
+          limit: subscription.aiConversationsLimit,
+          color: 'text-green-600',
+          bg: 'bg-green-100',
+        },
       ]
     : [];
 
