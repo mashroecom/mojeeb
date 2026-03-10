@@ -153,21 +153,21 @@ router.get('/analytics', async (req, res, next) => {
       'value',
     ];
 
-    const rows = [
-      ['totalConversations', String(overview.totalConversations)],
-      ['totalMessages', String(overview.totalMessages)],
-      ['totalLeads', String(overview.totalLeads)],
-      ['activeConversations', String(overview.activeConversations)],
-      ['resolvedConversations', String(overview.resolvedConversations)],
-      ['averageResponseTimeMs', String(overview.averageResponseTimeMs)],
-      ['handoffRate', String(overview.handoffRate)],
-    ];
-
-    const csv = buildCsv(headers, rows);
+    // Async generator that yields rows one at a time
+    async function* generateRows() {
+      yield ['totalConversations', String(overview.totalConversations)];
+      yield ['totalMessages', String(overview.totalMessages)];
+      yield ['totalLeads', String(overview.totalLeads)];
+      yield ['activeConversations', String(overview.activeConversations)];
+      yield ['resolvedConversations', String(overview.resolvedConversations)];
+      yield ['averageResponseTimeMs', String(overview.averageResponseTimeMs)];
+      yield ['handoffRate', String(overview.handoffRate)];
+    }
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="analytics-export.csv"');
-    res.send(csv);
+
+    await streamCsv(headers, generateRows(), res);
   } catch (err) {
     next(err);
   }
