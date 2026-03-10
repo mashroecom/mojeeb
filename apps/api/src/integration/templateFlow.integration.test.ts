@@ -63,14 +63,13 @@ describe('Template Flow E2E Integration', () => {
       const template = await prisma.messageTemplate.create({
         data: {
           orgId: testOrgId,
-          userId: testUserId,
+          createdBy: testUserId,
           title: 'Order Status Inquiry',
-          content:
+          contentEn:
             'Hello {{customer_name}}! Your order {{order_number}} is currently being processed by {{agent_name}}. We will notify you once it ships.',
           category: 'product_info',
           shortcut: '/order-status',
           variables: ['customer_name', 'order_number', 'agent_name'],
-          isShared: true,
           isActive: true,
           usageCount: 0,
         },
@@ -80,11 +79,10 @@ describe('Template Flow E2E Integration', () => {
 
       expect(template).toBeDefined();
       expect(template.title).toBe('Order Status Inquiry');
-      expect(template.content).toContain('{{customer_name}}');
-      expect(template.content).toContain('{{order_number}}');
-      expect(template.content).toContain('{{agent_name}}');
+      expect(template.contentEn).toContain('{{customer_name}}');
+      expect(template.contentEn).toContain('{{order_number}}');
+      expect(template.contentEn).toContain('{{agent_name}}');
       expect(template.variables).toEqual(['customer_name', 'order_number', 'agent_name']);
-      expect(template.isShared).toBe(true);
       expect(template.isActive).toBe(true);
       expect(template.usageCount).toBe(0);
     });
@@ -93,17 +91,15 @@ describe('Template Flow E2E Integration', () => {
       const template = await prisma.messageTemplate.create({
         data: {
           orgId: testOrgId,
-          userId: testUserId,
-          title: 'استفسار حالة الطلب',
-          titleAr: 'استفسار حالة الطلب',
-          content:
+          createdBy: testUserId,
+          title: 'Order Status Inquiry AR',
+          contentEn:
             'Hello {{customer_name}}! Your order {{order_number}} is being handled.',
           contentAr:
             'مرحباً {{customer_name}}! طلبك رقم {{order_number}} قيد المعالجة بواسطة {{agent_name}}. سنخطرك فور الشحن.',
           category: 'product_info',
           shortcut: '/order-status-ar',
           variables: ['customer_name', 'order_number', 'agent_name'],
-          isShared: true,
           isActive: true,
           usageCount: 0,
         },
@@ -112,7 +108,6 @@ describe('Template Flow E2E Integration', () => {
       arabicTemplateId = template.id;
 
       expect(template).toBeDefined();
-      expect(template.titleAr).toBe('استفسار حالة الطلب');
       expect(template.contentAr).toContain('مرحباً');
       expect(template.contentAr).toContain('{{customer_name}}');
       expect(template.variables).toEqual(['customer_name', 'order_number', 'agent_name']);
@@ -122,15 +117,13 @@ describe('Template Flow E2E Integration', () => {
       const template = await prisma.messageTemplate.create({
         data: {
           orgId: testOrgId,
-          userId: testUserId,
+          createdBy: testUserId,
           title: 'Welcome Message',
-          titleAr: 'رسالة ترحيب',
-          content: 'Thank you for contacting us! How can we help you today?',
+          contentEn: 'Thank you for contacting us! How can we help you today?',
           contentAr: 'شكراً لتواصلك معنا! كيف يمكننا مساعدتك اليوم؟',
           category: 'greeting',
           shortcut: '/welcome',
           variables: [],
-          isShared: true,
           isActive: true,
           usageCount: 0,
         },
@@ -140,24 +133,23 @@ describe('Template Flow E2E Integration', () => {
       expect(template.variables).toEqual([]);
     });
 
-    it('should create a personal (non-shared) template', async () => {
+    it('should create a personal template', async () => {
       const template = await prisma.messageTemplate.create({
         data: {
           orgId: testOrgId,
-          userId: testUserId,
+          createdBy: testUserId,
           title: 'My Personal Template',
-          content: 'This is my personal quick reply for {{customer_name}}',
+          contentEn: 'This is my personal quick reply for {{customer_name}}',
           category: 'troubleshooting',
           shortcut: '/personal',
           variables: ['customer_name'],
-          isShared: false, // Personal template
           isActive: true,
           usageCount: 0,
         },
       });
 
       expect(template).toBeDefined();
-      expect(template.isShared).toBe(false);
+      expect(template.createdBy).toBe(testUserId);
     });
   });
 
@@ -168,37 +160,34 @@ describe('Template Flow E2E Integration', () => {
         data: [
           {
             orgId: testOrgId,
-            userId: testUserId,
+            createdBy: testUserId,
             title: 'Greeting',
-            content: 'Hello! How can I help?',
+            contentEn: 'Hello! How can I help?',
             category: 'greeting',
             shortcut: '/hi',
             variables: [],
-            isShared: true,
             isActive: true,
             usageCount: 5,
           },
           {
             orgId: testOrgId,
-            userId: testUserId,
+            createdBy: testUserId,
             title: 'Order Status',
-            content: 'Your order {{order_number}} is on the way',
+            contentEn: 'Your order {{order_number}} is on the way',
             category: 'product_info',
             shortcut: '/status',
             variables: ['order_number'],
-            isShared: true,
             isActive: true,
             usageCount: 10,
           },
           {
             orgId: testOrgId,
-            userId: testUserId,
+            createdBy: testUserId,
             title: 'Inactive Template',
-            content: 'This should not appear',
+            contentEn: 'This should not appear',
             category: 'troubleshooting',
             shortcut: '/inactive',
             variables: [],
-            isShared: true,
             isActive: false, // Inactive
             usageCount: 0,
           },
@@ -241,7 +230,7 @@ describe('Template Flow E2E Integration', () => {
           isActive: true,
           OR: [
             { title: { contains: 'Order', mode: 'insensitive' } },
-            { content: { contains: 'order', mode: 'insensitive' } },
+            { contentEn: { contains: 'order', mode: 'insensitive' } },
           ],
         },
       });
@@ -250,18 +239,17 @@ describe('Template Flow E2E Integration', () => {
       expect(searchResults[0].title).toBe('Order Status');
     });
 
-    it('should include both shared and personal templates for a user', async () => {
+    it('should include templates created by user', async () => {
       // Create a personal template
       await prisma.messageTemplate.create({
         data: {
           orgId: testOrgId,
-          userId: testUserId,
+          createdBy: testUserId,
           title: 'Personal Template',
-          content: 'My personal template',
+          contentEn: 'My personal template',
           category: 'troubleshooting',
           shortcut: '/personal',
           variables: [],
-          isShared: false,
           isActive: true,
           usageCount: 0,
         },
@@ -271,10 +259,6 @@ describe('Template Flow E2E Integration', () => {
         where: {
           orgId: testOrgId,
           isActive: true,
-          OR: [
-            { isShared: true },
-            { userId: testUserId },
-          ],
         },
       });
 
@@ -297,7 +281,7 @@ describe('Template Flow E2E Integration', () => {
           },
           {
             conversationId: testConversationId,
-            role: 'AGENT',
+            role: 'HUMAN_AGENT',
             content: 'Let me check that for you.',
             contentType: 'TEXT',
             createdAt: new Date(Date.now() - 2000),
@@ -318,24 +302,20 @@ describe('Template Flow E2E Integration', () => {
           {
             orgId: testOrgId,
             title: 'Order Tracking',
-            titleAr: 'تتبع الطلب',
-            content: 'Your order {{order_number}} tracking: {{tracking_link}}',
+            contentEn: 'Your order {{order_number}} tracking: {{tracking_link}}',
             contentAr: 'رقم تتبع طلبك {{order_number}}: {{tracking_link}}',
             category: 'product_info',
             variables: ['order_number', 'tracking_link'],
-            isShared: true,
             isActive: true,
             usageCount: 0,
           },
           {
             orgId: testOrgId,
             title: 'Payment Issue',
-            titleAr: 'مشكلة الدفع',
-            content: 'There was an issue with your payment',
+            contentEn: 'There was an issue with your payment',
             contentAr: 'حدثت مشكلة في الدفع',
             category: 'troubleshooting',
             variables: [],
-            isShared: true,
             isActive: true,
             usageCount: 0,
           },
@@ -504,12 +484,11 @@ describe('Template Flow E2E Integration', () => {
       const template = await prisma.messageTemplate.create({
         data: {
           orgId: testOrgId,
-          userId: testUserId,
+          createdBy: testUserId,
           title: 'Usage Test Template',
-          content: 'Test content',
+          contentEn: 'Test content',
           category: 'greeting',
           variables: [],
-          isShared: true,
           isActive: true,
           usageCount: 0,
         },
@@ -528,7 +507,6 @@ describe('Template Flow E2E Integration', () => {
         where: { id: templateId },
         data: {
           usageCount: { increment: 1 },
-          lastUsedAt: new Date(),
         },
       });
 
@@ -536,7 +514,6 @@ describe('Template Flow E2E Integration', () => {
         where: { id: templateId },
       });
       expect(after?.usageCount).toBe(1);
-      expect(after?.lastUsedAt).toBeDefined();
     });
 
     it('should track multiple uses correctly', async () => {
@@ -546,7 +523,6 @@ describe('Template Flow E2E Integration', () => {
           where: { id: templateId },
           data: {
             usageCount: { increment: 1 },
-            lastUsedAt: new Date(),
           },
         });
       }
@@ -566,40 +542,36 @@ describe('Template Flow E2E Integration', () => {
           {
             orgId: testOrgId,
             title: 'Most Used',
-            content: 'Popular template',
+            contentEn: 'Popular template',
             category: 'greeting',
             variables: [],
-            isShared: true,
             isActive: true,
             usageCount: 50,
           },
           {
             orgId: testOrgId,
             title: 'Moderately Used',
-            content: 'Sometimes used',
+            contentEn: 'Sometimes used',
             category: 'troubleshooting',
             variables: [],
-            isShared: true,
             isActive: true,
             usageCount: 20,
           },
           {
             orgId: testOrgId,
             title: 'Rarely Used',
-            content: 'Seldom used',
+            contentEn: 'Seldom used',
             category: 'closing',
             variables: [],
-            isShared: true,
             isActive: true,
             usageCount: 3,
           },
           {
             orgId: testOrgId,
             title: 'Never Used',
-            content: 'Not used yet',
+            contentEn: 'Not used yet',
             category: 'product_info',
             variables: [],
-            isShared: false,
             isActive: true,
             usageCount: 0,
           },
@@ -623,12 +595,12 @@ describe('Template Flow E2E Integration', () => {
       expect(activeCount).toBe(4);
     });
 
-    it('should get shared template count', async () => {
-      const sharedCount = await prisma.messageTemplate.count({
-        where: { orgId: testOrgId, isShared: true },
+    it('should get active template count', async () => {
+      const activeCount = await prisma.messageTemplate.count({
+        where: { orgId: testOrgId, isActive: true },
       });
 
-      expect(sharedCount).toBe(3);
+      expect(activeCount).toBe(4);
     });
 
     it('should get most used templates (top 5)', async () => {
@@ -684,15 +656,13 @@ describe('Template Flow E2E Integration', () => {
       const template = await prisma.messageTemplate.create({
         data: {
           orgId: testOrgId,
-          userId: testUserId,
+          createdBy: testUserId,
           title: 'E2E Test Template',
-          titleAr: 'قالب اختبار شامل',
-          content: 'Hello {{customer_name}}, order {{order_number}} update',
+          contentEn: 'Hello {{customer_name}}, order {{order_number}} update',
           contentAr: 'مرحباً {{customer_name}}، تحديث طلب {{order_number}}',
           category: 'product_info',
           shortcut: '/e2e',
           variables: ['customer_name', 'order_number'],
-          isShared: true,
           isActive: true,
           usageCount: 0,
         },
@@ -715,13 +685,13 @@ describe('Template Flow E2E Integration', () => {
 
       // Step 3: Simulate AI suggestions (would be called with conversation context)
       // In real usage, this would analyze the conversation and suggest relevant templates
-      const suggestedTemplate = fetchedTemplates[0];
+      const suggestedTemplate = fetchedTemplates[0]!;
 
       // Step 4: Interpolate variables
       const service = new TemplateInterpolationService();
       const interpolated = service.interpolateBilingual(
         {
-          content: suggestedTemplate.content,
+          content: suggestedTemplate.contentEn,
           contentAr: suggestedTemplate.contentAr || '',
         },
         {
@@ -742,7 +712,6 @@ describe('Template Flow E2E Integration', () => {
         where: { id: template.id },
         data: {
           usageCount: { increment: 1 },
-          lastUsedAt: new Date(),
         },
       });
 
@@ -752,7 +721,6 @@ describe('Template Flow E2E Integration', () => {
       });
 
       expect(updatedTemplate?.usageCount).toBe(1);
-      expect(updatedTemplate?.lastUsedAt).toBeDefined();
 
       // Verify it appears in analytics
       const mostUsed = await prisma.messageTemplate.findMany({
@@ -769,15 +737,13 @@ describe('Template Flow E2E Integration', () => {
       const arabicTemplate = await prisma.messageTemplate.create({
         data: {
           orgId: testOrgId,
-          userId: testUserId,
+          createdBy: testUserId,
           title: 'رسالة ترحيب',
-          titleAr: 'رسالة ترحيب',
-          content: 'Welcome {{customer_name}}!',
+          contentEn: 'Welcome {{customer_name}}!',
           contentAr: 'مرحباً بك {{customer_name}}!',
           category: 'greeting',
           shortcut: '/welcome-ar',
           variables: ['customer_name'],
-          isShared: true,
           isActive: true,
           usageCount: 0,
         },
@@ -787,7 +753,7 @@ describe('Template Flow E2E Integration', () => {
       const service = new TemplateInterpolationService();
       const result = service.interpolateBilingual(
         {
-          content: arabicTemplate.content,
+          content: arabicTemplate.contentEn,
           contentAr: arabicTemplate.contentAr || '',
         },
         { customer_name: 'فاطمة' }

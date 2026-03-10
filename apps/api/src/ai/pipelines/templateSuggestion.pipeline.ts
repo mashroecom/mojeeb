@@ -6,8 +6,7 @@ import type { ConversationMessage } from '@mojeeb/shared-types';
 interface TemplateSuggestion {
   id: string;
   title: string;
-  titleAr: string;
-  content: string;
+  contentEn: string;
   contentAr: string;
   category: string | null;
   relevanceScore: number;
@@ -74,24 +73,19 @@ export class TemplateSuggestionPipeline {
         .filter((m) => m.role !== 'SYSTEM')
         .map((m) => ({
           role: m.role === 'CUSTOMER' ? ('user' as const) : ('assistant' as const),
-          content: this.annotateContentText(m.content, m.contentType),
+          content: this.annotateContentText(m.content, m.contentType as string),
         }));
 
-      // 2. Fetch available templates (active only, include both shared and user's personal)
+      // 2. Fetch available templates (active only)
       const templates = await prisma.messageTemplate.findMany({
         where: {
           orgId: params.orgId,
           isActive: true,
-          OR: [
-            { isShared: true },
-            { userId: params.userId || null },
-          ],
         },
         select: {
           id: true,
           title: true,
-          titleAr: true,
-          content: true,
+          contentEn: true,
           contentAr: true,
           category: true,
         },
@@ -106,9 +100,8 @@ export class TemplateSuggestionPipeline {
       const templateList = templates.map((t) => ({
         id: t.id,
         title: t.title,
-        titleAr: t.titleAr,
         category: t.category || 'uncategorized',
-        contentPreview: t.content.substring(0, 100),
+        contentPreview: t.contentEn.substring(0, 100),
       }));
 
       // 4. Use AI to rank templates
@@ -145,8 +138,7 @@ Which templates are most relevant for this conversation? Return top 3.`;
           return {
             id: template.id,
             title: template.title,
-            titleAr: template.titleAr,
-            content: template.content,
+            contentEn: template.contentEn,
             contentAr: template.contentAr,
             category: template.category,
             relevanceScore: ranking.relevance,

@@ -1,7 +1,45 @@
+/**
+ * @fileoverview Admin panel hooks for platform management and analytics.
+ *
+ * Provides 197+ React Query hooks for comprehensive administrative operations including:
+ * - Platform analytics (overview, growth, revenue trends)
+ * - User & organization management (CRUD, bulk operations, suspensions)
+ * - Subscription & billing management
+ * - System health monitoring (queues, database stats)
+ * - Content management (announcements, FAQs, testimonials)
+ * - Security (audit logs, sessions, blocked IPs, login activity)
+ * - Configuration management (feature flags, system config)
+ * - File management & statistics
+ * - Communications (bulk emails, notifications)
+ * - Entity management (agents, conversations, leads, knowledge bases)
+ * - Analytics (messages, sentiment, AI models, conversation quality)
+ * - Token usage tracking (by org, model, time period)
+ *
+ * All hooks require admin/superadmin privileges. Most mutations invalidate related
+ * query caches automatically. Some queries include auto-refresh intervals for real-time data.
+ *
+ * Query key factory `adminKeys` provides structured cache keys for all admin endpoints.
+ */
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+/**
+ * Query key factory for admin-related queries.
+ * Provides structured, hierarchical cache keys for React Query.
+ *
+ * @example
+ * // Simple key
+ * adminKeys.overview // ['admin', 'overview']
+ *
+ * @example
+ * // Parameterized key
+ * adminKeys.users({ page: 1, limit: 10 }) // ['admin', 'users', { page: 1, limit: 10 }]
+ *
+ * @example
+ * // Detail key
+ * adminKeys.userDetail('user-123') // ['admin', 'users', 'user-123']
+ */
 export const adminKeys = {
   siteSettings: ['admin', 'site-settings'] as const,
   plans: ['admin', 'plans'] as const,
@@ -141,7 +179,9 @@ export function useAdminOverview() {
   });
 }
 
-// Platform Growth
+/**
+ * Get platform growth analytics with optional date range and grouping.
+ */
 export function useAdminGrowth(params?: { startDate?: string; endDate?: string; groupBy?: string }) {
   return useQuery({
     queryKey: adminKeys.growth(params),
@@ -157,7 +197,9 @@ export function useAdminGrowth(params?: { startDate?: string; endDate?: string; 
   });
 }
 
-// Revenue
+/**
+ * Get platform revenue analytics and statistics.
+ */
 export function useAdminRevenue() {
   return useQuery({
     queryKey: adminKeys.revenue,
@@ -168,7 +210,9 @@ export function useAdminRevenue() {
   });
 }
 
-// Users
+/**
+ * List all users with pagination, search, and status filtering.
+ */
 export function useAdminUsers(params: { page: number; limit: number; search?: string; status?: string }) {
   return useQuery({
     queryKey: adminKeys.users(params),
@@ -185,6 +229,9 @@ export function useAdminUsers(params: { page: number; limit: number; search?: st
   });
 }
 
+/**
+ * Get detailed information for a specific user.
+ */
 export function useAdminUserDetail(userId: string) {
   return useQuery({
     queryKey: adminKeys.userDetail(userId),
@@ -196,6 +243,9 @@ export function useAdminUserDetail(userId: string) {
   });
 }
 
+/**
+ * Get API keys for a specific user with pagination.
+ */
 export function useAdminUserApiKeys(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ['admin', 'users', userId, 'api-keys', page, limit],
@@ -204,6 +254,9 @@ export function useAdminUserApiKeys(userId: string, page = 1, limit = 10) {
   });
 }
 
+/**
+ * Get conversations for a specific user with pagination.
+ */
 export function useAdminUserConversations(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ['admin', 'users', userId, 'conversations', page, limit],
@@ -212,6 +265,9 @@ export function useAdminUserConversations(userId: string, page = 1, limit = 10) 
   });
 }
 
+/**
+ * Get leads for a specific user with pagination.
+ */
 export function useAdminUserLeads(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ['admin', 'users', userId, 'leads', page, limit],
@@ -220,6 +276,9 @@ export function useAdminUserLeads(userId: string, page = 1, limit = 10) {
   });
 }
 
+/**
+ * Get notifications for a specific user with pagination.
+ */
 export function useAdminUserNotifications(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ['admin', 'users', userId, 'notifications', page, limit],
@@ -228,6 +287,9 @@ export function useAdminUserNotifications(userId: string, page = 1, limit = 10) 
   });
 }
 
+/**
+ * Get audit log actions for a specific user with pagination.
+ */
 export function useAdminUserActions(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ['admin', 'users', userId, 'actions', page, limit],
@@ -236,6 +298,10 @@ export function useAdminUserActions(userId: string, page = 1, limit = 10) {
   });
 }
 
+/**
+ * Toggle user suspension status.
+ * Invalidates the users list on success.
+ */
 export function useToggleUserSuspension() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -249,6 +315,10 @@ export function useToggleUserSuspension() {
   });
 }
 
+/**
+ * Delete a user permanently.
+ * Invalidates the users list on success.
+ */
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -262,6 +332,10 @@ export function useDeleteUser() {
   });
 }
 
+/**
+ * Suspend multiple users at once.
+ * Invalidates the users list on success.
+ */
 export function useBulkSuspendUsers() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -275,6 +349,10 @@ export function useBulkSuspendUsers() {
   });
 }
 
+/**
+ * Delete multiple users permanently.
+ * Invalidates the users list on success.
+ */
 export function useBulkDeleteUsers() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -288,6 +366,10 @@ export function useBulkDeleteUsers() {
   });
 }
 
+/**
+ * Unsuspend multiple users at once.
+ * Invalidates the users list on success.
+ */
 export function useBulkUnsuspendUsers() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -301,7 +383,9 @@ export function useBulkUnsuspendUsers() {
   });
 }
 
-// Organizations
+/**
+ * List all organizations with pagination, search, and status filtering.
+ */
 export function useAdminOrganizations(params: { page: number; limit: number; search?: string; status?: string }) {
   return useQuery({
     queryKey: adminKeys.orgs(params),
@@ -318,6 +402,9 @@ export function useAdminOrganizations(params: { page: number; limit: number; sea
   });
 }
 
+/**
+ * Get detailed information for a specific organization.
+ */
 export function useAdminOrgDetail(orgId: string) {
   return useQuery({
     queryKey: adminKeys.orgDetail(orgId),
