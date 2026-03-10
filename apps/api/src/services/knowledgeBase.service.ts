@@ -4,6 +4,7 @@ import { NotFoundError, BadRequestError } from '../utils/errors';
 import { getAIProvider } from '../ai/index';
 import { logger } from '../config/logger';
 import pdfParse from 'pdf-parse';
+import { crawlerService } from './crawler.service';
 
 export class KnowledgeBaseService {
   async create(orgId: string, data: { name: string; description?: string }) {
@@ -112,31 +113,12 @@ export class KnowledgeBaseService {
 
   private async crawlURL(url: string): Promise<string> {
     try {
-      const response = await fetch(url, {
-        headers: { 'User-Agent': 'MojeebBot/1.0' },
-        signal: AbortSignal.timeout(15000),
+      // Use the new crawler service with cheerio-based extraction
+      const result = await crawlerService.crawlUrl(url, {
+        respectRobotsTxt: true,
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const html = await response.text();
 
-      // Simple HTML-to-text: strip tags, decode entities, clean whitespace
-      const text = html
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-        .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
-        .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      return text;
+      return result.text;
     } catch (err) {
       logger.error({ err, url }, 'URL crawling failed');
       throw new BadRequestError('Failed to crawl URL');
@@ -172,6 +154,70 @@ export class KnowledgeBaseService {
     });
     if (!doc) throw new NotFoundError('Document not found');
     return prisma.kBDocument.delete({ where: { id: docId } });
+  }
+
+  async createCrawlJob(
+    kbId: string,
+    data: {
+      startUrl: string;
+      maxDepth?: number;
+      urlPattern?: string;
+      configId?: string;
+    }
+  ) {
+    // Validate knowledge base exists
+    const kb = await prisma.knowledgeBase.findUnique({
+      where: { id: kbId },
+    });
+    if (!kb) throw new NotFoundError('Knowledge base not found');
+
+    // Validate URL
+    try {
+      new URL(data.startUrl);
+    } catch (err) {
+      throw new BadRequestError('Invalid URL format');
+    }
+
+    // Create crawl job
+    const crawlJob = await prisma.crawlJob.create({
+      data: {
+        knowledgeBaseId: kbId,
+        startUrl: data.startUrl,
+        configId: data.configId,
+        status: 'PENDING',
+        pagesTotal: 0,
+        pagesCrawled: 0,
+      },
+      include: {
+        config: true,
+      },
+    });
+
+    return crawlJob;
+  }
+
+  async getCrawlJob(jobId: string) {
+    const job = await prisma.crawlJob.findUnique({
+      where: { id: jobId },
+      include: {
+        config: true,
+        knowledgeBase: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+    if (!job) throw new NotFoundError('Crawl job not found');
+    return job;
+  }
+
+  async listCrawlJobs(kbId: string) {
+    return prisma.crawlJob.findMany({
+      where: { knowledgeBaseId: kbId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        config: true,
+      },
+    });
   }
 
   private async processDocument(documentId: string) {
