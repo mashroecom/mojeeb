@@ -5,7 +5,8 @@ import { useTranslations, useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Section } from './SectionWrapper';
 import { api } from '@/lib/api';
-import { AlertTriangle, Loader2, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Loader2, Trash2 } from 'lucide-react';
+import { Dialog } from '@/components/ui/Dialog';
 
 const inputClass =
   'w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
@@ -80,100 +81,92 @@ export function DangerZoneSection({
       </Section>
 
       {/* Delete Account Confirmation Modal */}
-      {showDeleteAccountModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/50"
+      <Dialog
+        open={showDeleteAccountModal}
+        onOpenChange={(open) => {
+          setShowDeleteAccountModal(open);
+          if (!open) {
+            setDeleteAccountConfirmText('');
+            setDeleteAccountError('');
+          }
+        }}
+        size="md"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-destructive">{t('deleteAccount')}</h3>
+            <p className="mt-1.5 text-sm text-muted-foreground">{t('deleteAccountConfirm')}</p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label htmlFor="deleteAccountConfirm" className="block text-sm font-medium mb-1.5">
+            {t('typeDeleteToConfirm')}
+          </label>
+          <input
+            id="deleteAccountConfirm"
+            type="text"
+            value={deleteAccountConfirmText}
+            onChange={(e) => setDeleteAccountConfirmText(e.target.value)}
+            placeholder={t('deleteKeyword')}
+            className={inputClass}
+            dir={locale === 'ar' ? 'rtl' : 'ltr'}
+          />
+        </div>
+
+        {deleteAccountError && (
+          <div className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+            {deleteAccountError}
+          </div>
+        )}
+
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            type="button"
             onClick={() => {
               setShowDeleteAccountModal(false);
               setDeleteAccountConfirmText('');
+              setDeleteAccountError('');
             }}
-          />
-          <div className="relative z-10 w-full max-w-md rounded-xl border bg-card p-6 shadow-lg mx-4">
-            <button
-              type="button"
-              onClick={() => {
-                setShowDeleteAccountModal(false);
-                setDeleteAccountConfirmText('');
-              }}
-              className="absolute top-4 end-4 p-1 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-              </div>
-              <h3 className="text-lg font-semibold text-destructive">{t('deleteAccount')}</h3>
-            </div>
-
-            <p className="text-sm text-muted-foreground mb-4">{t('deleteAccountConfirm')}</p>
-
-            <div className="mb-4">
-              <label htmlFor="deleteAccountConfirm" className="block text-sm font-medium mb-1.5">
-                {t('typeDeleteToConfirm')}
-              </label>
-              <input
-                id="deleteAccountConfirm"
-                type="text"
-                value={deleteAccountConfirmText}
-                onChange={(e) => setDeleteAccountConfirmText(e.target.value)}
-                placeholder={t('deleteKeyword')}
-                className={inputClass}
-                dir={locale === 'ar' ? 'rtl' : 'ltr'}
-              />
-            </div>
-
-            {deleteAccountError && (
-              <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                {deleteAccountError}
-              </div>
+            className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
+            {t('deleteAccountCancel')}
+          </button>
+          <button
+            type="button"
+            disabled={deleteAccountLoading || deleteAccountConfirmText !== deleteKeyword}
+            onClick={async () => {
+              setDeleteAccountLoading(true);
+              setDeleteAccountError('');
+              try {
+                await api.delete('/auth/me');
+                clearAuth();
+                routerPush('/login');
+              } catch {
+                setDeleteAccountLoading(false);
+                setDeleteAccountError(t('deleteAccountFailed'));
+              }
+            }}
+            className={cn(
+              'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+              'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+              (deleteAccountLoading || deleteAccountConfirmText !== deleteKeyword) &&
+                'cursor-not-allowed opacity-50',
             )}
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                disabled={deleteAccountLoading || deleteAccountConfirmText !== deleteKeyword}
-                onClick={async () => {
-                  setDeleteAccountLoading(true);
-                  setDeleteAccountError('');
-                  try {
-                    await api.delete('/auth/me');
-                    clearAuth();
-                    routerPush('/login');
-                  } catch {
-                    setDeleteAccountLoading(false);
-                    setDeleteAccountError(t('deleteAccountFailed'));
-                  }
-                }}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90',
-                  (deleteAccountLoading || deleteAccountConfirmText !== deleteKeyword) &&
-                    'cursor-not-allowed opacity-50',
-                )}
-              >
-                {deleteAccountLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-                {t('deleteAccountButton')}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteAccountModal(false);
-                  setDeleteAccountConfirmText('');
-                }}
-                className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-              >
-                {t('deleteAccountCancel')}
-              </button>
-            </div>
-          </div>
+          >
+            {deleteAccountLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+            {t('deleteAccountButton')}
+          </button>
         </div>
-      )}
+      </Dialog>
     </>
   );
 }
