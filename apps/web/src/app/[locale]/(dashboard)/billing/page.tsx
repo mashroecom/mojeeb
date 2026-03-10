@@ -11,6 +11,7 @@ import { useLocale } from 'next-intl';
 import { fmtDate } from '@/lib/dateFormat';
 import { api } from '@/lib/api';
 import { SpendingCapSection } from './_components/SpendingCapSection';
+import { UsageTrendsChart } from './_components/UsageTrendsChart';
 import {
   MessageSquare,
   Bot,
@@ -490,6 +491,16 @@ export default function BillingPage() {
                 onSave={handleSpendingCapSave}
                 isSaving={spendingCapSaving}
                 showSaved={spendingCapSaved}
+              />
+            </div>
+          )}
+
+          {/* Usage Trends Chart */}
+          {subscription && (
+            <div className="mb-6">
+              <UsageTrendsChart
+                aiConversationsUsed={subscription.aiConversationsUsed}
+                aiConversationsLimit={subscription.aiConversationsLimit}
               />
             </div>
           )}

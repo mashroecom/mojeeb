@@ -1037,7 +1037,16 @@
       "saved": "تم الحفظ",
       "overagePricing": "تسعير الاستخدام الزائد",
       "overagePrice": "${price} لكل محادثة ذكاء اصطناعي",
-      "overageDescription": "رسوم إضافية بعد الوصول إلى حد خطتك"
+      "overageDescription": "رسوم إضافية بعد الوصول إلى حد خطتك",
+      "usageTrends": "اتجاهات استخدام الذكاء الاصطناعي",
+      "usageTrendsSubtitle": "تتبع استخدامك لمحادثات الذكاء الاصطناعي عبر الوقت",
+      "daily": "يومي",
+      "weekly": "أسبوعي",
+      "monthly": "شهري",
+      "last14Days": "آخر 14 يوم",
+      "last8Weeks": "آخر 8 أسابيع",
+      "last6Months": "آخر 6 أشهر",
+      "total": "المجموع"
     },
     "customers": {
       "title": "العملاء",

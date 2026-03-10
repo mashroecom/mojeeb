@@ -1088,7 +1088,16 @@
       "saved": "Saved",
       "overagePricing": "Overage Pricing",
       "overagePrice": "${price} per AI conversation",
-      "overageDescription": "Additional charges after reaching your plan limit"
+      "overageDescription": "Additional charges after reaching your plan limit",
+      "usageTrends": "AI Usage Trends",
+      "usageTrendsSubtitle": "Track your AI conversation usage over time",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "last14Days": "Last 14 days",
+      "last8Weeks": "Last 8 weeks",
+      "last6Months": "Last 6 months",
+      "total": "Total"
     },
     "team": {
       "title": "Team Management",
