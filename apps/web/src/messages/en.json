@@ -1008,6 +1008,7 @@
       "searchLeads": "Search leads...",
       "export": "Export CSV",
       "noLeads": "No leads found",
+      "noLeadsDescription": "Start capturing leads from conversations or create one manually.",
       "minConfidence": "Min Confidence",
       "allSources": "All Sources",
       "name": "Name",
