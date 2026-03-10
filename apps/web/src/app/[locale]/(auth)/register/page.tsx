@@ -84,6 +84,7 @@ export default function RegisterPage() {
         {error && (
           <div
             role="alert"
+            aria-live="polite"
             className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
           >
             {error}
