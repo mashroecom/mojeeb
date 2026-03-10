@@ -4,6 +4,7 @@ import { buildSystemPrompt } from '../prompts/system';
 import { analysisPipeline } from './analysis.pipeline';
 import { prisma } from '../../config/database';
 import { logger } from '../../config/logger';
+import { cache } from '../../config/cache';
 import type {
   AIResponse,
   EmotionResult,
@@ -284,7 +285,14 @@ export class ResponsePipeline {
 
     try {
       const provider = getAIProvider('OPENAI');
-      const queryEmbedding = await provider.generateEmbedding(query);
+
+      // Cache embeddings with 24-hour TTL (86400 seconds)
+      const queryEmbedding = await cache.getOrSet(
+        `embedding:${query}`,
+        86400,
+        async () => provider.generateEmbedding(query)
+      );
+
       const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
       // Top 3 chunks (reduced from 5 — saves ~40% KB tokens)

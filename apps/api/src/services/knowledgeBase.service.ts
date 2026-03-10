@@ -3,6 +3,7 @@ import { prisma } from '../config/database';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { getAIProvider } from '../ai/index';
 import { logger } from '../config/logger';
+import { cache } from '../config/cache';
 import pdfParse from 'pdf-parse';
 
 export class KnowledgeBaseService {
@@ -145,7 +146,17 @@ export class KnowledgeBaseService {
 
   async semanticSearch(kbId: string, query: string, limit: number = 5) {
     const provider = getAIProvider('OPENAI');
-    const queryEmbedding = await provider.generateEmbedding(query);
+
+    // Cache key for query embedding
+    const cacheKey = `kb:embedding:${crypto.createHash('sha256').update(query).digest('hex')}`;
+
+    // Get or generate embedding with cache (24-hour TTL)
+    const queryEmbedding = await cache.getOrSet<number[]>(
+      cacheKey,
+      86400, // 24 hours
+      async () => await provider.generateEmbedding(query)
+    );
+
     const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
     // Find documents that belong to this KB
