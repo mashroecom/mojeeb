@@ -3811,5 +3811,12 @@
       "resources": "Resources"
     },
     "userId": "User ID"
+  },
+  "mobile": {
+    "nav": {
+      "inbox": "Inbox",
+      "analytics": "Analytics",
+      "profile": "Profile"
+    }
   }
 }
