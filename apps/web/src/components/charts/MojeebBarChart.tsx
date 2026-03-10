@@ -17,8 +17,10 @@ interface DataPoint {
 }
 
 interface BarConfig {
-  dataKey: string;
+  dataKey?: string;
+  key?: string; // alias for dataKey
   fill?: string;
+  color?: string; // alias for fill
   name?: string;
   stackId?: string;
 }
@@ -26,7 +28,8 @@ interface BarConfig {
 interface MojeebBarChartProps {
   data: DataPoint[];
   bars: BarConfig[];
-  xAxisKey: string;
+  xAxisKey?: string;
+  xKey?: string; // alias for xAxisKey
   title?: string;
   height?: number;
   isLoading?: boolean;
@@ -34,6 +37,9 @@ interface MojeebBarChartProps {
   showLegend?: boolean;
   showTooltip?: boolean;
   emptyMessage?: string;
+  noDataMessage?: string; // alias for emptyMessage
+  formatX?: (value: any) => string;
+  formatY?: (value: any) => string;
 }
 
 const DEFAULT_COLORS = [
@@ -49,14 +55,20 @@ export function MojeebBarChart({
   data,
   bars,
   xAxisKey,
+  xKey,
   title,
   height = 300,
   isLoading = false,
   showGrid = true,
   showLegend = true,
   showTooltip = true,
-  emptyMessage = 'No data available',
+  emptyMessage,
+  noDataMessage,
+  formatX,
+  formatY,
 }: MojeebBarChartProps) {
+  const actualXKey = xAxisKey || xKey || 'x';
+  const actualEmptyMessage = emptyMessage || noDataMessage || 'No data available';
   if (isLoading) {
     return (
       <div className="rounded-lg border bg-card p-6">
@@ -87,7 +99,7 @@ export function MojeebBarChart({
           style={{ height }}
         >
           <AlertCircle className="h-10 w-10 mb-3 opacity-40" />
-          <p className="text-sm">{emptyMessage}</p>
+          <p className="text-sm">{actualEmptyMessage}</p>
         </div>
       </div>
     );
@@ -108,13 +120,15 @@ export function MojeebBarChart({
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           )}
           <XAxis
-            dataKey={xAxisKey}
+            dataKey={actualXKey}
             className="text-xs text-muted-foreground"
             tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            tickFormatter={formatX}
           />
           <YAxis
             className="text-xs text-muted-foreground"
             tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            tickFormatter={formatY}
           />
           {showTooltip && (
             <Tooltip
@@ -127,15 +141,19 @@ export function MojeebBarChart({
             />
           )}
           {showLegend && <Legend />}
-          {bars.map((bar, index) => (
-            <Bar
-              key={bar.dataKey}
-              dataKey={bar.dataKey}
-              fill={bar.fill || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
-              name={bar.name || bar.dataKey}
-              stackId={bar.stackId}
-            />
-          ))}
+          {bars.map((bar, index) => {
+            const dataKey = bar.dataKey || bar.key || `bar-${index}`;
+            const fill = bar.fill || bar.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length];
+            return (
+              <Bar
+                key={dataKey}
+                dataKey={dataKey}
+                fill={fill}
+                name={bar.name || dataKey}
+                stackId={bar.stackId}
+              />
+            );
+          })}
         </BarChart>
       </ResponsiveContainer>
     </div>

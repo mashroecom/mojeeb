@@ -211,6 +211,7 @@ export function MessageInput({
           >
             <FileText className="h-4 w-4" />
           </button>
+        )}
 
         <textarea
           ref={textareaRef}

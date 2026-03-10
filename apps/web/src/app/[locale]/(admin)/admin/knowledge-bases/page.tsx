@@ -6,6 +6,7 @@ import { fmtDateTime } from '@/lib/dateFormat';
 import {
   useAdminKnowledgeBases,
   useAdminKnowledgeBaseStats,
+  useAdminKBHealth,
   useDeleteAdminKnowledgeBase,
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';

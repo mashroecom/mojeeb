@@ -24,6 +24,7 @@ interface MojeebDonutChartProps {
   showLegend?: boolean;
   showTooltip?: boolean;
   emptyMessage?: string;
+  noDataMessage?: string; // alias for emptyMessage
   innerRadius?: number;
   outerRadius?: number;
 }
@@ -46,10 +47,12 @@ export function MojeebDonutChart({
   isLoading = false,
   showLegend = true,
   showTooltip = true,
-  emptyMessage = 'No data available',
+  emptyMessage,
+  noDataMessage,
   innerRadius = 60,
   outerRadius = 100,
 }: MojeebDonutChartProps) {
+  const actualEmptyMessage = emptyMessage || noDataMessage || 'No data available';
   if (isLoading) {
     return (
       <div className="rounded-lg border bg-card p-6">
@@ -80,7 +83,7 @@ export function MojeebDonutChart({
           style={{ height }}
         >
           <AlertCircle className="h-10 w-10 mb-3 opacity-40" />
-          <p className="text-sm">{emptyMessage}</p>
+          <p className="text-sm">{actualEmptyMessage}</p>
         </div>
       </div>
     );

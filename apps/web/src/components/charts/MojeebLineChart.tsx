@@ -17,8 +17,10 @@ interface DataPoint {
 }
 
 interface LineConfig {
-  dataKey: string;
+  dataKey?: string;
+  key?: string; // alias for dataKey
   stroke?: string;
+  color?: string; // alias for stroke
   name?: string;
   strokeWidth?: number;
 }
@@ -26,7 +28,8 @@ interface LineConfig {
 interface MojeebLineChartProps {
   data: DataPoint[];
   lines: LineConfig[];
-  xAxisKey: string;
+  xAxisKey?: string;
+  xKey?: string; // alias for xAxisKey
   title?: string;
   height?: number;
   isLoading?: boolean;
@@ -34,6 +37,9 @@ interface MojeebLineChartProps {
   showLegend?: boolean;
   showTooltip?: boolean;
   emptyMessage?: string;
+  noDataMessage?: string; // alias for emptyMessage
+  formatX?: (value: any) => string;
+  formatY?: (value: any) => string;
 }
 
 const DEFAULT_COLORS = [
@@ -49,14 +55,20 @@ export function MojeebLineChart({
   data,
   lines,
   xAxisKey,
+  xKey,
   title,
   height = 300,
   isLoading = false,
   showGrid = true,
   showLegend = true,
   showTooltip = true,
-  emptyMessage = 'No data available',
+  emptyMessage,
+  noDataMessage,
+  formatX,
+  formatY,
 }: MojeebLineChartProps) {
+  const actualXKey = xAxisKey || xKey || 'x';
+  const actualEmptyMessage = emptyMessage || noDataMessage || 'No data available';
   if (isLoading) {
     return (
       <div className="rounded-lg border bg-card p-6">
@@ -87,7 +99,7 @@ export function MojeebLineChart({
           style={{ height }}
         >
           <AlertCircle className="h-10 w-10 mb-3 opacity-40" />
-          <p className="text-sm">{emptyMessage}</p>
+          <p className="text-sm">{actualEmptyMessage}</p>
         </div>
       </div>
     );
@@ -108,13 +120,15 @@ export function MojeebLineChart({
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           )}
           <XAxis
-            dataKey={xAxisKey}
+            dataKey={actualXKey}
             className="text-xs text-muted-foreground"
             tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            tickFormatter={formatX}
           />
           <YAxis
             className="text-xs text-muted-foreground"
             tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            tickFormatter={formatY}
           />
           {showTooltip && (
             <Tooltip
@@ -127,18 +141,22 @@ export function MojeebLineChart({
             />
           )}
           {showLegend && <Legend />}
-          {lines.map((line, index) => (
-            <Line
-              key={line.dataKey}
-              type="monotone"
-              dataKey={line.dataKey}
-              stroke={line.stroke || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
-              strokeWidth={line.strokeWidth || 2}
-              name={line.name || line.dataKey}
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
-            />
-          ))}
+          {lines.map((line, index) => {
+            const dataKey = line.dataKey || line.key || `line-${index}`;
+            const stroke = line.stroke || line.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length];
+            return (
+              <Line
+                key={dataKey}
+                type="monotone"
+                dataKey={dataKey}
+                stroke={stroke}
+                strokeWidth={line.strokeWidth || 2}
+                name={line.name || dataKey}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+            );
+          })}
         </LineChart>
       </ResponsiveContainer>
     </div>

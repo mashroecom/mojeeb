@@ -229,7 +229,7 @@ export function TemplatePicker({
     return (
       <button
         key={`${type}-${template.id}`}
-        ref={(el) => (itemRefs.current[index] = el)}
+        ref={(el) => { itemRefs.current[index] = el; }}
         onClick={() => handleSelectTemplate(template)}
         className={cn(
           'w-full text-start p-3 rounded-lg border transition-colors',
