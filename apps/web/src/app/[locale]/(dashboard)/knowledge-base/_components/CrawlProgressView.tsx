@@ -205,7 +205,7 @@ export function CrawlProgressView({ jobId, kbId }: CrawlProgressViewProps) {
         )}
         {job.completedAt && (
           <div>
-            <span className="font-medium">{tc('common.completed')}:</span>{' '}
+            <span className="font-medium">{t('completed')}:</span>{' '}
             {fmtDate(job.completedAt, locale)}
           </div>
         )}

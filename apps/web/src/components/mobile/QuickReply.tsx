@@ -108,7 +108,7 @@ export function QuickReply({
   }
 
   function getTemplateTitle(template: MessageTemplate): string {
-    return locale === 'ar' && template.titleAr ? template.titleAr : template.title;
+    return template.title;
   }
 
   function interpolateVariables(content: string): string {
