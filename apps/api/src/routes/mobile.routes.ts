@@ -406,4 +406,79 @@ router.get('/push/subscriptions', async (req: Request, res: Response, next: Next
   }
 });
 
+// GET /analytics/dashboard - Mobile dashboard analytics with key metrics
+router.get('/analytics/dashboard', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const orgId = req.query.orgId as string | undefined;
+
+    // Get user's organizations
+    const memberships = await prisma.orgMembership.findMany({
+      where: { userId },
+      select: { orgId: true },
+    });
+    const orgIds = memberships.map((m) => m.orgId);
+
+    if (orgIds.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+      });
+    }
+
+    const now = new Date();
+    const currentStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const previousStart = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const orgFilter = orgId ? orgId : { in: orgIds };
+
+    const changePercent = (current: number, previous: number): number => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return Math.round(((current - previous) / previous) * 10000) / 100;
+    };
+
+    const [
+      currentConversations, previousConversations,
+      currentMessages, previousMessages,
+      activeConversations,
+      resolvedConversations,
+      conversationsToday,
+      currentAvgMessageCount, previousAvgMessageCount,
+    ] = await Promise.all([
+      prisma.conversation.count({ where: { orgId: orgFilter, createdAt: { gte: currentStart, lte: now } } }),
+      prisma.conversation.count({ where: { orgId: orgFilter, createdAt: { gte: previousStart, lte: currentStart } } }),
+      prisma.message.count({ where: { conversation: { orgId: orgFilter }, createdAt: { gte: currentStart, lte: now } } }),
+      prisma.message.count({ where: { conversation: { orgId: orgFilter }, createdAt: { gte: previousStart, lte: currentStart } } }),
+      prisma.conversation.count({ where: { orgId: orgFilter, status: 'ACTIVE' } }),
+      prisma.conversation.count({ where: { orgId: orgFilter, status: 'RESOLVED', resolvedAt: { gte: currentStart, lte: now } } }),
+      prisma.conversation.count({ where: { orgId: orgFilter, createdAt: { gte: todayStart } } }),
+      prisma.conversation.aggregate({
+        where: { orgId: orgFilter, createdAt: { gte: currentStart, lte: now } },
+        _avg: { messageCount: true },
+      }),
+      prisma.conversation.aggregate({
+        where: { orgId: orgFilter, createdAt: { gte: previousStart, lte: currentStart } },
+        _avg: { messageCount: true },
+      }),
+    ]);
+
+    const avgMsgCurrent = currentAvgMessageCount._avg.messageCount || 0;
+    const avgMsgPrevious = previousAvgMessageCount._avg.messageCount || 0;
+
+    const metrics = [
+      { label: 'totalConversations', value: currentConversations, previousValue: previousConversations, changePercent: changePercent(currentConversations, previousConversations) },
+      { label: 'totalMessages', value: currentMessages, previousValue: previousMessages, changePercent: changePercent(currentMessages, previousMessages) },
+      { label: 'activeConversations', value: activeConversations, previousValue: 0, changePercent: 0 },
+      { label: 'resolvedConversations', value: resolvedConversations, previousValue: 0, changePercent: 0 },
+      { label: 'avgMessagesPerConversation', value: avgMsgCurrent, previousValue: avgMsgPrevious, changePercent: changePercent(avgMsgCurrent, avgMsgPrevious) },
+      { label: 'conversationsToday', value: conversationsToday, previousValue: 0, changePercent: 0 },
+    ];
+
+    res.json({ success: true, data: metrics });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
