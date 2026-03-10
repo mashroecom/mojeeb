@@ -520,112 +520,50 @@ export class SubscriptionService {
    * Verify a Kashier webhook signature.
    */
   async verifyWebhookSignature(rawBody: string, signature: string): Promise<boolean> {
-    const kashier = await getKashierConfig();
-    const expectedSignature = crypto
-      .createHmac('sha256', kashier.webhookSecret)
-      .update(rawBody)
-      .digest('hex');
-    return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature, 'hex'),
-      Buffer.from(signature, 'hex'),
-    );
+    // Delegate to KashierProvider
+    const provider = getPaymentProvider(PaymentGateway.KASHIER);
+
+    // Create a mock Request object with required properties
+    const mockReq = {
+      headers: { 'x-kashier-signature': signature },
+      rawBody,
+    } as any;
+
+    return provider.verifyWebhook(mockReq);
   }
 
   /**
    * Handle a Kashier payment webhook event.
    */
   async handlePaymentWebhook(payload: KashierWebhookPayload) {
-    const { data } = payload;
-
-    logger.info(
-      { orderId: data.merchantOrderId, status: data.status, event: payload.event },
-      'Processing Kashier webhook',
-    );
-
-    // Find the invoice by Kashier order ID
-    const invoice = await prisma.invoice.findUnique({
-      where: { kashierOrderId: data.merchantOrderId },
-      include: { subscription: true },
-    });
-
-    if (!invoice) {
-      logger.warn({ orderId: data.merchantOrderId }, 'Invoice not found for Kashier webhook');
-      return;
-    }
-
-    if (data.status === 'SUCCESS') {
-      // Determine the new plan from the payment amount
-      const amount = Number(data.amount);
-      const result = await planConfigService.getPlanByPrice(amount);
-      if (!result) {
-        logger.error({ amount }, 'Unknown payment amount - cannot determine plan');
-        return;
-      }
-
-      const { plan: newPlan, billingCycle } = result;
-      const limits = await planConfigService.getLimits(newPlan);
-      const now = new Date();
-      const periodEnd = new Date(now);
-      periodEnd.setMonth(periodEnd.getMonth() + (billingCycle === 'yearly' ? 12 : 1));
-
-      // Update subscription with new plan and reset usage counters
-      await prisma.subscription.update({
-        where: { id: invoice.subscriptionId },
-        data: {
-          plan: newPlan,
-          status: 'ACTIVE',
-          kashierCustomerId: data.customerReference,
-          currentPeriodStart: now,
-          currentPeriodEnd: periodEnd,
-          cancelAtPeriodEnd: false,
-          messagesUsed: 0,
-          messagesLimit: safeLimit(limits.messagesPerMonth),
-          agentsLimit: safeLimit(limits.maxAgents),
-          integrationsLimit: safeLimit(limits.maxChannels),
-        },
-      });
-
-      // Mark the invoice as paid
-      await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
-          status: 'PAID',
-          kashierPaymentId: data.transactionId,
-          paidAt: now,
-        },
-      });
-
-      await cache.del(`subscription:${invoice.subscription.orgId}`);
-
-      logger.info(
-        { orgId: invoice.subscription.orgId, newPlan },
-        'Subscription upgraded successfully',
-      );
-    } else if (data.status === 'FAILED') {
-      // Mark the invoice as failed
-      await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: { status: 'FAILED' },
-      });
-
-      logger.warn(
-        { orgId: invoice.subscription.orgId, orderId: data.merchantOrderId },
-        'Payment failed',
-      );
-    }
-    // PENDING status: do nothing, wait for final status
+    // Delegate to KashierProvider
+    const provider = getPaymentProvider(PaymentGateway.KASHIER);
+    await provider.handleWebhook(payload as any);
   }
 
   /**
    * Verify a Stripe webhook signature.
    */
   async verifyStripeWebhookSignature(rawBody: string, signature: string): Promise<Stripe.Event> {
+    // Delegate verification to StripeProvider
+    const provider = getPaymentProvider(PaymentGateway.STRIPE);
+
+    // Create a mock Request object with required properties
+    const mockReq = {
+      headers: { 'stripe-signature': signature },
+      rawBody,
+    } as any;
+
+    const isValid = await provider.verifyWebhook(mockReq);
+    if (!isValid) {
+      throw new BadRequestError('Invalid Stripe webhook signature.');
+    }
+
+    // Stripe's verification requires constructing the event, so we need to do it again
+    // to return it. This is a limitation of Stripe's SDK where verification and event
+    // construction are tied together.
     const stripe = await getStripeClient();
     const stripeConfig = await getStripeConfig();
-
-    if (!stripeConfig.webhookSecret) {
-      throw new BadRequestError('Stripe webhook secret is not configured.');
-    }
 
     try {
       return stripe.webhooks.constructEvent(rawBody, signature, stripeConfig.webhookSecret);
@@ -639,27 +577,9 @@ export class SubscriptionService {
    * Handle a Stripe webhook event.
    */
   async handleStripeWebhook(event: Stripe.Event) {
-    logger.info({ type: event.type, id: event.id }, 'Processing Stripe webhook');
-
-    switch (event.type) {
-      case 'checkout.session.completed':
-        await this.handleStripeCheckoutCompleted(event);
-        break;
-      case 'payment_intent.succeeded':
-        await this.handleStripePaymentSucceeded(event);
-        break;
-      case 'payment_intent.payment_failed':
-        await this.handleStripePaymentFailed(event);
-        break;
-      case 'invoice.paid':
-        await this.handleStripeInvoicePaid(event);
-        break;
-      case 'invoice.payment_failed':
-        await this.handleStripeInvoicePaymentFailed(event);
-        break;
-      default:
-        logger.info({ type: event.type }, 'Unhandled Stripe webhook event type');
-    }
+    // Delegate to StripeProvider
+    const provider = getPaymentProvider(PaymentGateway.STRIPE);
+    await provider.handleWebhook(event as any);
   }
 
   /**
@@ -808,62 +728,25 @@ export class SubscriptionService {
     rawBody: string,
     headers: Record<string, string>,
   ): Promise<boolean> {
-    const paypalConfig = await getPayPalConfig();
+    // Delegate to PayPalProvider
+    const provider = getPaymentProvider(PaymentGateway.PAYPAL);
 
-    if (!paypalConfig.webhookId) {
-      throw new BadRequestError('PayPal webhook ID is not configured.');
-    }
+    // Create a mock Request object with required properties
+    const mockReq = {
+      headers,
+      rawBody,
+    } as any;
 
-    try {
-      const paypalClientInstance = await getPayPalClient();
-
-      const verifyRequest = {
-        auth_algo: headers['paypal-auth-algo'],
-        cert_url: headers['paypal-cert-url'],
-        transmission_id: headers['paypal-transmission-id'],
-        transmission_sig: headers['paypal-transmission-sig'],
-        transmission_time: headers['paypal-transmission-time'],
-        webhook_id: paypalConfig.webhookId,
-        webhook_event: JSON.parse(rawBody),
-      };
-
-      // PayPal SDK doesn't have a built-in webhook verification method in checkout-server-sdk
-      // For production, you would need to implement proper webhook verification
-      // For now, we'll do a basic validation
-      const hasRequiredHeaders =
-        verifyRequest.auth_algo &&
-        verifyRequest.cert_url &&
-        verifyRequest.transmission_id &&
-        verifyRequest.transmission_sig &&
-        verifyRequest.transmission_time;
-
-      return !!hasRequiredHeaders;
-    } catch (error) {
-      logger.error({ error }, 'PayPal webhook signature verification failed');
-      return false;
-    }
+    return provider.verifyWebhook(mockReq);
   }
 
   /**
    * Handle a PayPal webhook event.
    */
   async handlePayPalWebhook(payload: PayPalWebhookPayload) {
-    logger.info({ type: payload.event_type, id: payload.resource.id }, 'Processing PayPal webhook');
-
-    switch (payload.event_type) {
-      case 'PAYMENT.CAPTURE.COMPLETED':
-        await this.handlePayPalCaptureCompleted(payload);
-        break;
-      case 'PAYMENT.CAPTURE.DENIED':
-      case 'PAYMENT.CAPTURE.DECLINED':
-        await this.handlePayPalCaptureFailed(payload);
-        break;
-      case 'CHECKOUT.ORDER.APPROVED':
-        await this.handlePayPalOrderApproved(payload);
-        break;
-      default:
-        logger.info({ type: payload.event_type }, 'Unhandled PayPal webhook event type');
-    }
+    // Delegate to PayPalProvider
+    const provider = getPaymentProvider(PaymentGateway.PAYPAL);
+    await provider.handleWebhook(payload as any);
   }
 
   /**
