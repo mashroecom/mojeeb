@@ -3816,7 +3816,13 @@
     "nav": {
       "inbox": "Inbox",
       "analytics": "Analytics",
-      "profile": "Profile"
+      "profile": "Profile",
+      "active": "Active",
+      "inactive": "Inactive",
+      "updating": "Updating...",
+      "agentActivated": "Agent activated successfully",
+      "agentDeactivated": "Agent deactivated successfully",
+      "agentUpdateError": "Failed to update agent status"
     },
     "inbox": {
       "title": "Inbox",

@@ -3816,7 +3816,13 @@
     "nav": {
       "inbox": "صندوق الوارد",
       "analytics": "التحليلات",
-      "profile": "الملف الشخصي"
+      "profile": "الملف الشخصي",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "updating": "جاري التحديث...",
+      "agentActivated": "تم تفعيل الوكيل بنجاح",
+      "agentDeactivated": "تم تعطيل الوكيل بنجاح",
+      "agentUpdateError": "فشل تحديث حالة الوكيل"
     },
     "inbox": {
       "title": "صندوق الوارد",
