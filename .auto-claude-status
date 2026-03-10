@@ -3,23 +3,23 @@
   "spec": "041-knowledge-base-url-scraping-auto-sync",
   "state": "building",
   "subtasks": {
-    "completed": 15,
+    "completed": 18,
     "total": 19,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Frontend Crawl Configuration UI",
+    "current": "End-to-End Integration Testing",
     "id": null,
-    "total": 5
+    "total": 3
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 17,
+    "number": 20,
     "started_at": "2026-03-10T02:52:16.740572"
   },
-  "last_update": "2026-03-10T03:57:09.335117"
+  "last_update": "2026-03-10T04:15:22.030701"
 }
