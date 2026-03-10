@@ -3825,6 +3825,23 @@
       "noConversations": "No conversations found",
       "noConversationsHint": "Try adjusting your filters",
       "endOfList": "You've reached the end"
+    },
+    "quickReply": {
+      "title": "Quick Reply",
+      "searchPlaceholder": "Search templates...",
+      "send": "Send",
+      "sending": "Sending...",
+      "noTemplates": "No templates found",
+      "noTemplatesHint": "Try adjusting your search or create new templates",
+      "categories": {
+        "all": "All",
+        "greeting": "Greeting",
+        "troubleshooting": "Troubleshooting",
+        "closing": "Closing",
+        "productInfo": "Product Info",
+        "escalation": "Escalation",
+        "feedback": "Feedback"
+      }
     }
   }
 }

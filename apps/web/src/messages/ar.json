@@ -3825,6 +3825,23 @@
       "noConversations": "لا توجد محادثات",
       "noConversationsHint": "حاول تعديل خيارات التصفية",
       "endOfList": "لقد وصلت إلى النهاية"
+    },
+    "quickReply": {
+      "title": "الرد السريع",
+      "searchPlaceholder": "البحث في القوالب...",
+      "send": "إرسال",
+      "sending": "جاري الإرسال...",
+      "noTemplates": "لا توجد قوالب",
+      "noTemplatesHint": "حاول تعديل البحث أو إنشاء قوالب جديدة",
+      "categories": {
+        "all": "الكل",
+        "greeting": "تحية",
+        "troubleshooting": "حل المشاكل",
+        "closing": "إغلاق",
+        "productInfo": "معلومات المنتج",
+        "escalation": "تصعيد",
+        "feedback": "ملاحظات"
+      }
     }
   }
 }
