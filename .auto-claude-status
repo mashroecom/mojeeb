@@ -3,7 +3,7 @@
   "spec": "079-add-tooltip-with-human-readable-label-to-statusdot",
   "state": "building",
   "subtasks": {
-    "completed": 2,
+    "completed": 3,
     "total": 5,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 4,
+    "number": 5,
     "started_at": "2026-03-10T11:34:50.180394"
   },
-  "last_update": "2026-03-10T11:42:39.683855"
+  "last_update": "2026-03-10T11:48:32.067483"
 }
