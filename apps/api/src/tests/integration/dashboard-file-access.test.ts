@@ -92,8 +92,7 @@ async function setupTestData(): Promise<TestSetup> {
       email: `test-user-1-${Date.now()}@example.com`,
       firstName: 'Test',
       lastName: 'User 1',
-      password: 'hashed-password',
-      isActive: true,
+      passwordHash: 'hashed-password',
     },
   });
 
@@ -102,8 +101,7 @@ async function setupTestData(): Promise<TestSetup> {
       email: `test-user-2-${Date.now()}@example.com`,
       firstName: 'Test',
       lastName: 'User 2',
-      password: 'hashed-password',
-      isActive: true,
+      passwordHash: 'hashed-password',
     },
   });
 
@@ -112,8 +110,7 @@ async function setupTestData(): Promise<TestSetup> {
       email: `test-user-3-${Date.now()}@example.com`,
       firstName: 'Test',
       lastName: 'User 3',
-      password: 'hashed-password',
-      isActive: true,
+      passwordHash: 'hashed-password',
     },
   });
 
@@ -122,7 +119,7 @@ async function setupTestData(): Promise<TestSetup> {
     data: {
       userId: user1.id,
       orgId: org1.id,
-      role: 'AGENT',
+      role: 'MEMBER',
     },
   });
 
@@ -130,7 +127,7 @@ async function setupTestData(): Promise<TestSetup> {
     data: {
       userId: user2.id,
       orgId: org1.id,
-      role: 'AGENT',
+      role: 'MEMBER',
     },
   });
 
@@ -139,7 +136,17 @@ async function setupTestData(): Promise<TestSetup> {
     data: {
       userId: user3.id,
       orgId: org2.id,
-      role: 'AGENT',
+      role: 'MEMBER',
+    },
+  });
+
+  // Create a channel in org1 for the conversation
+  const channel = await prisma.channel.create({
+    data: {
+      orgId: org1.id,
+      type: 'WEBCHAT',
+      name: 'Test Channel',
+      credentials: {},
     },
   });
 
@@ -147,8 +154,9 @@ async function setupTestData(): Promise<TestSetup> {
   const conversation = await prisma.conversation.create({
     data: {
       orgId: org1.id,
+      channelId: channel.id,
       customerId: `test-customer-${Date.now()}`,
-      status: 'OPEN',
+      status: 'ACTIVE',
     },
   });
 
@@ -247,7 +255,7 @@ async function uploadFileAsDashboardUser(
     }
   );
 
-  const data = await response.json();
+  const data = (await response.json()) as { success: boolean; error?: string; data: { fileUrl: string } };
 
   // Clean up test file
   fs.unlinkSync(testFilePath);
@@ -265,7 +273,7 @@ async function uploadFileAsDashboardUser(
 
 function extractFilenameFromUrl(fileUrl: string): string {
   const match = fileUrl.match(/\/files\/([^?]+)/);
-  return match ? match[1] : '';
+  return match?.[1] ?? '';
 }
 
 async function accessFileWithBearerToken(filename: string, token: string): Promise<number> {

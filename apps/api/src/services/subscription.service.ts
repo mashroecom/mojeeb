@@ -605,11 +605,12 @@ export class SubscriptionService {
     }
 
     // Determine the new plan from the payment amount
-    const newPlan = await planConfigService.getPlanByPrice(invoiceAmountNum);
-    if (!newPlan) {
+    const planResult = await planConfigService.getPlanByPrice(invoiceAmountNum);
+    if (!planResult) {
       throw new BadRequestError('Unknown payment amount — cannot determine plan.');
     }
 
+    const { plan: newPlan } = planResult;
     const limits = await planConfigService.getLimits(newPlan);
     const now = new Date();
     const periodEnd = new Date(now);
@@ -786,11 +787,12 @@ export class SubscriptionService {
     }
 
     // Determine the new plan from the payment amount
-    const newPlan = await planConfigService.getPlanByPrice(invoiceAmountNum);
-    if (!newPlan) {
+    const planResult2 = await planConfigService.getPlanByPrice(invoiceAmountNum);
+    if (!planResult2) {
       throw new BadRequestError('Unknown payment amount — cannot determine plan.');
     }
 
+    const { plan: newPlan } = planResult2;
     const limits = await planConfigService.getLimits(newPlan);
     const now = new Date();
     const periodEnd = new Date(now);
@@ -1011,12 +1013,13 @@ export class SubscriptionService {
 
     // Determine the new plan from the payment amount
     const amount = parseFloat(String(invoice.amount));
-    const newPlan = await planConfigService.getPlanByPrice(amount);
-    if (!newPlan) {
+    const stripePlanResult = await planConfigService.getPlanByPrice(amount);
+    if (!stripePlanResult) {
       logger.error({ amount }, 'Unknown payment amount - cannot determine plan');
       return;
     }
 
+    const { plan: newPlan } = stripePlanResult;
     const limits = await planConfigService.getLimits(newPlan);
     const now = new Date();
     const periodEnd = new Date(now);
@@ -1209,12 +1212,13 @@ export class SubscriptionService {
 
     // Determine the new plan from the payment amount
     const amount = parseFloat(String(invoice.amount));
-    const newPlan = await planConfigService.getPlanByPrice(amount);
-    if (!newPlan) {
+    const paypalPlanResult = await planConfigService.getPlanByPrice(amount);
+    if (!paypalPlanResult) {
       logger.error({ amount }, 'Unknown payment amount - cannot determine plan');
       return;
     }
 
+    const { plan: newPlan } = paypalPlanResult;
     const limits = await planConfigService.getLimits(newPlan);
     const now = new Date();
     const periodEnd = new Date(now);

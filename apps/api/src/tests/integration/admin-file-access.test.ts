@@ -82,8 +82,7 @@ async function setupTestData(): Promise<TestSetup> {
       email: `super-admin-${Date.now()}@example.com`,
       firstName: 'Super',
       lastName: 'Admin',
-      password: 'hashed-password',
-      isActive: true,
+      passwordHash: 'hashed-password',
       isSuperAdmin: true,
     },
   });
@@ -94,8 +93,7 @@ async function setupTestData(): Promise<TestSetup> {
       email: `regular-user-${Date.now()}@example.com`,
       firstName: 'Regular',
       lastName: 'User',
-      password: 'hashed-password',
-      isActive: true,
+      passwordHash: 'hashed-password',
       isSuperAdmin: false,
     },
   });
@@ -105,7 +103,7 @@ async function setupTestData(): Promise<TestSetup> {
     data: {
       userId: regularUser.id,
       orgId: org.id,
-      role: 'AGENT',
+      role: 'MEMBER',
     },
   });
 
@@ -184,7 +182,7 @@ async function uploadAdminFile(
     }
   );
 
-  const data = await response.json();
+  const data = (await response.json()) as { success: boolean; error?: string; data: { relativePath: string } };
 
   // Clean up test file
   fs.unlinkSync(testFilePath);
@@ -202,7 +200,7 @@ async function uploadAdminFile(
 
 function extractFilenameFromUrl(fileUrl: string): string {
   const match = fileUrl.match(/\/files\/([^?]+)/);
-  return match ? match[1] : '';
+  return match?.[1] ?? '';
 }
 
 async function accessFileWithBearerToken(filename: string, token: string): Promise<number> {

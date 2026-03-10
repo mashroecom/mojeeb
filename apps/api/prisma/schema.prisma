@@ -550,8 +550,11 @@ model Subscription {
   org                   Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   plan                  SubscriptionPlan   @default(FREE)
   status                SubscriptionStatus @default(ACTIVE)
+  paymentGateway        String?
   kashierSubscriptionId String?            @unique
   kashierCustomerId     String?
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?            @unique
   currentPeriodStart    DateTime           @default(now())
   currentPeriodEnd      DateTime
   cancelAtPeriodEnd     Boolean            @default(false)
@@ -575,18 +578,23 @@ model Subscription {
 }
 
 model Invoice {
-  id               String        @id @default(cuid())
-  subscriptionId   String
-  subscription     Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  amount           Decimal       @db.Decimal(10, 2)
-  currency         String        @default("USD")
-  status           InvoiceStatus @default(PENDING)
-  kashierOrderId   String?       @unique
-  kashierPaymentId String?
-  paidAt           DateTime?
-  dueDate          DateTime
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id                    String        @id @default(cuid())
+  subscriptionId        String
+  subscription          Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amount                Decimal       @db.Decimal(10, 2)
+  currency              String        @default("USD")
+  status                InvoiceStatus @default(PENDING)
+  paymentGateway        String?
+  kashierOrderId        String?       @unique
+  kashierPaymentId      String?
+  stripeInvoiceId       String?       @unique
+  stripePaymentIntentId String?
+  paypalOrderId         String?       @unique
+  paypalCaptureId       String?
+  paidAt                DateTime?
+  dueDate               DateTime
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   @@index([subscriptionId])
   @@index([status])

@@ -58,7 +58,7 @@ async function discoverWebchatChannel(): Promise<string> {
   log('Discovering webchat channel...');
 
   const response = await fetch(`${API_URL}/api/v1/webchat/discover`);
-  const data = await response.json();
+  const data = (await response.json()) as { success: boolean; data: { channelId: string } };
 
   if (!data.success || !data.data.channelId) {
     throw new Error('No active webchat channel found. Please create one first.');
@@ -90,7 +90,7 @@ async function uploadFileAsVisitor(
     headers: formData.getHeaders(),
   });
 
-  const data = await response.json();
+  const data = (await response.json()) as { success: boolean; error?: string; data: { fileUrl: string; conversationId: string } };
 
   // Clean up test file
   fs.unlinkSync(testFilePath);
@@ -108,12 +108,12 @@ async function uploadFileAsVisitor(
 
 function extractTokenFromUrl(fileUrl: string): string | null {
   const match = fileUrl.match(/\?token=([^&]+)/);
-  return match ? match[1] : null;
+  return match?.[1] ?? null;
 }
 
 function extractFilenameFromUrl(fileUrl: string): string {
   const match = fileUrl.match(/\/files\/([^?]+)/);
-  return match ? match[1] : '';
+  return match?.[1] ?? '';
 }
 
 async function accessFileWithToken(fileUrl: string): Promise<boolean> {

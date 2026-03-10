@@ -22,10 +22,10 @@ export class TemplateInterpolationService {
 
     // Replace all {{variable_name}} patterns with their values
     const variablePattern = /\{\{(\w+)\}\}/g;
-    result = result.replace(variablePattern, (match, variableName) => {
+    result = result.replace(variablePattern, (match, variableName: string) => {
       const value = variables[variableName];
       // If variable is not provided, keep the placeholder
-      return value !== undefined ? value : match;
+      return value !== undefined && value !== null ? value : match;
     });
 
     return result;
@@ -46,7 +46,7 @@ export class TemplateInterpolationService {
     let match;
 
     while ((match = variablePattern.exec(template)) !== null) {
-      const variableName = match[1];
+      const variableName = match[1] as string;
       if (!variables.includes(variableName)) {
         variables.push(variableName);
       }
