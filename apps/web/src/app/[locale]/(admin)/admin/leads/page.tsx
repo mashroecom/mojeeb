@@ -15,6 +15,9 @@ import { cn } from '@/lib/utils';
 import { exportToCsv } from '@/lib/exportCsv';
 import { AdminConfirmDialog } from '@/components/admin/AdminConfirmDialog';
 import { AdminPagination } from '@/components/admin/AdminPagination';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import {
   Search,
   Trash2,
@@ -43,59 +46,6 @@ const STATUS_BADGE: Record<string, string> = {
 
 const ALL_STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'LOST'] as const;
 type StatusFilter = '' | (typeof ALL_STATUSES)[number];
-
-// ---------------------------------------------------------------------------
-// Skeletons
-// ---------------------------------------------------------------------------
-
-function StatSkeleton() {
-  return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
-      <div className="h-3 w-20 rounded bg-muted mb-3" />
-      <div className="h-7 w-16 rounded bg-muted" />
-    </div>
-  );
-}
-
-function RowSkeleton() {
-  return (
-    <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3">
-        <div className="h-4 w-4 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-24 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-32 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-20 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-24 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-5 w-16 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-16 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-10 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-20 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-20 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-7 w-8 rounded bg-muted" />
-      </td>
-    </tr>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Page
@@ -311,12 +261,12 @@ export default function AdminLeadsPage() {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-destructive font-medium mb-2">{tc('error')}</p>
-        <button onClick={() => refetch()} className="text-sm text-primary hover:underline">
-          {tc('retry')}
-        </button>
-      </div>
+      <ErrorState
+        title={tc('error')}
+        description={t('errorDescription')}
+        retryLabel={tc('retry')}
+        onRetry={() => refetch()}
+      />
     );
   }
 
@@ -331,10 +281,12 @@ export default function AdminLeadsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {statsLoading ? (
           <>
-            <StatSkeleton />
-            <StatSkeleton />
-            <StatSkeleton />
-            <StatSkeleton />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+                <Skeleton variant="text" className="w-20 h-3" />
+                <Skeleton variant="text" className="w-16 h-7" />
+              </div>
+            ))}
           </>
         ) : (
           <>
@@ -500,16 +452,51 @@ export default function AdminLeadsPage() {
               </thead>
               <tbody>
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <RowSkeleton key={i} />
+                  <tr key={i} className="border-b last:border-b-0">
+                    <td className="px-4 py-3">
+                      <Skeleton variant="rect" className="h-4 w-4" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" className="w-24" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" className="w-32" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" className="w-20" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" className="w-24" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="rect" className="h-5 w-16 rounded-full" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" className="w-16" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" className="w-10" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" className="w-20" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" className="w-20" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="rect" className="h-7 w-8" />
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : leads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <Target className="h-10 w-10 mb-3 opacity-40" />
-            <p className="text-sm">{t('noLeads')}</p>
-          </div>
+          <EmptyState
+            icon={Target}
+            title={t('noLeads')}
+            description={t('noLeadsDescription')}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
