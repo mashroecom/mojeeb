@@ -960,10 +960,12 @@ function TestStep({
   onNext,
   onBack,
   agentId,
+  agentName,
 }: {
   onNext: () => void;
   onBack: () => void;
   agentId: string | null;
+  agentName?: string;
 }) {
   const t = useTranslations('onboarding.testAgent');
   const ts = useTranslations('onboarding');
@@ -976,7 +978,7 @@ function TestStep({
       </div>
 
       {agentId ? (
-        <TestChat agentId={agentId} />
+        <TestChat agentId={agentId} agentName={agentName || 'Agent'} />
       ) : (
         <div className="mx-auto max-w-lg text-center py-12">
           <Bot className="mx-auto h-10 w-10 text-muted-foreground opacity-40 mb-3" />
@@ -1300,6 +1302,7 @@ export default function OnboardingPage() {
             onNext={() => goTo('done')}
             onBack={() => goTo('channel')}
             agentId={createdAgentId}
+            agentName={agentName}
           />
         )}
 

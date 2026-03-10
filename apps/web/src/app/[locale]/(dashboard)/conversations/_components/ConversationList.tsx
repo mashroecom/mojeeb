@@ -461,8 +461,8 @@ export const ConversationList = React.memo(function ConversationList({
                       </span>
                     )}
 
-                    {/* Tags */}
-                    {conv.tags?.map((conversationTag) => (
+                    {/* Tags - Not available in current Conversation interface */}
+                    {/* {conv.tags?.map((conversationTag) => (
                       <span
                         key={conversationTag.id}
                         className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium border"
@@ -474,7 +474,7 @@ export const ConversationList = React.memo(function ConversationList({
                       >
                         {conversationTag.tag.name}
                       </span>
-                    ))}
+                    ))} */}
 
                     {/* Rating */}
                     {rating && (

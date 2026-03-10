@@ -544,7 +544,7 @@ export default function MessageTemplatesPage() {
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-2" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-                    {locale === 'ar' && tpl.contentAr ? tpl.contentAr : tpl.contentEn}
+                    {tpl.content}
                   </p>
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                     <span>{tpl.org?.name || '—'}</span>
