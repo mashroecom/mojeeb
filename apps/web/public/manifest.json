@@ -1,0 +1,60 @@
+{
+  "name": "Mojeeb Admin",
+  "short_name": "Mojeeb",
+  "description": "Mobile admin application for Mojeeb customer support platform. Monitor conversations, receive notifications, and manage your team on the go.",
+  "start_url": "/mobile",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "dir": "auto",
+  "categories": [
+    "business",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Inbox",
+      "short_name": "Inbox",
+      "description": "View active conversations",
+      "url": "/mobile/inbox",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "short_name": "Analytics",
+      "description": "View key metrics and analytics",
+      "url": "/mobile/analytics",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
