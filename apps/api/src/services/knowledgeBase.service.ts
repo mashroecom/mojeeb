@@ -5,6 +5,9 @@ import { getAIProvider } from '../ai/index';
 import { logger } from '../config/logger';
 import { cache } from '../config/cache';
 import pdfParse from 'pdf-parse';
+import { crawlerService } from './crawler.service';
+import { crawlerQueue } from '../queues/index';
+import { scheduleRepeatableCrawl, cancelRepeatableCrawl } from '../queues/workers/crawler.worker';
 
 export class KnowledgeBaseService {
   async create(orgId: string, data: { name: string; description?: string }) {
@@ -113,31 +116,12 @@ export class KnowledgeBaseService {
 
   private async crawlURL(url: string): Promise<string> {
     try {
-      const response = await fetch(url, {
-        headers: { 'User-Agent': 'MojeebBot/1.0' },
-        signal: AbortSignal.timeout(15000),
+      // Use the new crawler service with cheerio-based extraction
+      const result = await crawlerService.crawlUrl(url, {
+        respectRobotsTxt: true,
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const html = await response.text();
 
-      // Simple HTML-to-text: strip tags, decode entities, clean whitespace
-      const text = html
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-        .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
-        .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      return text;
+      return result.text;
     } catch (err) {
       logger.error({ err, url }, 'URL crawling failed');
       throw new BadRequestError('Failed to crawl URL');
@@ -183,6 +167,162 @@ export class KnowledgeBaseService {
     });
     if (!doc) throw new NotFoundError('Document not found');
     return prisma.kBDocument.delete({ where: { id: docId } });
+  }
+
+  async createCrawlJob(
+    kbId: string,
+    data: {
+      startUrl: string;
+      maxDepth?: number;
+      urlPattern?: string;
+      configId?: string;
+    }
+  ) {
+    // Validate knowledge base exists
+    const kb = await prisma.knowledgeBase.findUnique({
+      where: { id: kbId },
+    });
+    if (!kb) throw new NotFoundError('Knowledge base not found');
+
+    // Validate URL
+    try {
+      new URL(data.startUrl);
+    } catch (err) {
+      throw new BadRequestError('Invalid URL format');
+    }
+
+    // Create crawl job
+    const crawlJob = await prisma.crawlJob.create({
+      data: {
+        knowledgeBaseId: kbId,
+        startUrl: data.startUrl,
+        configId: data.configId,
+        status: 'PENDING',
+        pagesTotal: 0,
+        pagesCrawled: 0,
+      },
+      include: {
+        config: true,
+      },
+    });
+
+    return crawlJob;
+  }
+
+  async startCrawlJob(
+    kbId: string,
+    data: {
+      startUrl: string;
+      maxDepth?: number;
+      urlPattern?: string;
+      configId?: string;
+    }
+  ) {
+    // Validate knowledge base exists
+    const kb = await prisma.knowledgeBase.findUnique({
+      where: { id: kbId },
+      select: { id: true, orgId: true },
+    });
+    if (!kb) throw new NotFoundError('Knowledge base not found');
+
+    // Validate URL
+    try {
+      new URL(data.startUrl);
+    } catch (err) {
+      throw new BadRequestError('Invalid URL format');
+    }
+
+    // Parse URL patterns if provided
+    let urlPatterns: string[] = [];
+    if (data.urlPattern) {
+      urlPatterns = data.urlPattern.split(',').map((p) => p.trim()).filter(Boolean);
+    }
+
+    // Create crawl job in database
+    const crawlJob = await prisma.crawlJob.create({
+      data: {
+        knowledgeBaseId: kbId,
+        startUrl: data.startUrl,
+        configId: data.configId,
+        status: 'PENDING',
+        pagesTotal: 0,
+        pagesCrawled: 0,
+      },
+      include: {
+        config: true,
+      },
+    });
+
+    // Get URL patterns from config if not provided directly
+    let configUrlPatterns = urlPatterns;
+    if (configUrlPatterns.length === 0 && crawlJob.config?.urlPattern) {
+      configUrlPatterns = crawlJob.config.urlPattern
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean);
+    }
+
+    // Enqueue crawl job to BullMQ
+    await crawlerQueue.add('crawl', {
+      jobId: crawlJob.id,
+      kbId: kb.id,
+      orgId: kb.orgId,
+      startUrl: data.startUrl,
+      config: {
+        maxDepth: data.maxDepth || crawlJob.config?.maxDepth || 1,
+        urlPatterns: configUrlPatterns,
+      },
+    });
+
+    logger.info({ jobId: crawlJob.id, kbId, startUrl: data.startUrl }, 'Crawl job enqueued');
+
+    return crawlJob;
+  }
+
+  async getCrawlJobStatus(jobId: string) {
+    const job = await prisma.crawlJob.findUnique({
+      where: { id: jobId },
+      select: {
+        id: true,
+        status: true,
+        startUrl: true,
+        pagesCrawled: true,
+        pagesTotal: true,
+        errorMessage: true,
+        startedAt: true,
+        completedAt: true,
+        createdAt: true,
+        knowledgeBase: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+    if (!job) throw new NotFoundError('Crawl job not found');
+    return job;
+  }
+
+  async getCrawlJob(jobId: string) {
+    const job = await prisma.crawlJob.findUnique({
+      where: { id: jobId },
+      include: {
+        config: true,
+        knowledgeBase: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+    if (!job) throw new NotFoundError('Crawl job not found');
+    return job;
+  }
+
+  async listCrawlJobs(kbId: string) {
+    return prisma.crawlJob.findMany({
+      where: { knowledgeBaseId: kbId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        config: true,
+      },
+    });
   }
 
   private async processDocument(documentId: string) {
@@ -244,6 +384,92 @@ export class KnowledgeBaseService {
     }
 
     return chunks;
+  }
+
+  async updateCrawlSchedule(
+    kbId: string,
+    data: {
+      frequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+      enabled: boolean;
+      maxDepth?: number;
+      urlPattern?: string;
+      startUrl?: string;
+    }
+  ) {
+    // Validate knowledge base exists
+    const kb = await prisma.knowledgeBase.findUnique({
+      where: { id: kbId },
+      include: { crawlConfigs: true },
+    });
+    if (!kb) throw new NotFoundError('Knowledge base not found');
+
+    // Validate required fields when enabling schedule
+    if (data.enabled && !data.frequency) {
+      throw new BadRequestError('Frequency is required when enabling schedule');
+    }
+
+    // Find existing config or create new one
+    let config = kb.crawlConfigs[0]; // For now, support one config per KB
+
+    if (config) {
+      // Update existing config
+      config = await prisma.crawlConfig.update({
+        where: { id: config.id },
+        data: {
+          scheduleEnabled: data.enabled,
+          scheduleFrequency: data.enabled ? data.frequency : null,
+          maxDepth: data.maxDepth ?? config.maxDepth,
+          urlPattern: data.urlPattern ?? config.urlPattern,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      // Create new config
+      if (data.enabled && !data.startUrl) {
+        throw new BadRequestError('Start URL is required for new crawl configuration');
+      }
+
+      config = await prisma.crawlConfig.create({
+        data: {
+          knowledgeBaseId: kbId,
+          scheduleEnabled: data.enabled,
+          scheduleFrequency: data.enabled ? data.frequency : null,
+          maxDepth: data.maxDepth ?? 1,
+          urlPattern: data.urlPattern,
+        },
+      });
+    }
+
+    // Schedule or cancel repeatable crawl job
+    if (data.enabled) {
+      await scheduleRepeatableCrawl(config.id);
+    } else {
+      await cancelRepeatableCrawl(config.id);
+    }
+
+    logger.info(
+      { kbId, configId: config.id, enabled: data.enabled, frequency: data.frequency },
+      'Crawl schedule updated'
+    );
+
+    return config;
+  }
+
+  async getCrawlSchedule(kbId: string) {
+    // Validate knowledge base exists
+    const kb = await prisma.knowledgeBase.findUnique({
+      where: { id: kbId },
+      include: { crawlConfigs: true },
+    });
+    if (!kb) throw new NotFoundError('Knowledge base not found');
+
+    // Return first config (for now, support one config per KB)
+    const config = kb.crawlConfigs[0];
+    if (!config) {
+      return null;
+    }
+
+    return config;
   }
 }
 

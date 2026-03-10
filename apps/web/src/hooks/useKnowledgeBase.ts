@@ -80,6 +80,59 @@ interface BulkImportInput {
   documents: Array<{ title: string; content: string; contentType?: 'TEXT' | 'FAQ' }>;
 }
 
+// Crawl Schedule
+export interface CrawlSchedule {
+  id: string;
+  knowledgeBaseId: string;
+  maxDepth: number;
+  urlPattern: string | null;
+  scheduleEnabled: boolean;
+  scheduleFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | null;
+  lastCrawledAt: string | null;
+  nextCrawlAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface UpdateCrawlScheduleInput {
+  kbId: string;
+  enabled: boolean;
+  frequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  maxDepth?: number;
+  urlPattern?: string;
+  startUrl?: string;
+}
+
+// Crawl Jobs
+export interface CrawlJob {
+  id: string;
+  knowledgeBaseId: string;
+  configId: string | null;
+  startUrl: string;
+  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  pagesTotal: number;
+  pagesCrawled: number;
+  errorMessage: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  config?: CrawlSchedule;
+}
+
+interface StartCrawlInput {
+  kbId: string;
+  startUrl: string;
+  maxDepth?: number;
+  urlPattern?: string;
+  configId?: string;
+}
+
+interface CancelCrawlJobInput {
+  kbId: string;
+  jobId: string;
+}
+
 // ---------------------------------------------------------------------------
 // Query key factory
 // ---------------------------------------------------------------------------
@@ -88,6 +141,12 @@ export const knowledgeBaseKeys = {
   all: (orgId: string) => ['organizations', orgId, 'knowledge-bases'] as const,
   detail: (orgId: string, kbId: string) =>
     ['organizations', orgId, 'knowledge-bases', kbId] as const,
+  schedule: (orgId: string, kbId: string) =>
+    ['organizations', orgId, 'knowledge-bases', kbId, 'schedule'] as const,
+  crawlJobs: (orgId: string, kbId: string) =>
+    ['organizations', orgId, 'knowledge-bases', kbId, 'crawl-jobs'] as const,
+  crawlJob: (orgId: string, kbId: string, jobId: string) =>
+    ['organizations', orgId, 'knowledge-bases', kbId, 'crawl-jobs', jobId] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -291,6 +350,134 @@ export function useBulkImportDocuments() {
       if (orgId) {
         queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.detail(orgId, variables.kbId) });
         queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.all(orgId) });
+      }
+    },
+  });
+}
+
+/**
+ * Fetch crawl schedule configuration for a knowledge base.
+ */
+export function useCrawlSchedule(kbId: string | undefined) {
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  return useQuery({
+    queryKey: knowledgeBaseKeys.schedule(orgId!, kbId!),
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<CrawlSchedule>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/crawl/schedule`,
+      );
+      return data.data;
+    },
+    enabled: !!orgId && !!kbId,
+  });
+}
+
+/**
+ * Update crawl schedule configuration.
+ * Invalidates the schedule query on success.
+ */
+export function useUpdateCrawlSchedule() {
+  const queryClient = useQueryClient();
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  return useMutation({
+    mutationFn: async ({ kbId, ...body }: UpdateCrawlScheduleInput) => {
+      const { data } = await api.post<ApiResponse<CrawlSchedule>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/crawl/schedule`,
+        body,
+      );
+      return data.data;
+    },
+    onSuccess: (_data, variables) => {
+      if (orgId) {
+        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.schedule(orgId, variables.kbId) });
+      }
+    },
+  });
+}
+
+/**
+ * Start a new crawl job for a knowledge base.
+ * Invalidates crawl jobs list on success.
+ */
+export function useStartCrawl() {
+  const queryClient = useQueryClient();
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  return useMutation({
+    mutationFn: async ({ kbId, ...body }: StartCrawlInput) => {
+      const { data } = await api.post<ApiResponse<CrawlJob>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/crawl`,
+        body,
+      );
+      return data.data;
+    },
+    onSuccess: (_data, variables) => {
+      if (orgId) {
+        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.crawlJobs(orgId, variables.kbId) });
+      }
+    },
+  });
+}
+
+/**
+ * List all crawl jobs for a knowledge base.
+ */
+export function useCrawlJobs(kbId: string | undefined) {
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  return useQuery({
+    queryKey: knowledgeBaseKeys.crawlJobs(orgId!, kbId!),
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<CrawlJob[]>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/crawl`,
+      );
+      return data.data;
+    },
+    enabled: !!orgId && !!kbId,
+  });
+}
+
+/**
+ * Fetch a single crawl job by ID.
+ */
+export function useCrawlJob(kbId: string | undefined, jobId: string | undefined) {
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  return useQuery({
+    queryKey: knowledgeBaseKeys.crawlJob(orgId!, kbId!, jobId!),
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<CrawlJob>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/crawl/${jobId}`,
+      );
+      return data.data;
+    },
+    enabled: !!orgId && !!kbId && !!jobId,
+  });
+}
+
+/**
+ * Cancel a running crawl job.
+ * Invalidates both the job detail and jobs list on success.
+ */
+export function useCancelCrawlJob() {
+  const queryClient = useQueryClient();
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  return useMutation({
+    mutationFn: async ({ kbId, jobId }: CancelCrawlJobInput) => {
+      const { data } = await api.delete<ApiResponse<void>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/crawl/${jobId}`,
+      );
+      return data.data;
+    },
+    onSuccess: (_data, variables) => {
+      if (orgId) {
+        queryClient.invalidateQueries({
+          queryKey: knowledgeBaseKeys.crawlJob(orgId, variables.kbId, variables.jobId),
+        });
+        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.crawlJobs(orgId, variables.kbId) });
       }
     },
   });

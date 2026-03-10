@@ -52,6 +52,15 @@ export const bulkEmailQueue = new Queue('bulk-email', {
   },
 });
 
+export const crawlerQueue = new Queue('crawler', {
+  ...defaultOpts,
+  defaultJobOptions: {
+    attempts: 1, // Crawl jobs don't need retries (errors are handled per-URL)
+    removeOnComplete: { count: 100 },
+    removeOnFail: { count: 500 },
+  },
+});
+
 export const deadLetterQueue = new Queue('dead-letter', {
   connection: redis,
   defaultJobOptions: {
