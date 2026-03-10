@@ -19,6 +19,7 @@
     "@socket.io/redis-adapter": "^8.3.0",
     "argon2": "^0.41.0",
     "bullmq": "^5.30.0",
+    "cheerio": "^1.0.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
@@ -36,12 +37,14 @@
     "pino-pretty": "^13.0.0",
     "rate-limit-redis": "^4.2.0",
     "resend": "^6.9.1",
+    "robots-parser": "^3.0.1",
     "socket.io": "^4.8.0",
     "stripe": "^17.5.0",
     "zod": "^3.24.0",
     "@paypal/checkout-server-sdk": "^1.0.3"
   },
   "devDependencies": {
+    "@types/cheerio": "^0.22.35",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
