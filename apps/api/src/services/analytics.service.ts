@@ -188,48 +188,125 @@ export class AnalyticsService {
 
   async getAgentPerformance(orgId: string) {
     return this.cached(`agent-perf:${orgId}`, 300, async () => {
-    const agents = await prisma.agent.findMany({
-      where: { orgId },
-      select: { id: true, name: true },
-    });
-
-    const results = await Promise.all(
-      agents.map(async (agent) => {
-        const [totalConversations, totalMessages, avgResponseTime, resolvedCount] =
-          await Promise.all([
-            prisma.conversation.count({
-              where: { orgId, agentId: agent.id },
-            }),
-            prisma.message.count({
-              where: {
-                conversation: { orgId, agentId: agent.id },
-              },
-            }),
-            prisma.message.aggregate({
-              where: {
-                conversation: { orgId, agentId: agent.id },
-                role: 'AI_AGENT',
-                latencyMs: { not: null },
-              },
-              _avg: { latencyMs: true },
-            }),
-            prisma.conversation.count({
-              where: { orgId, agentId: agent.id, status: 'RESOLVED' },
-            }),
-          ]);
-
-        return {
-          agentId: agent.id,
-          agentName: agent.name,
-          totalConversations,
-          totalMessages,
-          avgResponseTimeMs: Math.round(avgResponseTime._avg.latencyMs || 0),
-          resolvedCount,
-        };
+    const [
+      agentConversations,
+      agentResolvedConversations,
+      agentMessages,
+      agentResponseTimes,
+    ] = await Promise.all([
+      // Total conversations per agent
+      prisma.conversation.groupBy({
+        by: ['agentId'],
+        where: { orgId, agentId: { not: null } },
+        _count: { _all: true },
       }),
-    );
+      // Resolved conversations per agent
+      prisma.conversation.groupBy({
+        by: ['agentId'],
+        where: { orgId, agentId: { not: null }, status: 'RESOLVED' },
+        _count: { _all: true },
+      }),
+      // Messages per agent
+      prisma.message.groupBy({
+        by: ['conversationId'],
+        where: {
+          conversation: { orgId, agentId: { not: null } },
+        },
+        _count: { _all: true },
+      }),
+      // Avg response time per agent
+      prisma.message.groupBy({
+        by: ['conversationId'],
+        where: {
+          conversation: { orgId, agentId: { not: null } },
+          role: 'AI_AGENT',
+          latencyMs: { not: null },
+        },
+        _avg: { latencyMs: true },
+      }),
+    ]);
 
-    return results;
+    // Get conversation -> agent mapping for message aggregation
+    const agentIds = agentConversations.map((c) => c.agentId).filter((id): id is string => id !== null);
+
+    const [conversations, agents] = await Promise.all([
+      prisma.conversation.findMany({
+        where: { orgId, agentId: { in: agentIds } },
+        select: { id: true, agentId: true },
+      }),
+      prisma.agent.findMany({
+        where: { id: { in: agentIds } },
+        select: { id: true, name: true },
+      }),
+    ]);
+
+    const convAgentMap = new Map(conversations.map((c) => [c.id, c.agentId]));
+    const agentNameMap = new Map(agents.map((a) => [a.id, a.name]));
+
+    // Build per-agent totals
+    const agentStats = new Map<string, {
+      totalConversations: number;
+      totalMessages: number;
+      resolvedCount: number;
+      totalLatency: number;
+      latencyCount: number;
+    }>();
+
+    // Aggregate conversation counts
+    for (const row of agentConversations) {
+      if (!row.agentId) continue;
+      const existing = agentStats.get(row.agentId) ?? {
+        totalConversations: 0,
+        totalMessages: 0,
+        resolvedCount: 0,
+        totalLatency: 0,
+        latencyCount: 0,
+      };
+      existing.totalConversations = row._count._all;
+      agentStats.set(row.agentId, existing);
+    }
+
+    // Aggregate resolved counts
+    for (const row of agentResolvedConversations) {
+      if (!row.agentId) continue;
+      const existing = agentStats.get(row.agentId);
+      if (existing) {
+        existing.resolvedCount = row._count._all;
+      }
+    }
+
+    // Aggregate message counts
+    for (const row of agentMessages) {
+      const agentId = convAgentMap.get(row.conversationId);
+      if (!agentId) continue;
+      const existing = agentStats.get(agentId);
+      if (existing) {
+        existing.totalMessages += row._count._all;
+      }
+    }
+
+    // Aggregate response times
+    for (const row of agentResponseTimes) {
+      const agentId = convAgentMap.get(row.conversationId);
+      if (!agentId || !row._avg.latencyMs) continue;
+      const existing = agentStats.get(agentId);
+      if (existing) {
+        existing.totalLatency += row._avg.latencyMs;
+        existing.latencyCount += 1;
+      }
+    }
+
+    // Build final results
+    return Array.from(agentStats.entries()).map(([agentId, stats]) => ({
+      agentId,
+      agentName: agentNameMap.get(agentId) ?? 'Unknown',
+      totalConversations: stats.totalConversations,
+      totalMessages: stats.totalMessages,
+      avgResponseTimeMs: stats.latencyCount > 0
+        ? Math.round(stats.totalLatency / stats.latencyCount)
+        : 0,
+      resolvedCount: stats.resolvedCount,
+    }));
     }); // end cached
   }
 
