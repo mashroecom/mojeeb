@@ -3,7 +3,7 @@ import { config, validateConfig } from './config';
 import { logger } from './config/logger';
 import { prisma } from './config/database';
 import { redis } from './config/redis';
-import { inboundQueue, aiQueue, outboundQueue, analyticsQueue, webhookQueue, bulkEmailQueue, emailQueue, deadLetterQueue } from './queues';
+import { inboundQueue, aiQueue, outboundQueue, analyticsQueue, webhookQueue, bulkEmailQueue, emailQueue, crawlerQueue, deadLetterQueue } from './queues';
 
 // Import workers (named exports for graceful shutdown)
 import { inboundWorker } from './queues/workers/inbound.worker';
@@ -13,6 +13,7 @@ import { analyticsWorker } from './queues/workers/analytics.worker';
 import webhookWorker from './queues/workers/webhook.worker';
 import { bulkEmailWorker } from './queues/workers/bulkEmail.worker';
 import { emailWorker } from './queues/workers/email.worker';
+import { crawlerWorker } from './queues/workers/crawler.worker';
 
 async function main() {
   // Test database connection
@@ -74,6 +75,7 @@ async function main() {
         { name: 'webhook', worker: webhookWorker },
         { name: 'bulkEmail', worker: bulkEmailWorker },
         { name: 'email', worker: emailWorker },
+        { name: 'crawler', worker: crawlerWorker },
       ];
 
       for (const { name, worker } of workers) {
@@ -129,6 +131,7 @@ async function main() {
       webhookWorker.close(),
       bulkEmailWorker.close(),
       emailWorker.close(),
+      crawlerWorker.close(),
     ]);
     logger.info('Queue workers closed');
 
@@ -141,6 +144,7 @@ async function main() {
       webhookQueue.close(),
       bulkEmailQueue.close(),
       emailQueue.close(),
+      crawlerQueue.close(),
       deadLetterQueue.close(),
     ]);
     logger.info('Queues closed');
