@@ -15,6 +15,9 @@ import {
 } from '@/hooks/useAdmin';
 import { cn } from '@/lib/utils';
 import { exportToCsv } from '@/lib/exportCsv';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import {
   Search,
   MessageCircle,
@@ -240,14 +243,14 @@ export default function AdminConversationsPage() {
   /* ── Error state ──────────────────────────────────────── */
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-destructive font-medium mb-2">{tc('error')}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="text-sm text-primary hover:underline"
-        >
-          {tc('retry')}
-        </button>
+      <div className="pb-16">
+        <h1 className="text-2xl font-bold mb-6">{t('title')}</h1>
+        <ErrorState
+          title={tc('error')}
+          description={t('errorLoading')}
+          retryLabel={tc('retry')}
+          onRetry={() => window.location.reload()}
+        />
       </div>
     );
   }
@@ -290,7 +293,7 @@ export default function AdminConversationsPage() {
               <span className="text-sm">{card.label}</span>
             </div>
             {statsLoading ? (
-              <div className="h-8 w-20 animate-pulse rounded bg-muted" />
+              <Skeleton height={32} width={80} />
             ) : (
               <p className="text-2xl font-bold">{card.value ?? 0}</p>
             )}
@@ -404,23 +407,25 @@ export default function AdminConversationsPage() {
           <div className="divide-y">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4 px-4 py-4">
-                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-20 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-12 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-16 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+                <Skeleton width={16} height={16} />
+                <Skeleton width={128} />
+                <Skeleton width={96} />
+                <Skeleton width={80} />
+                <Skeleton width={48} />
+                <Skeleton width={64} />
+                <Skeleton width={64} />
                 <div className="flex-1" />
-                <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                <Skeleton width={96} />
               </div>
             ))}
           </div>
         ) : conversations.length === 0 ? (
           /* Empty state */
-          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <MessageCircle className="h-10 w-10 mb-3 opacity-40" />
-            <p className="text-sm">{t('noConversations')}</p>
-          </div>
+          <EmptyState
+            icon={MessageCircle}
+            title={t('noConversations')}
+            description={hasActiveFilters ? t('noConversationsFiltered') : t('noConversationsYet')}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
