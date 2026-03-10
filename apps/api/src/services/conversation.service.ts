@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import { NotFoundError } from '../utils/errors';
 import { webhookService } from './webhook.service';
+import { pushNotificationService } from './pushNotification.service';
 
 export class ConversationService {
   async list(orgId: string, params: {
@@ -169,7 +170,22 @@ export class ConversationService {
     if (result.count === 0) {
       throw new NotFoundError('Conversation not found or already handed off');
     }
-    return prisma.conversation.findUnique({ where: { id: conversationId } });
+    const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+
+    // Send push notification for manual handoff
+    if (conversation) {
+      try {
+        await pushNotificationService.notifyHandoff({
+          orgId: conversation.orgId,
+          conversationId: conversationId,
+          toAgentId: userId,
+        });
+      } catch (err) {
+        // Log but don't fail the handoff
+      }
+    }
+
+    return conversation;
   }
 
   async resolve(conversationId: string) {
