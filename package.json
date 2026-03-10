@@ -14,6 +14,8 @@
     "db:backup": "bash scripts/backup-db.sh",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:verify": "bash scripts/verify-prisma-client.sh",
+    "test:e2e": "tsx test-crawl-e2e.ts && tsx test-crawl-multipage-e2e.ts && tsx test-crawl-scheduled-e2e.ts",
     "clean": "turbo clean && rimraf node_modules",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
