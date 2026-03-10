@@ -222,6 +222,7 @@ export class AgentService {
 
   /**
    * Retrieve relevant knowledge base chunks via pgvector similarity search.
+   * Results are cached to avoid re-generating embeddings for identical queries.
    */
   private async retrieveKBContext(
     agent: { knowledgeBases: { knowledgeBaseId: string }[] },
@@ -231,28 +232,35 @@ export class AgentService {
     const kbIds = agent.knowledgeBases.map((kb) => kb.knowledgeBaseId);
     if (kbIds.length === 0) return '';
 
-    try {
-      const queryEmbedding = await provider.generateEmbedding(query);
-      const embeddingStr = `[${queryEmbedding.join(',')}]`;
+    // Create cache key from KBs and query (truncate query to avoid key length issues)
+    const kbKey = kbIds.sort().join(',');
+    const queryKey = query.substring(0, 100);
+    const cacheKey = `kb:context:${kbKey}:${queryKey}`;
 
-      const chunks = await prisma.$queryRaw<Array<{ content: string; similarity: number }>>`
-        SELECT c.content,
-               1 - (c.embedding <=> ${embeddingStr}::vector) as similarity
-        FROM kb_chunks c
-        JOIN kb_documents d ON c."documentId" = d.id
-        WHERE d."knowledgeBaseId" IN (${Prisma.join(kbIds)})
-          AND d."embeddingStatus" = 'COMPLETED'
-          AND c.embedding IS NOT NULL
-        ORDER BY c.embedding <=> ${embeddingStr}::vector
-        LIMIT 3
-      `;
+    return cache.getOrSet(cacheKey, 300, async () => {
+      try {
+        const queryEmbedding = await provider.generateEmbedding(query);
+        const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
-      if (chunks.length === 0) return '';
-      return chunks.map((c) => c.content).join('\n\n---\n\n');
-    } catch (err) {
-      logger.error({ err }, 'Failed to retrieve KB context in test mode');
-      return '';
-    }
+        const chunks = await prisma.$queryRaw<Array<{ content: string; similarity: number }>>`
+          SELECT c.content,
+                 1 - (c.embedding <=> ${embeddingStr}::vector) as similarity
+          FROM kb_chunks c
+          JOIN kb_documents d ON c."documentId" = d.id
+          WHERE d."knowledgeBaseId" IN (${Prisma.join(kbIds)})
+            AND d."embeddingStatus" = 'COMPLETED'
+            AND c.embedding IS NOT NULL
+          ORDER BY c.embedding <=> ${embeddingStr}::vector
+          LIMIT 3
+        `;
+
+        if (chunks.length === 0) return '';
+        return chunks.map((c) => c.content).join('\n\n---\n\n');
+      } catch (err) {
+        logger.error({ err }, 'Failed to retrieve KB context');
+        return '';
+      }
+    });
   }
 }
 
