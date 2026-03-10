@@ -631,6 +631,11 @@ model Subscription {
   integrationsLimit     Int                @default(1)
   tokensUsed            Int                @default(0)
   tokensLimit           Int                @default(500000)
+  aiConversationsUsed   Int                @default(0)
+  aiConversationsLimit  Int                @default(100)
+  spendingCapEnabled    Boolean            @default(false)
+  spendingCapAmount     Decimal?           @db.Decimal(10, 2)
+  overageChargesAccrued Decimal            @default(0) @db.Decimal(10, 2)
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
 
@@ -953,26 +958,28 @@ model SiteSettings {
 // ========================
 
 model PlanConfig {
-  id                String           @id @default(cuid())
-  plan              SubscriptionPlan @unique
-  displayName       String
-  displayNameAr     String           @default("")
-  monthlyPrice      Float            @default(0)
-  yearlyPrice       Float            @default(0)
-  currency          String           @default("USD")
-  messagesPerMonth  Int              @default(100)
-  maxAgents         Int              @default(1)
-  maxChannels       Int              @default(1)
-  maxKnowledgeBases Int              @default(0)
-  maxTeamMembers    Int              @default(1)
-  maxTokensPerMonth Int              @default(500000)
-  apiAccess         Boolean          @default(false)
-  isPopular         Boolean          @default(false)
-  sortOrder         Int              @default(0)
-  features          String           @default("[]")
-  featuresAr        String           @default("[]")
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  id                          String           @id @default(cuid())
+  plan                        SubscriptionPlan @unique
+  displayName                 String
+  displayNameAr               String           @default("")
+  monthlyPrice                Float            @default(0)
+  yearlyPrice                 Float            @default(0)
+  currency                    String           @default("USD")
+  messagesPerMonth            Int              @default(100)
+  maxAgents                   Int              @default(1)
+  maxChannels                 Int              @default(1)
+  maxKnowledgeBases           Int              @default(0)
+  maxTeamMembers              Int              @default(1)
+  maxTokensPerMonth           Int              @default(500000)
+  aiConversationsPerMonth     Int              @default(100)
+  overagePricePerConversation Float            @default(0)
+  apiAccess                   Boolean          @default(false)
+  isPopular                   Boolean          @default(false)
+  sortOrder                   Int              @default(0)
+  features                    String           @default("[]")
+  featuresAr                  String           @default("[]")
+  createdAt                   DateTime         @default(now())
+  updatedAt                   DateTime         @updatedAt
 
   @@map("plan_configs")
 }

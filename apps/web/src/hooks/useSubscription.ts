@@ -18,11 +18,16 @@ export interface Subscription {
   messagesLimit: number;
   agentsUsed: number;
   agentsLimit: number;
+  aiConversationsUsed: number;
+  aiConversationsLimit: number;
   integrationsUsed: number;
   integrationsLimit: number;
   currentPeriodStart: string;
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
+  spendingCapEnabled: boolean;
+  spendingCapAmount: number | null;
+  overageChargesAccrued: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -107,6 +112,8 @@ export interface PlanData {
   isPopular: boolean;
   features: string;
   featuresAr: string;
+  aiConversationsPerMonth: number;
+  overagePricePerConversation: number;
 }
 
 export function usePlans() {

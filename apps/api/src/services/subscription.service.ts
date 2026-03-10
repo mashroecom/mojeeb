@@ -1492,6 +1492,110 @@ export class SubscriptionService {
 
     return invoice;
   }
+
+  /**
+   * Set or update spending cap for overage charges.
+   * @param orgId - Organization ID
+   * @param enabled - Whether spending cap is enabled
+   * @param amount - Maximum overage charges allowed (required if enabled=true)
+   */
+  async setSpendingCap(orgId: string, enabled: boolean, amount?: number) {
+    // Validate that amount is provided when enabling spending cap
+    if (enabled && (amount === undefined || amount <= 0)) {
+      throw new BadRequestError('A positive spending cap amount is required when enabling spending cap.');
+    }
+
+    const subscription = await this.getByOrgId(orgId);
+
+    const updated = await prisma.subscription.update({
+      where: { orgId },
+      data: {
+        spendingCapEnabled: enabled,
+        spendingCapAmount: enabled && amount !== undefined ? amount : null,
+      },
+    });
+
+    await cache.del(`subscription:${orgId}`);
+
+    logger.info(
+      { orgId, enabled, amount },
+      `Spending cap ${enabled ? 'enabled' : 'disabled'} for organization`,
+    );
+
+    return updated;
+  }
+
+  /**
+   * Remove spending cap (disable it).
+   * @param orgId - Organization ID
+   */
+  async removeSpendingCap(orgId: string) {
+    const subscription = await this.getByOrgId(orgId);
+
+    const updated = await prisma.subscription.update({
+      where: { orgId },
+      data: {
+        spendingCapEnabled: false,
+        spendingCapAmount: null,
+      },
+    });
+
+    await cache.del(`subscription:${orgId}`);
+
+    logger.info({ orgId }, 'Spending cap removed for organization');
+
+    return updated;
+  }
+
+  /**
+   * Check if spending cap has been exceeded.
+   * @param orgId - Organization ID
+   * @returns true if spending cap is enabled and has been exceeded, false otherwise
+   */
+  async checkSpendingCapExceeded(orgId: string): Promise<boolean> {
+    const subscription = await this.getByOrgId(orgId);
+
+    // If spending cap is not enabled, it cannot be exceeded
+    if (!subscription.spendingCapEnabled || !subscription.spendingCapAmount) {
+      return false;
+    }
+
+    // Check if accrued overage charges have reached or exceeded the cap
+    const overageCharges = subscription.overageChargesAccrued || 0;
+    return overageCharges >= subscription.spendingCapAmount;
+  }
+
+  /**
+   * Accrue overage charges for AI conversations beyond the plan limit.
+   * @param orgId - Organization ID
+   * @param amount - Amount to add to overage charges
+   */
+  async accrueOverageCharge(orgId: string, amount: number) {
+    if (amount <= 0) {
+      throw new BadRequestError('Overage charge amount must be positive.');
+    }
+
+    const subscription = await this.getByOrgId(orgId);
+
+    const currentOverage = subscription.overageChargesAccrued || 0;
+    const newOverage = currentOverage + amount;
+
+    const updated = await prisma.subscription.update({
+      where: { orgId },
+      data: {
+        overageChargesAccrued: newOverage,
+      },
+    });
+
+    await cache.del(`subscription:${orgId}`);
+
+    logger.info(
+      { orgId, amount, totalOverage: newOverage },
+      'Overage charge accrued for organization',
+    );
+
+    return updated;
+  }
 }
 
 export const subscriptionService = new SubscriptionService();

@@ -276,4 +276,57 @@ router.get('/invoices/:invoiceId/pdf', async (req, res, next) => {
   }
 });
 
+// POST /api/v1/organizations/:orgId/subscription/spending-cap
+// Sets or updates the spending cap for overage charges
+router.post(
+  '/spending-cap',
+  requireRole('OWNER', 'ADMIN'),
+  validate({
+    body: z.object({
+      enabled: z.boolean(),
+      amount: z.number().positive().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const { orgId } = req.params as OrgParams;
+      const { enabled, amount } = req.body;
+      const subscription = await subscriptionService.setSpendingCap(orgId, enabled, amount);
+      res.json({ success: true, data: subscription });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// DELETE /api/v1/organizations/:orgId/subscription/spending-cap
+// Removes the spending cap (disables it)
+router.delete('/spending-cap', requireRole('OWNER', 'ADMIN'), async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    const subscription = await subscriptionService.removeSpendingCap(orgId);
+    res.json({ success: true, data: subscription });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/v1/organizations/:orgId/subscription/overage-charges
+// Returns the accrued overage charges for the current billing period
+router.get('/overage-charges', async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    const subscription = await subscriptionService.getByOrgId(orgId);
+    res.json({
+      success: true,
+      data: {
+        overageChargesAccrued: subscription.overageChargesAccrued || 0,
+        currency: subscription.currency || 'USD',
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
