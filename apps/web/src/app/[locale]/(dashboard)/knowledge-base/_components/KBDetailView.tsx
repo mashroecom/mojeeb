@@ -15,6 +15,8 @@ import {
   X as XIcon,
   Plus,
   Trash2,
+  Clock,
+  Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -22,10 +24,13 @@ import {
   useUpdateKnowledgeBase,
   useAddDocument,
   useDeleteDocument,
+  useCrawlSchedule,
+  useUpdateCrawlSchedule,
 } from '@/hooks/useKnowledgeBase';
 import { StatusBadge } from './StatusBadge';
 import { ContentTypeBadge } from './ContentTypeBadge';
 import { CrawlConfigForm } from './CrawlConfigForm';
+import { toast } from 'sonner';
 
 interface KBDetailViewProps {
   kbId: string;
@@ -38,12 +43,18 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
   const locale = useLocale();
 
   const { data: kb, isLoading } = useKnowledgeBase(kbId);
+  const { data: schedule, isLoading: scheduleLoading } = useCrawlSchedule(kbId);
+  const updateScheduleMutation = useUpdateCrawlSchedule();
 
   // Edit KB state
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const updateKbMutation = useUpdateKnowledgeBase();
+
+  // Schedule state
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleFrequency, setScheduleFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
 
   // Add document form state
   const [showAddDocForm, setShowAddDocForm] = useState(false);
@@ -70,6 +81,16 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
 
   const addDocMutation = useAddDocument();
   const deleteDocMutation = useDeleteDocument();
+
+  // Sync schedule state with fetched data
+  React.useEffect(() => {
+    if (schedule) {
+      setScheduleEnabled(schedule.scheduleEnabled);
+      if (schedule.scheduleFrequency) {
+        setScheduleFrequency(schedule.scheduleFrequency);
+      }
+    }
+  }, [schedule]);
 
   function startEditing() {
     if (!kb) return;
@@ -157,6 +178,47 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
       { kbId, docId },
       { onSuccess: () => setConfirmDeleteDocId(null) },
     );
+  }
+
+  function handleScheduleToggle(enabled: boolean) {
+    setScheduleEnabled(enabled);
+    updateScheduleMutation.mutate(
+      {
+        kbId,
+        enabled,
+        frequency: enabled ? scheduleFrequency : undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success(enabled ? 'Auto-sync enabled' : 'Auto-sync disabled');
+        },
+        onError: (error: any) => {
+          setScheduleEnabled(!enabled); // Revert on error
+          toast.error(error.response?.data?.message || 'Failed to update schedule');
+        },
+      },
+    );
+  }
+
+  function handleFrequencyChange(frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY') {
+    setScheduleFrequency(frequency);
+    if (scheduleEnabled) {
+      updateScheduleMutation.mutate(
+        {
+          kbId,
+          enabled: true,
+          frequency,
+        },
+        {
+          onSuccess: () => {
+            toast.success('Schedule frequency updated');
+          },
+          onError: (error: any) => {
+            toast.error(error.response?.data?.message || 'Failed to update frequency');
+          },
+        },
+      );
+    }
   }
 
   if (isLoading) {
@@ -274,6 +336,96 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
               </button>
             )}
           </div>
+        )}
+      </div>
+
+      {/* Auto-Sync Schedule Configuration */}
+      <div className="mb-6 rounded-xl border bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">Auto-Sync Schedule</h2>
+          </div>
+          {scheduleLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          ) : (
+            <button
+              onClick={() => handleScheduleToggle(!scheduleEnabled)}
+              disabled={updateScheduleMutation.isPending}
+              className={cn(
+                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50',
+                scheduleEnabled ? 'bg-primary' : 'bg-muted',
+              )}
+            >
+              <span
+                className={cn(
+                  'inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm',
+                  scheduleEnabled ? 'translate-x-6 rtl:-translate-x-6' : 'translate-x-1 rtl:translate-x-6',
+                )}
+              />
+            </button>
+          )}
+        </div>
+
+        {scheduleEnabled && (
+          <div className="space-y-4">
+            {/* Frequency Selector */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                <Calendar className="inline-block h-4 w-4 mr-1.5 rtl:mr-0 rtl:ml-1.5 -mt-0.5" />
+                Crawl Frequency
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(['DAILY', 'WEEKLY', 'MONTHLY'] as const).map((freq) => (
+                  <button
+                    key={freq}
+                    type="button"
+                    onClick={() => handleFrequencyChange(freq)}
+                    disabled={updateScheduleMutation.isPending}
+                    className={cn(
+                      'rounded-lg px-4 py-2 text-sm font-medium transition-colors border disabled:opacity-50',
+                      scheduleFrequency === freq
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-muted-foreground hover:bg-muted border-border',
+                    )}
+                  >
+                    {freq.charAt(0) + freq.slice(1).toLowerCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Schedule Info */}
+            {schedule && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
+                {schedule.lastCrawledAt && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Last Crawled</p>
+                    <p className="text-sm">{fmtDate(schedule.lastCrawledAt, locale)}</p>
+                  </div>
+                )}
+                {schedule.nextCrawlAt && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Next Scheduled Crawl</p>
+                    <p className="text-sm">{fmtDate(schedule.nextCrawlAt, locale)}</p>
+                  </div>
+                )}
+                {!schedule.lastCrawledAt && !schedule.nextCrawlAt && (
+                  <div className="col-span-2">
+                    <p className="text-sm text-muted-foreground">
+                      Schedule is enabled. The first crawl will start shortly.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!scheduleEnabled && (
+          <p className="text-sm text-muted-foreground">
+            Enable auto-sync to automatically re-crawl your website content and keep your knowledge base up to date.
+          </p>
         )}
       </div>
 

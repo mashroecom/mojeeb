@@ -80,6 +80,29 @@ interface BulkImportInput {
   documents: Array<{ title: string; content: string; contentType?: 'TEXT' | 'FAQ' }>;
 }
 
+// Crawl Schedule
+export interface CrawlSchedule {
+  id: string;
+  knowledgeBaseId: string;
+  maxDepth: number;
+  urlPattern: string | null;
+  scheduleEnabled: boolean;
+  scheduleFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | null;
+  lastCrawledAt: string | null;
+  nextCrawlAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface UpdateCrawlScheduleInput {
+  kbId: string;
+  enabled: boolean;
+  frequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  maxDepth?: number;
+  urlPattern?: string;
+  startUrl?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Query key factory
 // ---------------------------------------------------------------------------
@@ -88,6 +111,8 @@ export const knowledgeBaseKeys = {
   all: (orgId: string) => ['organizations', orgId, 'knowledge-bases'] as const,
   detail: (orgId: string, kbId: string) =>
     ['organizations', orgId, 'knowledge-bases', kbId] as const,
+  schedule: (orgId: string, kbId: string) =>
+    ['organizations', orgId, 'knowledge-bases', kbId, 'schedule'] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -291,6 +316,48 @@ export function useBulkImportDocuments() {
       if (orgId) {
         queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.detail(orgId, variables.kbId) });
         queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.all(orgId) });
+      }
+    },
+  });
+}
+
+/**
+ * Fetch crawl schedule configuration for a knowledge base.
+ */
+export function useCrawlSchedule(kbId: string | undefined) {
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  return useQuery({
+    queryKey: knowledgeBaseKeys.schedule(orgId!, kbId!),
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<CrawlSchedule>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/crawl/schedule`,
+      );
+      return data.data;
+    },
+    enabled: !!orgId && !!kbId,
+  });
+}
+
+/**
+ * Update crawl schedule configuration.
+ * Invalidates the schedule query on success.
+ */
+export function useUpdateCrawlSchedule() {
+  const queryClient = useQueryClient();
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  return useMutation({
+    mutationFn: async ({ kbId, ...body }: UpdateCrawlScheduleInput) => {
+      const { data } = await api.post<ApiResponse<CrawlSchedule>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/crawl/schedule`,
+        body,
+      );
+      return data.data;
+    },
+    onSuccess: (_data, variables) => {
+      if (orgId) {
+        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.schedule(orgId, variables.kbId) });
       }
     },
   });
