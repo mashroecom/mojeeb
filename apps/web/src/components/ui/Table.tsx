@@ -83,6 +83,7 @@ export function Table<T extends Record<string, unknown>>({
             {columns.map((col) => (
               <th
                 key={col.key}
+                role={col.sortable ? 'button' : undefined}
                 className={cn(
                   'px-4 py-3 text-start text-xs font-medium uppercase tracking-wider text-muted-foreground',
                   col.sortable &&
