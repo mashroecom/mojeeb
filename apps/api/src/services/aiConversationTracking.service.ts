@@ -3,6 +3,7 @@ import { cache } from '../config/cache';
 import { logger } from '../config/logger';
 import { NotFoundError, UsageLimitError } from '../utils/errors';
 import { planConfigService } from './planConfig.service';
+import { usageAlertService } from './usageAlert.service';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -91,6 +92,14 @@ export class AiConversationTrackingService {
     await cache.del(cacheKey(orgId));
 
     logger.info({ orgId, used: subscription.aiConversationsUsed + 1 }, 'AI conversation incremented');
+
+    // Check for usage threshold alerts (80% and 100%)
+    // Non-blocking: don't let alert failures break core tracking
+    try {
+      await usageAlertService.checkAndSendAlerts(orgId);
+    } catch (err) {
+      logger.error({ err, orgId }, 'Failed to check usage alerts after increment');
+    }
   }
 
   /**
