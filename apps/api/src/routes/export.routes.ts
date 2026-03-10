@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Response } from 'express';
 import { prisma } from '../config/database';
 import { analyticsService } from '../services/analytics.service';
 import { authenticate, orgContext } from '../middleware/auth';
@@ -9,6 +10,33 @@ interface OrgParams { orgId: string; [key: string]: string; }
 const router: Router = Router({ mergeParams: true });
 
 router.use(authenticate, orgContext);
+
+// ─── Helper: stream CSV using async generator ──────────────────────
+/**
+ * Stream CSV data to response without building entire string in memory.
+ * Processes rows one at a time to keep memory usage constant and event loop responsive.
+ *
+ * @param headers - CSV column headers
+ * @param rows - Async generator that yields rows one at a time
+ * @param res - Express response object
+ */
+async function streamCsv(
+  headers: string[],
+  rows: AsyncGenerator<string[], void, unknown>,
+  res: Response
+): Promise<void> {
+  // Write headers first
+  res.write(headers.join(',') + '\n');
+
+  // Stream rows one at a time
+  for await (const row of rows) {
+    const sanitizedRow = row.map(csvSanitize).join(',');
+    res.write(sanitizedRow + '\n');
+  }
+
+  // Signal end of stream
+  res.end();
+}
 
 // ─── Helper: build CSV string from headers + rows ──────────────────
 function buildCsv(headers: string[], rows: string[][]): string {
