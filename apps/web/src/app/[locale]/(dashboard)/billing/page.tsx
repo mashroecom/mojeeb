@@ -18,7 +18,7 @@ import { api } from '@/lib/api';
 import { SpendingCapSection } from './_components/SpendingCapSection';
 import { UsageTrendsChart } from './_components/UsageTrendsChart';
 import { UsageAlertsSection } from './_components/UsageAlertsSection';
-import { Skeleton, SkeletonText, SkeletonCard } from '@/components/ui/Skeleton';
+import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import {
@@ -43,8 +43,8 @@ export default function BillingPage() {
   const tb = useTranslations('dashboard.breadcrumb');
   const locale = useLocale();
   const isAr = locale === 'ar';
-  const { data: subscription, isLoading, isError, error, refetch } = useSubscription();
-  const { data: invoices, isLoading: loadingInvoices, isError: invoicesError, error: invoicesErrorObj, refetch: refetchInvoices } = useInvoices();
+  const { data: subscription, isLoading, isError, refetch } = useSubscription();
+  const { data: invoices, isLoading: loadingInvoices, isError: invoicesError, refetch: refetchInvoices } = useInvoices();
   const { data: planConfigs } = usePlans();
   const { data: paymentGateways, isLoading: loadingGateways } = usePaymentGateways();
   const orgId = useAuthStore((s) => s.organization?.id);
