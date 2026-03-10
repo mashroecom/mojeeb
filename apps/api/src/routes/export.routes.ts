@@ -38,15 +38,6 @@ async function streamCsv(
   res.end();
 }
 
-// ─── Helper: build CSV string from headers + rows ──────────────────
-function buildCsv(headers: string[], rows: string[][]): string {
-  const lines = [headers.join(',')];
-  for (const row of rows) {
-    lines.push(row.map(csvSanitize).join(','));
-  }
-  return lines.join('\n');
-}
-
 // ─── GET /api/v1/organizations/:orgId/export/conversations ─────────
 
 router.get('/conversations', async (req, res, next) => {
