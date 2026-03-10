@@ -22,47 +22,9 @@ import {
   XCircle,
   BarChart3,
 } from 'lucide-react';
-
-// ---------------------------------------------------------------------------
-// Skeletons
-// ---------------------------------------------------------------------------
-
-function StatSkeleton() {
-  return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">
-      <div className="h-3 w-20 rounded bg-muted mb-3" />
-      <div className="h-7 w-16 rounded bg-muted" />
-    </div>
-  );
-}
-
-function RowSkeleton() {
-  return (
-    <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3">
-        <div className="h-3 w-32 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-24 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-12 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-12 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-12 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-3 w-20 rounded bg-muted" />
-      </td>
-      <td className="px-4 py-3">
-        <div className="h-7 w-8 rounded bg-muted" />
-      </td>
-    </tr>
-  );
-}
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 // ---------------------------------------------------------------------------
 // Page
@@ -129,18 +91,14 @@ export default function AdminKnowledgeBasesPage() {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Error state
-  // ---------------------------------------------------------------------------
-
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-destructive font-medium mb-2">{tc('error')}</p>
-        <button onClick={() => refetch()} className="text-sm text-primary hover:underline">
-          {tc('retry')}
-        </button>
-      </div>
+      <ErrorState
+        title={tc('error')}
+        description={t('errorLoading')}
+        retryLabel={tc('retry')}
+        onRetry={() => refetch()}
+      />
     );
   }
 
@@ -160,10 +118,22 @@ export default function AdminKnowledgeBasesPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {healthLoading ? (
           <>
-            <StatSkeleton />
-            <StatSkeleton />
-            <StatSkeleton />
-            <StatSkeleton />
+            <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+              <Skeleton variant="text" width={80} />
+              <Skeleton variant="text" width={64} height={28} />
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+              <Skeleton variant="text" width={80} />
+              <Skeleton variant="text" width={64} height={28} />
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+              <Skeleton variant="text" width={80} />
+              <Skeleton variant="text" width={64} height={28} />
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+              <Skeleton variant="text" width={80} />
+              <Skeleton variant="text" width={64} height={28} />
+            </div>
           </>
         ) : (
           <>
@@ -203,10 +173,22 @@ export default function AdminKnowledgeBasesPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {statsLoading ? (
           <>
-            <StatSkeleton />
-            <StatSkeleton />
-            <StatSkeleton />
-            <StatSkeleton />
+            <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+              <Skeleton variant="text" width={80} />
+              <Skeleton variant="text" width={64} height={28} />
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+              <Skeleton variant="text" width={80} />
+              <Skeleton variant="text" width={64} height={28} />
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+              <Skeleton variant="text" width={80} />
+              <Skeleton variant="text" width={64} height={28} />
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+              <Skeleton variant="text" width={80} />
+              <Skeleton variant="text" width={64} height={28} />
+            </div>
           </>
         ) : (
           <>
@@ -288,16 +270,39 @@ export default function AdminKnowledgeBasesPage() {
               </thead>
               <tbody>
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <RowSkeleton key={i} />
+                  <tr key={i} className="border-b last:border-b-0">
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" width={128} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" width={96} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" width={48} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" width={48} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" width={48} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" width={80} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton variant="text" width={32} height={28} />
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : knowledgeBases.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <BookOpen className="h-10 w-10 mb-3 opacity-40" />
-            <p className="text-sm">{t('noKBs')}</p>
-          </div>
+          <EmptyState
+            icon={BookOpen}
+            title={t('noKBs')}
+            description={search ? t('noSearchResults') : undefined}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
