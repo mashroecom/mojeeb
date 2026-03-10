@@ -2,8 +2,8 @@
 // Payment Provider Exports
 // ---------------------------------------------------------------------------
 
-export {
-  PaymentProvider,
+export { PaymentProvider } from './PaymentProvider';
+export type {
   CheckoutResponse,
   PaymentConfirmation,
   WebhookPayload,
@@ -11,8 +11,11 @@ export {
   PaymentConfirmationParams,
 } from './PaymentProvider';
 
-export { KashierProvider, KashierWebhookPayload } from './KashierProvider';
+export { KashierProvider } from './KashierProvider';
+export type { KashierWebhookPayload } from './KashierProvider';
 
-export { StripeProvider, StripeCheckoutSession, StripeWebhookEvent } from './StripeProvider';
+export { StripeProvider } from './StripeProvider';
+export type { StripeCheckoutSession, StripeWebhookEvent } from './StripeProvider';
 
-export { PayPalProvider, PayPalOrderResponse, PayPalWebhookPayload } from './PayPalProvider';
+export { PayPalProvider } from './PayPalProvider';
+export type { PayPalOrderResponse, PayPalWebhookPayload } from './PayPalProvider';

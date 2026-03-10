@@ -7,8 +7,14 @@ import { logger } from '../config/logger';
 import { cache } from '../config/cache';
 import { configService } from './config.service';
 import { NotFoundError, BadRequestError, UsageLimitError } from '../utils/errors';
-import { SubscriptionPlan } from '@mojeeb/shared-types';
+import { SubscriptionPlan, PaymentGateway } from '@mojeeb/shared-types';
 import { planConfigService } from './planConfig.service';
+import {
+  PaymentProvider,
+  KashierProvider,
+  StripeProvider,
+  PayPalProvider,
+} from './payments';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -104,6 +110,37 @@ export interface PayPalWebhookPayload {
  */
 function safeLimit(value: number): number {
   return Number.isFinite(value) ? value : 999999;
+}
+
+/**
+ * Provider instances (singleton pattern).
+ */
+const providerInstances: Partial<Record<PaymentGateway, PaymentProvider>> = {};
+
+/**
+ * Get or create a payment provider instance for the specified gateway.
+ * Uses singleton pattern to ensure only one instance per provider type.
+ *
+ * @param gateway - The payment gateway type
+ * @returns Payment provider instance
+ */
+function getPaymentProvider(gateway: PaymentGateway): PaymentProvider {
+  if (!providerInstances[gateway]) {
+    switch (gateway) {
+      case PaymentGateway.KASHIER:
+        providerInstances[gateway] = new KashierProvider();
+        break;
+      case PaymentGateway.STRIPE:
+        providerInstances[gateway] = new StripeProvider();
+        break;
+      case PaymentGateway.PAYPAL:
+        providerInstances[gateway] = new PayPalProvider();
+        break;
+      default:
+        throw new BadRequestError(`Unsupported payment gateway: ${gateway}`);
+    }
+  }
+  return providerInstances[gateway]!;
 }
 
 /**
