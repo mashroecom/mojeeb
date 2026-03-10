@@ -44,6 +44,7 @@ model User {
   blockedIPs              BlockedIP[]              @relation("BlockedIPs")
   bulkEmailCampaigns      BulkEmailCampaign[]      @relation("BulkEmailCampaigns")
   adminNotifications      AdminNotification[]      @relation("AdminNotifications")
+  messageTemplates        MessageTemplate[]        @relation("CreatedMessageTemplates")
 
   @@index([isSuperAdmin])
   @@index([createdAt])
@@ -187,8 +188,10 @@ model KnowledgeBase {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  documents KBDocument[]
-  agents    AgentKnowledgeBase[]
+  documents    KBDocument[]
+  agents       AgentKnowledgeBase[]
+  crawlJobs    CrawlJob[]
+  crawlConfigs CrawlConfig[]
 
   @@index([orgId])
   @@map("knowledge_bases")
@@ -198,6 +201,8 @@ model KBDocument {
   id              String          @id @default(cuid())
   knowledgeBaseId String
   knowledgeBase   KnowledgeBase   @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  crawlJobId      String?
+  crawlJob        CrawlJob?       @relation(fields: [crawlJobId], references: [id], onDelete: SetNull)
   title           String
   content         String          @db.Text
   contentType     KBDocumentType  @default(TEXT)
@@ -211,6 +216,7 @@ model KBDocument {
   chunks KBChunk[]
 
   @@index([knowledgeBaseId])
+  @@index([crawlJobId])
   @@map("kb_documents")
 }
 
@@ -238,6 +244,49 @@ model AgentKnowledgeBase {
   @@map("agent_knowledge_bases")
 }
 
+model CrawlJob {
+  id              String        @id @default(cuid())
+  knowledgeBaseId String
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  configId        String?
+  config          CrawlConfig?  @relation(fields: [configId], references: [id], onDelete: SetNull)
+  startUrl        String
+  status          CrawlStatus   @default(PENDING)
+  pagesTotal      Int           @default(0)
+  pagesCrawled    Int           @default(0)
+  errorMessage    String?       @db.Text
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  documents KBDocument[]
+
+  @@index([knowledgeBaseId])
+  @@index([status])
+  @@map("crawl_jobs")
+}
+
+model CrawlConfig {
+  id                String          @id @default(cuid())
+  knowledgeBaseId   String
+  knowledgeBase     KnowledgeBase   @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  maxDepth          Int             @default(1)
+  urlPattern        String?
+  scheduleEnabled   Boolean         @default(false)
+  scheduleFrequency CrawlFrequency?
+  lastCrawledAt     DateTime?
+  nextCrawlAt       DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  jobs CrawlJob[]
+
+  @@index([knowledgeBaseId])
+  @@index([scheduleEnabled])
+  @@map("crawl_configs")
+}
+
 enum KBDocumentType {
   TEXT
   PDF
@@ -250,6 +299,20 @@ enum EmbeddingStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+enum CrawlStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CrawlFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
 }
 
 // ========================
@@ -550,11 +613,13 @@ model Subscription {
   org                   Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   plan                  SubscriptionPlan   @default(FREE)
   status                SubscriptionStatus @default(ACTIVE)
-  paymentGateway        String?
+  paymentGateway        PaymentGateway     @default(KASHIER)
   kashierSubscriptionId String?            @unique
   kashierCustomerId     String?
-  stripeCustomerId      String?
   stripeSubscriptionId  String?            @unique
+  stripeCustomerId      String?
+  paypalSubscriptionId  String?            @unique
+  paypalOrderId         String?
   currentPeriodStart    DateTime           @default(now())
   currentPeriodEnd      DateTime
   cancelAtPeriodEnd     Boolean            @default(false)
@@ -583,23 +648,23 @@ model Subscription {
 }
 
 model Invoice {
-  id                    String        @id @default(cuid())
+  id                    String         @id @default(cuid())
   subscriptionId        String
-  subscription          Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  amount                Decimal       @db.Decimal(10, 2)
-  currency              String        @default("USD")
-  status                InvoiceStatus @default(PENDING)
-  paymentGateway        String?
-  kashierOrderId        String?       @unique
+  subscription          Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amount                Decimal        @db.Decimal(10, 2)
+  currency              String         @default("USD")
+  status                InvoiceStatus  @default(PENDING)
+  paymentGateway        PaymentGateway @default(KASHIER)
+  kashierOrderId        String?        @unique
   kashierPaymentId      String?
-  stripeInvoiceId       String?       @unique
+  stripeInvoiceId       String?        @unique
   stripePaymentIntentId String?
-  paypalOrderId         String?       @unique
+  paypalOrderId         String?        @unique
   paypalCaptureId       String?
   paidAt                DateTime?
   dueDate               DateTime
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   @@index([subscriptionId])
   @@index([status])
@@ -627,6 +692,12 @@ enum InvoiceStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+enum PaymentGateway {
+  KASHIER
+  STRIPE
+  PAYPAL
 }
 
 // ========================
@@ -1257,15 +1328,19 @@ model MessageTemplate {
   orgId       String
   org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   title       String
+  titleAr     String       @default("")
   contentEn   String       @db.Text
   contentAr   String       @default("") @db.Text
   shortcut    String?
   category    String       @default("general")
-  variables   Json         @default("[]")
+  variables   String[]     @default([])
   agentId     String?
   isActive    Boolean      @default(true)
+  isShared    Boolean      @default(false)
   usageCount  Int          @default(0)
   autoTrigger Json         @default("{\"enabled\":false,\"keywords\":[]}")
+  userId      String?
+  user        User?        @relation("CreatedMessageTemplates", fields: [userId], references: [id], onDelete: SetNull)
   createdBy   String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -1274,6 +1349,8 @@ model MessageTemplate {
   @@index([orgId])
   @@index([orgId, category])
   @@index([orgId, isActive])
+  @@index([orgId, isShared])
+  @@index([userId])
   @@map("message_templates")
 }
 

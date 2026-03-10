@@ -1,4 +1,3 @@
-// @ts-ignore - PayPal SDK lacks TypeScript definitions
 import paypal from '@paypal/checkout-server-sdk';
 import { prisma } from '../config/database';
 import { config } from '../config';

@@ -117,8 +117,8 @@ router.get('/landing-page', async (_req: Request, res: Response, next: NextFunct
 
     // Check both LandingPage.maintenanceEnabled AND SiteSettings.maintenanceMode
     let isMaintenanceOn = content.maintenanceEnabled;
-    let mTitle = content.maintenanceTitle;
-    let mTitleAr = content.maintenanceTitleAr;
+    const mTitle = content.maintenanceTitle;
+    const mTitleAr = content.maintenanceTitleAr;
     let mMessage = content.maintenanceMessage;
     let mMessageAr = content.maintenanceMessageAr;
 
