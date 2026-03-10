@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "014-add-csv-formula-injection-protection-to-data-expor",
-  "state": "building",
+  "spec": "079-add-tooltip-with-human-readable-label-to-statusdot",
+  "state": "planning",
   "subtasks": {
-    "completed": 5,
-    "total": 6,
+    "completed": 0,
+    "total": 0,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Security Verification",
+    "current": "Verify Implementation",
     "id": null,
-    "total": 1
+    "total": 5
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 7,
-    "started_at": "2026-03-09T22:53:17.444297"
+    "number": 2,
+    "started_at": "2026-03-10T11:34:50.180394"
   },
-  "last_update": "2026-03-09T23:09:51.504881"
+  "last_update": "2026-03-10T11:38:37.881627"
 }
