@@ -1,6 +1,7 @@
 import { prisma, prismaReadReplica } from '../config/database';
 import { cache } from '../config/cache';
 import { NotFoundError } from '../utils/errors';
+import { Prisma } from '@prisma/client';
 
 export class AdminService {
   // ========================
@@ -521,29 +522,21 @@ export class AdminService {
       take: limit,
     });
 
-    // Get message counts per org
+    // Get message counts per org using a single JOIN query
     const orgIds = orgs.map((o) => o.id);
-    const messageCounts = await prismaReadReplica.message.groupBy({
-      by: ['conversationId'],
-      where: {
-        conversation: { orgId: { in: orgIds } },
-      },
-      _count: true,
-    });
+    const messageCountsRaw = await prismaReadReplica.$queryRaw<
+      { orgId: string; count: bigint }[]
+    >`
+      SELECT c."orgId", COUNT(*)::bigint AS "count"
+        FROM "messages" m
+        JOIN "conversations" c ON c."id" = m."conversationId"
+       WHERE c."orgId" IN (${Prisma.join(orgIds)})
+       GROUP BY c."orgId"
+    `;
 
-    // Aggregate message counts by org via conversations
-    const conversations = await prismaReadReplica.conversation.findMany({
-      where: { orgId: { in: orgIds } },
-      select: { id: true, orgId: true },
-    });
-    const convOrgMap = new Map(conversations.map((c) => [c.id, c.orgId]));
-    const orgMessageCounts = new Map<string, number>();
-    for (const mc of messageCounts) {
-      const orgId = convOrgMap.get(mc.conversationId);
-      if (orgId) {
-        orgMessageCounts.set(orgId, (orgMessageCounts.get(orgId) ?? 0) + mc._count);
-      }
-    }
+    const orgMessageCounts = new Map(
+      messageCountsRaw.map((row) => [row.orgId, Number(row.count)])
+    );
 
     return orgs.map((org) => ({
       id: org.id,
