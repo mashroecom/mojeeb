@@ -116,21 +116,25 @@ router.get('/leads', async (req, res, next) => {
       'createdAt',
     ];
 
-    const rows = leads.map((l) => [
-      l.id,
-      l.name ?? '',
-      l.email ?? '',
-      l.phone ?? '',
-      l.status,
-      l.source ?? '',
-      l.createdAt.toISOString(),
-    ]);
-
-    const csv = buildCsv(headers, rows);
+    // Async generator that yields rows one at a time
+    async function* generateRows() {
+      for (const l of leads) {
+        yield [
+          l.id,
+          l.name ?? '',
+          l.email ?? '',
+          l.phone ?? '',
+          l.status,
+          l.source ?? '',
+          l.createdAt.toISOString(),
+        ];
+      }
+    }
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="leads-export.csv"');
-    res.send(csv);
+
+    await streamCsv(headers, generateRows(), res);
   } catch (err) {
     next(err);
   }
