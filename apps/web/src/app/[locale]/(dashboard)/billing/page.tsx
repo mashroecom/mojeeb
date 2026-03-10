@@ -18,6 +18,9 @@ import { api } from '@/lib/api';
 import { SpendingCapSection } from './_components/SpendingCapSection';
 import { UsageTrendsChart } from './_components/UsageTrendsChart';
 import { UsageAlertsSection } from './_components/UsageAlertsSection';
+import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import {
   MessageSquare,
   Bot,
@@ -40,8 +43,8 @@ export default function BillingPage() {
   const tb = useTranslations('dashboard.breadcrumb');
   const locale = useLocale();
   const isAr = locale === 'ar';
-  const { data: subscription, isLoading, refetch } = useSubscription();
-  const { data: invoices, isLoading: loadingInvoices, refetch: refetchInvoices } = useInvoices();
+  const { data: subscription, isLoading, isError, refetch } = useSubscription();
+  const { data: invoices, isLoading: loadingInvoices, isError: invoicesError, refetch: refetchInvoices } = useInvoices();
   const { data: planConfigs } = usePlans();
   const { data: paymentGateways, isLoading: loadingGateways } = usePaymentGateways();
   const orgId = useAuthStore((s) => s.organization?.id);
@@ -355,11 +358,29 @@ export default function BillingPage() {
         )}
 
         {isLoading ? (
-          <div className="space-y-6 animate-pulse">
-            <div className="h-40 rounded-xl bg-muted" />
-            <div className="h-48 rounded-xl bg-muted" />
-            <div className="h-64 rounded-xl bg-muted" />
+          <div className="space-y-6">
+            <SkeletonCard />
+            <SkeletonCard />
+            <div className="rounded-xl border bg-card p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <Skeleton variant="circle" />
+                <Skeleton variant="text" width="120px" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </div>
+            </div>
+            <SkeletonCard />
           </div>
+        ) : isError ? (
+          <ErrorState
+            title={t('errorLoadingSubscription') || 'Failed to load subscription'}
+            description={t('errorLoadingSubscriptionDesc') || 'Please try again later'}
+            retryLabel={t('retry') || 'Retry'}
+            onRetry={() => refetch()}
+          />
         ) : (
           <>
             {/* Usage Alerts */}
@@ -643,11 +664,18 @@ export default function BillingPage() {
                 <h2 className="text-lg font-semibold">{t('invoiceHistory')}</h2>
               </div>
               {loadingInvoices ? (
-                <div className="space-y-3 animate-pulse">
+                <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-10 rounded bg-muted" />
+                    <Skeleton key={i} variant="rect" height="40px" />
                   ))}
                 </div>
+              ) : invoicesError ? (
+                <ErrorState
+                  title={t('errorLoadingInvoices') || 'Failed to load invoices'}
+                  description={t('errorLoadingInvoicesDesc') || 'Please try again later'}
+                  retryLabel={t('retry') || 'Retry'}
+                  onRetry={() => refetchInvoices()}
+                />
               ) : invoices && invoices.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -730,7 +758,11 @@ export default function BillingPage() {
                   </table>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">{t('noInvoices')}</p>
+                <EmptyState
+                  icon={FileText}
+                  title={t('noInvoices') || 'No invoices yet'}
+                  description={t('noInvoicesDesc') || 'Your invoice history will appear here once you have billing activity.'}
+                />
               )}
             </div>
           </>

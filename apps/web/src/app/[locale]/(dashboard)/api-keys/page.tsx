@@ -10,6 +10,9 @@ import type { ApiKeyCreated } from '@/hooks/useApiKeys';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import {
   Key,
   Plus,
@@ -35,7 +38,7 @@ export default function ApiKeysPage() {
   const locale = useLocale();
   const orgId = useAuthStore((s) => s.organization?.id);
 
-  const { data: apiKeys, isLoading: apiKeysLoading } = useApiKeys();
+  const { data: apiKeys, isLoading: apiKeysLoading, isError, refetch } = useApiKeys();
   const createApiKey = useCreateApiKey();
   const revokeApiKey = useRevokeApiKey();
   const { confirmProps, confirm } = useConfirmDialog();
@@ -246,11 +249,18 @@ export default function ApiKeysPage() {
 
             {/* API keys list */}
             {apiKeysLoading ? (
-              <div className="animate-pulse space-y-3">
+              <div className="space-y-3">
                 {[1, 2].map((i) => (
-                  <div key={i} className="h-12 w-full rounded bg-muted" />
+                  <Skeleton key={i} variant="rect" height={48} />
                 ))}
               </div>
+            ) : isError ? (
+              <ErrorState
+                title={t('errorLoadingKeys') || 'Failed to load API keys'}
+                description={t('errorLoadingKeysDesc') || 'There was a problem loading your API keys. Please try again.'}
+                retryLabel={t('retry') || 'Retry'}
+                onRetry={() => refetch()}
+              />
             ) : apiKeys && apiKeys.length > 0 ? (
               <div className="space-y-2">
                 {apiKeys.map((apiKey) => (
@@ -291,7 +301,15 @@ export default function ApiKeysPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">{t('noKeys')}</p>
+              <EmptyState
+                icon={Key}
+                title={t('noKeys') || 'No API keys yet'}
+                description={t('noKeysDesc') || 'Create your first API key to start using the Mojeeb API.'}
+                action={{
+                  label: t('create') || 'Create API Key',
+                  onClick: () => setShowNewKeyDialog(true),
+                }}
+              />
             )}
           </div>
 

@@ -26,9 +26,11 @@ import {
   Plus,
   Pencil,
   X,
-  AlertCircle,
 } from 'lucide-react';
 import { Pagination } from '@/components/ui/Pagination';
+import { SkeletonCard } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 const STATUS_COLORS: Record<Lead['status'], string> = {
   NEW: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -85,6 +87,7 @@ export default function LeadsPage() {
     data: leadsData,
     isLoading,
     isError,
+    refetch,
   } = useLeads({
     page,
     limit: 20,
@@ -380,32 +383,33 @@ export default function LeadsPage() {
 
         {/* Error state */}
         {!isLoading && isError && (
-          <div className="rounded-xl border bg-card p-12 shadow-sm">
-            <div className="flex flex-col items-center justify-center text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-                <AlertCircle className="h-6 w-6 text-destructive" />
-              </div>
-              <p className="font-medium">{tc('somethingWentWrong')}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{tc('errorDescription')}</p>
-            </div>
+          <div className="rounded-xl border bg-card shadow-sm">
+            <ErrorState
+              title={tc('somethingWentWrong')}
+              description={tc('errorDescription')}
+              retryLabel={tc('retry')}
+              onRetry={() => refetch()}
+            />
           </div>
         )}
 
         {/* Table / Cards */}
         {isLoading ? (
-          <div className="rounded-xl border bg-card shadow-sm">
-            <div className="p-6 space-y-4 animate-pulse">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-12 rounded bg-muted" />
-              ))}
-            </div>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
         ) : isError ? null : leads.length === 0 ? (
-          <div className="rounded-xl border bg-card p-12 shadow-sm">
-            <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
-              <Users className="mb-3 h-12 w-12 opacity-30" />
-              <p className="text-sm">{t('noLeads')}</p>
-            </div>
+          <div className="rounded-xl border bg-card shadow-sm">
+            <EmptyState
+              icon={Users}
+              title={t('noLeads')}
+              action={{
+                label: t('createLead'),
+                onClick: openCreate,
+              }}
+            />
           </div>
         ) : (
           <>

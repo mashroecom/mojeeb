@@ -1,55 +1,56 @@
 {
-  "task_type": "security_hardening",
-  "severity": "critical",
+  "task_type": "ui_refactor",
+  "severity": "medium",
   "files_to_modify": {
-    "root": [".env"]
-  },
-  "files_to_create": {
-    "root": ["SECURITY.md", "docs/KEY_ROTATION.md"]
-  },
-  "files_to_reference": [
-    ".env.example",
-    "apps/api/src/config/index.ts",
-    "AUDIT-REPORT.md"
-  ],
-  "patterns": {
-    "env_structure": "The .env.example file shows the correct structure with placeholders",
-    "config_loading": "All environment variables are loaded via apps/api/src/config/index.ts with dotenv",
-    "validation": "The validateConfig() function checks for placeholder values in production mode"
-  },
-  "existing_implementations": {
-    "description": "The project has a comprehensive config system with validation that checks for weak/placeholder secrets",
-    "relevant_files": [
-      "apps/api/src/config/index.ts",
-      ".env.example"
-    ],
-    "validation_checks": [
-      "JWT_SECRET must be at least 32 characters",
-      "JWT_SECRET cannot contain known placeholders",
-      "ENCRYPTION_KEY must be 64 hex characters",
-      "ENCRYPTION_KEY cannot be the example value"
+    "frontend": [
+      "apps/web/src/app/[locale]/(dashboard)/leads/page.tsx",
+      "apps/web/src/app/[locale]/(dashboard)/analytics/page.tsx",
+      "apps/web/src/app/[locale]/(dashboard)/agents/page.tsx",
+      "apps/web/src/app/[locale]/(dashboard)/api-keys/page.tsx",
+      "apps/web/src/app/[locale]/(dashboard)/billing/page.tsx",
+      "apps/web/src/app/[locale]/(dashboard)/team/page.tsx",
+      "apps/web/src/app/[locale]/(dashboard)/webhooks/page.tsx",
+      "apps/web/src/app/[locale]/(dashboard)/message-templates/page.tsx",
+      "apps/web/src/app/[locale]/(dashboard)/knowledge-base/page.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/knowledge-bases/page.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/conversations/page.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/leads/page.tsx"
     ]
   },
-  "live_credentials_found": {
-    "openai_key": "sk-proj-9UaI... (LIVE)",
-    "anthropic_key": "sk-ant-oat01-... (LIVE)",
-    "kashier_merchant_id": "MID-5857-102 (LIVE)",
-    "kashier_api_key": "ea1640e3-... (LIVE)",
-    "kashier_webhook_secret": "fd83cd17... (LIVE)",
-    "google_client_id": "44877055026-... (LIVE)",
-    "google_client_secret": "GOCSPX-djBTyms4... (LIVE)",
-    "jwt_secret": "your-jwt-secret-change-in-production (WEAK PLACEHOLDER)",
-    "encryption_key": "0123456789abcdef... (EXAMPLE VALUE)"
+  "files_to_reference": [
+    "apps/web/src/components/ui/Skeleton.tsx",
+    "apps/web/src/components/ui/EmptyState.tsx",
+    "apps/web/src/components/ui/ErrorState.tsx",
+    "apps/web/src/app/[locale]/(dashboard)/conversations/page.tsx"
+  ],
+  "patterns": {
+    "reusable_components": "The project has well-designed reusable components in components/ui/ that follow consistent patterns",
+    "skeleton_pattern": "Skeleton component has variants (text, circle, card, rect) and exports SkeletonText and SkeletonCard",
+    "empty_state_pattern": "EmptyState accepts icon (ElementType), title, description, and optional action button",
+    "error_state_pattern": "ErrorState accepts title, description, and optional retry button with onRetry callback",
+    "current_bad_pattern": "Most pages use inline animate-pulse divs, custom empty messages, and inconsistent error handling"
   },
-  "rotation_required": [
-    "OPENAI_API_KEY",
-    "ANTHROPIC_API_KEY",
-    "KASHIER_MERCHANT_ID",
-    "KASHIER_API_KEY",
-    "KASHIER_WEBHOOK_SECRET",
-    "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET",
-    "JWT_SECRET",
-    "ENCRYPTION_KEY"
-  ]
+  "existing_implementations": {
+    "description": "Three reusable UI components exist but are severely underutilized",
+    "relevant_files": [
+      "apps/web/src/components/ui/Skeleton.tsx",
+      "apps/web/src/components/ui/EmptyState.tsx",
+      "apps/web/src/components/ui/ErrorState.tsx"
+    ],
+    "usage_stats": {
+      "empty_state_usage": "Only 3 files use EmptyState (conversations, mobile analytics, admin DLQ)",
+      "skeleton_exports_usage": "SkeletonText and SkeletonCard are NEVER imported anywhere (0 files)",
+      "inline_loading_states": "48 files use inline animate-pulse divs instead of Skeleton component"
+    }
+  },
+  "scope": {
+    "total_dashboard_pages": 14,
+    "total_admin_pages": 40,
+    "focus_pages": "Prioritize main dashboard pages first (8-12 pages), then admin pages as needed",
+    "components_to_standardize": [
+      "Loading states (replace animate-pulse with Skeleton/SkeletonText/SkeletonCard)",
+      "Empty states (replace custom empty messages with EmptyState)",
+      "Error states (replace custom error UI with ErrorState)"
+    ]
+  }
 }
