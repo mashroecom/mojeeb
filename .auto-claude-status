@@ -3,23 +3,23 @@
   "spec": "002-decompose-landing-page-god-component-2-052-lines-5",
   "state": "building",
   "subtasks": {
-    "completed": 1,
+    "completed": 5,
     "total": 21,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Setup - Create Shared Infrastructure",
+    "current": "Extract - Core Landing Sections (Hero, Features, Stats, Pricing)",
     "id": null,
-    "total": 3
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 3,
+    "number": 7,
     "started_at": "2026-03-10T23:55:29.988534"
   },
-  "last_update": "2026-03-11T00:08:59.012380"
+  "last_update": "2026-03-11T00:31:13.999189"
 }
