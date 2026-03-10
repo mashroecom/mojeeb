@@ -91,8 +91,7 @@ async function setupTestData(): Promise<TestSetup> {
       email: `test-ai-billing-${timestamp}@example.com`,
       firstName: 'Test',
       lastName: 'User',
-      password: 'hashed-password',
-      isActive: true,
+      passwordHash: 'hashed-password',
       isSuperAdmin: false,
     },
   });
@@ -135,8 +134,24 @@ async function setupTestData(): Promise<TestSetup> {
     await prisma.planConfig.create({
       data: {
         plan: 'FREE',
+        displayName: 'Free Plan',
+        displayNameAr: 'الخطة المجانية',
+        monthlyPrice: 0,
+        yearlyPrice: 0,
+        currency: 'USD',
+        messagesPerMonth: 100,
+        maxAgents: 1,
+        maxChannels: 1,
+        maxKnowledgeBases: 0,
+        maxTeamMembers: 1,
+        maxTokensPerMonth: 500000,
         aiConversationsPerMonth: 100,
         overagePricePerConversation: 0.5, // $0.50 per additional conversation
+        apiAccess: false,
+        isPopular: false,
+        sortOrder: 0,
+        features: '[]',
+        featuresAr: '[]',
       },
     });
   } else {
@@ -394,7 +409,7 @@ async function runTests() {
 
     const withSpendingCap = await subscriptionService.getByOrgId(setup.orgId);
 
-    if (withSpendingCap.spendingCapEnabled && withSpendingCap.spendingCapAmount === spendingCapAmount) {
+    if (withSpendingCap.spendingCapEnabled && withSpendingCap.spendingCapAmount?.toNumber() === spendingCapAmount) {
       addResult('Step 8a: Enable spending cap', true, undefined, {
         enabled: withSpendingCap.spendingCapEnabled,
         amount: withSpendingCap.spendingCapAmount,
@@ -486,7 +501,14 @@ async function runTests() {
       },
     );
 
-    const apiData = await response.json();
+    const apiData = (await response.json()) as {
+      success: boolean;
+      data: {
+        aiConversationsUsed: number;
+        aiConversationsLimit: number;
+        spendingCapEnabled: boolean;
+      };
+    };
 
     if (
       response.status === 200 &&
