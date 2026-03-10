@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { pushNotificationService } from '../services/pushNotification.service';
 
 const router: Router = Router();
 
@@ -281,6 +282,124 @@ router.get('/organizations', async (req: Request, res: Response, next: NextFunct
     res.json({
       success: true,
       data: { organizations },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const subscribeSchema = z.object({
+  orgId: z.string().cuid(),
+  subscription: z.object({
+    endpoint: z.string().url(),
+    keys: z.object({
+      p256dh: z.string(),
+      auth: z.string(),
+    }),
+  }),
+  deviceInfo: z.object({
+    userAgent: z.string().optional(),
+    platform: z.string().optional(),
+  }).optional(),
+});
+
+// POST /push/subscribe - Subscribe to push notifications
+router.post(
+  '/push/subscribe',
+  validate({ body: subscribeSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.userId;
+      const { orgId, subscription, deviceInfo } = req.body;
+
+      // Verify user has access to the organization
+      const membership = await prisma.orgMembership.findUnique({
+        where: {
+          userId_orgId: { userId, orgId },
+        },
+      });
+
+      if (!membership) {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied to this organization',
+        });
+      }
+
+      const result = await pushNotificationService.subscribe({
+        userId,
+        orgId,
+        subscription,
+        deviceInfo,
+      });
+
+      res.status(201).json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+const unsubscribeSchema = z.object({
+  endpoint: z.string().url(),
+});
+
+// DELETE /push/unsubscribe - Unsubscribe from push notifications
+router.delete(
+  '/push/unsubscribe',
+  validate({ body: unsubscribeSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.userId;
+      const { endpoint } = req.body;
+
+      await pushNotificationService.unsubscribe(userId, endpoint);
+
+      res.json({
+        success: true,
+        data: { unsubscribed: true },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// GET /push/subscriptions - List user's push subscriptions
+router.get('/push/subscriptions', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const orgId = req.query.orgId as string | undefined;
+
+    if (!orgId) {
+      return res.status(400).json({
+        success: false,
+        error: 'orgId query parameter is required',
+      });
+    }
+
+    // Verify user has access to the organization
+    const membership = await prisma.orgMembership.findUnique({
+      where: {
+        userId_orgId: { userId, orgId },
+      },
+    });
+
+    if (!membership) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied to this organization',
+      });
+    }
+
+    const subscriptions = await pushNotificationService.getUserSubscriptions(userId, orgId);
+
+    res.json({
+      success: true,
+      data: { subscriptions },
     });
   } catch (err) {
     next(err);
