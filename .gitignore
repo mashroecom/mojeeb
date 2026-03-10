@@ -55,11 +55,9 @@ uploads/
 letsencrypt/
 certbot/
 
-# Auto Claude data directory
+# Claude Code & Auto Claude
+.claude/
 .auto-claude/
-
-
-# Auto Claude generated files
 .auto-claude-security.json
 .auto-claude-status
 .claude_settings.json
