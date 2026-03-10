@@ -106,7 +106,7 @@ export async function scheduleRepeatableCrawl(configId: string): Promise<void> {
 
     // Update nextCrawlAt in the database
     const now = new Date();
-    let nextCrawlAt = new Date(now);
+    const nextCrawlAt = new Date(now);
     switch (config.scheduleFrequency) {
       case 'DAILY':
         nextCrawlAt.setDate(nextCrawlAt.getDate() + 1);

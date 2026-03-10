@@ -30,7 +30,7 @@ import {
 import { StatusBadge } from './StatusBadge';
 import { ContentTypeBadge } from './ContentTypeBadge';
 import { CrawlConfigForm } from './CrawlConfigForm';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/useToast';
 
 interface KBDetailViewProps {
   kbId: string;

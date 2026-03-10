@@ -6,7 +6,7 @@ import { Loader2, ChevronDown, Globe, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/useToast';
 
 interface CrawlConfigFormProps {
   kbId: string;

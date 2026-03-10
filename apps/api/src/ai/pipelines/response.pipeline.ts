@@ -145,7 +145,7 @@ export class ResponsePipeline {
 
     // Compute missing required fields for data collection
     const dataCollectionConfig = params.agent.dataCollectionConfig as DataCollectionConfig | null;
-    let missingRequiredFields: string[] = [];
+    const missingRequiredFields: string[] = [];
     const collectedFields: Record<string, string> = {};
 
     if (dataCollectionConfig?.requiredFields?.length) {
