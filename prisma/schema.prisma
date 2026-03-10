@@ -30,21 +30,21 @@ model User {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  memberships            OrgMembership[]
-  sentMessages           Message[]            @relation("HumanAgentMessages")
-  sessions               Session[]
-  apiKeys                ApiKey[]
-  notifications          Notification[]
-  verificationTokens     VerificationToken[]
-  auditLogs              AuditLog[]           @relation("AuditLogs")
-  announcements          Announcement[]       @relation("CreatedAnnouncements")
+  memberships             OrgMembership[]
+  sentMessages            Message[]                @relation("HumanAgentMessages")
+  sessions                Session[]
+  apiKeys                 ApiKey[]
+  notifications           Notification[]
+  verificationTokens      VerificationToken[]
+  auditLogs               AuditLog[]               @relation("AuditLogs")
+  announcements           Announcement[]           @relation("CreatedAnnouncements")
   notificationPreferences NotificationPreference[]
-  assignedLeads          Lead[]               @relation("AssignedLeads")
-  loginActivities        LoginActivity[]
-  blockedIPs             BlockedIP[]          @relation("BlockedIPs")
-  bulkEmailCampaigns     BulkEmailCampaign[]  @relation("BulkEmailCampaigns")
-  adminNotifications     AdminNotification[]  @relation("AdminNotifications")
-  messageTemplates       MessageTemplate[]    @relation("CreatedMessageTemplates")
+  assignedLeads           Lead[]                   @relation("AssignedLeads")
+  loginActivities         LoginActivity[]
+  blockedIPs              BlockedIP[]              @relation("BlockedIPs")
+  bulkEmailCampaigns      BulkEmailCampaign[]      @relation("BulkEmailCampaigns")
+  adminNotifications      AdminNotification[]      @relation("AdminNotifications")
+  messageTemplates        MessageTemplate[]        @relation("CreatedMessageTemplates")
 
   @@index([isSuperAdmin])
   @@index([createdAt])
@@ -109,14 +109,14 @@ model Organization {
 }
 
 model OrgMembership {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   orgId     String
   org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  role      OrgRole  @default(MEMBER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      OrgRole      @default(MEMBER)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   @@unique([userId, orgId])
   @@index([orgId])
@@ -134,32 +134,32 @@ enum OrgRole {
 // ========================
 
 model Agent {
-  id                     String     @id @default(cuid())
+  id                     String       @id @default(cuid())
   orgId                  String
   org                    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name                   String
   description            String?
-  aiProvider             AiProvider @default(OPENAI)
-  aiModel                String     @default("gpt-4o")
-  systemPrompt           String     @db.Text
-  temperature            Float      @default(0.7)
-  maxTokens              Int        @default(1024)
-  language               String     @default("ar")
-  isActive               Boolean    @default(true)
-  enableEmotionDetection Boolean    @default(true)
-  enableLeadExtraction   Boolean    @default(false)
-  enableHumanHandoff     Boolean    @default(true)
-  handoffThreshold       Float      @default(0.3)
-  tone                   String     @default("friendly")
-  responseLength         String     @default("medium")
+  aiProvider             AiProvider   @default(OPENAI)
+  aiModel                String       @default("gpt-4o")
+  systemPrompt           String       @db.Text
+  temperature            Float        @default(0.7)
+  maxTokens              Int          @default(1024)
+  language               String       @default("ar")
+  isActive               Boolean      @default(true)
+  enableEmotionDetection Boolean      @default(true)
+  enableLeadExtraction   Boolean      @default(false)
+  enableHumanHandoff     Boolean      @default(true)
+  handoffThreshold       Float        @default(0.3)
+  tone                   String       @default("friendly")
+  responseLength         String       @default("medium")
   dataCollectionConfig   Json?
-  escalationKeywords     String[]   @default([])
-  sentimentEscalation    Boolean    @default(false)
-  escalationMessageCount Int        @default(5)
+  escalationKeywords     String[]     @default([])
+  sentimentEscalation    Boolean      @default(false)
+  escalationMessageCount Int          @default(5)
   quickRepliesConfig     Json?
   templateType           String?
-  createdAt              DateTime   @default(now())
-  updatedAt              DateTime   @updatedAt
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
 
   knowledgeBases AgentKnowledgeBase[]
   channels       ChannelAgent[]
@@ -180,16 +180,18 @@ enum AiProvider {
 // ========================
 
 model KnowledgeBase {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   orgId       String
   org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name        String
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  documents KBDocument[]
-  agents    AgentKnowledgeBase[]
+  documents    KBDocument[]
+  agents       AgentKnowledgeBase[]
+  crawlJobs    CrawlJob[]
+  crawlConfigs CrawlConfig[]
 
   @@index([orgId])
   @@map("knowledge_bases")
@@ -199,6 +201,8 @@ model KBDocument {
   id              String          @id @default(cuid())
   knowledgeBaseId String
   knowledgeBase   KnowledgeBase   @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  crawlJobId      String?
+  crawlJob        CrawlJob?       @relation(fields: [crawlJobId], references: [id], onDelete: SetNull)
   title           String
   content         String          @db.Text
   contentType     KBDocumentType  @default(TEXT)
@@ -212,18 +216,19 @@ model KBDocument {
   chunks KBChunk[]
 
   @@index([knowledgeBaseId])
+  @@index([crawlJobId])
   @@map("kb_documents")
 }
 
 model KBChunk {
-  id         String     @id @default(cuid())
+  id         String                       @id @default(cuid())
   documentId String
-  document   KBDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  content    String     @db.Text
+  document   KBDocument                   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content    String                       @db.Text
   embedding  Unsupported("vector(1536)")?
   chunkIndex Int
   metadata   Json?
-  createdAt  DateTime   @default(now())
+  createdAt  DateTime                     @default(now())
 
   @@index([documentId])
   @@map("kb_chunks")
@@ -237,6 +242,49 @@ model AgentKnowledgeBase {
 
   @@id([agentId, knowledgeBaseId])
   @@map("agent_knowledge_bases")
+}
+
+model CrawlJob {
+  id              String        @id @default(cuid())
+  knowledgeBaseId String
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  configId        String?
+  config          CrawlConfig?  @relation(fields: [configId], references: [id], onDelete: SetNull)
+  startUrl        String
+  status          CrawlStatus   @default(PENDING)
+  pagesTotal      Int           @default(0)
+  pagesCrawled    Int           @default(0)
+  errorMessage    String?       @db.Text
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  documents KBDocument[]
+
+  @@index([knowledgeBaseId])
+  @@index([status])
+  @@map("crawl_jobs")
+}
+
+model CrawlConfig {
+  id                String          @id @default(cuid())
+  knowledgeBaseId   String
+  knowledgeBase     KnowledgeBase   @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  maxDepth          Int             @default(1)
+  urlPattern        String?
+  scheduleEnabled   Boolean         @default(false)
+  scheduleFrequency CrawlFrequency?
+  lastCrawledAt     DateTime?
+  nextCrawlAt       DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  jobs CrawlJob[]
+
+  @@index([knowledgeBaseId])
+  @@index([scheduleEnabled])
+  @@map("crawl_configs")
 }
 
 enum KBDocumentType {
@@ -253,22 +301,36 @@ enum EmbeddingStatus {
   FAILED
 }
 
+enum CrawlStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CrawlFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
 // ========================
 // CHANNELS
 // ========================
 
 model Channel {
-  id            String      @id @default(cuid())
+  id            String       @id @default(cuid())
   orgId         String
   org           Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   type          ChannelType
   name          String
-  isActive      Boolean     @default(false)
+  isActive      Boolean      @default(false)
   credentials   Json
   webhookSecret String?
   externalId    String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   agents        ChannelAgent[]
   conversations Conversation[]
@@ -302,33 +364,33 @@ enum ChannelType {
 // ========================
 
 model Conversation {
-  id              String             @id @default(cuid())
-  orgId           String
-  org             Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  channelId       String
-  channel         Channel            @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  agentId         String?
-  agent           Agent?             @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  customerId      String
-  customerName    String?
-  customerPhone   String?
-  customerEmail   String?
-  customerMeta    Json?
-  status          ConversationStatus @default(ACTIVE)
-  assignedToHuman String?
-  lastEmotion     String?
-  emotionScore    Float?
+  id               String             @id @default(cuid())
+  orgId            String
+  org              Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  channelId        String
+  channel          Channel            @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  agentId          String?
+  agent            Agent?             @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  customerId       String
+  customerName     String?
+  customerPhone    String?
+  customerEmail    String?
+  customerMeta     Json?
+  status           ConversationStatus @default(ACTIVE)
+  assignedToHuman  String?
+  lastEmotion      String?
+  emotionScore     Float?
   summary          String?            @db.Text
   category         String?
   topics           String[]           @default([])
   customerIntent   String?
   resolutionStatus String?
   messageCount     Int                @default(0)
-  firstMessageAt  DateTime           @default(now())
-  lastMessageAt   DateTime           @default(now())
-  resolvedAt      DateTime?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  firstMessageAt   DateTime           @default(now())
+  lastMessageAt    DateTime           @default(now())
+  resolvedAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   messages Message[]
   leads    Lead[]
@@ -417,11 +479,11 @@ enum DeliveryStatus {
 // ========================
 
 model Tag {
-  id        String            @id @default(cuid())
+  id        String   @id @default(cuid())
   orgId     String
   name      String
-  color     String            @default("#6366f1")
-  createdAt DateTime          @default(now())
+  color     String   @default("#6366f1")
+  createdAt DateTime @default(now())
 
   conversations ConversationTag[]
 
@@ -450,7 +512,7 @@ model ConversationRating {
   id             String       @id @default(cuid())
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  rating         Int          // 1-5
+  rating         Int // 1-5
   feedback       String?      @db.Text
   customerId     String
   createdAt      DateTime     @default(now())
@@ -638,18 +700,18 @@ enum PaymentGateway {
 // ========================
 
 model ApiKey {
-  id         String    @id @default(cuid())
+  id         String       @id @default(cuid())
   userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   orgId      String
   org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name       String
-  keyHash    String    @unique
+  keyHash    String       @unique
   keyPrefix  String
   lastUsedAt DateTime?
   expiresAt  DateTime?
   scopes     String[]
-  createdAt  DateTime  @default(now())
+  createdAt  DateTime     @default(now())
   revokedAt  DateTime?
 
   @@index([orgId])
@@ -697,11 +759,11 @@ model Notification {
   id        String   @id @default(cuid())
   orgId     String
   userId    String
-  type      String   // CONVERSATION_NEW, CONVERSATION_HANDOFF, LEAD_NEW, USAGE_WARNING, SYSTEM
+  type      String // CONVERSATION_NEW, CONVERSATION_HANDOFF, LEAD_NEW, USAGE_WARNING, SYSTEM
   title     String
   body      String
   isRead    Boolean  @default(false)
-  metadata  Json?    // optional data (conversationId, leadId, etc.)
+  metadata  Json? // optional data (conversationId, leadId, etc.)
   createdAt DateTime @default(now())
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
@@ -719,7 +781,7 @@ model Notification {
 model VerificationToken {
   id        String    @id @default(cuid())
   token     String    @unique
-  type      String    // EMAIL_VERIFY, PASSWORD_RESET
+  type      String // EMAIL_VERIFY, PASSWORD_RESET
   userId    String
   expiresAt DateTime
   usedAt    DateTime?
@@ -782,23 +844,23 @@ model Announcement {
 // ========================
 
 model NotificationPreference {
-  id                   String       @id @default(cuid())
-  orgId                String
-  org                  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  userId               String
-  user                 User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  emailNewConversation Boolean      @default(true)
-  emailHandoff         Boolean      @default(true)
-  emailLeadExtracted   Boolean      @default(true)
-  emailUsageWarning    Boolean      @default(true)
-  emailWeeklyDigest    Boolean      @default(false)
-  emailDailyDigest     Boolean      @default(false)
-  emailMonthlyReport   Boolean      @default(true)
-  emailNegativeSentiment Boolean    @default(true)
-  browserNotifications Boolean      @default(true)
-  soundEnabled         Boolean      @default(true)
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
+  id                     String       @id @default(cuid())
+  orgId                  String
+  org                    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  userId                 String
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailNewConversation   Boolean      @default(true)
+  emailHandoff           Boolean      @default(true)
+  emailLeadExtracted     Boolean      @default(true)
+  emailUsageWarning      Boolean      @default(true)
+  emailWeeklyDigest      Boolean      @default(false)
+  emailDailyDigest       Boolean      @default(false)
+  emailMonthlyReport     Boolean      @default(true)
+  emailNegativeSentiment Boolean      @default(true)
+  browserNotifications   Boolean      @default(true)
+  soundEnabled           Boolean      @default(true)
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
 
   @@unique([orgId, userId])
   @@map("notification_preferences")
@@ -850,38 +912,38 @@ model LeadActivity {
 // ========================
 
 model SiteSettings {
-  id                    String   @id @default("singleton")
-  siteName              String   @default("Mojeeb")
-  logoUrl               String?
-  faviconUrl            String?
-  ogImageUrl            String?
-  description           String   @default("")
-  keywords              String   @default("")
-  primaryColor          String   @default("#6366f1")
-  secondaryColor        String   @default("#ec4899")
-  twitterUrl            String?
-  linkedinUrl           String?
-  githubUrl             String?
-  facebookUrl           String?
-  instagramUrl          String?
-  youtubeUrl            String?
-  supportEmail          String?
-  contactPhone          String?
-  companyAddress        String?
-  copyrightText         String?
-  timezone              String   @default("UTC")
-  googleAnalyticsId     String?
-  customHeadScripts     String?
-  maintenanceMode       Boolean  @default(false)
-  maintenanceMessage    String?
-  supportChatEnabled    Boolean  @default(false)
-  supportChatChannelId  String?
-  supportChatPosition   String   @default("right")
-  supportChatColor      String   @default("#6366f1")
-  supportChatWelcome    String?
-  supportChatWelcomeAr  String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                   String   @id @default("singleton")
+  siteName             String   @default("Mojeeb")
+  logoUrl              String?
+  faviconUrl           String?
+  ogImageUrl           String?
+  description          String   @default("")
+  keywords             String   @default("")
+  primaryColor         String   @default("#6366f1")
+  secondaryColor       String   @default("#ec4899")
+  twitterUrl           String?
+  linkedinUrl          String?
+  githubUrl            String?
+  facebookUrl          String?
+  instagramUrl         String?
+  youtubeUrl           String?
+  supportEmail         String?
+  contactPhone         String?
+  companyAddress       String?
+  copyrightText        String?
+  timezone             String   @default("UTC")
+  googleAnalyticsId    String?
+  customHeadScripts    String?
+  maintenanceMode      Boolean  @default(false)
+  maintenanceMessage   String?
+  supportChatEnabled   Boolean  @default(false)
+  supportChatChannelId String?
+  supportChatPosition  String   @default("right")
+  supportChatColor     String   @default("#6366f1")
+  supportChatWelcome   String?
+  supportChatWelcomeAr String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   @@map("site_settings")
 }
@@ -1112,122 +1174,122 @@ model AdminNotification {
 // ========================
 
 model LandingPageContent {
-  id                  String   @id @default("singleton")
+  id String @id @default("singleton")
 
   // --- Hero Section ---
-  heroEnabled         Boolean  @default(true)
-  heroTitle           String   @default("AI-Powered Customer Support")
-  heroTitleAr         String   @default("دعم العملاء بالذكاء الاصطناعي")
-  heroSubtitle        String   @default("Automate your customer support with intelligent AI agents")
-  heroSubtitleAr      String   @default("أتمت دعم العملاء مع وكلاء ذكاء اصطناعي")
-  heroCta             String   @default("Get Started Free")
-  heroCtaAr           String   @default("ابدأ مجاناً")
-  heroCtaLink         String   @default("/register")
-  heroImage           String?
-  showNoCreditCard    Boolean  @default(true)
-  badgeText           String   @default("Powered by AI")
-  badgeTextAr         String   @default("مدعوم بالذكاء الاصطناعي")
+  heroEnabled      Boolean @default(true)
+  heroTitle        String  @default("AI-Powered Customer Support")
+  heroTitleAr      String  @default("دعم العملاء بالذكاء الاصطناعي")
+  heroSubtitle     String  @default("Automate your customer support with intelligent AI agents")
+  heroSubtitleAr   String  @default("أتمت دعم العملاء مع وكلاء ذكاء اصطناعي")
+  heroCta          String  @default("Get Started Free")
+  heroCtaAr        String  @default("ابدأ مجاناً")
+  heroCtaLink      String  @default("/register")
+  heroImage        String?
+  showNoCreditCard Boolean @default(true)
+  badgeText        String  @default("Powered by AI")
+  badgeTextAr      String  @default("مدعوم بالذكاء الاصطناعي")
 
   // --- Trusted By / Logos Section ---
-  trustedByEnabled    Boolean  @default(false)
-  trustedByTitle      String   @default("Trusted By")
-  trustedByTitleAr    String   @default("موثوق من قبل")
-  trustedByLogos      Json     @default("[]") // [{image: string, name: string}]
+  trustedByEnabled Boolean @default(false)
+  trustedByTitle   String  @default("Trusted By")
+  trustedByTitleAr String  @default("موثوق من قبل")
+  trustedByLogos   Json    @default("[]") // [{image: string, name: string}]
 
   // --- Features Section ---
-  featuresEnabled     Boolean  @default(true)
-  featuresTitle       String   @default("Why Choose Mojeeb?")
-  featuresTitleAr     String   @default("لماذا تختار مجيب؟")
-  featuresSubtitle    String   @default("Everything you need to deliver exceptional customer support")
-  featuresSubtitleAr  String   @default("كل ما تحتاجه لتقديم دعم عملاء استثنائي")
-  features            Json     @default("[]")
-  featuresAr          Json     @default("[]")
+  featuresEnabled    Boolean @default(true)
+  featuresTitle      String  @default("Why Choose Mojeeb?")
+  featuresTitleAr    String  @default("لماذا تختار مجيب؟")
+  featuresSubtitle   String  @default("Everything you need to deliver exceptional customer support")
+  featuresSubtitleAr String  @default("كل ما تحتاجه لتقديم دعم عملاء استثنائي")
+  features           Json    @default("[]")
+  featuresAr         Json    @default("[]")
 
   // --- Stats ---
-  statsEnabled        Boolean  @default(false)
-  statsCustomers      String   @default("500+")
-  statsMessages       String   @default("10M+")
-  statsLanguages      String   @default("20+")
-  statsUptime         String   @default("99.9%")
+  statsEnabled   Boolean @default(false)
+  statsCustomers String  @default("500+")
+  statsMessages  String  @default("10M+")
+  statsLanguages String  @default("20+")
+  statsUptime    String  @default("99.9%")
 
   // --- Pricing Section ---
-  pricingEnabled      Boolean  @default(true)
-  pricingTitle        String   @default("Simple, Transparent Pricing")
-  pricingTitleAr      String   @default("أسعار بسيطة وشفافة")
-  pricingSubtitle     String   @default("Choose the plan that fits your business")
-  pricingSubtitleAr   String   @default("اختر الخطة المناسبة لعملك")
-  showYearlyToggle    Boolean  @default(true)
-  yearlyDiscount      Int      @default(20)
-  enterpriseCtaText   String   @default("Contact Sales")
-  enterpriseCtaTextAr String   @default("تواصل مع المبيعات")
-  enterpriseCtaLink   String   @default("/contact")
+  pricingEnabled      Boolean @default(true)
+  pricingTitle        String  @default("Simple, Transparent Pricing")
+  pricingTitleAr      String  @default("أسعار بسيطة وشفافة")
+  pricingSubtitle     String  @default("Choose the plan that fits your business")
+  pricingSubtitleAr   String  @default("اختر الخطة المناسبة لعملك")
+  showYearlyToggle    Boolean @default(true)
+  yearlyDiscount      Int     @default(20)
+  enterpriseCtaText   String  @default("Contact Sales")
+  enterpriseCtaTextAr String  @default("تواصل مع المبيعات")
+  enterpriseCtaLink   String  @default("/contact")
 
   // --- Testimonials Section ---
-  testimonialsEnabled Boolean  @default(true)
-  testimonialsTitle   String   @default("What Our Customers Say")
-  testimonialsTitleAr String   @default("ماذا يقول عملاؤنا")
-  testimonialsSubtitle   String   @default("Trusted by businesses worldwide")
-  testimonialsSubtitleAr String   @default("موثوق من الشركات حول العالم")
-  testimonialsMaxDisplay Int    @default(3)
-  testimonials        Json     @default("[]")
-  testimonialsAr      Json     @default("[]")
+  testimonialsEnabled    Boolean @default(true)
+  testimonialsTitle      String  @default("What Our Customers Say")
+  testimonialsTitleAr    String  @default("ماذا يقول عملاؤنا")
+  testimonialsSubtitle   String  @default("Trusted by businesses worldwide")
+  testimonialsSubtitleAr String  @default("موثوق من الشركات حول العالم")
+  testimonialsMaxDisplay Int     @default(3)
+  testimonials           Json    @default("[]")
+  testimonialsAr         Json    @default("[]")
 
   // --- FAQ Section ---
-  faqEnabled          Boolean  @default(true)
-  faqTitle            String   @default("Frequently Asked Questions")
-  faqTitleAr          String   @default("الأسئلة الشائعة")
-  faqSubtitle         String   @default("Find answers to common questions")
-  faqSubtitleAr       String   @default("اعثر على إجابات للأسئلة الشائعة")
-  faqMaxDisplay       Int      @default(5)
-  faqShowViewAll      Boolean  @default(true)
+  faqEnabled     Boolean @default(true)
+  faqTitle       String  @default("Frequently Asked Questions")
+  faqTitleAr     String  @default("الأسئلة الشائعة")
+  faqSubtitle    String  @default("Find answers to common questions")
+  faqSubtitleAr  String  @default("اعثر على إجابات للأسئلة الشائعة")
+  faqMaxDisplay  Int     @default(5)
+  faqShowViewAll Boolean @default(true)
 
   // --- Bottom CTA Section ---
-  bottomCtaEnabled    Boolean  @default(true)
-  bottomCtaTitle      String   @default("Ready to Transform Your Customer Support?")
-  bottomCtaTitleAr    String   @default("مستعد لتحويل دعم عملائك؟")
-  bottomCtaSubtitle   String   @default("Start your free trial today. No credit card required.")
-  bottomCtaSubtitleAr String   @default("ابدأ تجربتك المجانية اليوم. لا حاجة لبطاقة ائتمان.")
-  bottomCtaButtonText String   @default("Get Started Free")
-  bottomCtaButtonTextAr String @default("ابدأ مجاناً")
-  bottomCtaButtonLink String   @default("/register")
+  bottomCtaEnabled      Boolean @default(true)
+  bottomCtaTitle        String  @default("Ready to Transform Your Customer Support?")
+  bottomCtaTitleAr      String  @default("مستعد لتحويل دعم عملائك؟")
+  bottomCtaSubtitle     String  @default("Start your free trial today. No credit card required.")
+  bottomCtaSubtitleAr   String  @default("ابدأ تجربتك المجانية اليوم. لا حاجة لبطاقة ائتمان.")
+  bottomCtaButtonText   String  @default("Get Started Free")
+  bottomCtaButtonTextAr String  @default("ابدأ مجاناً")
+  bottomCtaButtonLink   String  @default("/register")
 
   // --- Footer ---
-  footerCopyrightText   String @default("© 2025 Mojeeb. All rights reserved.")
-  footerCopyrightTextAr String @default("© 2025 مجيب. جميع الحقوق محفوظة.")
+  footerCopyrightText   String  @default("© 2025 Mojeeb. All rights reserved.")
+  footerCopyrightTextAr String  @default("© 2025 مجيب. جميع الحقوق محفوظة.")
   footerShowSocialLinks Boolean @default(true)
-  footerTwitter       String   @default("")
-  footerLinkedin      String   @default("")
-  footerInstagram     String   @default("")
-  footerFacebook      String   @default("")
-  footerLinks         Json     @default("[]") // [{label: {en, ar}, url}]
+  footerTwitter         String  @default("")
+  footerLinkedin        String  @default("")
+  footerInstagram       String  @default("")
+  footerFacebook        String  @default("")
+  footerLinks           Json    @default("[]") // [{label: {en, ar}, url}]
 
   // --- Legacy footer fields ---
-  footerText          String   @default("© 2025 Mojeeb. All rights reserved.")
-  footerTextAr        String   @default("© 2025 مجيب. جميع الحقوق محفوظة.")
-  customCss           String?  @db.Text
+  footerText   String  @default("© 2025 Mojeeb. All rights reserved.")
+  footerTextAr String  @default("© 2025 مجيب. جميع الحقوق محفوظة.")
+  customCss    String? @db.Text
 
   // --- SEO & Meta ---
-  seoMetaTitle        String   @default("Mojeeb - AI-Powered Customer Support")
-  seoMetaTitleAr      String   @default("مجيب - دعم العملاء بالذكاء الاصطناعي")
-  seoMetaDescription  String   @default("Automate your customer support with intelligent AI agents")
+  seoMetaTitle         String  @default("Mojeeb - AI-Powered Customer Support")
+  seoMetaTitleAr       String  @default("مجيب - دعم العملاء بالذكاء الاصطناعي")
+  seoMetaDescription   String  @default("Automate your customer support with intelligent AI agents")
   seoMetaDescriptionAr String  @default("أتمت دعم العملاء مع وكلاء ذكاء اصطناعي")
-  seoOgImage          String?
+  seoOgImage           String?
   seoGoogleAnalyticsId String  @default("")
-  seoCustomHeadCode   String?  @db.Text
-  seoCustomFooterCode String?  @db.Text
-  seoFavicon          String?
+  seoCustomHeadCode    String? @db.Text
+  seoCustomFooterCode  String? @db.Text
+  seoFavicon           String?
 
   // --- Maintenance Mode ---
-  maintenanceEnabled  Boolean  @default(false)
-  maintenanceTitle    String   @default("We'll Be Back Soon")
-  maintenanceTitleAr  String   @default("سنعود قريباً")
-  maintenanceMessage  String   @default("We're currently performing scheduled maintenance. Please check back shortly.")
+  maintenanceEnabled   Boolean @default(false)
+  maintenanceTitle     String  @default("We'll Be Back Soon")
+  maintenanceTitleAr   String  @default("سنعود قريباً")
+  maintenanceMessage   String  @default("We're currently performing scheduled maintenance. Please check back shortly.")
   maintenanceMessageAr String  @default("نقوم حالياً بصيانة مجدولة. يرجى المحاولة مرة أخرى قريباً.")
 
   // --- Section Ordering ---
-  sectionOrder        Json     @default("[\"hero\",\"trustedBy\",\"features\",\"stats\",\"pricing\",\"testimonials\",\"faq\",\"bottomCta\"]")
+  sectionOrder Json @default("[\"hero\",\"trustedBy\",\"features\",\"stats\",\"pricing\",\"testimonials\",\"faq\",\"bottomCta\"]")
 
-  updatedAt           DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
   @@map("landing_page_content")
 }
@@ -1333,11 +1395,11 @@ model FAQ {
 // ========================
 
 model LegalContent {
-  id          String   @id
-  contentEn   String   @default("") @db.Text
-  contentAr   String   @default("") @db.Text
-  updatedAt   DateTime @updatedAt
-  createdAt   DateTime @default(now())
+  id        String   @id
+  contentEn String   @default("") @db.Text
+  contentAr String   @default("") @db.Text
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 
   @@map("legal_contents")
 }
