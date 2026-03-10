@@ -85,4 +85,42 @@ router.delete('/:jobId', async (req, res, next) => {
   }
 });
 
+// POST /api/v1/organizations/:orgId/knowledge-bases/:kbId/crawl/schedule
+router.post(
+  '/schedule',
+  validate({
+    body: z.object({
+      frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
+      enabled: z.boolean(),
+      maxDepth: z.number().min(1).max(5).optional(),
+      urlPattern: z.string().optional(),
+      startUrl: z.string().url().optional(),
+    }),
+  }),
+  async (req, res, next) => {
+    try {
+      const { orgId, kbId } = req.params as CrawlParams;
+      // Verify KB belongs to org
+      await knowledgeBaseService.getById(orgId, kbId);
+      const config = await knowledgeBaseService.updateCrawlSchedule(kbId, req.body);
+      res.json({ success: true, data: config });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// GET /api/v1/organizations/:orgId/knowledge-bases/:kbId/crawl/schedule
+router.get('/schedule', async (req, res, next) => {
+  try {
+    const { orgId, kbId } = req.params as CrawlParams;
+    // Verify KB belongs to org
+    await knowledgeBaseService.getById(orgId, kbId);
+    const config = await knowledgeBaseService.getCrawlSchedule(kbId);
+    res.json({ success: true, data: config });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

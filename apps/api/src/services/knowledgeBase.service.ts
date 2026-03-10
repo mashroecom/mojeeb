@@ -373,6 +373,92 @@ export class KnowledgeBaseService {
 
     return chunks;
   }
+
+  async updateCrawlSchedule(
+    kbId: string,
+    data: {
+      frequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+      enabled: boolean;
+      maxDepth?: number;
+      urlPattern?: string;
+      startUrl?: string;
+    }
+  ) {
+    // Validate knowledge base exists
+    const kb = await prisma.knowledgeBase.findUnique({
+      where: { id: kbId },
+      include: { crawlConfigs: true },
+    });
+    if (!kb) throw new NotFoundError('Knowledge base not found');
+
+    // Validate required fields when enabling schedule
+    if (data.enabled && !data.frequency) {
+      throw new BadRequestError('Frequency is required when enabling schedule');
+    }
+
+    // Find existing config or create new one
+    let config = kb.crawlConfigs[0]; // For now, support one config per KB
+
+    if (config) {
+      // Update existing config
+      config = await prisma.crawlConfig.update({
+        where: { id: config.id },
+        data: {
+          scheduleEnabled: data.enabled,
+          scheduleFrequency: data.enabled ? data.frequency : null,
+          maxDepth: data.maxDepth ?? config.maxDepth,
+          urlPattern: data.urlPattern ?? config.urlPattern,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      // Create new config
+      if (data.enabled && !data.startUrl) {
+        throw new BadRequestError('Start URL is required for new crawl configuration');
+      }
+
+      config = await prisma.crawlConfig.create({
+        data: {
+          knowledgeBaseId: kbId,
+          scheduleEnabled: data.enabled,
+          scheduleFrequency: data.enabled ? data.frequency : null,
+          maxDepth: data.maxDepth ?? 1,
+          urlPattern: data.urlPattern,
+        },
+      });
+    }
+
+    // TODO: In subtask-5-2, add BullMQ repeatable job logic here
+    // if (data.enabled) {
+    //   await this.scheduleRepeatableCrawl(config);
+    // } else {
+    //   await this.cancelRepeatableCrawl(config.id);
+    // }
+
+    logger.info(
+      { kbId, configId: config.id, enabled: data.enabled, frequency: data.frequency },
+      'Crawl schedule updated'
+    );
+
+    return config;
+  }
+
+  async getCrawlSchedule(kbId: string) {
+    // Validate knowledge base exists
+    const kb = await prisma.knowledgeBase.findUnique({
+      where: { id: kbId },
+      include: { crawlConfigs: true },
+    });
+    if (!kb) throw new NotFoundError('Knowledge base not found');
+
+    // Return first config (for now, support one config per KB)
+    const config = kb.crawlConfigs[0];
+    if (!config) {
+      return null;
+    }
+
+    return config;
+  }
 }
 
 export const knowledgeBaseService = new KnowledgeBaseService();
