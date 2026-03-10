@@ -96,6 +96,7 @@ export enum PaymentGateway {
 export const PLAN_LIMITS = {
   [SubscriptionPlan.FREE]: {
     messagesPerMonth: 100,
+    aiConversationsPerMonth: 100,
     maxAgents: 1,
     maxChannels: Infinity,
     maxKnowledgeBases: 1,
@@ -104,6 +105,7 @@ export const PLAN_LIMITS = {
   },
   [SubscriptionPlan.STARTER]: {
     messagesPerMonth: 1000,
+    aiConversationsPerMonth: 1000,
     maxAgents: 2,
     maxChannels: Infinity,
     maxKnowledgeBases: 3,
@@ -112,6 +114,7 @@ export const PLAN_LIMITS = {
   },
   [SubscriptionPlan.PROFESSIONAL]: {
     messagesPerMonth: 10000,
+    aiConversationsPerMonth: 10000,
     maxAgents: 5,
     maxChannels: Infinity,
     maxKnowledgeBases: 10,
@@ -120,6 +123,7 @@ export const PLAN_LIMITS = {
   },
   [SubscriptionPlan.ENTERPRISE]: {
     messagesPerMonth: Infinity,
+    aiConversationsPerMonth: Infinity,
     maxAgents: Infinity,
     maxChannels: Infinity,
     maxKnowledgeBases: Infinity,
