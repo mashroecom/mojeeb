@@ -1076,7 +1076,16 @@
         "PAST_DUE": "Past Due",
         "CANCELED": "Canceled",
         "TRIALING": "Trial"
-      }
+      },
+      "spendingCap": "Spending Cap",
+      "spendingCapDescription": "Set a maximum limit for overage charges. Once reached, AI features will be paused until the next billing cycle.",
+      "spendingCapEnabled": "Enable Spending Cap",
+      "spendingCapEnabledHint": "Protect your budget from unexpected overage charges",
+      "spendingCapAmount": "Maximum Overage Amount (USD)",
+      "spendingCapAmountHint": "Enter the maximum amount you want to spend on overages per billing cycle",
+      "spendingCapAmountError": "Please enter a valid amount greater than 0",
+      "saveChanges": "Save Changes",
+      "saved": "Saved"
     },
     "team": {
       "title": "Team Management",

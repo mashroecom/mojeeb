@@ -25,6 +25,9 @@ export interface Subscription {
   currentPeriodStart: string;
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
+  spendingCapEnabled: boolean;
+  spendingCapAmount: number | null;
+  overageChargesAccrued: number;
   createdAt: string;
   updatedAt: string;
 }

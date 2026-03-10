@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useLocale } from 'next-intl';
 import { fmtDate } from '@/lib/dateFormat';
 import { api } from '@/lib/api';
+import { SpendingCapSection } from './_components/SpendingCapSection';
 import {
   MessageSquare,
   Bot,
@@ -51,6 +52,9 @@ export default function BillingPage() {
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+
+  const [spendingCapSaving, setSpendingCapSaving] = useState(false);
+  const [spendingCapSaved, setSpendingCapSaved] = useState(false);
 
   // Handle return from Kashier checkout
   const confirmingRef = useRef(false);
@@ -152,6 +156,26 @@ export default function BillingPage() {
   function handleCancel() {
     if (!orgId || !subscription) return;
     setShowCancelDialog(true);
+  }
+
+  async function handleSpendingCapSave(enabled: boolean, amount?: number) {
+    if (!orgId) return;
+    setSpendingCapSaving(true);
+    setSpendingCapSaved(false);
+    setStatusMessage(null);
+    try {
+      await api.post(`/organizations/${orgId}/subscription/spending-cap`, {
+        enabled,
+        amount,
+      });
+      setSpendingCapSaved(true);
+      refetch();
+      setTimeout(() => setSpendingCapSaved(false), 3000);
+    } catch {
+      setStatusMessage({ type: 'error', text: t('upgradeFailed') });
+    } finally {
+      setSpendingCapSaving(false);
+    }
   }
 
   function planDisplayName(plan: string): string {
@@ -452,6 +476,20 @@ export default function BillingPage() {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Spending Cap Section */}
+          {subscription && (
+            <div className="mb-6">
+              <SpendingCapSection
+                isLoading={false}
+                spendingCapEnabled={subscription.spendingCapEnabled}
+                spendingCapAmount={subscription.spendingCapAmount || 0}
+                onSave={handleSpendingCapSave}
+                isSaving={spendingCapSaving}
+                showSaved={spendingCapSaved}
+              />
             </div>
           )}
 
