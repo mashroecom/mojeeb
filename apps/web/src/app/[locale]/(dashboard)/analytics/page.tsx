@@ -14,6 +14,9 @@ import {
 } from '@/hooks/useAnalytics';
 import { useLeadStats } from '@/hooks/useLeads';
 import { exportToCsv } from '@/lib/exportCsv';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import {
   MessageSquare,
   Mail,
@@ -24,6 +27,9 @@ import {
   ArrowRightLeft,
   Download,
   Calendar,
+  BarChart3,
+  TrendingUp,
+  PieChart,
 } from 'lucide-react';
 
 export default function AnalyticsPage() {
@@ -34,28 +40,69 @@ export default function AnalyticsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const { data: overview, isLoading: loadingOverview } = useAnalyticsOverview();
-  const { data: leadStats, isLoading: loadingLeads } = useLeadStats();
-  const { data: conversationMetrics, isLoading: loadingMetrics } = useConversationMetrics({
+  const {
+    data: overview,
+    isLoading: loadingOverview,
+    error: errorOverview,
+    refetch: refetchOverview,
+  } = useAnalyticsOverview();
+  const {
+    data: leadStats,
+    isLoading: loadingLeads,
+    error: errorLeads,
+    refetch: refetchLeads,
+  } = useLeadStats();
+  const {
+    data: conversationMetrics,
+    isLoading: loadingMetrics,
+    error: errorMetrics,
+    refetch: refetchMetrics,
+  } = useConversationMetrics({
     groupBy: 'day',
     startDate: startDate || undefined,
     endDate: endDate || undefined,
   });
-  const { data: agentPerformance, isLoading: loadingAgents } = useAgentPerformance();
-  const { data: channelBreakdown, isLoading: loadingChannels } = useChannelBreakdown();
-  const { data: leadFunnel, isLoading: loadingFunnel } = useLeadFunnel();
-  const { data: csatTrends, isLoading: loadingCsat } = useCsatTrends({
+  const {
+    data: agentPerformance,
+    isLoading: loadingAgents,
+    error: errorAgents,
+    refetch: refetchAgents,
+  } = useAgentPerformance();
+  const {
+    data: channelBreakdown,
+    isLoading: loadingChannels,
+    error: errorChannels,
+    refetch: refetchChannels,
+  } = useChannelBreakdown();
+  const {
+    data: leadFunnel,
+    isLoading: loadingFunnel,
+    error: errorFunnel,
+    refetch: refetchFunnel,
+  } = useLeadFunnel();
+  const {
+    data: csatTrends,
+    isLoading: loadingCsat,
+    error: errorCsat,
+    refetch: refetchCsat,
+  } = useCsatTrends({
     groupBy: 'day',
     startDate: startDate || undefined,
     endDate: endDate || undefined,
   });
-  const { data: responseTimeTrends, isLoading: loadingResponseTime } = useResponseTimeTrends({
+  const {
+    data: responseTimeTrends,
+    isLoading: loadingResponseTime,
+    error: errorResponseTime,
+    refetch: refetchResponseTime,
+  } = useResponseTimeTrends({
     groupBy: 'day',
     startDate: startDate || undefined,
     endDate: endDate || undefined,
   });
 
   const isLoading = loadingOverview || loadingLeads;
+  const hasError = errorOverview || errorLeads;
 
   function formatResponseTime(ms: number): string {
     if (ms < 1000) return `${ms} ${t('ms')}`;
@@ -194,37 +241,57 @@ export default function AnalyticsPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="rounded-xl border bg-card p-5 shadow-sm">
-            {isLoading ? (
-              <div className="animate-pulse">
-                <div className="h-4 w-24 rounded bg-muted mb-3" />
-                <div className="h-8 w-16 rounded bg-muted" />
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-muted-foreground">{stat.label}</span>
-                  <div className={`rounded-lg p-2 ${stat.bg}`}>
-                    <stat.icon className={`h-4 w-4 ${stat.color}`} />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold">
-                  {stat.isText ? stat.value : Number(stat.value).toLocaleString(locale)}
-                </p>
-              </>
-            )}
+        {hasError ? (
+          <div className="col-span-full">
+            <ErrorState
+              title={t('errorLoadingStats')}
+              description={t('errorLoadingStatsDescription')}
+              retryLabel={t('retry')}
+              onRetry={() => {
+                refetchOverview();
+                refetchLeads();
+              }}
+            />
           </div>
-        ))}
+        ) : isLoading ? (
+          stats.map((stat) => (
+            <div key={stat.label} className="rounded-xl border bg-card p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <Skeleton variant="text" className="w-24" />
+                <Skeleton variant="circle" className="h-10 w-10" />
+              </div>
+              <Skeleton variant="text" className="h-8 w-16" />
+            </div>
+          ))
+        ) : (
+          stats.map((stat) => (
+            <div key={stat.label} className="rounded-xl border bg-card p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-muted-foreground">{stat.label}</span>
+                <div className={`rounded-lg p-2 ${stat.bg}`}>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold">
+                {stat.isText ? stat.value : Number(stat.value).toLocaleString(locale)}
+              </p>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Conversations Over Time */}
       <div className="mt-8 rounded-xl border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-semibold mb-4">{t('conversationsOverTime')}</h2>
-        {loadingMetrics ? (
-          <div className="space-y-3 animate-pulse">
-            <div className="h-40 rounded bg-muted" />
-          </div>
+        {errorMetrics ? (
+          <ErrorState
+            title={t('errorLoadingData')}
+            description={t('errorLoadingDataDescription')}
+            retryLabel={t('retry')}
+            onRetry={refetchMetrics}
+          />
+        ) : loadingMetrics ? (
+          <Skeleton variant="rect" className="h-48" />
         ) : conversationMetrics?.metrics && conversationMetrics.metrics.length > 0 ? (
           <div className="flex items-end gap-1.5 h-48 overflow-x-auto pb-2">
             {conversationMetrics.metrics.map((metric) => {
@@ -251,9 +318,11 @@ export default function AnalyticsPage() {
             })}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            {t('noConversationMetrics')}
-          </p>
+          <EmptyState
+            icon={BarChart3}
+            title={t('noConversationMetrics')}
+            description={t('noConversationMetricsDescription')}
+          />
         )}
       </div>
 
@@ -262,10 +331,17 @@ export default function AnalyticsPage() {
         {/* Agent Performance Table */}
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">{t('agentPerformance')}</h2>
-          {loadingAgents ? (
-            <div className="space-y-3 animate-pulse">
+          {errorAgents ? (
+            <ErrorState
+              title={t('errorLoadingData')}
+              description={t('errorLoadingDataDescription')}
+              retryLabel={t('retry')}
+              onRetry={refetchAgents}
+            />
+          ) : loadingAgents ? (
+            <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-8 rounded bg-muted" />
+                <Skeleton key={i} variant="rect" className="h-12" />
               ))}
             </div>
           ) : agentPerformance?.agents && agentPerformance.agents.length > 0 ? (
@@ -294,17 +370,28 @@ export default function AnalyticsPage() {
               </table>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">{t('noAgents')}</p>
+            <EmptyState
+              icon={Users}
+              title={t('noAgents')}
+              description={t('noAgentsDescription')}
+            />
           )}
         </div>
 
         {/* Channel Breakdown - Horizontal Bars */}
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">{t('channelBreakdown')}</h2>
-          {loadingChannels ? (
-            <div className="space-y-4 animate-pulse">
+          {errorChannels ? (
+            <ErrorState
+              title={t('errorLoadingData')}
+              description={t('errorLoadingDataDescription')}
+              retryLabel={t('retry')}
+              onRetry={refetchChannels}
+            />
+          ) : loadingChannels ? (
+            <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-8 rounded bg-muted" />
+                <Skeleton key={i} variant="rect" className="h-12" />
               ))}
             </div>
           ) : channelBreakdown?.channels && channelBreakdown.channels.length > 0 ? (
@@ -339,7 +426,11 @@ export default function AnalyticsPage() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">{t('noChannels')}</p>
+            <EmptyState
+              icon={MessageSquare}
+              title={t('noChannels')}
+              description={t('noChannelsDescription')}
+            />
           )}
         </div>
       </div>
@@ -349,10 +440,17 @@ export default function AnalyticsPage() {
         {/* Lead Funnel */}
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">{t('leadFunnel')}</h2>
-          {loadingFunnel ? (
-            <div className="space-y-4 animate-pulse">
+          {errorFunnel ? (
+            <ErrorState
+              title={t('errorLoadingData')}
+              description={t('errorLoadingDataDescription')}
+              retryLabel={t('retry')}
+              onRetry={refetchFunnel}
+            />
+          ) : loadingFunnel ? (
+            <div className="space-y-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-10 rounded bg-muted" />
+                <Skeleton key={i} variant="rect" className="h-14" />
               ))}
             </div>
           ) : leadFunnel?.funnel && leadFunnel.funnel.length > 0 ? (
@@ -380,17 +478,28 @@ export default function AnalyticsPage() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">{t('noFunnelData')}</p>
+            <EmptyState
+              icon={TrendingUp}
+              title={t('noFunnelData')}
+              description={t('noFunnelDataDescription')}
+            />
           )}
         </div>
 
         {/* Lead Status Breakdown */}
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">{t('leadBreakdown')}</h2>
-          {isLoading ? (
-            <div className="space-y-4 animate-pulse">
+          {errorLeads ? (
+            <ErrorState
+              title={t('errorLoadingData')}
+              description={t('errorLoadingDataDescription')}
+              retryLabel={t('retry')}
+              onRetry={refetchLeads}
+            />
+          ) : loadingLeads ? (
+            <div className="space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-6 rounded bg-muted" />
+                <Skeleton key={i} variant="rect" className="h-10" />
               ))}
             </div>
           ) : leadStats && leadStats.total > 0 ? (
@@ -418,7 +527,11 @@ export default function AnalyticsPage() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">{t('noData')}</p>
+            <EmptyState
+              icon={PieChart}
+              title={t('noData')}
+              description={t('noLeadDataDescription')}
+            />
           )}
         </div>
       </div>
@@ -428,10 +541,15 @@ export default function AnalyticsPage() {
         {/* Customer Satisfaction Trends */}
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">{t('csatTrends')}</h2>
-          {loadingCsat ? (
-            <div className="space-y-3 animate-pulse">
-              <div className="h-40 rounded bg-muted" />
-            </div>
+          {errorCsat ? (
+            <ErrorState
+              title={t('errorLoadingData')}
+              description={t('errorLoadingDataDescription')}
+              retryLabel={t('retry')}
+              onRetry={refetchCsat}
+            />
+          ) : loadingCsat ? (
+            <Skeleton variant="rect" className="h-48" />
           ) : csatTrends?.trends && csatTrends.trends.length > 0 ? (
             <div className="space-y-2">
               {/* Rating scale labels */}
@@ -479,17 +597,26 @@ export default function AnalyticsPage() {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">{t('noData')}</p>
+            <EmptyState
+              icon={BarChart3}
+              title={t('noData')}
+              description={t('noCsatDataDescription')}
+            />
           )}
         </div>
 
         {/* Response Time Trends */}
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">{t('responseTimeTrends')}</h2>
-          {loadingResponseTime ? (
-            <div className="space-y-3 animate-pulse">
-              <div className="h-40 rounded bg-muted" />
-            </div>
+          {errorResponseTime ? (
+            <ErrorState
+              title={t('errorLoadingData')}
+              description={t('errorLoadingDataDescription')}
+              retryLabel={t('retry')}
+              onRetry={refetchResponseTime}
+            />
+          ) : loadingResponseTime ? (
+            <Skeleton variant="rect" className="h-48" />
           ) : responseTimeTrends?.trends && responseTimeTrends.trends.length > 0 ? (
             (() => {
               const maxMs = Math.max(
@@ -524,7 +651,11 @@ export default function AnalyticsPage() {
               );
             })()
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">{t('noData')}</p>
+            <EmptyState
+              icon={Clock}
+              title={t('noData')}
+              description={t('noResponseTimeDataDescription')}
+            />
           )}
         </div>
       </div>
