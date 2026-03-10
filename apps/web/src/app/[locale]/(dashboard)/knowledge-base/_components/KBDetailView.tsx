@@ -25,6 +25,7 @@ import {
 } from '@/hooks/useKnowledgeBase';
 import { StatusBadge } from './StatusBadge';
 import { ContentTypeBadge } from './ContentTypeBadge';
+import { CrawlConfigForm } from './CrawlConfigForm';
 
 interface KBDetailViewProps {
   kbId: string;
@@ -276,8 +277,17 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
         )}
       </div>
 
-      {/* Add document form */}
-      {showAddDocForm && (
+      {/* Add document form / URL crawl config */}
+      {showAddDocForm && docContentType === 'URL' ? (
+        <div className="mb-6 rounded-xl border bg-card p-6 shadow-sm">
+          <h2 className="text-lg font-semibold mb-4">Website Crawl Configuration</h2>
+          <CrawlConfigForm
+            kbId={kbId}
+            onSuccess={resetForm}
+            onCancel={resetForm}
+          />
+        </div>
+      ) : showAddDocForm && (
         <form
           onSubmit={handleAddDocument}
           className="mb-6 rounded-xl border bg-card p-6 shadow-sm"
@@ -349,28 +359,6 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
                     {pdfFile.name} ({(pdfFile.size / 1024).toFixed(0)} KB)
                   </p>
                 )}
-              </div>
-            )}
-
-            {/* URL Input */}
-            {docContentType === 'URL' && (
-              <div>
-                <label htmlFor="doc-url" className="block text-sm font-medium mb-1">
-                  {t('websiteUrl')} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="doc-url"
-                  type="url"
-                  required
-                  value={docSourceUrl}
-                  onChange={(e) => setDocSourceUrl(e.target.value)}
-                  placeholder="https://example.com/page"
-                  dir="ltr"
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t('urlHint')}
-                </p>
               </div>
             )}
 
