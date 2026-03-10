@@ -1,56 +1,111 @@
 {
-  "task_type": "ui_refactor",
-  "severity": "medium",
+  "task_type": "refactor_god_component",
+  "severity": "critical",
   "files_to_modify": {
     "frontend": [
-      "apps/web/src/app/[locale]/(dashboard)/leads/page.tsx",
-      "apps/web/src/app/[locale]/(dashboard)/analytics/page.tsx",
-      "apps/web/src/app/[locale]/(dashboard)/agents/page.tsx",
-      "apps/web/src/app/[locale]/(dashboard)/api-keys/page.tsx",
-      "apps/web/src/app/[locale]/(dashboard)/billing/page.tsx",
-      "apps/web/src/app/[locale]/(dashboard)/team/page.tsx",
-      "apps/web/src/app/[locale]/(dashboard)/webhooks/page.tsx",
-      "apps/web/src/app/[locale]/(dashboard)/message-templates/page.tsx",
-      "apps/web/src/app/[locale]/(dashboard)/knowledge-base/page.tsx",
-      "apps/web/src/app/[locale]/(admin)/admin/knowledge-bases/page.tsx",
-      "apps/web/src/app/[locale]/(admin)/admin/conversations/page.tsx",
-      "apps/web/src/app/[locale]/(admin)/admin/leads/page.tsx"
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/page.tsx"
+    ]
+  },
+  "files_to_create": {
+    "frontend": [
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/types.ts",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/shared.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/styles.ts",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/HeroSection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/TrustedBySection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/FeaturesSection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/StatsSection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/PricingSection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/TestimonialsSection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/FAQSection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/BottomCTASection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/FooterSection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/SEOSection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/MaintenanceSection.tsx",
+      "apps/web/src/app/[locale]/(admin)/admin/landing-page/_components/SectionOrderConfig.tsx"
     ]
   },
   "files_to_reference": [
-    "apps/web/src/components/ui/Skeleton.tsx",
-    "apps/web/src/components/ui/EmptyState.tsx",
-    "apps/web/src/components/ui/ErrorState.tsx",
-    "apps/web/src/app/[locale]/(dashboard)/conversations/page.tsx"
+    "apps/web/src/app/[locale]/(admin)/admin/users/[userId]/_components/ApiKeysTab.tsx",
+    "apps/web/src/app/[locale]/(admin)/admin/users/[userId]/_components/UserTabsSection.tsx",
+    "apps/web/src/app/[locale]/(dashboard)/settings/_components/NotificationsSection.tsx",
+    "apps/web/src/app/[locale]/(dashboard)/settings/_components/ProfileSection.tsx",
+    "apps/web/src/app/[locale]/(dashboard)/settings/_components/SectionWrapper.tsx"
   ],
   "patterns": {
-    "reusable_components": "The project has well-designed reusable components in components/ui/ that follow consistent patterns",
-    "skeleton_pattern": "Skeleton component has variants (text, circle, card, rect) and exports SkeletonText and SkeletonCard",
-    "empty_state_pattern": "EmptyState accepts icon (ElementType), title, description, and optional action button",
-    "error_state_pattern": "ErrorState accepts title, description, and optional retry button with onRetry callback",
-    "current_bad_pattern": "Most pages use inline animate-pulse divs, custom empty messages, and inconsistent error handling"
+    "component_extraction_pattern": "Project uses _components directories alongside page.tsx files to organize child components",
+    "section_wrapper_pattern": "SectionWrapper provides consistent card layout with icon and title",
+    "toggle_pattern": "Toggle switches implemented with role='switch', aria-checked, and Tailwind transitions",
+    "bilingual_forms": "Language tabs (EN/AR) toggle between English and Arabic inputs with dir='rtl' for Arabic",
+    "image_upload_pattern": "Image uploads use FormData, mutation hooks, and display preview thumbnails with remove button",
+    "array_management_pattern": "Dynamic arrays (features, links, logos) have add/remove/update/move helper functions",
+    "state_management": "Parent page holds all state and passes down via props - no context or global state"
   },
   "existing_implementations": {
-    "description": "Three reusable UI components exist but are severely underutilized",
-    "relevant_files": [
-      "apps/web/src/components/ui/Skeleton.tsx",
-      "apps/web/src/components/ui/EmptyState.tsx",
-      "apps/web/src/components/ui/ErrorState.tsx"
+    "description": "Landing page CMS is a 2,052-line god component with 96 useState hooks managing 12 sections",
+    "god_component_location": "apps/web/src/app/[locale]/(admin)/admin/landing-page/page.tsx",
+    "current_structure": {
+      "line_count": 2052,
+      "state_hooks": 96,
+      "sections": 12,
+      "main_useEffect_lines": 102,
+      "save_handler_lines": 94,
+      "conditional_blocks": 12,
+      "helper_functions": 10
+    },
+    "sections": [
+      "hero - Hero banner with title, subtitle, CTA, image, badge (enabled/disabled toggle)",
+      "trustedBy - Logos section with image uploads and names",
+      "features - Feature grid with icons, titles, descriptions (add/remove/reorder)",
+      "stats - 4 stat counters (customers, messages, languages, uptime)",
+      "pricing - Pricing cards with yearly toggle and enterprise CTA",
+      "testimonials - Testimonial configuration (title, subtitle, max display)",
+      "faq - FAQ configuration (title, subtitle, max display, view-all toggle)",
+      "bottomCta - Bottom call-to-action section",
+      "footer - Footer with description, copyright, social links, custom CSS, footer links array",
+      "seo - SEO meta tags, OG image, Google Analytics, custom head/footer code, favicon",
+      "maintenance - Maintenance mode toggle with title and message",
+      "sectionOrder - Drag-to-reorder section visibility configuration"
     ],
-    "usage_stats": {
-      "empty_state_usage": "Only 3 files use EmptyState (conversations, mobile analytics, admin DLQ)",
-      "skeleton_exports_usage": "SkeletonText and SkeletonCard are NEVER imported anywhere (0 files)",
-      "inline_loading_states": "48 files use inline animate-pulse divs instead of Skeleton component"
-    }
-  },
-  "scope": {
-    "total_dashboard_pages": 14,
-    "total_admin_pages": 40,
-    "focus_pages": "Prioritize main dashboard pages first (8-12 pages), then admin pages as needed",
-    "components_to_standardize": [
-      "Loading states (replace animate-pulse with Skeleton/SkeletonText/SkeletonCard)",
-      "Empty states (replace custom empty messages with EmptyState)",
-      "Error states (replace custom error UI with ErrorState)"
+    "shared_components_in_file": [
+      "ToggleSwitch - Reusable toggle component (lines 90-108)",
+      "SectionHeader - Section title with enable/disable toggle (lines 113-125)",
+      "LangTabs - Language switcher for EN/AR (lines 133-160)",
+      "TABS constant - Tab navigation configuration (lines 167-180)"
+    ],
+    "style_constants": {
+      "inputCls": "Shared input field Tailwind classes (line 667)",
+      "textareaCls": "Shared textarea Tailwind classes (line 669)"
+    },
+    "api_hooks": [
+      "useAdminLandingPage() - Fetches landing page data",
+      "useUpdateLandingPage() - Mutation for saving changes",
+      "useUploadLandingImage() - Mutation for image uploads"
     ]
+  },
+  "refactoring_strategy": {
+    "approach": "Extract Component Pattern - preserve all functionality while organizing into focused components",
+    "state_management_approach": "Keep state in parent page, pass down via props (no prop drilling issues since parent already manages everything)",
+    "component_organization": "Each section becomes a separate component file in _components directory",
+    "shared_utilities": "Extract types, shared UI components, and style constants to dedicated files",
+    "verification": "Manual browser testing critical - all 12 sections must work identically to original"
+  },
+  "code_quality_issues": {
+    "maintainability": "Modifying one section requires scrolling through 1,500+ lines of unrelated code",
+    "performance": "96 state variables cause unnecessary re-renders across all 12 sections",
+    "duplication": [
+      "Language toggle logic duplicated 9 times",
+      "Image upload handling duplicated 3 times",
+      "Input styling classes repeated 50+ times"
+    ],
+    "testability": "Impossible to test sections in isolation",
+    "extensibility": "Adding new sections requires modifying the monolithic file"
+  },
+  "target_metrics": {
+    "parent_page_line_count": "~500 lines (reduced from 2,052)",
+    "component_count": "12 section components + 3 shared utility files",
+    "average_component_size": "100-180 lines per section component",
+    "code_duplication_reduction": "90% reduction in duplicated patterns",
+    "re-render_optimization": "Each section only re-renders when its own props change"
   }
 }
