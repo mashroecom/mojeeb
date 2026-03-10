@@ -83,12 +83,25 @@ export function Table<T extends Record<string, unknown>>({
             {columns.map((col) => (
               <th
                 key={col.key}
+                role={col.sortable ? 'button' : undefined}
                 className={cn(
                   'px-4 py-3 text-start text-xs font-medium uppercase tracking-wider text-muted-foreground',
-                  col.sortable && 'cursor-pointer select-none hover:text-foreground',
+                  col.sortable &&
+                    'cursor-pointer select-none hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
                   col.className,
                 )}
                 onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                onKeyDown={
+                  col.sortable
+                    ? (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleSort(col.key);
+                        }
+                      }
+                    : undefined
+                }
+                tabIndex={col.sortable ? 0 : undefined}
                 aria-sort={
                   sortKey === col.key && sortDir
                     ? sortDir === 'asc'
