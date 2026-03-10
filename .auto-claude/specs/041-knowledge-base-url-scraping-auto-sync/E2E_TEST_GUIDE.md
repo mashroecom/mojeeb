@@ -362,6 +362,331 @@ All tests pass when:
 7. ✅ Arabic content handled correctly
 8. ✅ Error cases handled gracefully
 
+---
+
+# Part 7: Multi-Page Crawl Testing (Subtask 7-2)
+
+## Automated Multi-Page Test Script
+
+### Running the Test
+
+```bash
+# From project root
+tsx test-crawl-multipage-e2e.ts
+```
+
+### What the Script Tests
+
+The automated multi-page test script (`test-crawl-multipage-e2e.ts`) verifies:
+
+1. ✅ **Crawl Job Creation**
+   - Creates crawl job with depth=2
+   - Initial status is PENDING
+
+2. ✅ **Job Progress Monitoring**
+   - Status transitions: PENDING → RUNNING → COMPLETED
+   - Real-time progress updates (pagesCrawled/pagesTotal)
+   - Job completion tracking
+
+3. ✅ **Multiple Document Creation**
+   - Verifies multiple KBDocuments are created
+   - Each document has extracted content
+   - All documents linked to crawl job
+
+4. ✅ **Status Transitions**
+   - Verifies PENDING → RUNNING → COMPLETED flow
+   - Checks timestamps (startedAt, completedAt)
+   - Validates timestamp ordering
+
+5. ✅ **URL Pattern Filter**
+   - Creates job with URL pattern
+   - Verifies only matching URLs are crawled
+   - Validates pattern filtering logic
+
+6. ✅ **Depth Limit Respect**
+   - Verifies depth limit is not exceeded
+   - Checks all URLs are valid
+   - Confirms breadth-first crawling
+
+7. ✅ **Duplicate URL Detection**
+   - Ensures same URL is not crawled twice
+   - Verifies visited set works correctly
+   - Checks no duplicate documents created
+
+### Expected Output
+
+```
+========================================
+Multi-Page URL Crawling E2E Test
+========================================
+
+✓ 1. Create Test User: Test user created
+✓ 2. Create Test Organization: Test organization created
+✓ 3. Create Knowledge Base: Knowledge base created
+✓ 4. Create Crawl Job: Crawl job created with PENDING status
+✓ 5. Monitor Job Progress: Job completed successfully
+✓ 6. Verify Multiple Documents: Multiple documents created with content
+✓ 7. Verify Status Transitions: Status transitions correct: PENDING → RUNNING → COMPLETED
+✓ 8. Test URL Pattern Filter: URL pattern filter works correctly
+✓ 9. Verify Depth Limit: Depth limit respected, valid documents created
+✓ 10. Test Duplicate URL Detection: No duplicate URLs detected
+
+========================================
+Test Summary
+========================================
+
+Total Steps: 10
+✓ Passed: 10
+✗ Failed: 0
+Success Rate: 100%
+
+🎉 All tests passed!
+
+✅ Multi-page crawl job created successfully
+✅ Job status transitions: PENDING → RUNNING → COMPLETED
+✅ Multiple documents created from crawl
+✅ Depth limit respected
+✅ URL pattern filter works
+✅ Duplicate URL detection works
+✅ Breadth-first crawling implemented
+```
+
+### Troubleshooting Multi-Page Tests
+
+**Issue: "Job did not complete within timeout"**
+- Ensure worker process is running: `cd apps/api && pnpm worker`
+- Check worker logs for errors
+- Verify Redis is accessible for BullMQ queues
+- Check if start URL is accessible
+
+**Issue: "No documents created"**
+- Check API logs for crawl errors
+- Verify robots.txt allows crawling
+- Ensure crawler service is working
+- Check database for job error messages
+
+**Issue: "Some documents have no content"**
+- Check if URLs are returning valid HTML
+- Verify cheerio extraction is working
+- Check for network/timeout issues
+- Review crawler service logs
+
+## Manual UI Testing for Multi-Page Crawls
+
+### Test 1: Multi-Page Crawl with Depth=2
+
+#### Steps:
+
+1. **Navigate to Knowledge Base**
+   - Open http://localhost:3000
+   - Go to Knowledge Base section
+   - Select or create a KB
+
+2. **Configure Multi-Page Crawl**
+   - Click "Add Document"
+   - Select content type: **URL**
+   - Enter start URL: `https://example.org`
+   - Set crawl type: **Multi-page**
+   - Set max depth: **2**
+   - Click "Start Crawl"
+
+3. **Monitor Crawl Progress**
+   - Crawl job should appear in jobs list
+   - Status shows: **PENDING** → **RUNNING** → **COMPLETED**
+   - Progress indicator shows: "X/Y pages crawled"
+   - Real-time updates every 2 seconds
+
+4. **Verify Multiple Documents**
+   - After completion, check document list
+   - Should show multiple documents (one per crawled page)
+   - Each document has:
+     - Title (extracted from page)
+     - Source URL
+     - Content (extracted text)
+     - Linked to crawl job
+
+5. **Check Crawl Job Details**
+   - Click on crawl job to view details
+   - Verify:
+     - Start URL is correct
+     - Pages crawled count matches documents created
+     - Status is COMPLETED
+     - Start and completion timestamps are set
+     - No error messages
+
+#### Expected Results:
+
+- ✅ Crawl job created and enqueued
+- ✅ Status transitions visible in real-time
+- ✅ Multiple documents created (typically 1-5 for example.org)
+- ✅ All documents have valid content
+- ✅ Job completes within 10-30 seconds
+- ✅ No console errors
+
+### Test 2: URL Pattern Filter
+
+#### Steps:
+
+1. **Create Crawl with Pattern**
+   - Start URL: `https://example.com`
+   - Crawl type: **Multi-page**
+   - Max depth: **2**
+   - URL pattern: `example.com`
+   - Click "Start Crawl"
+
+2. **Wait for Completion**
+   - Monitor job progress
+   - Wait for COMPLETED status
+
+3. **Verify Pattern Filter**
+   - Check all created documents
+   - Verify all source URLs contain "example.com"
+   - Verify no external links were crawled
+
+#### Expected Results:
+
+- ✅ Only URLs matching pattern are crawled
+- ✅ External links are ignored
+- ✅ All documents match the pattern
+
+### Test 3: Depth Limit
+
+#### Steps:
+
+1. **Create Crawl with Depth=1**
+   - Start URL: `https://example.org`
+   - Crawl type: **Multi-page**
+   - Max depth: **1**
+   - Click "Start Crawl"
+
+2. **Compare with Depth=2**
+   - After first job completes, note document count
+   - Create another job with same URL but depth=2
+   - Compare document counts
+
+#### Expected Results:
+
+- ✅ Depth=1 crawls only start page and direct links
+- ✅ Depth=2 crawls more pages (2nd level links)
+- ✅ Depth limit is respected
+
+### Test 4: Duplicate URL Detection
+
+#### Steps:
+
+1. **Create Crawl Job**
+   - Start URL: `https://example.com`
+   - Max depth: **2**
+   - Start crawl
+
+2. **Check for Duplicates**
+   - After completion, review all documents
+   - Check source URLs for duplicates
+   - Verify each URL appears only once
+
+#### Expected Results:
+
+- ✅ No duplicate documents created
+- ✅ Each URL crawled only once
+- ✅ Visited set working correctly
+
+## Database Verification for Multi-Page Crawls
+
+### Check Crawl Job Records
+
+```sql
+-- Check crawl jobs
+SELECT
+  id,
+  "knowledgeBaseId",
+  "startUrl",
+  status,
+  "pagesCrawled",
+  "pagesTotal",
+  "startedAt",
+  "completedAt",
+  "errorMessage"
+FROM crawl_jobs
+ORDER BY created_at DESC
+LIMIT 5;
+
+-- Check documents created by a crawl job
+SELECT
+  id,
+  title,
+  "sourceUrl",
+  "crawlJobId",
+  LENGTH(content) as content_length
+FROM kb_documents
+WHERE "crawlJobId" = '<job-id-from-above>'
+ORDER BY created_at;
+
+-- Verify no duplicate URLs in a crawl job
+SELECT
+  "sourceUrl",
+  COUNT(*) as count
+FROM kb_documents
+WHERE "crawlJobId" = '<job-id>'
+GROUP BY "sourceUrl"
+HAVING COUNT(*) > 1;
+
+-- Check crawl job status transitions
+SELECT
+  id,
+  status,
+  "startedAt" - created_at as time_to_start,
+  "completedAt" - "startedAt" as crawl_duration
+FROM crawl_jobs
+WHERE id = '<job-id>';
+```
+
+### Expected Database State
+
+```
+crawl_jobs:
+- status: 'COMPLETED'
+- pagesCrawled: > 0 (number of successfully crawled pages)
+- pagesTotal: >= pagesCrawled (total URLs discovered)
+- startedAt: NOT NULL
+- completedAt: NOT NULL
+- errorMessage: NULL
+
+kb_documents (multiple records):
+- contentType: 'URL'
+- sourceUrl: unique URLs
+- content: extracted text (500-5000 chars each)
+- crawlJobId: same job ID for all documents
+- title: page titles extracted from HTML
+```
+
+## Acceptance Criteria Verification (Subtask 7-2)
+
+All verification steps from implementation plan:
+
+- [x] Create crawl job with depth=2
+- [x] Monitor progress in UI (real-time updates)
+- [x] Verify multiple KBDocuments are created
+- [x] Verify crawl job status transitions: pending → running → completed
+- [x] Check that URL pattern filter works (if configured)
+- [x] Verify depth limit is respected
+- [x] Verify breadth-first crawling order
+- [x] Verify duplicate URL detection
+
+## Success Criteria for Subtask 7-2
+
+All tests pass when:
+
+1. ✅ Automated multi-page test completes with 100% pass rate
+2. ✅ Crawl jobs transition through correct statuses
+3. ✅ Multiple documents created per crawl job
+4. ✅ Real-time progress updates visible in UI
+5. ✅ URL pattern filtering works correctly
+6. ✅ Depth limit is respected
+7. ✅ No duplicate URLs crawled
+8. ✅ Breadth-first crawling order maintained
+9. ✅ All documents have valid content
+10. ✅ No errors in browser console or server logs
+
 ## Next Steps
 
 After completing this test:
@@ -374,6 +699,12 @@ After completing this test:
    git commit -m "auto-claude: subtask-7-1 - End-to-end single page crawl test"
    ```
 4. Proceed to subtask-7-2: Multi-page crawl test
+5. After subtask-7-2, mark it as completed and commit:
+   ```bash
+   git add .
+   git commit -m "auto-claude: subtask-7-2 - End-to-end multi-page crawl test"
+   ```
+6. Proceed to subtask-7-3: Scheduled re-crawl test
 
 ## Notes
 
