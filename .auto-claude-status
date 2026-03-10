@@ -3,7 +3,7 @@
   "spec": "078-add-aria-busy-to-table-during-loading-and-improve-",
   "state": "building",
   "subtasks": {
-    "completed": 2,
+    "completed": 3,
     "total": 4,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 4,
+    "number": 5,
     "started_at": "2026-03-10T12:10:54.269384"
   },
-  "last_update": "2026-03-10T12:17:40.966143"
+  "last_update": "2026-03-10T12:19:34.192637"
 }
