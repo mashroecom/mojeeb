@@ -3,13 +3,13 @@
   "spec": "090-fix-n-1-query-pattern-in-analytics-agent-performan",
   "state": "building",
   "subtasks": {
-    "completed": 6,
+    "completed": 7,
     "total": 11,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Optimize getChannelBreakdown",
+    "current": "Optimize getTopOrganizations",
     "id": null,
     "total": 2
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 4,
+    "number": 5,
     "started_at": "2026-03-10T12:31:12.151577"
   },
-  "last_update": "2026-03-10T12:43:11.692938"
+  "last_update": "2026-03-10T12:49:00.462813"
 }
