@@ -29,7 +29,11 @@ import {
   AlertTriangle,
   Info,
   Grid3X3,
+  UserPlus,
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 const inputClass =
   'h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50';
@@ -46,7 +50,7 @@ export default function TeamPage() {
   const user = useAuthStore((s) => s.user);
 
   // Members
-  const { data: members, isLoading: membersLoading } = useOrgMembers();
+  const { data: members, isLoading: membersLoading, error: membersError, refetch: refetchMembers } = useOrgMembers();
   const inviteMember = useInviteMember();
   const updateMemberRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
@@ -191,14 +195,21 @@ export default function TeamPage() {
               )}
             </h2>
 
-            {membersLoading ? (
-              <div className="animate-pulse space-y-3">
-                {[1, 2].map((i) => (
+            {membersError ? (
+              <ErrorState
+                title={t('errorTitle') || 'Failed to load team members'}
+                description={t('errorDescription') || 'An error occurred while loading team members. Please try again.'}
+                retryLabel={tc('retry') || 'Try Again'}
+                onRetry={() => refetchMembers()}
+              />
+            ) : membersLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-muted" />
-                    <div className="flex-1 space-y-1">
-                      <div className="h-4 w-32 rounded bg-muted" />
-                      <div className="h-3 w-48 rounded bg-muted" />
+                    <Skeleton variant="circle" className="h-8 w-8" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton variant="text" className="w-32" />
+                      <Skeleton variant="text" className="w-48" />
                     </div>
                   </div>
                 ))}
@@ -374,7 +385,11 @@ export default function TeamPage() {
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">{t('noMembers')}</p>
+              <EmptyState
+                icon={UserPlus}
+                title={t('noMembers') || 'No team members yet'}
+                description={t('noMembersDescription') || 'Invite team members to collaborate on your organization.'}
+              />
             )}
           </div>
 
