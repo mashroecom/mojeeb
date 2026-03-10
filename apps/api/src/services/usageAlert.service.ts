@@ -130,22 +130,19 @@ export class UsageAlertService {
         where: { orgId },
         select: {
           plan: true,
+          spendingCapEnabled: true,
+          spendingCapAmount: true,
         },
       });
 
-      // Type assertion for fields that exist in schema but may not be in generated client yet
-      const subscriptionRaw = subscription as any;
-
       let body: string;
-      if (subscriptionRaw?.spendingCapEnabled && subscriptionRaw.spendingCapAmount !== null) {
+      if (subscription?.spendingCapEnabled && subscription.spendingCapAmount !== null) {
         body = `Your organization "${org.name}" has reached 100% (${used}/${limit}) of your monthly AI conversation limit. Your spending cap is enabled, so AI responses may be blocked. Please upgrade your plan or increase your spending cap to continue service.`;
       } else {
         const planConfig = await prisma.planConfig.findUnique({
           where: { plan: subscription?.plan || 'FREE' },
         });
-        // Type assertion for fields that exist in schema but may not be in generated client yet
-        const planConfigRaw = planConfig as any;
-        const overagePrice = planConfigRaw?.overagePricePerConversation ?? 0;
+        const overagePrice = planConfig?.overagePricePerConversation ?? 0;
         body = `Your organization "${org.name}" has reached 100% (${used}/${limit}) of your monthly AI conversation limit. Additional conversations will be charged at $${overagePrice.toFixed(2)} per conversation. Consider upgrading your plan to reduce costs.`;
       }
 
@@ -162,7 +159,7 @@ export class UsageAlertService {
           limit,
           percentage: 100,
           threshold: ALERT_THRESHOLD_LIMIT,
-          spendingCapEnabled: subscriptionRaw?.spendingCapEnabled ?? false,
+          spendingCapEnabled: subscription?.spendingCapEnabled ?? false,
         },
       });
 
