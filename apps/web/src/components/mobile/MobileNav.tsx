@@ -4,11 +4,12 @@ import { usePathname } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
-import { MessageSquare, BarChart3, User, Circle } from 'lucide-react';
+import { MessageSquare, BarChart3, User, Circle, WifiOff } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAgents, useUpdateAgent } from '@/hooks/useAgents';
 import { useToastStore } from '@/hooks/useToast';
-import { useState } from 'react';
+import { isOnline, setupOnlineListeners } from '@/lib/offlineStorage';
+import { useState, useEffect } from 'react';
 
 interface NavItem {
   key: string;
@@ -29,9 +30,24 @@ export function MobileNav() {
   const updateAgent = useUpdateAgent();
   const addToast = useToastStore((s) => s.addToast);
   const [isToggling, setIsToggling] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   // Get the first agent (primary agent)
   const primaryAgent = agents?.[0];
+
+  // Setup online/offline event listeners
+  useEffect(() => {
+    // Set initial state
+    setIsOffline(!isOnline());
+
+    // Setup listeners for online/offline events
+    const cleanup = setupOnlineListeners(
+      () => setIsOffline(false),
+      () => setIsOffline(true)
+    );
+
+    return cleanup;
+  }, []);
 
   const handleToggleStatus = async () => {
     if (!primaryAgent || isToggling) return;
@@ -59,6 +75,21 @@ export function MobileNav() {
 
   return (
     <nav className="fixed bottom-0 start-0 end-0 z-50 border-t bg-card shadow-lg safe-area-inset-bottom">
+      {/* Offline Indicator Banner */}
+      {isOffline && (
+        <div className="border-b px-4 py-2.5 flex items-center gap-2 bg-orange-50 dark:bg-orange-900/20">
+          <WifiOff className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+          <div className="flex-1">
+            <p className="text-xs font-medium text-orange-900 dark:text-orange-100">
+              {t('offline')}
+            </p>
+            <p className="text-xs text-orange-700 dark:text-orange-300">
+              {t('offlineMessage')}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Agent Status Bar */}
       {!isLoading && primaryAgent && (
         <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/30">

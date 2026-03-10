@@ -3837,7 +3837,9 @@
       "updating": "Updating...",
       "agentActivated": "Agent activated successfully",
       "agentDeactivated": "Agent deactivated successfully",
-      "agentUpdateError": "Failed to update agent status"
+      "agentUpdateError": "Failed to update agent status",
+      "offline": "You're offline",
+      "offlineMessage": "Some features may be limited"
     },
     "inbox": {
       "title": "Inbox",

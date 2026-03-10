@@ -3837,7 +3837,9 @@
       "updating": "جاري التحديث...",
       "agentActivated": "تم تفعيل الوكيل بنجاح",
       "agentDeactivated": "تم تعطيل الوكيل بنجاح",
-      "agentUpdateError": "فشل تحديث حالة الوكيل"
+      "agentUpdateError": "فشل تحديث حالة الوكيل",
+      "offline": "أنت غير متصل",
+      "offlineMessage": "بعض الميزات قد تكون محدودة"
     },
     "inbox": {
       "title": "صندوق الوارد",
