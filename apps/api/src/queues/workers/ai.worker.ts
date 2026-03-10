@@ -11,6 +11,7 @@ import { tokenUsageService } from '../../services/tokenUsage.service';
 import { notificationService } from '../../services/notification.service';
 import { webhookService } from '../../services/webhook.service';
 import { aiConversationTrackingService } from '../../services/aiConversationTracking.service';
+import { pushNotificationService } from '../../services/pushNotification.service';
 
 interface AIJobData {
   conversationId: string;
@@ -221,6 +222,36 @@ export const aiWorker = new Worker(
         });
       } catch (notifErr) {
         logger.warn({ err: notifErr }, 'Failed to create handoff notification');
+      }
+
+      // Send push notifications for handoff
+      try {
+        await pushNotificationService.notifyHandoff({
+          orgId: data.orgId,
+          conversationId: data.conversationId,
+        });
+      } catch (pushErr) {
+        logger.warn({ err: pushErr }, 'Failed to send handoff push notification');
+      }
+
+      // Send escalation push notification for high-priority cases
+      try {
+        const isHighPriorityEscalation =
+          result.emotion &&
+          ['angry', 'frustrated'].includes(result.emotion.emotion) &&
+          result.emotion.score > 0.8;
+
+        const isEscalationKeyword = reason.includes('Escalation keyword');
+
+        if (isHighPriorityEscalation || isEscalationKeyword) {
+          await pushNotificationService.notifyEscalation({
+            orgId: data.orgId,
+            conversationId: data.conversationId,
+            priority: isHighPriorityEscalation ? 'urgent' : 'high',
+          });
+        }
+      } catch (escalationErr) {
+        logger.warn({ err: escalationErr }, 'Failed to send escalation push notification');
       }
 
       // DO NOT create AI message, DO NOT queue outbound — escalation only

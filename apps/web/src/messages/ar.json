@@ -504,6 +504,11 @@
       "typePlaceholder": "اكتب رسالة...",
       "messagePlaceholder": "اكتب رسالة...",
       "send": "إرسال",
+      "offline": "غير متصل",
+      "queueMessage": "إضافة للطابور",
+      "queued": "تم إضافة الرسالة للطابور",
+      "queuedForSync": "تم إضافة الرسالة للمزامنة",
+      "willSyncWhenOnline": "سيتم الإرسال تلقائياً عند عودة الاتصال",
       "uploadImage": "رفع صورة",
       "noMessages": "لا توجد رسائل في هذه المحادثة.",
       "selectConversation": "اختر محادثة لعرض الرسائل",
@@ -2512,6 +2517,11 @@
       "sendEmailTo": "إرسال بريد إلى",
       "emailFieldsRequired": "الموضوع والرسالة مطلوبان",
       "send": "إرسال",
+      "offline": "غير متصل",
+      "queueMessage": "إضافة للطابور",
+      "queued": "تم إضافة الرسالة للطابور",
+      "queuedForSync": "تم إضافة الرسالة للمزامنة",
+      "willSyncWhenOnline": "سيتم الإرسال تلقائياً عند عودة الاتصال",
       "sendEmailButton": "إرسال البريد",
       "emailSent": "تم إرسال البريد بنجاح",
       "impersonate": "انتحال هوية المستخدم",
@@ -2861,6 +2871,11 @@
         "actions": "الإجراءات",
         "viewDetail": "عرض التفاصيل",
         "send": "إرسال",
+      "offline": "غير متصل",
+      "queueMessage": "إضافة للطابور",
+      "queued": "تم إضافة الرسالة للطابور",
+      "queuedForSync": "تم إضافة الرسالة للمزامنة",
+      "willSyncWhenOnline": "سيتم الإرسال تلقائياً عند عودة الاتصال",
         "confirm": "تأكيد",
         "cancel": "إلغاء",
         "no": "لا",
@@ -3877,5 +3892,56 @@
       "resources": "الموارد"
     },
     "userId": "معرف المستخدم"
+  },
+  "mobile": {
+    "nav": {
+      "inbox": "صندوق الوارد",
+      "analytics": "التحليلات",
+      "profile": "الملف الشخصي",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "updating": "جاري التحديث...",
+      "agentActivated": "تم تفعيل الوكيل بنجاح",
+      "agentDeactivated": "تم تعطيل الوكيل بنجاح",
+      "agentUpdateError": "فشل تحديث حالة الوكيل",
+      "offline": "أنت غير متصل",
+      "offlineMessage": "بعض الميزات قد تكون محدودة"
+    },
+    "inbox": {
+      "title": "صندوق الوارد",
+      "searchPlaceholder": "البحث في المحادثات...",
+      "filters": "التصفية",
+      "noConversations": "لا توجد محادثات",
+      "noConversationsHint": "حاول تعديل خيارات التصفية",
+      "endOfList": "لقد وصلت إلى النهاية"
+    },
+    "quickReply": {
+      "title": "الرد السريع",
+      "searchPlaceholder": "البحث في القوالب...",
+      "send": "إرسال",
+      "offline": "غير متصل",
+      "queueMessage": "إضافة للطابور",
+      "queued": "تم إضافة الرسالة للطابور",
+      "queuedForSync": "تم إضافة الرسالة للمزامنة",
+      "willSyncWhenOnline": "سيتم الإرسال تلقائياً عند عودة الاتصال",
+      "sending": "جاري الإرسال...",
+      "noTemplates": "لا توجد قوالب",
+      "noTemplatesHint": "حاول تعديل البحث أو إنشاء قوالب جديدة",
+      "categories": {
+        "all": "الكل",
+        "greeting": "تحية",
+        "troubleshooting": "حل المشاكل",
+        "closing": "إغلاق",
+        "productInfo": "معلومات المنتج",
+        "escalation": "تصعيد",
+        "feedback": "ملاحظات"
+      }
+    },
+    "push": {
+      "subscribed": "تم تفعيل الإشعارات الفورية بنجاح",
+      "subscribeFailed": "فشل تفعيل الإشعارات الفورية",
+      "notSupported": "الإشعارات الفورية غير مدعومة في هذا المتصفح",
+      "permissionDenied": "تم رفض إذن الإشعارات"
+    }
   }
 }

@@ -30,6 +30,7 @@ import adminRoutes from './admin';
 import publicRoutes from './public.routes';
 import setupRoutes from './setup.routes';
 import announcementsRoutes from './announcements.routes';
+import mobileRoutes from './mobile.routes';
 import { authenticate } from '../middleware/auth';
 
 const router: Router = Router();
@@ -147,5 +148,8 @@ router.use('/templates', templatesRoutes);
 
 // Super Admin routes (requires authentication + super admin)
 router.use('/admin', adminRoutes);
+
+// Mobile routes (requires authentication)
+router.use('/mobile', mobileRoutes);
 
 export default router;
