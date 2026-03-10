@@ -1,11 +1,14 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { useAgents, useDeleteAgent, type Agent } from '@/hooks/useAgents';
 import { toast } from '@/hooks/useToast';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { SkeletonCard } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { getTemplateById } from '@/lib/agent-templates';
 import { cn } from '@/lib/utils';
 import {
@@ -45,35 +48,6 @@ function getAgentIcon(templateType: string | null | undefined) {
   const template = getTemplateById(templateType);
   if (!template) return Bot;
   return ICON_MAP[template.iconName] || Bot;
-}
-
-// ---------------------------------------------------------------------------
-// Loading skeleton
-// ---------------------------------------------------------------------------
-
-function AgentCardSkeleton() {
-  return (
-    <div className="animate-pulse rounded-xl border bg-card p-6 shadow-sm">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-muted" />
-          <div className="space-y-2">
-            <div className="h-4 w-32 rounded bg-muted" />
-            <div className="h-3 w-48 rounded bg-muted" />
-          </div>
-        </div>
-      </div>
-      <div className="mt-4 flex gap-2">
-        <div className="h-6 w-24 rounded bg-muted" />
-        <div className="h-6 w-12 rounded bg-muted" />
-        <div className="h-6 w-20 rounded bg-muted" />
-      </div>
-      <div className="mt-4 flex gap-2 border-t pt-4">
-        <div className="h-8 w-16 rounded bg-muted" />
-        <div className="h-8 w-16 rounded bg-muted" />
-      </div>
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -221,7 +195,12 @@ export default function AgentsPage() {
   const tc = useTranslations('common');
   const ts = useTranslations('dashboard.sidebar');
   const tb = useTranslations('dashboard.breadcrumb');
+  const router = useRouter();
   const { data: agents, isLoading, isError, refetch } = useAgents();
+
+  const handleCreateAgent = () => {
+    router.push('/agents/new');
+  };
 
   return (
     <div>
@@ -246,43 +225,31 @@ export default function AgentsPage() {
       {isLoading && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <AgentCardSkeleton key={i} />
+            <SkeletonCard key={i} />
           ))}
         </div>
       )}
 
       {/* Error state */}
       {!isLoading && isError && (
-        <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-            <Bot className="h-6 w-6 text-destructive" />
-          </div>
-          <p className="font-medium">{tc('somethingWentWrong')}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{tc('errorDescription')}</p>
-          <button
-            onClick={() => refetch()}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            {tc('tryAgain')}
-          </button>
-        </div>
+        <ErrorState
+          title={tc('somethingWentWrong')}
+          description={tc('errorDescription')}
+          retryLabel={tc('tryAgain')}
+          onRetry={() => refetch()}
+        />
       )}
 
       {/* Empty state */}
       {!isLoading && !isError && (!agents || agents.length === 0) && (
-        <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <Bot className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <p className="text-muted-foreground">{t('noAgents')}</p>
-          <Link
-            href="/agents/new"
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            {t('createAgent')}
-          </Link>
-        </div>
+        <EmptyState
+          icon={Bot}
+          title={t('noAgents')}
+          action={{
+            label: t('createAgent'),
+            onClick: handleCreateAgent,
+          }}
+        />
       )}
 
       {/* Agent grid */}
