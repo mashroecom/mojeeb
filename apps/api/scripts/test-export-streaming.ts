@@ -28,7 +28,7 @@ function makeRequest(path: string): Promise<{ data: string; duration: number }> 
     const startTime = performance.now();
 
     const options = {
-      headers: AUTH_TOKEN ? { 'Authorization': `Bearer ${AUTH_TOKEN}` } : {}
+      headers: AUTH_TOKEN ? { Authorization: `Bearer ${AUTH_TOKEN}` } : {},
     };
 
     const req = http.get(`${API_BASE}${path}`, options, (res) => {
@@ -62,10 +62,12 @@ async function testExport(): Promise<TestResult> {
   console.log('📊 Testing /export/conversations endpoint...');
 
   try {
-    const { data, duration } = await makeRequest(`/api/v1/organizations/${ORG_ID}/export/conversations`);
+    const { data, duration } = await makeRequest(
+      `/api/v1/organizations/${ORG_ID}/export/conversations`,
+    );
 
     // Verify CSV structure
-    const lines = data.split('\n').filter(line => line.trim());
+    const lines = data.split('\n').filter((line) => line.trim());
     const rows = lines.length - 1; // Subtract header row
     const size = Buffer.byteLength(data, 'utf8');
 
@@ -77,8 +79,16 @@ async function testExport(): Promise<TestResult> {
 
     // Verify CSV header
     const header = lines[0];
-    const expectedColumns = ['id', 'customerName', 'channel', 'status', 'messageCount', 'createdAt', 'resolvedAt'];
-    const hasCorrectHeaders = expectedColumns.every(col => header.includes(col));
+    const expectedColumns = [
+      'id',
+      'customerName',
+      'channel',
+      'status',
+      'messageCount',
+      'createdAt',
+      'resolvedAt',
+    ];
+    const hasCorrectHeaders = expectedColumns.every((col) => header.includes(col));
 
     if (!hasCorrectHeaders) {
       throw new Error('CSV headers do not match expected format');
@@ -92,7 +102,7 @@ async function testExport(): Promise<TestResult> {
       duration: 0,
       rows: 0,
       size: 0,
-      error: err instanceof Error ? err.message : String(err)
+      error: err instanceof Error ? err.message : String(err),
     };
   }
 }
@@ -105,29 +115,30 @@ async function testServerResponsiveness(): Promise<boolean> {
   const exportPromise = makeRequest(`/api/v1/organizations/${ORG_ID}/export/conversations`);
 
   // Wait a bit for export to start
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   // Make concurrent health check requests
   console.log('   Making 3 concurrent requests to verify no event loop blocking...');
 
   const startTime = performance.now();
   const healthChecks = await Promise.all([
-    makeRequest('/health').catch(err => ({ data: '', duration: 0, error: err })),
-    makeRequest('/health').catch(err => ({ data: '', duration: 0, error: err })),
-    makeRequest('/health').catch(err => ({ data: '', duration: 0, error: err })),
+    makeRequest('/health').catch((err) => ({ data: '', duration: 0, error: err })),
+    makeRequest('/health').catch((err) => ({ data: '', duration: 0, error: err })),
+    makeRequest('/health').catch((err) => ({ data: '', duration: 0, error: err })),
   ]);
   const totalDuration = performance.now() - startTime;
 
   // Wait for export to complete
   await exportPromise;
 
-  const allSucceeded = healthChecks.every(check => !('error' in check));
-  const avgResponseTime = healthChecks.reduce((sum, check) => sum + check.duration, 0) / healthChecks.length;
+  const allSucceeded = healthChecks.every((check) => !('error' in check));
+  const avgResponseTime =
+    healthChecks.reduce((sum, check) => sum + check.duration, 0) / healthChecks.length;
 
   console.log(`   ${allSucceeded ? '✅' : '❌'} Health checks during export:`);
   console.log(`      - Total time: ${totalDuration.toFixed(0)}ms`);
   console.log(`      - Avg response time: ${avgResponseTime.toFixed(0)}ms`);
-  console.log(`      - Success rate: ${healthChecks.filter(c => !('error' in c)).length}/3`);
+  console.log(`      - Success rate: ${healthChecks.filter((c) => !('error' in c)).length}/3`);
 
   if (!allSucceeded) {
     console.log('   ⚠️  Server was unresponsive during export (event loop blocked)');
@@ -168,8 +179,12 @@ async function main() {
   console.log('║  Test Summary                                              ║');
   console.log('╚════════════════════════════════════════════════════════════╝\n');
 
-  console.log(`✅ CSV Download: ${exportResult.rows.toLocaleString()} rows in ${exportResult.duration.toFixed(0)}ms`);
-  console.log(`${responsiveResult ? '✅' : '❌'} Server Responsiveness: ${responsiveResult ? 'PASS' : 'FAIL'}`);
+  console.log(
+    `✅ CSV Download: ${exportResult.rows.toLocaleString()} rows in ${exportResult.duration.toFixed(0)}ms`,
+  );
+  console.log(
+    `${responsiveResult ? '✅' : '❌'} Server Responsiveness: ${responsiveResult ? 'PASS' : 'FAIL'}`,
+  );
   console.log(`✅ Memory Usage: Constant (streaming implementation)`);
   console.log(`✅ Event Loop: ${responsiveResult ? 'Not blocked' : 'Blocked'}`);
 

@@ -85,7 +85,7 @@ export function UserActionsBar({
             'inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors w-full',
             user.emailVerified
               ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-              : 'bg-teal-100 text-teal-700 hover:bg-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:hover:bg-teal-900/50'
+              : 'bg-teal-100 text-teal-700 hover:bg-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:hover:bg-teal-900/50',
           )}
         >
           <BadgeCheck className="h-4 w-4" />
@@ -100,14 +100,8 @@ export function UserActionsBar({
           disabled={toggleSuperAdminIsPending}
           className="inline-flex items-center justify-center gap-1.5 rounded-md bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 px-3 py-2 text-sm font-medium transition-colors w-full"
         >
-          {user.isSuperAdmin ? (
-            <ShieldOff className="h-4 w-4" />
-          ) : (
-            <Shield className="h-4 w-4" />
-          )}
-          {user.isSuperAdmin
-            ? t('userActions.removeSuperAdmin')
-            : t('userActions.makeSuperAdmin')}
+          {user.isSuperAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+          {user.isSuperAdmin ? t('userActions.removeSuperAdmin') : t('userActions.makeSuperAdmin')}
         </button>
 
         {/* Reset Password */}

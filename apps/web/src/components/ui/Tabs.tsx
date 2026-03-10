@@ -45,19 +45,10 @@ export function Tabs({ tabs, defaultTab, value, onChange, className }: TabsProps
   );
 }
 
-export function TabsList({
-  className,
-  children,
-}: {
-  className?: string;
-  children: ReactNode;
-}) {
+export function TabsList({ className, children }: { className?: string; children: ReactNode }) {
   return (
     <TabsPrimitive.List
-      className={cn(
-        'inline-flex h-10 items-center gap-1 border-b bg-transparent px-1',
-        className,
-      )}
+      className={cn('inline-flex h-10 items-center gap-1 border-b bg-transparent px-1', className)}
     >
       {children}
     </TabsPrimitive.List>

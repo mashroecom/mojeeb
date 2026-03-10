@@ -39,13 +39,27 @@ function StatSkeleton() {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-32 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-12 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-12 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-12 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-7 w-8 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-32 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-12 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-12 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-12 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-7 w-8 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -123,10 +137,7 @@ export default function AdminKnowledgeBasesPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <p className="text-destructive font-medium mb-2">{tc('error')}</p>
-        <button
-          onClick={() => refetch()}
-          className="text-sm text-primary hover:underline"
-        >
+        <button onClick={() => refetch()} className="text-sm text-primary hover:underline">
           {tc('retry')}
         </button>
       </div>
@@ -252,13 +263,27 @@ export default function AdminKnowledgeBasesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('name')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('organization')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('documents')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('chunks')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('linkedAgents')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('created')}</th>
-                  <th className="text-end px-4 py-3 font-medium text-muted-foreground">{t('actions')}</th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('name')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('organization')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('documents')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('chunks')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('linkedAgents')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('created')}
+                  </th>
+                  <th className="text-end px-4 py-3 font-medium text-muted-foreground">
+                    {t('actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -278,36 +303,37 @@ export default function AdminKnowledgeBasesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('name')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('organization')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('documents')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('chunks')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('linkedAgents')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('created')}</th>
-                  <th className="text-end px-4 py-3 font-medium text-muted-foreground">{t('actions')}</th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('name')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('organization')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('documents')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('chunks')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('linkedAgents')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('created')}
+                  </th>
+                  <th className="text-end px-4 py-3 font-medium text-muted-foreground">
+                    {t('actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {knowledgeBases.map((kb: any) => (
-                  <tr
-                    key={kb.id}
-                    className="hover:bg-muted/50 transition-colors"
-                  >
-                    <td className="px-4 py-3 font-medium">
-                      {kb.name || '\u2014'}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {kb.org?.name ?? '\u2014'}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {kb._count?.documents ?? 0}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {'\u2014'}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {kb._count?.agents ?? 0}
-                    </td>
+                  <tr key={kb.id} className="hover:bg-muted/50 transition-colors">
+                    <td className="px-4 py-3 font-medium">{kb.name || '\u2014'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{kb.org?.name ?? '\u2014'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{kb._count?.documents ?? 0}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{'\u2014'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{kb._count?.agents ?? 0}</td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                       {fmtDateTime(kb.createdAt, locale)}
                     </td>

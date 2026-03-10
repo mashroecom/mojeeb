@@ -60,17 +60,39 @@ function StatSkeleton() {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-4 w-4 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-32 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-5 w-16 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-16 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-10 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-7 w-8 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-4 w-4 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-32 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-5 w-16 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-16 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-10 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-7 w-8 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -200,7 +222,9 @@ export default function AdminLeadsPage() {
       [t('csvStatus')]: lead.status,
       [t('csvSource')]: lead.source || '',
       [t('csvConfidence')]: lead.confidence != null ? `${lead.confidence}%` : '',
-      [t('csvAssignedTo')]: lead.assignedUser ? `${lead.assignedUser.firstName ?? ''} ${lead.assignedUser.lastName ?? ''}`.trim() : '',
+      [t('csvAssignedTo')]: lead.assignedUser
+        ? `${lead.assignedUser.firstName ?? ''} ${lead.assignedUser.lastName ?? ''}`.trim()
+        : '',
       [t('csvCreated')]: fmtDateTime(lead.createdAt, locale),
     }));
     exportToCsv('admin-leads', rows);
@@ -215,9 +239,12 @@ export default function AdminLeadsPage() {
       message: t('confirmBulkContacted', { count: ids.length }),
       variant: 'default',
       onConfirm: () => {
-        bulkStatus.mutate({ leadIds: ids, status: 'CONTACTED' }, {
-          onSuccess: () => setSelectedIds(new Set()),
-        });
+        bulkStatus.mutate(
+          { leadIds: ids, status: 'CONTACTED' },
+          {
+            onSuccess: () => setSelectedIds(new Set()),
+          },
+        );
       },
     });
   }
@@ -230,9 +257,12 @@ export default function AdminLeadsPage() {
       message: t('confirmBulkQualified', { count: ids.length }),
       variant: 'default',
       onConfirm: () => {
-        bulkStatus.mutate({ leadIds: ids, status: 'QUALIFIED' }, {
-          onSuccess: () => setSelectedIds(new Set()),
-        });
+        bulkStatus.mutate(
+          { leadIds: ids, status: 'QUALIFIED' },
+          {
+            onSuccess: () => setSelectedIds(new Set()),
+          },
+        );
       },
     });
   }
@@ -245,9 +275,12 @@ export default function AdminLeadsPage() {
       message: t('confirmBulkConverted', { count: ids.length }),
       variant: 'default',
       onConfirm: () => {
-        bulkStatus.mutate({ leadIds: ids, status: 'CONVERTED' }, {
-          onSuccess: () => setSelectedIds(new Set()),
-        });
+        bulkStatus.mutate(
+          { leadIds: ids, status: 'CONVERTED' },
+          {
+            onSuccess: () => setSelectedIds(new Set()),
+          },
+        );
       },
     });
   }
@@ -280,7 +313,9 @@ export default function AdminLeadsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <p className="text-destructive font-medium mb-2">{tc('error')}</p>
-        <button onClick={() => refetch()} className="text-sm text-primary hover:underline">{tc('retry')}</button>
+        <button onClick={() => refetch()} className="text-sm text-primary hover:underline">
+          {tc('retry')}
+        </button>
       </div>
     );
   }
@@ -294,23 +329,44 @@ export default function AdminLeadsPage() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        {statsLoading ? (<><StatSkeleton /><StatSkeleton /><StatSkeleton /><StatSkeleton /></>) : (
+        {statsLoading ? (
+          <>
+            <StatSkeleton />
+            <StatSkeleton />
+            <StatSkeleton />
+            <StatSkeleton />
+          </>
+        ) : (
           <>
             <div className="rounded-xl border bg-card p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><UserPlus className="h-4 w-4" />{t('totalLeads')}</div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <UserPlus className="h-4 w-4" />
+                {t('totalLeads')}
+              </div>
               <p className="text-2xl font-bold">{stats?.total ?? 0}</p>
             </div>
             <div className="rounded-xl border bg-card p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 mb-1"><Sparkles className="h-4 w-4" />{t('newLeads')}</div>
+              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 mb-1">
+                <Sparkles className="h-4 w-4" />
+                {t('newLeads')}
+              </div>
               <p className="text-2xl font-bold">{newCount}</p>
             </div>
             <div className="rounded-xl border bg-card p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 mb-1"><CheckCircle className="h-4 w-4" />{t('convertedLeads')}</div>
+              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 mb-1">
+                <CheckCircle className="h-4 w-4" />
+                {t('convertedLeads')}
+              </div>
               <p className="text-2xl font-bold">{convertedCount}</p>
             </div>
             <div className="rounded-xl border bg-card p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 mb-1"><TrendingUp className="h-4 w-4" />{t('conversionRate')}</div>
-              <p className="text-2xl font-bold">{stats?.conversionRate != null ? `${stats.conversionRate}%` : '0%'}</p>
+              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 mb-1">
+                <TrendingUp className="h-4 w-4" />
+                {t('conversionRate')}
+              </div>
+              <p className="text-2xl font-bold">
+                {stats?.conversionRate != null ? `${stats.conversionRate}%` : '0%'}
+              </p>
             </div>
           </>
         )}
@@ -319,7 +375,9 @@ export default function AdminLeadsPage() {
       {/* Conversion Funnel */}
       {!statsLoading && stats?.byStatus && (
         <div className="rounded-xl border bg-card p-6 shadow-sm mb-6">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">{t('conversionFunnel')}</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+            {t('conversionFunnel')}
+          </h3>
           {(() => {
             const stages = [
               { key: 'NEW', label: t('statusNew'), color: 'bg-blue-500' },
@@ -327,7 +385,13 @@ export default function AdminLeadsPage() {
               { key: 'QUALIFIED', label: t('statusQualified'), color: 'bg-purple-500' },
               { key: 'CONVERTED', label: t('statusConverted'), color: 'bg-green-500' },
             ];
-            const maxCount = Math.max(...stages.map((s) => { const found = stats.byStatus.find((bs: any) => bs.status === s.key); return found?._count ?? 0; }), 1);
+            const maxCount = Math.max(
+              ...stages.map((s) => {
+                const found = stats.byStatus.find((bs: any) => bs.status === s.key);
+                return found?._count ?? 0;
+              }),
+              1,
+            );
             return (
               <div className="space-y-3">
                 {stages.map((stage) => {
@@ -338,7 +402,10 @@ export default function AdminLeadsPage() {
                     <div key={stage.key} className="flex items-center gap-3">
                       <span className="text-xs font-medium w-24 shrink-0">{stage.label}</span>
                       <div className="flex-1 h-7 rounded bg-muted/50 overflow-hidden">
-                        <div className={cn('h-full rounded transition-all', stage.color)} style={{ width: `${Math.max(pct, 2)}%` }} />
+                        <div
+                          className={cn('h-full rounded transition-all', stage.color)}
+                          style={{ width: `${Math.max(pct, 2)}%` }}
+                        />
                       </div>
                       <span className="text-sm font-bold tabular-nums w-10 text-end">{count}</span>
                     </div>
@@ -354,17 +421,40 @@ export default function AdminLeadsPage() {
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input type="text" placeholder={t('search')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-lg border bg-card ps-10 pe-4 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          <input
+            type="text"
+            placeholder={t('search')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border bg-card ps-10 pe-4 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
         </div>
         <div className="flex rounded-lg border bg-card overflow-hidden">
           {statusTabs.map((tab) => (
-            <button key={tab.key || 'all'} onClick={() => { setStatusFilter(tab.key); setPage(1); }} className={cn('px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap', statusFilter === tab.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}>
+            <button
+              key={tab.key || 'all'}
+              onClick={() => {
+                setStatusFilter(tab.key);
+                setPage(1);
+              }}
+              className={cn(
+                'px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap',
+                statusFilter === tab.key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+              )}
+            >
               {tab.label}
             </button>
           ))}
         </div>
-        <button onClick={handleExport} disabled={!leads.length} className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed">
-          <Download className="h-4 w-4" />{tc('export')}
+        <button
+          onClick={handleExport}
+          disabled={!leads.length}
+          className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Download className="h-4 w-4" />
+          {tc('export')}
         </button>
       </div>
 
@@ -373,8 +463,46 @@ export default function AdminLeadsPage() {
         {isLoading ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b bg-muted/50"><th className="px-4 py-3 w-10" /><th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('name')}</th><th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('email')}</th><th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('phone')}</th><th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('organization')}</th><th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('status')}</th><th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('source')}</th><th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('confidence')}</th><th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('assignedTo')}</th><th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('created')}</th><th className="text-end px-4 py-3 font-medium text-muted-foreground">{t('actions')}</th></tr></thead>
-              <tbody>{Array.from({ length: 5 }).map((_, i) => (<RowSkeleton key={i} />))}</tbody>
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3 w-10" />
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('name')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('email')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('phone')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('organization')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('status')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('source')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('confidence')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('assignedTo')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('created')}
+                  </th>
+                  <th className="text-end px-4 py-3 font-medium text-muted-foreground">
+                    {t('actions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <RowSkeleton key={i} />
+                ))}
+              </tbody>
             </table>
           </div>
         ) : leads.length === 0 ? (
@@ -388,38 +516,109 @@ export default function AdminLeadsPage() {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="px-4 py-3 w-10">
-                    <input type="checkbox" checked={allSelected} ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }} onChange={toggleSelectAll} className="h-4 w-4 rounded border text-primary focus-visible:ring-primary cursor-pointer" title={t('selectAll')} />
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = someSelected && !allSelected;
+                      }}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 rounded border text-primary focus-visible:ring-primary cursor-pointer"
+                      title={t('selectAll')}
+                    />
                   </th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('name')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('email')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('phone')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('organization')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('status')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('source')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('confidence')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('assignedTo')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('created')}</th>
-                  <th className="text-end px-4 py-3 font-medium text-muted-foreground">{t('actions')}</th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('name')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('email')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('phone')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('organization')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('status')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('source')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('confidence')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('assignedTo')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('created')}
+                  </th>
+                  <th className="text-end px-4 py-3 font-medium text-muted-foreground">
+                    {t('actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {leads.map((lead: any) => {
                   const isSelected = selectedIds.has(lead.id);
                   return (
-                    <tr key={lead.id} className={cn('hover:bg-muted/50 transition-colors', isSelected && 'bg-primary/5')}>
-                      <td className="px-4 py-3"><input type="checkbox" checked={isSelected} onChange={() => toggleSelect(lead.id)} className="h-4 w-4 rounded border text-primary focus-visible:ring-primary cursor-pointer" /></td>
+                    <tr
+                      key={lead.id}
+                      className={cn(
+                        'hover:bg-muted/50 transition-colors',
+                        isSelected && 'bg-primary/5',
+                      )}
+                    >
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelect(lead.id)}
+                          className="h-4 w-4 rounded border text-primary focus-visible:ring-primary cursor-pointer"
+                        />
+                      </td>
                       <td className="px-4 py-3 font-medium">{lead.name || '\u2014'}</td>
-                      <td className="px-4 py-3 text-muted-foreground" dir="ltr">{lead.email || '\u2014'}</td>
-                      <td className="px-4 py-3 text-muted-foreground" dir="ltr">{lead.phone || '\u2014'}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{lead.org?.name ?? '\u2014'}</td>
-                      <td className="px-4 py-3"><span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', STATUS_BADGE[lead.status] ?? 'bg-muted text-muted-foreground')}>{statusLabel(lead.status)}</span></td>
+                      <td className="px-4 py-3 text-muted-foreground" dir="ltr">
+                        {lead.email || '\u2014'}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground" dir="ltr">
+                        {lead.phone || '\u2014'}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {lead.org?.name ?? '\u2014'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={cn(
+                            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+                            STATUS_BADGE[lead.status] ?? 'bg-muted text-muted-foreground',
+                          )}
+                        >
+                          {statusLabel(lead.status)}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{lead.source || '\u2014'}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{lead.confidence != null ? `${lead.confidence}%` : '\u2014'}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{lead.assignedUser ? `${lead.assignedUser.firstName ?? ''} ${lead.assignedUser.lastName ?? ''}`.trim() || '\u2014' : '\u2014'}</td>
-                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{fmtDateTime(lead.createdAt, locale)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {lead.confidence != null ? `${lead.confidence}%` : '\u2014'}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {lead.assignedUser
+                          ? `${lead.assignedUser.firstName ?? ''} ${lead.assignedUser.lastName ?? ''}`.trim() ||
+                            '\u2014'
+                          : '\u2014'}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                        {fmtDateTime(lead.createdAt, locale)}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end">
-                          <button onClick={() => handleDelete(lead.id)} disabled={deleteLead.isPending} className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" title={t('deleteLead')}>
+                          <button
+                            onClick={() => handleDelete(lead.id)}
+                            disabled={deleteLead.isPending}
+                            className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            title={t('deleteLead')}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
@@ -434,7 +633,15 @@ export default function AdminLeadsPage() {
 
         {!isLoading && totalPages > 1 && (
           <div className="border-t px-4 py-3">
-            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+            <AdminPagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              previousLabel={tc('previous')}
+              nextLabel={tc('next')}
+              pageLabel={tc('page')}
+              ofLabel={tc('of')}
+            />
           </div>
         )}
       </div>
@@ -442,22 +649,48 @@ export default function AdminLeadsPage() {
       {/* Bulk Action Toolbar */}
       {someSelected && (
         <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg border bg-card px-4 py-3 shadow-lg">
-          <span className="text-sm font-medium text-muted-foreground">{t('selected', { count: selectedIds.size })}</span>
+          <span className="text-sm font-medium text-muted-foreground">
+            {t('selected', { count: selectedIds.size })}
+          </span>
           <div className="h-4 w-px bg-border" />
-          <button onClick={handleBulkContacted} disabled={bulkStatus.isPending} className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50">
-            <Phone className="h-3.5 w-3.5" />{t('bulkContacted', { count: selectedIds.size })}
+          <button
+            onClick={handleBulkContacted}
+            disabled={bulkStatus.isPending}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <Phone className="h-3.5 w-3.5" />
+            {t('bulkContacted', { count: selectedIds.size })}
           </button>
-          <button onClick={handleBulkQualified} disabled={bulkStatus.isPending} className="inline-flex items-center gap-1.5 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50">
-            <Star className="h-3.5 w-3.5" />{t('bulkQualified', { count: selectedIds.size })}
+          <button
+            onClick={handleBulkQualified}
+            disabled={bulkStatus.isPending}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <Star className="h-3.5 w-3.5" />
+            {t('bulkQualified', { count: selectedIds.size })}
           </button>
-          <button onClick={handleBulkConverted} disabled={bulkStatus.isPending} className="inline-flex items-center gap-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50">
-            <CheckCircle className="h-3.5 w-3.5" />{t('bulkConverted', { count: selectedIds.size })}
+          <button
+            onClick={handleBulkConverted}
+            disabled={bulkStatus.isPending}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <CheckCircle className="h-3.5 w-3.5" />
+            {t('bulkConverted', { count: selectedIds.size })}
           </button>
-          <button onClick={handleBulkDelete} disabled={bulkDelete.isPending} className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50">
-            <Trash2 className="h-3.5 w-3.5" />{t('bulkDelete', { count: selectedIds.size })}
+          <button
+            onClick={handleBulkDelete}
+            disabled={bulkDelete.isPending}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {t('bulkDelete', { count: selectedIds.size })}
           </button>
-          <button onClick={clearSelection} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted">
-            <X className="h-3.5 w-3.5" />{t('clearSelection')}
+          <button
+            onClick={clearSelection}
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+          >
+            <X className="h-3.5 w-3.5" />
+            {t('clearSelection')}
           </button>
         </div>
       )}
@@ -468,7 +701,10 @@ export default function AdminLeadsPage() {
         message={confirmDialog.message}
         variant={confirmDialog.variant}
         loading={deleteLead.isPending || bulkStatus.isPending || bulkDelete.isPending}
-        onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog((prev) => ({ ...prev, open: false })); }}
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+        }}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
     </div>

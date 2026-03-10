@@ -17,10 +17,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="w-full">
         {label && (
-          <label
-            htmlFor={textareaId}
-            className="mb-1.5 block text-sm font-medium text-foreground"
-          >
+          <label htmlFor={textareaId} className="mb-1.5 block text-sm font-medium text-foreground">
             {label}
           </label>
         )}
@@ -35,7 +32,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             'disabled:cursor-not-allowed disabled:opacity-50',
             'placeholder:text-muted-foreground',
             'min-h-[80px] resize-y',
-            error && 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive',
+            error &&
+              'border-destructive focus-visible:border-destructive focus-visible:ring-destructive',
             className,
           )}
           aria-invalid={error ? true : undefined}

@@ -82,14 +82,6 @@ export function DialogOverlay({ className }: { className?: string }) {
   );
 }
 
-export function DialogTrigger({
-  children,
-  asChild,
-}: {
-  children: ReactNode;
-  asChild?: boolean;
-}) {
-  return (
-    <DialogPrimitive.Trigger asChild={asChild}>{children}</DialogPrimitive.Trigger>
-  );
+export function DialogTrigger({ children, asChild }: { children: ReactNode; asChild?: boolean }) {
+  return <DialogPrimitive.Trigger asChild={asChild}>{children}</DialogPrimitive.Trigger>;
 }

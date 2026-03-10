@@ -18,10 +18,5 @@ export function CustomStyles() {
     return null;
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{ __html: cms.customCss }}
-      suppressHydrationWarning
-    />
-  );
+  return <style dangerouslySetInnerHTML={{ __html: cms.customCss }} suppressHydrationWarning />;
 }

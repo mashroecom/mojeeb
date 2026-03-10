@@ -103,9 +103,7 @@ function NotificationItem({
       }}
     >
       {/* Type icon */}
-      <div className="mt-0.5 shrink-0">
-        {getNotificationIcon(notification.type)}
-      </div>
+      <div className="mt-0.5 shrink-0">{getNotificationIcon(notification.type)}</div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -118,13 +116,9 @@ function NotificationItem({
           >
             {notification.title}
           </p>
-          {!notification.isRead && (
-            <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-          )}
+          {!notification.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
         </div>
-        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-          {notification.body}
-        </p>
+        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{notification.body}</p>
         <p className="text-xs text-muted-foreground/70 mt-1">
           {formatRelativeTime(notification.createdAt, locale, t)}
         </p>
@@ -176,10 +170,7 @@ export function NotificationBell() {
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }

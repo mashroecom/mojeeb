@@ -5,7 +5,10 @@ import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { prisma } from '../config/database';
 
-interface OrgParams { orgId: string; [key: string]: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
 
 const VALID_LEAD_STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'LOST'] as const;
 
@@ -41,19 +44,15 @@ const createLeadSchema = z.object({
   status: z.enum(VALID_LEAD_STATUSES).optional(),
 });
 
-router.post(
-  '/',
-  validate({ body: createLeadSchema }),
-  async (req, res, next) => {
-    try {
-      const { orgId } = req.params as OrgParams;
-      const lead = await leadsService.create(orgId, req.body);
-      res.status(201).json({ success: true, data: lead });
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+router.post('/', validate({ body: createLeadSchema }), async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    const lead = await leadsService.create(orgId, req.body);
+    res.status(201).json({ success: true, data: lead });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /api/v1/organizations/:orgId/leads/stats
 router.get('/stats', async (req, res, next) => {
@@ -88,19 +87,15 @@ const updateLeadSchema = z.object({
   status: z.enum(VALID_LEAD_STATUSES).optional(),
 });
 
-router.patch(
-  '/:leadId',
-  validate({ body: updateLeadSchema }),
-  async (req, res, next) => {
-    try {
-      const { orgId, leadId } = req.params as OrgParams & { leadId: string };
-      const lead = await leadsService.update(orgId, leadId, req.body);
-      res.json({ success: true, data: lead });
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+router.patch('/:leadId', validate({ body: updateLeadSchema }), async (req, res, next) => {
+  try {
+    const { orgId, leadId } = req.params as OrgParams & { leadId: string };
+    const lead = await leadsService.update(orgId, leadId, req.body);
+    res.json({ success: true, data: lead });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // PATCH /api/v1/organizations/:orgId/leads/:leadId/status
 router.patch(
@@ -143,7 +138,9 @@ router.patch(
           where: { userId_orgId: { userId: assignedTo, orgId } },
         });
         if (!membership) {
-          return res.status(400).json({ success: false, error: 'User is not a member of this organization' });
+          return res
+            .status(400)
+            .json({ success: false, error: 'User is not a member of this organization' });
         }
       }
 

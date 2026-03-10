@@ -164,7 +164,7 @@ function openDatabase(): Promise<IDBDatabase> {
  * Save a single conversation to offline storage
  */
 export async function saveConversation(
-  conversation: Omit<StoredConversation, 'cachedAt'>
+  conversation: Omit<StoredConversation, 'cachedAt'>,
 ): Promise<OfflineStorageResult<StoredConversation>> {
   try {
     const db = await openDatabase();
@@ -191,10 +191,7 @@ export async function saveConversation(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to save conversation',
+      error: error instanceof Error ? error.message : 'Failed to save conversation',
     };
   }
 }
@@ -203,19 +200,17 @@ export async function saveConversation(
  * Save multiple conversations to offline storage
  */
 export async function saveConversations(
-  conversations: Omit<StoredConversation, 'cachedAt'>[]
+  conversations: Omit<StoredConversation, 'cachedAt'>[],
 ): Promise<OfflineStorageResult<StoredConversation[]>> {
   try {
     const db = await openDatabase();
     const transaction = db.transaction([STORE_CONVERSATIONS], 'readwrite');
     const store = transaction.objectStore(STORE_CONVERSATIONS);
 
-    const conversationsWithCache: StoredConversation[] = conversations.map(
-      (conv) => ({
-        ...conv,
-        cachedAt: Date.now(),
-      })
-    );
+    const conversationsWithCache: StoredConversation[] = conversations.map((conv) => ({
+      ...conv,
+      cachedAt: Date.now(),
+    }));
 
     await Promise.all(
       conversationsWithCache.map(
@@ -224,8 +219,8 @@ export async function saveConversations(
             const request = store.put(conv);
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
-          })
-      )
+          }),
+      ),
     );
 
     db.close();
@@ -237,10 +232,7 @@ export async function saveConversations(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to save conversations',
+      error: error instanceof Error ? error.message : 'Failed to save conversations',
     };
   }
 }
@@ -249,20 +241,18 @@ export async function saveConversations(
  * Get a single conversation from offline storage
  */
 export async function getConversation(
-  conversationId: string
+  conversationId: string,
 ): Promise<OfflineStorageResult<StoredConversation>> {
   try {
     const db = await openDatabase();
     const transaction = db.transaction([STORE_CONVERSATIONS], 'readonly');
     const store = transaction.objectStore(STORE_CONVERSATIONS);
 
-    const conversation = await new Promise<StoredConversation | undefined>(
-      (resolve, reject) => {
-        const request = store.get(conversationId);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      }
-    );
+    const conversation = await new Promise<StoredConversation | undefined>((resolve, reject) => {
+      const request = store.get(conversationId);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
 
     db.close();
 
@@ -288,10 +278,7 @@ export async function getConversation(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to get conversation',
+      error: error instanceof Error ? error.message : 'Failed to get conversation',
     };
   }
 }
@@ -332,16 +319,12 @@ export async function getConversations(options?: {
 
     // Filter by status if specified
     if (options?.status) {
-      conversations = conversations.filter(
-        (conv) => conv.status === options.status
-      );
+      conversations = conversations.filter((conv) => conv.status === options.status);
     }
 
     // Remove expired conversations
     const now = Date.now();
-    conversations = conversations.filter(
-      (conv) => now - conv.cachedAt <= CACHE_MAX_AGE
-    );
+    conversations = conversations.filter((conv) => now - conv.cachedAt <= CACHE_MAX_AGE);
 
     // Sort by lastMessageAt (most recent first)
     conversations.sort((a, b) => {
@@ -362,10 +345,7 @@ export async function getConversations(options?: {
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to get conversations',
+      error: error instanceof Error ? error.message : 'Failed to get conversations',
     };
   }
 }
@@ -373,9 +353,7 @@ export async function getConversations(options?: {
 /**
  * Delete a conversation from offline storage
  */
-export async function deleteConversation(
-  conversationId: string
-): Promise<OfflineStorageResult> {
+export async function deleteConversation(conversationId: string): Promise<OfflineStorageResult> {
   try {
     const db = await openDatabase();
     const transaction = db.transaction([STORE_CONVERSATIONS], 'readwrite');
@@ -393,10 +371,7 @@ export async function deleteConversation(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to delete conversation',
+      error: error instanceof Error ? error.message : 'Failed to delete conversation',
     };
   }
 }
@@ -409,7 +384,7 @@ export async function deleteConversation(
  * Save messages for a conversation
  */
 export async function saveMessages(
-  messages: Omit<StoredMessage, 'cachedAt'>[]
+  messages: Omit<StoredMessage, 'cachedAt'>[],
 ): Promise<OfflineStorageResult<StoredMessage[]>> {
   try {
     const db = await openDatabase();
@@ -428,8 +403,8 @@ export async function saveMessages(
             const request = store.put(msg);
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
-          })
-      )
+          }),
+      ),
     );
 
     db.close();
@@ -441,8 +416,7 @@ export async function saveMessages(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : 'Failed to save messages',
+      error: error instanceof Error ? error.message : 'Failed to save messages',
     };
   }
 }
@@ -451,7 +425,7 @@ export async function saveMessages(
  * Get messages for a specific conversation
  */
 export async function getMessages(
-  conversationId: string
+  conversationId: string,
 ): Promise<OfflineStorageResult<StoredMessage[]>> {
   try {
     const db = await openDatabase();
@@ -469,15 +443,10 @@ export async function getMessages(
 
     // Remove expired messages
     const now = Date.now();
-    const validMessages = messages.filter(
-      (msg) => now - msg.cachedAt <= CACHE_MAX_AGE
-    );
+    const validMessages = messages.filter((msg) => now - msg.cachedAt <= CACHE_MAX_AGE);
 
     // Sort by createdAt (oldest first)
-    validMessages.sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
+    validMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
     return {
       success: true,
@@ -486,8 +455,7 @@ export async function getMessages(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : 'Failed to get messages',
+      error: error instanceof Error ? error.message : 'Failed to get messages',
     };
   }
 }
@@ -495,9 +463,7 @@ export async function getMessages(
 /**
  * Delete all messages for a conversation
  */
-export async function deleteMessages(
-  conversationId: string
-): Promise<OfflineStorageResult> {
+export async function deleteMessages(conversationId: string): Promise<OfflineStorageResult> {
   try {
     const db = await openDatabase();
     const transaction = db.transaction([STORE_MESSAGES], 'readwrite');
@@ -517,8 +483,8 @@ export async function deleteMessages(
             const request = store.delete(msg.id);
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
-          })
-      )
+          }),
+      ),
     );
 
     db.close();
@@ -527,8 +493,7 @@ export async function deleteMessages(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : 'Failed to delete messages',
+      error: error instanceof Error ? error.message : 'Failed to delete messages',
     };
   }
 }
@@ -541,7 +506,7 @@ export async function deleteMessages(
  * Add an action to the offline queue
  */
 export async function queueAction(
-  action: Omit<QueuedAction, 'id' | 'createdAt' | 'retryCount'>
+  action: Omit<QueuedAction, 'id' | 'createdAt' | 'retryCount'>,
 ): Promise<OfflineStorageResult<QueuedAction>> {
   try {
     const db = await openDatabase();
@@ -570,8 +535,7 @@ export async function queueAction(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : 'Failed to queue action',
+      error: error instanceof Error ? error.message : 'Failed to queue action',
     };
   }
 }
@@ -579,9 +543,7 @@ export async function queueAction(
 /**
  * Get all queued actions
  */
-export async function getQueuedActions(): Promise<
-  OfflineStorageResult<QueuedAction[]>
-> {
+export async function getQueuedActions(): Promise<OfflineStorageResult<QueuedAction[]>> {
   try {
     const db = await openDatabase();
     const transaction = db.transaction([STORE_QUEUE], 'readonly');
@@ -605,10 +567,7 @@ export async function getQueuedActions(): Promise<
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to get queued actions',
+      error: error instanceof Error ? error.message : 'Failed to get queued actions',
     };
   }
 }
@@ -618,20 +577,18 @@ export async function getQueuedActions(): Promise<
  */
 export async function updateQueuedAction(
   actionId: string,
-  updates: Partial<QueuedAction>
+  updates: Partial<QueuedAction>,
 ): Promise<OfflineStorageResult<QueuedAction>> {
   try {
     const db = await openDatabase();
     const transaction = db.transaction([STORE_QUEUE], 'readwrite');
     const store = transaction.objectStore(STORE_QUEUE);
 
-    const existingAction = await new Promise<QueuedAction | undefined>(
-      (resolve, reject) => {
-        const request = store.get(actionId);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      }
-    );
+    const existingAction = await new Promise<QueuedAction | undefined>((resolve, reject) => {
+      const request = store.get(actionId);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
 
     if (!existingAction) {
       db.close();
@@ -661,10 +618,7 @@ export async function updateQueuedAction(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to update queued action',
+      error: error instanceof Error ? error.message : 'Failed to update queued action',
     };
   }
 }
@@ -672,9 +626,7 @@ export async function updateQueuedAction(
 /**
  * Remove a queued action (after successful sync)
  */
-export async function removeQueuedAction(
-  actionId: string
-): Promise<OfflineStorageResult> {
+export async function removeQueuedAction(actionId: string): Promise<OfflineStorageResult> {
   try {
     const db = await openDatabase();
     const transaction = db.transaction([STORE_QUEUE], 'readwrite');
@@ -692,10 +644,7 @@ export async function removeQueuedAction(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to remove queued action',
+      error: error instanceof Error ? error.message : 'Failed to remove queued action',
     };
   }
 }
@@ -721,10 +670,7 @@ export async function clearQueuedActions(): Promise<OfflineStorageResult> {
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to clear queued actions',
+      error: error instanceof Error ? error.message : 'Failed to clear queued actions',
     };
   }
 }
@@ -746,19 +692,15 @@ export async function clearExpiredData(): Promise<OfflineStorageResult> {
     const convStore = convTransaction.objectStore(STORE_CONVERSATIONS);
     const convIndex = convStore.index('cachedAt');
 
-    const expiredConversations = await new Promise<StoredConversation[]>(
-      (resolve, reject) => {
-        const request = convIndex.getAll();
-        request.onsuccess = () => {
-          const all = request.result;
-          const expired = all.filter(
-            (conv) => now - conv.cachedAt > CACHE_MAX_AGE
-          );
-          resolve(expired);
-        };
-        request.onerror = () => reject(request.error);
-      }
-    );
+    const expiredConversations = await new Promise<StoredConversation[]>((resolve, reject) => {
+      const request = convIndex.getAll();
+      request.onsuccess = () => {
+        const all = request.result;
+        const expired = all.filter((conv) => now - conv.cachedAt > CACHE_MAX_AGE);
+        resolve(expired);
+      };
+      request.onerror = () => reject(request.error);
+    });
 
     await Promise.all(
       expiredConversations.map(
@@ -767,8 +709,8 @@ export async function clearExpiredData(): Promise<OfflineStorageResult> {
             const request = convStore.delete(conv.id);
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
-          })
-      )
+          }),
+      ),
     );
 
     // Clear expired messages
@@ -776,19 +718,15 @@ export async function clearExpiredData(): Promise<OfflineStorageResult> {
     const msgStore = msgTransaction.objectStore(STORE_MESSAGES);
     const msgIndex = msgStore.index('cachedAt');
 
-    const expiredMessages = await new Promise<StoredMessage[]>(
-      (resolve, reject) => {
-        const request = msgIndex.getAll();
-        request.onsuccess = () => {
-          const all = request.result;
-          const expired = all.filter(
-            (msg) => now - msg.cachedAt > CACHE_MAX_AGE
-          );
-          resolve(expired);
-        };
-        request.onerror = () => reject(request.error);
-      }
-    );
+    const expiredMessages = await new Promise<StoredMessage[]>((resolve, reject) => {
+      const request = msgIndex.getAll();
+      request.onsuccess = () => {
+        const all = request.result;
+        const expired = all.filter((msg) => now - msg.cachedAt > CACHE_MAX_AGE);
+        resolve(expired);
+      };
+      request.onerror = () => reject(request.error);
+    });
 
     await Promise.all(
       expiredMessages.map(
@@ -797,8 +735,8 @@ export async function clearExpiredData(): Promise<OfflineStorageResult> {
             const request = msgStore.delete(msg.id);
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
-          })
-      )
+          }),
+      ),
     );
 
     db.close();
@@ -807,10 +745,7 @@ export async function clearExpiredData(): Promise<OfflineStorageResult> {
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to clear expired data',
+      error: error instanceof Error ? error.message : 'Failed to clear expired data',
     };
   }
 }
@@ -824,7 +759,7 @@ export async function clearAllData(): Promise<OfflineStorageResult> {
 
     const transaction = db.transaction(
       [STORE_CONVERSATIONS, STORE_MESSAGES, STORE_QUEUE],
-      'readwrite'
+      'readwrite',
     );
 
     await Promise.all([
@@ -851,8 +786,7 @@ export async function clearAllData(): Promise<OfflineStorageResult> {
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : 'Failed to clear all data',
+      error: error instanceof Error ? error.message : 'Failed to clear all data',
     };
   }
 }
@@ -872,27 +806,26 @@ export async function getStorageStats(): Promise<
 
     const transaction = db.transaction(
       [STORE_CONVERSATIONS, STORE_MESSAGES, STORE_QUEUE],
-      'readonly'
+      'readonly',
     );
 
-    const [conversationCount, messageCount, queuedActionCount] =
-      await Promise.all([
-        new Promise<number>((resolve, reject) => {
-          const request = transaction.objectStore(STORE_CONVERSATIONS).count();
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error);
-        }),
-        new Promise<number>((resolve, reject) => {
-          const request = transaction.objectStore(STORE_MESSAGES).count();
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error);
-        }),
-        new Promise<number>((resolve, reject) => {
-          const request = transaction.objectStore(STORE_QUEUE).count();
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error);
-        }),
-      ]);
+    const [conversationCount, messageCount, queuedActionCount] = await Promise.all([
+      new Promise<number>((resolve, reject) => {
+        const request = transaction.objectStore(STORE_CONVERSATIONS).count();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      }),
+      new Promise<number>((resolve, reject) => {
+        const request = transaction.objectStore(STORE_MESSAGES).count();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      }),
+      new Promise<number>((resolve, reject) => {
+        const request = transaction.objectStore(STORE_QUEUE).count();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      }),
+    ]);
 
     db.close();
 
@@ -907,10 +840,7 @@ export async function getStorageStats(): Promise<
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to get storage stats',
+      error: error instanceof Error ? error.message : 'Failed to get storage stats',
     };
   }
 }
@@ -945,7 +875,7 @@ export type SyncHandler = (action: QueuedAction) => Promise<boolean>;
  */
 export async function syncQueuedActions(
   syncHandler: SyncHandler,
-  maxRetries: number = 3
+  maxRetries: number = 3,
 ): Promise<
   OfflineStorageResult<{
     total: number;
@@ -998,8 +928,7 @@ export async function syncQueuedActions(
       } catch (error) {
         // Increment retry count on error
         const newRetryCount = action.retryCount + 1;
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
         if (newRetryCount >= maxRetries) {
           // Remove action if max retries reached
@@ -1017,9 +946,7 @@ export async function syncQueuedActions(
 
     // Get remaining actions
     const remainingResult = await getQueuedActions();
-    const remaining = remainingResult.success
-      ? remainingResult.data?.length ?? 0
-      : 0;
+    const remaining = remainingResult.success ? (remainingResult.data?.length ?? 0) : 0;
 
     return {
       success: true,
@@ -1033,10 +960,7 @@ export async function syncQueuedActions(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to sync queued actions',
+      error: error instanceof Error ? error.message : 'Failed to sync queued actions',
     };
   }
 }
@@ -1048,10 +972,7 @@ export async function syncQueuedActions(
  * @param onOffline - Callback when browser goes offline
  * @returns Cleanup function to remove listeners
  */
-export function setupOnlineListeners(
-  onOnline: () => void,
-  onOffline: () => void
-): () => void {
+export function setupOnlineListeners(onOnline: () => void, onOffline: () => void): () => void {
   if (typeof window === 'undefined') {
     return () => {};
   }

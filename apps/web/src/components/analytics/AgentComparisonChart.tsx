@@ -97,7 +97,9 @@ export function AgentComparisonChart({ agentIds, dateRange }: AgentComparisonCha
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Conversations</span>
-                  <span className="font-medium">{(agent.totalConversations ?? 0).toLocaleString()}</span>
+                  <span className="font-medium">
+                    {(agent.totalConversations ?? 0).toLocaleString()}
+                  </span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                   <div
@@ -145,7 +147,9 @@ export function AgentComparisonChart({ agentIds, dateRange }: AgentComparisonCha
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Satisfaction</span>
-                  <span className="font-medium">{(agent.satisfactionScore ?? 0).toFixed(2)} / 5</span>
+                  <span className="font-medium">
+                    {(agent.satisfactionScore ?? 0).toFixed(2)} / 5
+                  </span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                   <div
@@ -169,7 +173,7 @@ export function AgentComparisonChart({ agentIds, dateRange }: AgentComparisonCha
               <p className="text-xs text-muted-foreground mb-1">Avg Conversations</p>
               <p className="text-lg font-bold">
                 {Math.round(
-                  agents.reduce((sum, a) => sum + (a.totalConversations ?? 0), 0) / agents.length
+                  agents.reduce((sum, a) => sum + (a.totalConversations ?? 0), 0) / agents.length,
                 ).toLocaleString()}
               </p>
             </div>
@@ -177,7 +181,7 @@ export function AgentComparisonChart({ agentIds, dateRange }: AgentComparisonCha
               <p className="text-xs text-muted-foreground mb-1">Avg Messages</p>
               <p className="text-lg font-bold">
                 {Math.round(
-                  agents.reduce((sum, a) => sum + (a.totalMessages ?? 0), 0) / agents.length
+                  agents.reduce((sum, a) => sum + (a.totalMessages ?? 0), 0) / agents.length,
                 ).toLocaleString()}
               </p>
             </div>
@@ -186,7 +190,8 @@ export function AgentComparisonChart({ agentIds, dateRange }: AgentComparisonCha
               <p className="text-lg font-bold">
                 {(
                   agents.reduce((sum, a) => sum + (a.resolutionRate ?? 0), 0) / agents.length
-                ).toFixed(1)}%
+                ).toFixed(1)}
+                %
               </p>
             </div>
             <div className="text-center">

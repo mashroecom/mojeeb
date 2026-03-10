@@ -5,17 +5,20 @@ import { webhookService } from './webhook.service';
 import { pushNotificationService } from './pushNotification.service';
 
 export class ConversationService {
-  async list(orgId: string, params: {
-    page?: number;
-    limit?: number;
-    status?: string;
-    channelId?: string;
-    search?: string;
-    startDate?: string;
-    endDate?: string;
-    sentiment?: string;
-    category?: string;
-  }) {
+  async list(
+    orgId: string,
+    params: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      channelId?: string;
+      search?: string;
+      startDate?: string;
+      endDate?: string;
+      sentiment?: string;
+      category?: string;
+    },
+  ) {
     const page = Math.max(params.page || 1, 1);
     const limit = Math.min(Math.max(params.limit || 20, 1), 100);
     const skip = (page - 1) * limit;
@@ -103,10 +106,13 @@ export class ConversationService {
     return conversation;
   }
 
-  async getMessages(conversationId: string, params: {
-    page?: number;
-    limit?: number;
-  }) {
+  async getMessages(
+    conversationId: string,
+    params: {
+      page?: number;
+      limit?: number;
+    },
+  ) {
     const page = Math.max(params.page || 1, 1);
     const limit = Math.min(Math.max(params.limit || 50, 1), 100);
     const skip = (page - 1) * limit;
@@ -275,25 +281,25 @@ export class ConversationService {
   async bulkDelete(orgId: string, conversationIds: string[]) {
     const result = await prisma.$transaction([
       prisma.conversationTag.deleteMany({
-        where: { conversationId: { in: conversationIds } }
+        where: { conversationId: { in: conversationIds } },
       }),
       prisma.conversationRating.deleteMany({
-        where: { conversationId: { in: conversationIds } }
+        where: { conversationId: { in: conversationIds } },
       }),
       prisma.conversationNote.deleteMany({
-        where: { conversationId: { in: conversationIds } }
+        where: { conversationId: { in: conversationIds } },
       }),
       prisma.message.deleteMany({
-        where: { conversationId: { in: conversationIds } }
+        where: { conversationId: { in: conversationIds } },
       }),
       prisma.lead.deleteMany({
-        where: { conversationId: { in: conversationIds } }
+        where: { conversationId: { in: conversationIds } },
       }),
       prisma.conversation.deleteMany({
         where: {
           id: { in: conversationIds },
-          orgId
-        }
+          orgId,
+        },
       }),
     ]);
 

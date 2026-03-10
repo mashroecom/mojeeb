@@ -6,28 +6,33 @@ import { authenticate, orgContext } from '../middleware/auth';
 import { createAgentSchema } from '@mojeeb/shared-utils';
 import { z } from 'zod';
 
-interface OrgParams { orgId: string; [key: string]: string; }
-interface AgentParams { orgId: string; agentId: string; [key: string]: string; }
-interface AgentKBParams extends AgentParams { knowledgeBaseId: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
+interface AgentParams {
+  orgId: string;
+  agentId: string;
+  [key: string]: string;
+}
+interface AgentKBParams extends AgentParams {
+  knowledgeBaseId: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
 router.use(authenticate, orgContext);
 
 // POST /api/v1/organizations/:orgId/agents
-router.post(
-  '/',
-  validate({ body: createAgentSchema }),
-  async (req, res, next) => {
-    try {
-      const { orgId } = req.params as OrgParams;
-      const agent = await agentService.create(orgId, req.body);
-      res.status(201).json({ success: true, data: agent });
-    } catch (err) {
-      next(err);
-    }
+router.post('/', validate({ body: createAgentSchema }), async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    const agent = await agentService.create(orgId, req.body);
+    res.status(201).json({ success: true, data: agent });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // GET /api/v1/organizations/:orgId/agents
 router.get('/', async (req, res, next) => {
@@ -63,7 +68,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // DELETE /api/v1/organizations/:orgId/agents/:agentId
@@ -83,10 +88,14 @@ router.post(
   validate({
     body: z.object({
       message: z.string().min(1),
-      history: z.array(z.object({
-        role: z.enum(['user', 'assistant']),
-        content: z.string(),
-      })).optional(),
+      history: z
+        .array(
+          z.object({
+            role: z.enum(['user', 'assistant']),
+            content: z.string(),
+          }),
+        )
+        .optional(),
     }),
   }),
   async (req, res, next) => {
@@ -97,7 +106,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /api/v1/organizations/:orgId/agents/:agentId/knowledge-bases
@@ -112,7 +121,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // DELETE /api/v1/organizations/:orgId/agents/:agentId/knowledge-bases/:knowledgeBaseId

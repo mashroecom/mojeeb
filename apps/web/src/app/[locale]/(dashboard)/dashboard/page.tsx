@@ -5,15 +5,7 @@ import { Link } from '@/i18n/navigation';
 import { useAnalyticsOverview } from '@/hooks/useAnalytics';
 import { useConversations } from '@/hooks/useConversations';
 import { cn } from '@/lib/utils';
-import {
-  MessageSquare,
-  Mail,
-  Users,
-  Clock,
-  Bot,
-  ArrowRight,
-  Loader2,
-} from 'lucide-react';
+import { MessageSquare, Mail, Users, Clock, Bot, ArrowRight, Loader2 } from 'lucide-react';
 import { GettingStartedCard } from '@/components/dashboard/GettingStartedCard';
 
 function formatResponseTime(ms: number): string {
@@ -87,10 +79,7 @@ export default function DashboardPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
-          <div
-            key={s.label}
-            className="rounded-xl border bg-card p-5 flex items-start gap-4"
-          >
+          <div key={s.label} className="rounded-xl border bg-card p-5 flex items-start gap-4">
             <div className={cn('rounded-lg p-2.5', s.color)}>
               <s.icon className="h-5 w-5" />
             </div>
@@ -142,9 +131,7 @@ export default function DashboardPage() {
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : !conversations?.data?.length ? (
-          <div className="p-10 text-center text-muted-foreground">
-            {t('noConversationsYet')}
-          </div>
+          <div className="p-10 text-center text-muted-foreground">{t('noConversationsYet')}</div>
         ) : (
           <div className="divide-y">
             {conversations.data.map((conv) => (
@@ -154,9 +141,7 @@ export default function DashboardPage() {
                 className="flex items-center justify-between p-4 hover:bg-accent/50 transition"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">
-                    {conv.customerName || t('guestUser')}
-                  </p>
+                  <p className="font-medium truncate">{conv.customerName || t('guestUser')}</p>
                   <p className="text-sm text-muted-foreground truncate">
                     {conv.messages?.[0]?.content || '—'}
                   </p>

@@ -15,7 +15,9 @@ function escapeHtml(str: string): string {
 }
 
 // Cached Resend client that is recreated when the API key changes
-let cachedResend: Resend | null = config.email.resendApiKey ? new Resend(config.email.resendApiKey) : null;
+let cachedResend: Resend | null = config.email.resendApiKey
+  ? new Resend(config.email.resendApiKey)
+  : null;
 let cachedResendApiKey: string = config.email.resendApiKey;
 
 /**
@@ -60,7 +62,11 @@ async function getFromAddress(): Promise<string> {
 }
 
 export class EmailService {
-  private async getBranding(): Promise<{ siteName: string; primaryColor: string; logoUrl: string | null }> {
+  private async getBranding(): Promise<{
+    siteName: string;
+    primaryColor: string;
+    logoUrl: string | null;
+  }> {
     try {
       const settings = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } });
       const rawName = settings?.siteName || 'Mojeeb';
@@ -70,9 +76,10 @@ export class EmailService {
       return {
         siteName: escapeHtml(rawName),
         // Validate color is a safe CSS value (hex, rgb, hsl, named color)
-        primaryColor: /^(#[0-9a-fA-F]{3,8}|rgb\([\d\s,.%]+\)|hsl\([\d\s,.%]+\)|[a-zA-Z]{1,20})$/.test(rawColor)
-          ? rawColor
-          : '#6366f1',
+        primaryColor:
+          /^(#[0-9a-fA-F]{3,8}|rgb\([\d\s,.%]+\)|hsl\([\d\s,.%]+\)|[a-zA-Z]{1,20})$/.test(rawColor)
+            ? rawColor
+            : '#6366f1',
         // Validate URL protocol (prevent javascript: / data: injection)
         logoUrl: rawLogo && /^https?:\/\//i.test(rawLogo) ? escapeHtml(rawLogo) : null,
       };
@@ -95,9 +102,10 @@ export class EmailService {
     await resend.emails.send({
       from: fromAddress,
       to,
-      subject: locale === 'ar'
-        ? `${branding.siteName} - تأكيد بريدك الإلكتروني`
-        : `Verify Your Email - ${branding.siteName}`,
+      subject:
+        locale === 'ar'
+          ? `${branding.siteName} - تأكيد بريدك الإلكتروني`
+          : `Verify Your Email - ${branding.siteName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
@@ -162,9 +170,10 @@ export class EmailService {
     await resend.emails.send({
       from: fromAddress,
       to,
-      subject: locale === 'ar'
-        ? `${branding.siteName} - إعادة تعيين كلمة المرور`
-        : `Reset Your Password - ${branding.siteName}`,
+      subject:
+        locale === 'ar'
+          ? `${branding.siteName} - إعادة تعيين كلمة المرور`
+          : `Reset Your Password - ${branding.siteName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
@@ -227,9 +236,8 @@ export class EmailService {
     await resend.emails.send({
       from: fromAddress,
       to,
-      subject: locale === 'ar'
-        ? `${branding.siteName} - مرحباً بك!`
-        : `Welcome to ${branding.siteName}!`,
+      subject:
+        locale === 'ar' ? `${branding.siteName} - مرحباً بك!` : `Welcome to ${branding.siteName}!`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">
@@ -288,7 +296,10 @@ export class EmailService {
   }) {
     const resend = await getResendClient();
     if (!resend) {
-      logger.debug({ name: data.name, email: data.email }, 'Demo request notification skipped (no email provider configured)');
+      logger.debug(
+        { name: data.name, email: data.email },
+        'Demo request notification skipped (no email provider configured)',
+      );
       return;
     }
 
@@ -351,7 +362,10 @@ export class EmailService {
   }) {
     const resend = await getResendClient();
     if (!resend) {
-      logger.debug({ name: data.name, email: data.email, subject: data.subject }, 'Contact notification skipped (no email provider configured)');
+      logger.debug(
+        { name: data.name, email: data.email, subject: data.subject },
+        'Contact notification skipped (no email provider configured)',
+      );
       return;
     }
 
@@ -461,9 +475,8 @@ export class EmailService {
     await resend.emails.send({
       from: fromAddress,
       to,
-      subject: locale === 'ar'
-        ? `${branding.siteName} - ${title}`
-        : `${title} - ${branding.siteName}`,
+      subject:
+        locale === 'ar' ? `${branding.siteName} - ${title}` : `${title} - ${branding.siteName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 24px;">

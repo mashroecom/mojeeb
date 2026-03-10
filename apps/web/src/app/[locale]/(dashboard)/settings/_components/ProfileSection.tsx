@@ -21,13 +21,16 @@ const inputClass =
 
 interface ProfileSectionProps {
   profileLoading: boolean;
-  profile: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    emailVerified: boolean;
-    createdAt: string;
-  } | null | undefined;
+  profile:
+    | {
+        firstName: string;
+        lastName: string;
+        email: string;
+        emailVerified: boolean;
+        createdAt: string;
+      }
+    | null
+    | undefined;
   user: { firstName?: string; lastName?: string } | null | undefined;
   profileFirstName: string;
   setProfileFirstName: (v: string) => void;
@@ -85,9 +88,7 @@ export function ProfileSection({
 
   return (
     <Section icon={User} title={t('profile.title')}>
-      <p className="text-sm text-muted-foreground mb-4">
-        {t('profile.subtitle')}
-      </p>
+      <p className="text-sm text-muted-foreground mb-4">{t('profile.subtitle')}</p>
       {profileLoading ? (
         <div className="animate-pulse space-y-3">
           <div className="h-16 w-16 rounded-full bg-muted" />
@@ -123,7 +124,9 @@ export function ProfileSection({
                     </span>
                     <button
                       type="button"
-                      disabled={resendVerificationIsPending || resendVerificationStatus === 'success'}
+                      disabled={
+                        resendVerificationIsPending || resendVerificationStatus === 'success'
+                      }
                       onClick={onResendVerification}
                       className={cn(
                         'inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10',
@@ -158,10 +161,7 @@ export function ProfileSection({
           <form onSubmit={handleProfileSave} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="profileFirstName"
-                  className="block text-sm font-medium mb-1.5"
-                >
+                <label htmlFor="profileFirstName" className="block text-sm font-medium mb-1.5">
                   {t('profile.firstName')}
                 </label>
                 <input
@@ -173,10 +173,7 @@ export function ProfileSection({
                 />
               </div>
               <div>
-                <label
-                  htmlFor="profileLastName"
-                  className="block text-sm font-medium mb-1.5"
-                >
+                <label htmlFor="profileLastName" className="block text-sm font-medium mb-1.5">
                   {t('profile.lastName')}
                 </label>
                 <input
@@ -190,9 +187,7 @@ export function ProfileSection({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5">
-                {t('profile.email')}
-              </label>
+              <label className="block text-sm font-medium mb-1.5">{t('profile.email')}</label>
               <input
                 type="email"
                 value={profile?.email ?? ''}
@@ -203,9 +198,7 @@ export function ProfileSection({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5">
-                {t('profile.createdAt')}
-              </label>
+              <label className="block text-sm font-medium mb-1.5">{t('profile.createdAt')}</label>
               <p className="text-sm text-muted-foreground">
                 {profile?.createdAt ? formatDate(profile.createdAt) : '--'}
               </p>
@@ -245,10 +238,7 @@ export function ProfileSection({
             </h3>
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
-                <label
-                  htmlFor="currentPassword"
-                  className="block text-sm font-medium mb-1.5"
-                >
+                <label htmlFor="currentPassword" className="block text-sm font-medium mb-1.5">
                   {t('profile.currentPassword')}
                 </label>
                 <div className="relative">
@@ -275,10 +265,7 @@ export function ProfileSection({
               </div>
 
               <div>
-                <label
-                  htmlFor="newPassword"
-                  className="block text-sm font-medium mb-1.5"
-                >
+                <label htmlFor="newPassword" className="block text-sm font-medium mb-1.5">
                   {t('profile.newPassword')}
                 </label>
                 <div className="relative">
@@ -295,20 +282,13 @@ export function ProfileSection({
                     onClick={() => setShowNewPassword(!showNewPassword)}
                     className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
                   >
-                    {showNewPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label
-                  htmlFor="confirmNewPassword"
-                  className="block text-sm font-medium mb-1.5"
-                >
+                <label htmlFor="confirmNewPassword" className="block text-sm font-medium mb-1.5">
                   {t('profile.confirmPassword')}
                 </label>
                 <div className="relative">

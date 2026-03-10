@@ -121,14 +121,18 @@ export class AuthService {
       });
 
       // Send verification email (non-blocking)
-      verificationService.resendVerificationEmail(result.user.id).catch(err => logger.warn({ err }, 'Background task failed'));
+      verificationService
+        .resendVerificationEmail(result.user.id)
+        .catch((err) => logger.warn({ err }, 'Background task failed'));
 
       // Notify admins (fire-and-forget)
-      adminNotificationService.create({
-        type: 'NEW_USER',
-        title: 'New User Registration',
-        body: `${data.firstName} ${data.lastName} (${data.email}) registered and created organization "${data.organizationName}".`,
-      }).catch(err => logger.debug({ err }, 'Admin notification failed'));
+      adminNotificationService
+        .create({
+          type: 'NEW_USER',
+          title: 'New User Registration',
+          body: `${data.firstName} ${data.lastName} (${data.email}) registered and created organization "${data.organizationName}".`,
+        })
+        .catch((err) => logger.debug({ err }, 'Admin notification failed'));
 
       const tokens = await this.generateTokens(result.user.id, result.user.email);
 
@@ -205,14 +209,18 @@ export class AuthService {
     });
 
     // Send verification email (non-blocking) via the VerificationToken model
-    verificationService.resendVerificationEmail(result.user.id).catch(err => logger.warn({ err }, 'Background task failed'));
+    verificationService
+      .resendVerificationEmail(result.user.id)
+      .catch((err) => logger.warn({ err }, 'Background task failed'));
 
     // Notify admins (fire-and-forget)
-    adminNotificationService.create({
-      type: 'NEW_USER',
-      title: 'New User Registration',
-      body: `${data.firstName} ${data.lastName} (${data.email}) registered and created organization "${data.organizationName}".`,
-    }).catch(err => logger.debug({ err }, 'Admin notification failed'));
+    adminNotificationService
+      .create({
+        type: 'NEW_USER',
+        title: 'New User Registration',
+        body: `${data.firstName} ${data.lastName} (${data.email}) registered and created organization "${data.organizationName}".`,
+      })
+      .catch((err) => logger.debug({ err }, 'Admin notification failed'));
 
     // Generate tokens
     const tokens = await this.generateTokens(result.user.id, result.user.email);
@@ -279,9 +287,7 @@ export class AuthService {
         onboardingCompleted: user.onboardingCompleted,
       },
       tokens,
-      organization: org
-        ? { id: org.id, name: org.name, slug: org.slug }
-        : null,
+      organization: org ? { id: org.id, name: org.name, slug: org.slug } : null,
       organizations: user.memberships.map((m) => ({
         id: m.id,
         role: m.role,
@@ -329,7 +335,7 @@ export class AuthService {
     // Blacklist the access token if provided (prevents reuse after logout)
     if (accessToken) {
       try {
-        const decoded = jwt.decode(accessToken) as JwtPayload & { exp?: number } | null;
+        const decoded = jwt.decode(accessToken) as (JwtPayload & { exp?: number }) | null;
         if (decoded?.jti && decoded.exp) {
           const { tokenBlacklistService } = await import('./tokenBlacklist.service');
           await tokenBlacklistService.blacklist(decoded.jti, decoded.exp);
@@ -414,7 +420,9 @@ export class AuthService {
     });
 
     // Send welcome email (non-blocking)
-    emailQueue.add('welcome', { type: 'welcome', to: user.email, firstName: user.firstName }).catch(err => logger.warn({ err }, 'Failed to queue welcome email'));
+    emailQueue
+      .add('welcome', { type: 'welcome', to: user.email, firstName: user.firstName })
+      .catch((err) => logger.warn({ err }, 'Failed to queue welcome email'));
   }
 
   async getProfile(userId: string) {
@@ -539,7 +547,9 @@ export class AuthService {
         data: {
           lastLoginAt: new Date(),
           ...(avatarUrl && !existingUser.avatarUrl ? { avatarUrl } : {}),
-          ...(!existingUser.emailVerified ? { emailVerified: true, emailVerifiedAt: new Date() } : {}),
+          ...(!existingUser.emailVerified
+            ? { emailVerified: true, emailVerifiedAt: new Date() }
+            : {}),
         },
       });
 
@@ -557,9 +567,7 @@ export class AuthService {
           onboardingCompleted: existingUser.onboardingCompleted,
         },
         tokens,
-        organization: org
-          ? { id: org.id, name: org.name, slug: org.slug }
-          : null,
+        organization: org ? { id: org.id, name: org.name, slug: org.slug } : null,
         organizations: existingUser.memberships.map((m) => ({
           id: m.id,
           role: m.role,
@@ -650,7 +658,11 @@ export class AuthService {
   }
 
   /** Generate tokens using a specific Prisma client (or transaction). */
-  private async generateTokensInTx(tx: Prisma.TransactionClient | typeof prisma, userId: string, email: string) {
+  private async generateTokensInTx(
+    tx: Prisma.TransactionClient | typeof prisma,
+    userId: string,
+    email: string,
+  ) {
     const jti = crypto.randomUUID();
     const payload: JwtPayload = { userId, email, jti };
 

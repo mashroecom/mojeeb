@@ -48,9 +48,7 @@ export function SessionsTab({
 
   if (!sessionData?.items?.length) {
     return (
-      <p className="text-sm text-muted-foreground text-center py-8">
-        {t('userDetail.noSessions')}
-      </p>
+      <p className="text-sm text-muted-foreground text-center py-8">{t('userDetail.noSessions')}</p>
     );
   }
 
@@ -69,10 +67,7 @@ export function SessionsTab({
       </div>
 
       {sessionData.items.map((session) => (
-        <div
-          key={session.id}
-          className="flex items-center justify-between rounded-lg border p-3"
-        >
+        <div key={session.id} className="flex items-center justify-between rounded-lg border p-3">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
               <Monitor className="h-4 w-4 text-blue-600 dark:text-blue-400" />

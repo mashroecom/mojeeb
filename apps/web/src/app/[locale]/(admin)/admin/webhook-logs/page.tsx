@@ -3,7 +3,12 @@
 import { useState, useMemo, useEffect, Fragment } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDateTime } from '@/lib/dateFormat';
-import { useAdminWebhookLogs, useAdminWebhookLogStats, useAdminWebhookHealth, useAdminWebhookStats } from '@/hooks/useAdmin';
+import {
+  useAdminWebhookLogs,
+  useAdminWebhookLogStats,
+  useAdminWebhookHealth,
+  useAdminWebhookStats,
+} from '@/hooks/useAdmin';
 import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import {
@@ -50,7 +55,6 @@ interface WebhookLogStats {
 // Helpers
 // ---------------------------------------------------------------------------
 
-
 function truncateUrl(url: string, max = 50) {
   if (!url) return '-';
   return url.length > max ? url.slice(0, max) + '...' : url;
@@ -72,12 +76,24 @@ function StatSkeleton() {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-40 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-5 w-16 rounded-full bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-16 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-10 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-40 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-5 w-16 rounded-full bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-16 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-10 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -285,7 +301,9 @@ export default function WebhookLogsPage() {
 
           {/* Status */}
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('status')}</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
+              {t('status')}
+            </label>
             <select
               value={successFilter}
               onChange={(e) => updateFilter(setSuccessFilter)(e.target.value)}
@@ -299,7 +317,9 @@ export default function WebhookLogsPage() {
 
           {/* Event */}
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('event')}</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
+              {t('event')}
+            </label>
             <input
               type="text"
               value={event}
@@ -379,8 +399,7 @@ export default function WebhookLogsPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
+              {isLoading && Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
 
               {!isLoading && !isError && entries.length === 0 && (
                 <tr>
@@ -406,7 +425,10 @@ export default function WebhookLogsPage() {
                           ) : (
                             <ChevronDown className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
                           )}
-                          <span className="text-sm font-mono truncate block max-w-[250px]" title={entry.webhookUrl}>
+                          <span
+                            className="text-sm font-mono truncate block max-w-[250px]"
+                            title={entry.webhookUrl}
+                          >
                             {truncateUrl(entry.webhookUrl)}
                           </span>
                         </div>
@@ -440,12 +462,18 @@ export default function WebhookLogsPage() {
                         <td colSpan={6} className="px-4 py-3">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="rounded-lg border bg-background p-3">
-                              <p className="text-xs font-medium text-muted-foreground mb-2">{t('requestBody')}</p>
+                              <p className="text-xs font-medium text-muted-foreground mb-2">
+                                {t('requestBody')}
+                              </p>
                               <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all max-h-48 overflow-y-auto">
                                 {entry.requestBody
                                   ? (() => {
                                       try {
-                                        return JSON.stringify(JSON.parse(entry.requestBody), null, 2);
+                                        return JSON.stringify(
+                                          JSON.parse(entry.requestBody),
+                                          null,
+                                          2,
+                                        );
                                       } catch {
                                         return entry.requestBody;
                                       }
@@ -454,12 +482,18 @@ export default function WebhookLogsPage() {
                               </pre>
                             </div>
                             <div className="rounded-lg border bg-background p-3">
-                              <p className="text-xs font-medium text-muted-foreground mb-2">{t('responseBody')}</p>
+                              <p className="text-xs font-medium text-muted-foreground mb-2">
+                                {t('responseBody')}
+                              </p>
                               <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all max-h-48 overflow-y-auto">
                                 {entry.responseBody
                                   ? (() => {
                                       try {
-                                        return JSON.stringify(JSON.parse(entry.responseBody), null, 2);
+                                        return JSON.stringify(
+                                          JSON.parse(entry.responseBody),
+                                          null,
+                                          2,
+                                        );
                                       } catch {
                                         return entry.responseBody;
                                       }
@@ -480,7 +514,15 @@ export default function WebhookLogsPage() {
 
       {/* Pagination */}
       {!isLoading && (
-        <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          previousLabel={tc('previous')}
+          nextLabel={tc('next')}
+          pageLabel={tc('page')}
+          ofLabel={tc('of')}
+        />
       )}
     </div>
   );

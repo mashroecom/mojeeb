@@ -1,14 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import {
-  Briefcase,
-  Globe,
-  GraduationCap,
-  Rocket,
-  Users,
-  Mail,
-} from 'lucide-react';
+import { Briefcase, Globe, GraduationCap, Rocket, Users, Mail } from 'lucide-react';
 
 const benefitIcons = {
   remote: Globe,
@@ -44,29 +37,22 @@ export default function CareersPage() {
             {t('benefits.title')}
           </h2>
           <div className="grid gap-6 sm:grid-cols-2">
-            {(['remote', 'growth', 'impact', 'culture'] as const).map(
-              (benefit) => {
-                const Icon = benefitIcons[benefit];
-                return (
-                  <div
-                    key={benefit}
-                    className="flex gap-4 rounded-2xl border bg-card p-6 sm:p-8"
-                  >
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                      <Icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="mb-2 text-lg font-semibold">
-                        {t(`benefits.${benefit}.title`)}
-                      </h3>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        {t(`benefits.${benefit}.description`)}
-                      </p>
-                    </div>
+            {(['remote', 'growth', 'impact', 'culture'] as const).map((benefit) => {
+              const Icon = benefitIcons[benefit];
+              return (
+                <div key={benefit} className="flex gap-4 rounded-2xl border bg-card p-6 sm:p-8">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                    <Icon className="h-6 w-6 text-primary" />
                   </div>
-                );
-              }
-            )}
+                  <div>
+                    <h3 className="mb-2 text-lg font-semibold">{t(`benefits.${benefit}.title`)}</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {t(`benefits.${benefit}.description`)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -81,9 +67,7 @@ export default function CareersPage() {
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <Briefcase className="h-8 w-8 text-muted-foreground" />
             </div>
-            <p className="mb-6 text-lg text-muted-foreground">
-              {t('positions.empty')}
-            </p>
+            <p className="mb-6 text-lg text-muted-foreground">{t('positions.empty')}</p>
             <div className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-5 py-3 text-sm font-medium text-primary">
               <Mail className="h-4 w-4" />
               {t('positions.contact')}

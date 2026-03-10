@@ -132,7 +132,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // DELETE /:leadId - Delete lead
@@ -189,7 +189,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /bulk-delete - Bulk delete leads
@@ -220,7 +220,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 export default router;

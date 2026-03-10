@@ -5,16 +5,14 @@ export default function UIDemoPage() {
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold mb-2">UI Component Demo</h1>
-        <p className="text-muted-foreground">
-          Test page for verifying UI components
-        </p>
+        <p className="text-muted-foreground">Test page for verifying UI components</p>
       </div>
 
       <div className="border rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">StatusDot Component</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          Hover over each dot to see the tooltip with human-readable status label.
-          This addresses WCAG 2.1 SC 1.4.1 (color not sole indicator).
+          Hover over each dot to see the tooltip with human-readable status label. This addresses
+          WCAG 2.1 SC 1.4.1 (color not sole indicator).
         </p>
 
         <div className="space-y-3">

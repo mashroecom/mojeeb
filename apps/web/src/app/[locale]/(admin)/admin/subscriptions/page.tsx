@@ -30,7 +30,6 @@ import {
 type PlanFilter = '' | 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
 type StatusFilter = '' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED';
 
-
 function UsageBar({ used, limit, label }: { used: number; limit: number; label: string }) {
   const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
   const isHigh = pct >= 80;
@@ -45,10 +44,7 @@ function UsageBar({ used, limit, label }: { used: number; limit: number; label: 
       </div>
       <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
         <div
-          className={cn(
-            'h-full rounded-full transition-all',
-            isHigh ? 'bg-red-500' : 'bg-primary',
-          )}
+          className={cn('h-full rounded-full transition-all', isHigh ? 'bg-red-500' : 'bg-primary')}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -87,15 +83,21 @@ function SubscriptionDetail({ id, t }: { id: string; t: ReturnType<typeof useTra
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('periodStart')}</span>
-            <span className="font-medium">{detail.currentPeriodStart ? fmtDate(detail.currentPeriodStart, locale) : '—'}</span>
+            <span className="font-medium">
+              {detail.currentPeriodStart ? fmtDate(detail.currentPeriodStart, locale) : '—'}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('periodEnd')}</span>
-            <span className="font-medium">{detail.currentPeriodEnd ? fmtDate(detail.currentPeriodEnd, locale) : '—'}</span>
+            <span className="font-medium">
+              {detail.currentPeriodEnd ? fmtDate(detail.currentPeriodEnd, locale) : '—'}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('createdAt')}</span>
-            <span className="font-medium">{detail.createdAt ? fmtDate(detail.createdAt, locale) : '—'}</span>
+            <span className="font-medium">
+              {detail.createdAt ? fmtDate(detail.createdAt, locale) : '—'}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('cancelAtEnd')}</span>
@@ -142,12 +144,8 @@ function SubscriptionDetail({ id, t }: { id: string; t: ReturnType<typeof useTra
                 className="flex items-center justify-between text-sm rounded-lg border bg-card px-3 py-2"
               >
                 <div>
-                  <span className="font-medium">
-                    ${Number(inv.amount).toFixed(2)}
-                  </span>
-                  <span className="text-xs text-muted-foreground ms-2">
-                    {inv.currency}
-                  </span>
+                  <span className="font-medium">${Number(inv.amount).toFixed(2)}</span>
+                  <span className="text-xs text-muted-foreground ms-2">{inv.currency}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span
@@ -354,10 +352,7 @@ export default function SubscriptionsPage() {
               const invoiceCount = sub._count?.invoices ?? 0;
 
               return (
-                <div
-                  key={sub.id}
-                  className="rounded-xl border bg-card shadow-sm overflow-hidden"
-                >
+                <div key={sub.id} className="rounded-xl border bg-card shadow-sm overflow-hidden">
                   {/* Main Row */}
                   <div className="flex items-center gap-4 p-4">
                     {/* Expand toggle */}
@@ -396,7 +391,8 @@ export default function SubscriptionsPage() {
                       </div>
                       <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                         <span>
-                          {t('period')}: {fmtDate(sub.currentPeriodStart, locale)} — {fmtDate(sub.currentPeriodEnd, locale)}
+                          {t('period')}: {fmtDate(sub.currentPeriodStart, locale)} —{' '}
+                          {fmtDate(sub.currentPeriodEnd, locale)}
                         </span>
                         {invoiceCount > 0 && (
                           <span className="flex items-center gap-1">
@@ -517,7 +513,15 @@ export default function SubscriptionsPage() {
           </div>
 
           {/* Pagination */}
-          <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            previousLabel={tc('previous')}
+            nextLabel={tc('next')}
+            pageLabel={tc('page')}
+            ofLabel={tc('of')}
+          />
         </>
       )}
     </div>

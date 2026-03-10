@@ -60,14 +60,25 @@ export function DashboardTopbar() {
   const breadcrumbs = pageSegments
     .map((segment, index) => {
       const translationKey = PAGE_TITLE_KEYS[segment];
-      const label = translationKey ? (() => { try { return t(translationKey); } catch { return segment; } })() : segment;
+      const label = translationKey
+        ? (() => {
+            try {
+              return t(translationKey);
+            } catch {
+              return segment;
+            }
+          })()
+        : segment;
       const href = '/' + pageSegments.slice(0, index + 1).join('/');
       return { label, href };
     })
     .filter((b) => b.label);
 
   return (
-    <header role="banner" className="flex h-14 md:h-16 items-center justify-between border-b bg-card px-4 md:px-6">
+    <header
+      role="banner"
+      className="flex h-14 md:h-16 items-center justify-between border-b bg-card px-4 md:px-6"
+    >
       {/* Hamburger menu + Breadcrumbs */}
       <div className="flex items-center gap-3 min-w-0">
         <button
@@ -87,9 +98,7 @@ export function DashboardTopbar() {
               <span key={crumb.href} className="flex items-center gap-1 min-w-0">
                 {i > 0 && <ChevronRight className="h-3.5 w-3.5 shrink-0 rtl:rotate-180" />}
                 {i === breadcrumbs.length - 1 ? (
-                  <span className="font-medium text-foreground truncate">
-                    {crumb.label}
-                  </span>
+                  <span className="font-medium text-foreground truncate">{crumb.label}</span>
                 ) : (
                   <Link
                     href={crumb.href}

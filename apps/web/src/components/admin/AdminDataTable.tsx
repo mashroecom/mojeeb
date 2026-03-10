@@ -44,7 +44,7 @@ export function AdminDataTable<T>({
                   key={col.key}
                   className={cn(
                     'px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase tracking-wider',
-                    col.className
+                    col.className,
                   )}
                 >
                   {col.header}
@@ -80,7 +80,7 @@ export function AdminDataTable<T>({
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
                     'border-b last:border-b-0 transition-colors hover:bg-muted/50',
-                    onRowClick && 'cursor-pointer'
+                    onRowClick && 'cursor-pointer',
                   )}
                 >
                   {columns.map((col) => (

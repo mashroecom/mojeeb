@@ -3,7 +3,11 @@ import argon2 from 'argon2';
 import { authService } from '../services/auth.service';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
-import { authLimiter, tokenRefreshLimiter, destructiveActionLimiter } from '../middleware/rateLimiter';
+import {
+  authLimiter,
+  tokenRefreshLimiter,
+  destructiveActionLimiter,
+} from '../middleware/rateLimiter';
 import { registerSchema, loginSchema, passwordSchema } from '@mojeeb/shared-utils';
 import { z } from 'zod';
 import { prisma } from '../config/database';
@@ -26,34 +30,33 @@ router.post(
       const result = await authService.register(req.body);
 
       // Audit log: successful registration (fire-and-forget)
-      auditLogService.log({
-        userId: result.user.id,
-        action: 'AUTH_REGISTER',
-        targetType: 'User',
-        targetId: result.user.id,
-        metadata: { email: result.user.email },
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-      }).catch(err => logger.warn({ err }, 'Audit log failed'));
+      auditLogService
+        .log({
+          userId: result.user.id,
+          action: 'AUTH_REGISTER',
+          targetType: 'User',
+          targetId: result.user.id,
+          metadata: { email: result.user.email },
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        })
+        .catch((err) => logger.warn({ err }, 'Audit log failed'));
 
       res.status(201).json({ success: true, data: result });
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /api/v1/auth/login
-router.post(
-  '/login',
-  authLimiter,
-  validate({ body: loginSchema }),
-  async (req, res, next) => {
-    try {
-      const result = await authService.login(req.body.email, req.body.password);
+router.post('/login', authLimiter, validate({ body: loginSchema }), async (req, res, next) => {
+  try {
+    const result = await authService.login(req.body.email, req.body.password);
 
-      // Audit log: successful login (fire-and-forget)
-      auditLogService.log({
+    // Audit log: successful login (fire-and-forget)
+    auditLogService
+      .log({
         userId: result.user.id,
         action: 'AUTH_LOGIN',
         targetType: 'User',
@@ -61,34 +64,38 @@ router.post(
         metadata: { email: result.user.email },
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
-      }).catch(err => logger.warn({ err }, 'Audit log failed'));
+      })
+      .catch((err) => logger.warn({ err }, 'Audit log failed'));
 
-      // Login activity: success (fire-and-forget)
-      loginActivityService.log({
+    // Login activity: success (fire-and-forget)
+    loginActivityService
+      .log({
         userId: result.user.id,
         email: req.body.email,
         success: true,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
-      }).catch(() => {});
+      })
+      .catch(() => {});
 
-      res.json({ success: true, data: result });
-    } catch (err) {
-      // Log failed login attempt
-      if (err instanceof UnauthorizedError) {
-        loginActivityService.log({
+    res.json({ success: true, data: result });
+  } catch (err) {
+    // Log failed login attempt
+    if (err instanceof UnauthorizedError) {
+      loginActivityService
+        .log({
           email: req.body.email,
           success: false,
           ipAddress: req.ip,
           userAgent: req.headers['user-agent'],
           failReason: 'INVALID_CREDENTIALS',
-        }).catch(() => {});
-        if (req.ip) ipBlockService.autoBlockCheck(req.ip, 'system').catch(() => {});
-      }
-      next(err);
+        })
+        .catch(() => {});
+      if (req.ip) ipBlockService.autoBlockCheck(req.ip, 'system').catch(() => {});
     }
+    next(err);
   }
-);
+});
 
 // POST /api/v1/auth/refresh
 router.post('/refresh', tokenRefreshLimiter, async (req, res, next) => {
@@ -126,11 +133,14 @@ router.post(
   async (req, res, next) => {
     try {
       await authService.forgotPassword(req.body.email);
-      res.json({ success: true, data: { message: 'If the email exists, a reset link has been sent' } });
+      res.json({
+        success: true,
+        data: { message: 'If the email exists, a reset link has been sent' },
+      });
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /api/v1/auth/reset-password
@@ -150,7 +160,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /api/v1/auth/verify-email
@@ -164,23 +174,18 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /api/v1/auth/resend-verification
-router.post(
-  '/resend-verification',
-  authLimiter,
-  authenticate,
-  async (req, res, next) => {
-    try {
-      await verificationService.resendVerificationEmail(req.user!.userId);
-      res.json({ success: true, data: { message: 'Verification email sent' } });
-    } catch (err) {
-      next(err);
-    }
+router.post('/resend-verification', authLimiter, authenticate, async (req, res, next) => {
+  try {
+    await verificationService.resendVerificationEmail(req.user!.userId);
+    res.json({ success: true, data: { message: 'Verification email sent' } });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // POST /api/v1/auth/google
 router.post(
@@ -192,40 +197,46 @@ router.post(
       const result = await authService.googleSignIn(req.body.idToken);
 
       // Audit log: Google sign-in (fire-and-forget)
-      auditLogService.log({
-        userId: result.user.id,
-        action: 'AUTH_GOOGLE_SIGNIN',
-        targetType: 'User',
-        targetId: result.user.id,
-        metadata: { email: result.user.email },
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-      }).catch(err => logger.warn({ err }, 'Audit log failed'));
+      auditLogService
+        .log({
+          userId: result.user.id,
+          action: 'AUTH_GOOGLE_SIGNIN',
+          targetType: 'User',
+          targetId: result.user.id,
+          metadata: { email: result.user.email },
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        })
+        .catch((err) => logger.warn({ err }, 'Audit log failed'));
 
       // Login activity: Google sign-in success (fire-and-forget)
-      loginActivityService.log({
-        userId: result.user.id,
-        email: result.user.email,
-        success: true,
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-      }).catch(() => {});
+      loginActivityService
+        .log({
+          userId: result.user.id,
+          email: result.user.email,
+          success: true,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        })
+        .catch(() => {});
 
       res.json({ success: true, data: result });
     } catch (err) {
       // Log failed Google sign-in attempt
       if (err instanceof UnauthorizedError) {
-        loginActivityService.log({
-          email: req.body.idToken ? 'google-oauth' : 'unknown',
-          success: false,
-          ipAddress: req.ip,
-          userAgent: req.headers['user-agent'],
-          failReason: 'GOOGLE_AUTH_FAILED',
-        }).catch(() => {});
+        loginActivityService
+          .log({
+            email: req.body.idToken ? 'google-oauth' : 'unknown',
+            success: false,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent'],
+            failReason: 'GOOGLE_AUTH_FAILED',
+          })
+          .catch(() => {});
       }
       next(err);
     }
-  }
+  },
 );
 
 // GET /api/v1/auth/me
@@ -271,7 +282,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // PATCH /api/v1/auth/me/password - change password
@@ -305,14 +316,16 @@ router.patch(
       });
 
       // Audit log: password changed (fire-and-forget)
-      auditLogService.log({
-        userId: req.user!.userId,
-        action: 'AUTH_PASSWORD_CHANGED',
-        targetType: 'User',
-        targetId: req.user!.userId,
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-      }).catch(err => logger.warn({ err }, 'Audit log failed'));
+      auditLogService
+        .log({
+          userId: req.user!.userId,
+          action: 'AUTH_PASSWORD_CHANGED',
+          targetType: 'User',
+          targetId: req.user!.userId,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        })
+        .catch((err) => logger.warn({ err }, 'Audit log failed'));
 
       res.json({ success: true, data: { message: 'Password updated successfully' } });
     } catch (err) {
@@ -342,34 +355,41 @@ router.get('/sessions', authenticate, async (req, res, next) => {
 });
 
 // DELETE /api/v1/auth/sessions/:sessionId - revoke a specific session
-router.delete('/sessions/:sessionId', destructiveActionLimiter, authenticate, async (req, res, next) => {
-  try {
-    const sessionId = req.params.sessionId as string;
-    const session = await prisma.session.findFirst({
-      where: { id: sessionId, userId: req.user!.userId },
-    });
-    if (!session) {
-      return res.status(404).json({ success: false, error: 'Session not found' });
+router.delete(
+  '/sessions/:sessionId',
+  destructiveActionLimiter,
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const sessionId = req.params.sessionId as string;
+      const session = await prisma.session.findFirst({
+        where: { id: sessionId, userId: req.user!.userId },
+      });
+      if (!session) {
+        return res.status(404).json({ success: false, error: 'Session not found' });
+      }
+      await prisma.session.delete({ where: { id: sessionId } });
+      res.json({ success: true });
+    } catch (err) {
+      next(err);
     }
-    await prisma.session.delete({ where: { id: sessionId } });
-    res.json({ success: true });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // DELETE /api/v1/auth/me - delete account
 router.delete('/me', destructiveActionLimiter, authenticate, async (req, res, next) => {
   try {
     // Audit log BEFORE deletion (user will be gone after)
-    await auditLogService.log({
-      userId: req.user!.userId,
-      action: 'AUTH_ACCOUNT_DELETED',
-      targetType: 'User',
-      targetId: req.user!.userId,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'],
-    }).catch(err => logger.warn({ err }, 'Audit log failed'));
+    await auditLogService
+      .log({
+        userId: req.user!.userId,
+        action: 'AUTH_ACCOUNT_DELETED',
+        targetType: 'User',
+        targetId: req.user!.userId,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      })
+      .catch((err) => logger.warn({ err }, 'Audit log failed'));
 
     await authService.deleteAccount(req.user!.userId);
     res.json({ success: true });

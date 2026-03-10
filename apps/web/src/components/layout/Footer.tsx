@@ -38,7 +38,11 @@ export function Footer() {
   const socialLinks = [
     { url: cms?.footerTwitter || settings?.twitterUrl, label: 'X / Twitter', icon: TwitterIcon },
     { url: cms?.footerLinkedin || settings?.linkedinUrl, label: 'LinkedIn', icon: LinkedInIcon },
-    { url: cms?.footerInstagram || settings?.instagramUrl, label: 'Instagram', icon: InstagramIcon },
+    {
+      url: cms?.footerInstagram || settings?.instagramUrl,
+      label: 'Instagram',
+      icon: InstagramIcon,
+    },
     { url: cms?.footerFacebook || settings?.facebookUrl, label: 'Facebook', icon: FacebookIcon },
   ].filter((s) => s.url);
 
@@ -58,9 +62,7 @@ export function Footer() {
               )}
               <span className="text-xl font-bold">{siteName}</span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {footerDescription || t('description')}
-            </p>
+            <p className="text-sm text-muted-foreground">{footerDescription || t('description')}</p>
             {/* Social links */}
             {showSocial && socialLinks.length > 0 && (
               <div className="mt-4 flex gap-3">
@@ -84,8 +86,22 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold mb-3">{t('product')}</h3>
             <ul className="space-y-2">
-              <li><Link href="/features" className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{tNav('features')}</Link></li>
-              <li><Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{tNav('pricing')}</Link></li>
+              <li>
+                <Link
+                  href="/features"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  {tNav('features')}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/pricing"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  {tNav('pricing')}
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -93,8 +109,22 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold mb-3">{t('company')}</h3>
             <ul className="space-y-2">
-              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t('about')}</Link></li>
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t('contact')}</Link></li>
+              <li>
+                <Link
+                  href="/about"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  {t('about')}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  {t('contact')}
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -102,11 +132,30 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold mb-3">{t('legal')}</h3>
             <ul className="space-y-2">
-              <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t('privacy')}</Link></li>
-              <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">{t('terms')}</Link></li>
+              <li>
+                <Link
+                  href="/privacy"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  {t('privacy')}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  {t('terms')}
+                </Link>
+              </li>
               {footerLinks.map((link, i) => (
                 <li key={i}>
-                  <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  >
                     {isAr ? link.label.ar : link.label.en}
                   </a>
                 </li>
@@ -117,8 +166,7 @@ export function Footer() {
 
         <div className="mt-8 border-t pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} {siteName}.{' '}
-            {copyrightText || t('copyright')}
+            &copy; {new Date().getFullYear()} {siteName}. {copyrightText || t('copyright')}
           </p>
         </div>
       </div>

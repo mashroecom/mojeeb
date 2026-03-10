@@ -47,9 +47,7 @@ export function useOrganization() {
   return useQuery({
     queryKey: organizationKeys.detail(orgId!),
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Organization>>(
-        `/organizations/${orgId}`,
-      );
+      const { data } = await api.get<ApiResponse<Organization>>(`/organizations/${orgId}`);
       return data.data;
     },
     enabled: !!orgId,
@@ -69,10 +67,7 @@ export function useUpdateOrganization() {
       timezone?: string;
       defaultLanguage?: string;
     }) => {
-      const { data } = await api.patch<ApiResponse<Organization>>(
-        `/organizations/${orgId}`,
-        input,
-      );
+      const { data } = await api.patch<ApiResponse<Organization>>(`/organizations/${orgId}`, input);
       return data.data;
     },
     onSuccess: () => {
@@ -90,9 +85,7 @@ export function useOrgMembers() {
   return useQuery({
     queryKey: organizationKeys.members(orgId!),
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<OrgMember[]>>(
-        `/organizations/${orgId}/members`,
-      );
+      const { data } = await api.get<ApiResponse<OrgMember[]>>(`/organizations/${orgId}/members`);
       return data.data;
     },
     enabled: !!orgId,

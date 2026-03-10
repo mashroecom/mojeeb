@@ -4,9 +4,21 @@ import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { z } from 'zod';
 
-interface OrgParams { orgId: string; [key: string]: string; }
-interface KbParams { orgId: string; kbId: string; [key: string]: string; }
-interface DocParams { orgId: string; kbId: string; docId: string; [key: string]: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
+interface KbParams {
+  orgId: string;
+  kbId: string;
+  [key: string]: string;
+}
+interface DocParams {
+  orgId: string;
+  kbId: string;
+  docId: string;
+  [key: string]: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
@@ -29,7 +41,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // GET /api/v1/organizations/:orgId/knowledge-bases
@@ -58,12 +70,14 @@ router.get('/:kbId', async (req, res, next) => {
 router.patch(
   '/:kbId',
   validate({
-    body: z.object({
-      name: z.string().min(1).max(100).optional(),
-      description: z.string().max(500).optional(),
-    }).refine((d) => d.name || d.description !== undefined, {
-      message: 'At least one field (name or description) is required',
-    }),
+    body: z
+      .object({
+        name: z.string().min(1).max(100).optional(),
+        description: z.string().max(500).optional(),
+      })
+      .refine((d) => d.name || d.description !== undefined, {
+        message: 'At least one field (name or description) is required',
+      }),
   }),
   async (req, res, next) => {
     try {
@@ -73,7 +87,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // DELETE /api/v1/organizations/:orgId/knowledge-bases/:kbId
@@ -101,28 +115,33 @@ router.post(
       const { orgId, kbId } = req.params as KbParams;
       // Verify KB belongs to org
       await knowledgeBaseService.getById(orgId, kbId);
-      const results = await knowledgeBaseService.semanticSearch(kbId, req.body.query, req.body.limit || 5);
+      const results = await knowledgeBaseService.semanticSearch(
+        kbId,
+        req.body.query,
+        req.body.limit || 5,
+      );
       res.json({ success: true, data: results });
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /api/v1/organizations/:orgId/knowledge-bases/:kbId/documents
 router.post(
   '/:kbId/documents',
   validate({
-    body: z.object({
-      title: z.string().min(1).max(200),
-      content: z.string().optional(),
-      contentType: z.enum(['TEXT', 'FAQ', 'PDF', 'URL']).optional(),
-      sourceUrl: z.string().url().optional(),
-      fileBase64: z.string().optional(),
-    }).refine(
-      (d) => d.content || d.fileBase64 || d.sourceUrl,
-      { message: 'One of content, fileBase64, or sourceUrl is required' },
-    ),
+    body: z
+      .object({
+        title: z.string().min(1).max(200),
+        content: z.string().optional(),
+        contentType: z.enum(['TEXT', 'FAQ', 'PDF', 'URL']).optional(),
+        sourceUrl: z.string().url().optional(),
+        fileBase64: z.string().optional(),
+      })
+      .refine((d) => d.content || d.fileBase64 || d.sourceUrl, {
+        message: 'One of content, fileBase64, or sourceUrl is required',
+      }),
   }),
   async (req, res, next) => {
     try {
@@ -134,7 +153,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /api/v1/organizations/:orgId/knowledge-bases/:kbId/documents/bulk
@@ -142,13 +161,16 @@ router.post(
   '/:kbId/documents/bulk',
   validate({
     body: z.object({
-      documents: z.array(
-        z.object({
-          title: z.string().min(1).max(200),
-          content: z.string().min(1),
-          contentType: z.enum(['TEXT', 'FAQ']).default('TEXT'),
-        }),
-      ).min(1).max(50),
+      documents: z
+        .array(
+          z.object({
+            title: z.string().min(1).max(200),
+            content: z.string().min(1),
+            contentType: z.enum(['TEXT', 'FAQ']).default('TEXT'),
+          }),
+        )
+        .min(1)
+        .max(50),
     }),
   }),
   async (req, res, next) => {

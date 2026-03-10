@@ -119,8 +119,12 @@ function TemplateForm({
   function addCustomVariable() {
     if (!customVarKey.trim()) return;
     const key = customVarKey.trim().replace(/\s+/g, '');
-    if (variables.some((v) => v.key === key) || DEFAULT_VARIABLES.some((v) => v.key === key)) return;
-    setVariables([...variables, { key, labelEn: customVarLabelEn.trim() || key, labelAr: customVarLabelAr.trim() }]);
+    if (variables.some((v) => v.key === key) || DEFAULT_VARIABLES.some((v) => v.key === key))
+      return;
+    setVariables([
+      ...variables,
+      { key, labelEn: customVarLabelEn.trim() || key, labelAr: customVarLabelAr.trim() },
+    ]);
     setCustomVarKey('');
     setCustomVarLabelEn('');
     setCustomVarLabelAr('');
@@ -173,7 +177,9 @@ function TemplateForm({
         <div>
           <label className="text-xs font-medium text-muted-foreground">{t('shortcut')}</label>
           <div className="relative mt-1">
-            <span className="absolute start-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">/</span>
+            <span className="absolute start-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+              /
+            </span>
             <input
               value={shortcut}
               onChange={(e) => setShortcut(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
@@ -223,7 +229,9 @@ function TemplateForm({
               onClick={() => setContentTab('en')}
               className={cn(
                 'px-3 py-1 text-xs font-medium rounded-lg transition-colors',
-                contentTab === 'en' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                contentTab === 'en'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80',
               )}
             >
               English
@@ -233,7 +241,9 @@ function TemplateForm({
               onClick={() => setContentTab('ar')}
               className={cn(
                 'px-3 py-1 text-xs font-medium rounded-lg transition-colors',
-                contentTab === 'ar' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                contentTab === 'ar'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80',
               )}
             >
               العربية
@@ -270,7 +280,9 @@ function TemplateForm({
 
         <textarea
           value={contentTab === 'en' ? contentEn : contentAr}
-          onChange={(e) => contentTab === 'en' ? setContentEn(e.target.value) : setContentAr(e.target.value)}
+          onChange={(e) =>
+            contentTab === 'en' ? setContentEn(e.target.value) : setContentAr(e.target.value)
+          }
           placeholder={contentTab === 'en' ? t('contentPlaceholderEn') : t('contentPlaceholderAr')}
           rows={4}
           dir={contentTab === 'ar' ? 'rtl' : 'ltr'}
@@ -290,7 +302,10 @@ function TemplateForm({
               {t('preview')}
             </button>
             {showPreview && (
-              <div className="mt-2 rounded-lg border bg-muted/50 p-3 text-sm whitespace-pre-wrap" dir={contentTab === 'ar' ? 'rtl' : 'ltr'}>
+              <div
+                className="mt-2 rounded-lg border bg-muted/50 p-3 text-sm whitespace-pre-wrap"
+                dir={contentTab === 'ar' ? 'rtl' : 'ltr'}
+              >
                 {previewContent || <span className="text-muted-foreground">{t('noContent')}</span>}
               </div>
             )}
@@ -304,9 +319,16 @@ function TemplateForm({
         {variables.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-1.5 mb-2">
             {variables.map((v) => (
-              <span key={v.key} className="inline-flex items-center gap-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full">
+              <span
+                key={v.key}
+                className="inline-flex items-center gap-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full"
+              >
                 {`{{${v.key}}}`} - {locale === 'ar' && v.labelAr ? v.labelAr : v.labelEn}
-                <button type="button" onClick={() => removeCustomVariable(v.key)} className="hover:text-red-500">
+                <button
+                  type="button"
+                  onClick={() => removeCustomVariable(v.key)}
+                  className="hover:text-red-500"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </span>
@@ -367,7 +389,12 @@ function TemplateForm({
               <input
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addKeyword(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addKeyword();
+                  }
+                }}
                 placeholder={t('keywordPlaceholder')}
                 className="flex-1 rounded-lg border bg-background px-3 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               />
@@ -383,9 +410,16 @@ function TemplateForm({
             {autoTrigger.keywords.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {autoTrigger.keywords.map((kw) => (
-                  <span key={kw} className="inline-flex items-center gap-1 text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-full">
+                  <span
+                    key={kw}
+                    className="inline-flex items-center gap-1 text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-full"
+                  >
                     {kw}
-                    <button type="button" onClick={() => removeKeyword(kw)} className="hover:text-red-500">
+                    <button
+                      type="button"
+                      onClick={() => removeKeyword(kw)}
+                      className="hover:text-red-500"
+                    >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
@@ -408,7 +442,12 @@ function TemplateForm({
           ) : (
             <ToggleLeft className="h-5 w-5 text-muted-foreground" />
           )}
-          <span className={cn('text-xs font-medium', isActive ? 'text-primary' : 'text-muted-foreground')}>
+          <span
+            className={cn(
+              'text-xs font-medium',
+              isActive ? 'text-primary' : 'text-muted-foreground',
+            )}
+          >
             {isActive ? t('active') : t('inactive')}
           </span>
         </button>
@@ -427,7 +466,11 @@ function TemplateForm({
             disabled={isSaving || !title.trim() || !contentEn.trim()}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {isSaving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
             {t('save')}
           </button>
         </div>
@@ -494,7 +537,10 @@ export default function MessageTemplatesPage() {
       },
       onError: (err: any) => {
         const msg = err?.response?.data?.error;
-        addToast('error', msg === 'Shortcut already exists' ? t('shortcutExists') : t('createFailed'));
+        addToast(
+          'error',
+          msg === 'Shortcut already exists' ? t('shortcutExists') : t('createFailed'),
+        );
       },
     });
   }
@@ -510,7 +556,10 @@ export default function MessageTemplatesPage() {
         },
         onError: (err: any) => {
           const msg = err?.response?.data?.error;
-          addToast('error', msg === 'Shortcut already exists' ? t('shortcutExists') : t('updateFailed'));
+          addToast(
+            'error',
+            msg === 'Shortcut already exists' ? t('shortcutExists') : t('updateFailed'),
+          );
         },
       },
     );
@@ -579,10 +628,7 @@ export default function MessageTemplatesPage() {
   return (
     <div>
       <Breadcrumb
-        items={[
-          { label: tb('dashboard'), href: '/dashboard' },
-          { label: tb('messageTemplates') },
-        ]}
+        items={[{ label: tb('dashboard'), href: '/dashboard' }, { label: tb('messageTemplates') }]}
         className="mb-4"
       />
 
@@ -598,7 +644,10 @@ export default function MessageTemplatesPage() {
           <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
         </div>
         <button
-          onClick={() => { setShowForm(true); setEditingTemplate(null); }}
+          onClick={() => {
+            setShowForm(true);
+            setEditingTemplate(null);
+          }}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           <Plus className="h-4 w-4" />
@@ -612,7 +661,10 @@ export default function MessageTemplatesPage() {
           <TemplateForm
             initial={editingTemplate || undefined}
             onSave={editingTemplate ? handleUpdate : handleCreate}
-            onCancel={() => { setShowForm(false); setEditingTemplate(null); }}
+            onCancel={() => {
+              setShowForm(false);
+              setEditingTemplate(null);
+            }}
             isSaving={createTemplate.isPending || updateTemplate.isPending}
             agents={agentList}
           />
@@ -683,7 +735,10 @@ export default function MessageTemplatesPage() {
                 <h3 className="text-sm font-semibold truncate">{tpl.title}</h3>
                 <div className="hidden group-hover:flex items-center gap-1 shrink-0">
                   <button
-                    onClick={() => { setEditingTemplate(tpl); setShowForm(false); }}
+                    onClick={() => {
+                      setEditingTemplate(tpl);
+                      setShowForm(false);
+                    }}
                     className="text-muted-foreground hover:text-foreground p-1"
                     title={t('editTemplate')}
                   >
@@ -706,7 +761,10 @@ export default function MessageTemplatesPage() {
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed mb-3" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+              <p
+                className="text-xs text-muted-foreground line-clamp-3 leading-relaxed mb-3"
+                dir={locale === 'ar' ? 'rtl' : 'ltr'}
+              >
                 {locale === 'ar' && tpl.contentAr ? tpl.contentAr : tpl.contentEn}
               </p>
 
@@ -721,8 +779,7 @@ export default function MessageTemplatesPage() {
                 </span>
                 {tpl.shortcut && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                    <Zap className="h-2.5 w-2.5" />
-                    /{tpl.shortcut}
+                    <Zap className="h-2.5 w-2.5" />/{tpl.shortcut}
                   </span>
                 )}
                 {tpl.usageCount > 0 && (

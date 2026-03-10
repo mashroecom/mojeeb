@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  useQuery,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 // ---------------------------------------------------------------------------
@@ -18,12 +13,7 @@ export interface AdminConversation {
   customerName: string | null;
   organizationId: string;
   organizationName?: string;
-  status:
-    | 'ACTIVE'
-    | 'HANDED_OFF'
-    | 'WAITING'
-    | 'RESOLVED'
-    | 'ARCHIVED';
+  status: 'ACTIVE' | 'HANDED_OFF' | 'WAITING' | 'RESOLVED' | 'ARCHIVED';
   lastEmotion: string | null;
   emotionScore: number | null;
   summary: string | null;
@@ -140,10 +130,7 @@ export function useAdminConversationStats() {
  * Get messages for a specific conversation with infinite scroll pagination.
  * Admin-only endpoint - can view messages from any conversation.
  */
-export function useAdminConversationMessages(
-  conversationId: string,
-  params?: { limit?: number }
-) {
+export function useAdminConversationMessages(conversationId: string, params?: { limit?: number }) {
   return useInfiniteQuery({
     queryKey: adminConversationKeys.messages(conversationId, params),
     queryFn: async ({ pageParam = 1 }) => {
@@ -213,17 +200,8 @@ export function useDeleteAdminConversation() {
 export function useAdminAssignConversation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      conversationId,
-      userId,
-    }: {
-      conversationId: string;
-      userId: string;
-    }) => {
-      const { data } = await api.post(
-        `/admin/conversations/${conversationId}/assign`,
-        { userId }
-      );
+    mutationFn: async ({ conversationId, userId }: { conversationId: string; userId: string }) => {
+      const { data } = await api.post(`/admin/conversations/${conversationId}/assign`, { userId });
       return data.data;
     },
     onSuccess: (_data, variables) => {
@@ -249,10 +227,7 @@ export function useAdminUpdateConversationStatus() {
       conversationId: string;
       status: AdminConversation['status'];
     }) => {
-      const { data } = await api.patch(
-        `/admin/conversations/${conversationId}/status`,
-        { status }
-      );
+      const { data } = await api.patch(`/admin/conversations/${conversationId}/status`, { status });
       return data.data;
     },
     onSuccess: (_data, variables) => {

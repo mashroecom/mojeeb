@@ -46,9 +46,7 @@ export function AnalyticsWidget({
         <div className="flex-1 min-w-0">
           <p className="text-xs text-muted-foreground truncate mb-0.5">{title}</p>
           <p className="text-xl font-bold truncate">{value}</p>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
         </div>
       </div>
     </div>

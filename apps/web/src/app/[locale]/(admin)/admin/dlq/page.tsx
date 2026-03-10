@@ -33,7 +33,8 @@ interface DLQJob {
 const QUEUE_COLORS: Record<string, string> = {
   'inbound-messages': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
   'ai-processing': 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400',
-  'outbound-messages': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+  'outbound-messages':
+    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
   'webhook-dispatch': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
 };
 
@@ -65,14 +66,16 @@ function JobCard({
   const queueKey = job.data.originalQueue || '';
   const queueColor = QUEUE_COLORS[queueKey] || 'bg-muted text-muted-foreground';
   const queueLabelKey = QUEUE_LABEL_KEYS[queueKey];
-  const queueLabel = queueLabelKey ? t(queueLabelKey) : (job.data.originalQueue || t('unknown'));
+  const queueLabel = queueLabelKey ? t(queueLabelKey) : job.data.originalQueue || t('unknown');
 
   return (
     <div className="rounded-xl border bg-card p-4 transition-colors hover:border-primary/20">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded-full', queueColor)}>
+            <span
+              className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded-full', queueColor)}
+            >
               {queueLabel}
             </span>
             <span className="text-sm font-medium truncate">{job.data.jobName || job.name}</span>
@@ -92,7 +95,11 @@ function JobCard({
             title={t('retry')}
             className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:bg-muted transition-colors disabled:opacity-50"
           >
-            {isRetrying ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+            {isRetrying ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3" />
+            )}
             {t('retry')}
           </button>
           <button
@@ -101,7 +108,11 @@ function JobCard({
             title={t('discard')}
             className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 text-red-600 px-2.5 py-1.5 text-xs font-medium hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
           >
-            {isDiscarding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+            {isDiscarding ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Trash2 className="h-3 w-3" />
+            )}
             {t('discard')}
           </button>
         </div>
@@ -226,7 +237,15 @@ export default function DLQPage() {
       )}
 
       {/* Pagination */}
-      <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+      <AdminPagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        previousLabel={tc('previous')}
+        nextLabel={tc('next')}
+        pageLabel={tc('page')}
+        ofLabel={tc('of')}
+      />
     </div>
   );
 }

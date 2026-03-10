@@ -3,16 +3,21 @@
 import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDate } from '@/lib/dateFormat';
-import {
-  useOrganization,
-  useUpdateOrganization,
-} from '@/hooks/useOrganization';
+import { useOrganization, useUpdateOrganization } from '@/hooks/useOrganization';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { useProfile, useUpdateProfile, useChangePassword, useResendVerification } from '@/hooks/useProfile';
+import {
+  useProfile,
+  useUpdateProfile,
+  useChangePassword,
+  useResendVerification,
+} from '@/hooks/useProfile';
 import { useAuthStore } from '@/stores/authStore';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
-import { useNotificationPreferences, useUpdateNotificationPreferences } from '@/hooks/useNotifications';
+import {
+  useNotificationPreferences,
+  useUpdateNotificationPreferences,
+} from '@/hooks/useNotifications';
 import { ProfileSection } from './_components/ProfileSection';
 import { OrganizationSection } from './_components/OrganizationSection';
 import { NotificationsSection } from './_components/NotificationsSection';
@@ -34,14 +39,18 @@ export default function SettingsPage() {
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
   const resendVerification = useResendVerification();
-  const [resendVerificationStatus, setResendVerificationStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [resendVerificationStatus, setResendVerificationStatus] = useState<
+    'idle' | 'success' | 'error'
+  >('idle');
   const [profileFirstName, setProfileFirstName] = useState('');
   const [profileLastName, setProfileLastName] = useState('');
   const [showProfileSaved, setShowProfileSaved] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [passwordStatus, setPasswordStatus] = useState<'idle' | 'success' | 'error' | 'mismatch' | 'tooShort'>('idle');
+  const [passwordStatus, setPasswordStatus] = useState<
+    'idle' | 'success' | 'error' | 'mismatch' | 'tooShort'
+  >('idle');
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Notification preferences

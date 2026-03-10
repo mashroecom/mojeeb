@@ -4,10 +4,7 @@ import type { LeadResult, ConversationMessage } from '@mojeeb/shared-types';
 import { logger } from '../../config/logger';
 
 export class LeadPipeline {
-  async extract(
-    message: string,
-    history: ConversationMessage[]
-  ): Promise<LeadResult | null> {
+  async extract(message: string, history: ConversationMessage[]): Promise<LeadResult | null> {
     try {
       const provider = getAIProvider('OPENAI');
 
@@ -24,10 +21,7 @@ export class LeadPipeline {
         notes: string;
       }>({
         systemPrompt: LEAD_EXTRACTION_PROMPT,
-        messages: [
-          ...history.slice(-10),
-          { role: 'user', content: message },
-        ],
+        messages: [...history.slice(-10), { role: 'user', content: message }],
         temperature: 0.2,
         maxTokens: 300,
       });

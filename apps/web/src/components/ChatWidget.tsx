@@ -16,7 +16,10 @@ declare global {
   }
 }
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace('/api/v1', '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1').replace(
+  '/api/v1',
+  '',
+);
 
 /**
  * ChatWidget — Injects the Mojeeb support chat widget using the
@@ -48,7 +51,8 @@ export function ChatWidget() {
       JSON.stringify({
         primaryColor: settings?.supportChatColor || '#6366f1',
         position: settings?.supportChatPosition === 'left' ? 'bottom-left' : 'bottom-right',
-        greeting: (locale === 'ar' ? settings?.supportChatWelcomeAr : settings?.supportChatWelcome) || '',
+        greeting:
+          (locale === 'ar' ? settings?.supportChatWelcomeAr : settings?.supportChatWelcome) || '',
         direction: locale === 'ar' ? 'rtl' : 'ltr',
       }),
     );

@@ -33,9 +33,7 @@ export function csvSanitize(value: string | number | null | undefined): string {
   let str = String(value);
 
   // Check if the string starts with a formula injection character
-  const startsWithDangerousChar = FORMULA_INJECTION_CHARS.some(char =>
-    str.startsWith(char)
-  );
+  const startsWithDangerousChar = FORMULA_INJECTION_CHARS.some((char) => str.startsWith(char));
 
   // If it starts with a dangerous character, prefix with single quote to neutralize
   if (startsWithDangerousChar) {

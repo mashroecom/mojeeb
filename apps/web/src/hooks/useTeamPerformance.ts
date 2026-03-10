@@ -18,7 +18,9 @@ export function useTeamPerformanceRealTime(orgId?: string) {
       const searchParams = new URLSearchParams();
       if (orgId) searchParams.set('orgId', orgId);
       const query = searchParams.toString();
-      const { data } = await api.get(`/admin/team-performance/real-time${query ? `?${query}` : ''}`);
+      const { data } = await api.get(
+        `/admin/team-performance/real-time${query ? `?${query}` : ''}`,
+      );
       return data.data;
     },
     refetchInterval: 5000,
@@ -48,7 +50,9 @@ export function useTeamPerformanceHistorical(params?: {
       if (params?.channel) searchParams.set('channel', params.channel);
       if (params?.conversationType) searchParams.set('conversationType', params.conversationType);
       const query = searchParams.toString();
-      const { data } = await api.get(`/admin/team-performance/historical${query ? `?${query}` : ''}`);
+      const { data } = await api.get(
+        `/admin/team-performance/historical${query ? `?${query}` : ''}`,
+      );
       return data.data;
     },
     enabled: !!params?.orgId,
@@ -58,7 +62,7 @@ export function useTeamPerformanceHistorical(params?: {
 // Agent comparison for side-by-side performance analysis
 export function useAgentComparison(
   agentIds?: string[],
-  dateRange?: { startDate?: string; endDate?: string; orgId?: string }
+  dateRange?: { startDate?: string; endDate?: string; orgId?: string },
 ) {
   return useQuery({
     queryKey: teamPerformanceKeys.agentComparison(agentIds, dateRange),
@@ -71,7 +75,9 @@ export function useAgentComparison(
         searchParams.set('agentIds', agentIds.join(','));
       }
       const query = searchParams.toString();
-      const { data } = await api.get(`/admin/team-performance/agents/compare${query ? `?${query}` : ''}`);
+      const { data } = await api.get(
+        `/admin/team-performance/agents/compare${query ? `?${query}` : ''}`,
+      );
       return data.data;
     },
     enabled: !!dateRange?.orgId && !!agentIds && agentIds.length > 0,
@@ -94,7 +100,9 @@ export function useAiVsHuman(dateRange?: {
       if (dateRange?.endDate) searchParams.set('endDate', dateRange.endDate);
       if (dateRange?.channel) searchParams.set('channel', dateRange.channel);
       const query = searchParams.toString();
-      const { data } = await api.get(`/admin/team-performance/ai-vs-human${query ? `?${query}` : ''}`);
+      const { data } = await api.get(
+        `/admin/team-performance/ai-vs-human${query ? `?${query}` : ''}`,
+      );
       return data.data;
     },
     enabled: !!dateRange?.orgId,

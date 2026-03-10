@@ -4,7 +4,12 @@ import { prisma } from '../config/database';
 import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 
-interface NoteParams { orgId: string; conversationId: string; noteId: string; [key: string]: string; }
+interface NoteParams {
+  orgId: string;
+  conversationId: string;
+  noteId: string;
+  [key: string]: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 

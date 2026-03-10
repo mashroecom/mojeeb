@@ -3,11 +3,7 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDateShort } from '@/lib/dateFormat';
-import {
-  useAdminOverview,
-  useAdminGrowth,
-  useAdminRevenue,
-} from '@/hooks/useAdmin';
+import { useAdminOverview, useAdminGrowth, useAdminRevenue } from '@/hooks/useAdmin';
 import { PLAN_COLORS } from '@/lib/admin-constants';
 import { cn } from '@/lib/utils';
 import {
@@ -21,11 +17,7 @@ import {
   BarChart3,
   RefreshCw,
 } from 'lucide-react';
-import {
-  AnalyticsWidget,
-  ChartWidget,
-  EmptyState,
-} from '@/components/mobile/AnalyticsWidget';
+import { AnalyticsWidget, ChartWidget, EmptyState } from '@/components/mobile/AnalyticsWidget';
 import { MobileNav } from '@/components/mobile/MobileNav';
 
 const GROUP_BY_OPTIONS = ['day', 'week', 'month'] as const;
@@ -44,11 +36,14 @@ export default function MobileAnalyticsPage() {
     error: overviewError,
     refetch: refetchOverview,
   } = useAdminOverview();
-  const { data: growth, isLoading: loadingGrowth, refetch: refetchGrowth } = useAdminGrowth({
+  const {
+    data: growth,
+    isLoading: loadingGrowth,
+    refetch: refetchGrowth,
+  } = useAdminGrowth({
     groupBy,
   });
-  const { data: revenue, isLoading: loadingRevenue, refetch: refetchRevenue } =
-    useAdminRevenue();
+  const { data: revenue, isLoading: loadingRevenue, refetch: refetchRevenue } = useAdminRevenue();
 
   const handleRefresh = () => {
     refetchOverview();
@@ -115,9 +110,9 @@ export default function MobileAnalyticsPage() {
     growthData.length > 0
       ? Math.max(
           ...growthData.map((d: any) =>
-            Math.max(d.users ?? 0, d.organizations ?? 0, d.conversations ?? 0)
+            Math.max(d.users ?? 0, d.organizations ?? 0, d.conversations ?? 0),
           ),
-          1
+          1,
         )
       : 1;
 
@@ -128,10 +123,7 @@ export default function MobileAnalyticsPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen px-4 pb-20">
         <p className="text-destructive font-medium mb-2">{tCommon('error')}</p>
-        <button
-          onClick={handleRefresh}
-          className="text-sm text-primary hover:underline"
-        >
+        <button onClick={handleRefresh} className="text-sm text-primary hover:underline">
           {tCommon('retry')}
         </button>
         <MobileNav />
@@ -154,7 +146,7 @@ export default function MobileAnalyticsPage() {
             <RefreshCw
               className={cn(
                 'h-5 w-5',
-                (loadingOverview || loadingGrowth || loadingRevenue) && 'animate-spin'
+                (loadingOverview || loadingGrowth || loadingRevenue) && 'animate-spin',
               )}
             />
           </button>
@@ -194,7 +186,7 @@ export default function MobileAnalyticsPage() {
                     'px-4 py-2 text-xs font-medium transition-colors',
                     groupBy === opt
                       ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground active:text-foreground active:bg-muted'
+                      : 'text-muted-foreground active:text-foreground active:bg-muted',
                   )}
                 >
                   {t(opt)}
@@ -228,8 +220,7 @@ export default function MobileAnalyticsPage() {
                 {growthData.map((point: any, index: number) => {
                   const usersHeight = ((point.users ?? 0) / maxGrowthValue) * 100;
                   const orgsHeight = ((point.organizations ?? 0) / maxGrowthValue) * 100;
-                  const convsHeight =
-                    ((point.conversations ?? 0) / maxGrowthValue) * 100;
+                  const convsHeight = ((point.conversations ?? 0) / maxGrowthValue) * 100;
 
                   return (
                     <div
@@ -283,15 +274,10 @@ export default function MobileAnalyticsPage() {
                   <div>
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                       {growthData
-                        .reduce(
-                          (sum: number, d: any) => sum + (d.conversations ?? 0),
-                          0
-                        )
+                        .reduce((sum: number, d: any) => sum + (d.conversations ?? 0), 0)
                         .toLocaleString(locale)}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {t('newConversations')}
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('newConversations')}</p>
                   </div>
                 </div>
               </div>
@@ -300,11 +286,7 @@ export default function MobileAnalyticsPage() {
         </ChartWidget>
 
         {/* Plan Distribution */}
-        <ChartWidget
-          title={t('planDistribution')}
-          icon={BarChart3}
-          isLoading={loadingRevenue}
-        >
+        <ChartWidget title={t('planDistribution')} icon={BarChart3} isLoading={loadingRevenue}>
           {planDistribution.length === 0 ? (
             <EmptyState icon={CreditCard} message={tCommon('noData')} />
           ) : (
@@ -313,24 +295,17 @@ export default function MobileAnalyticsPage() {
                 const planName = (plan.plan ?? plan.name ?? 'FREE').toUpperCase();
                 const count = plan.count ?? plan._count ?? 0;
                 return (
-                  <div
-                    key={planName}
-                    className="rounded-lg border bg-card/50 p-4 text-center"
-                  >
+                  <div key={planName} className="rounded-lg border bg-card/50 p-4 text-center">
                     <span
                       className={cn(
                         'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold mb-3',
-                        PLAN_COLORS[planName] ?? PLAN_COLORS.FREE
+                        PLAN_COLORS[planName] ?? PLAN_COLORS.FREE,
                       )}
                     >
                       {t(`plan_${planName}`)}
                     </span>
-                    <p className="text-2xl font-bold">
-                      {Number(count).toLocaleString(locale)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {t('subscriptions')}
-                    </p>
+                    <p className="text-2xl font-bold">{Number(count).toLocaleString(locale)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('subscriptions')}</p>
                   </div>
                 );
               })}

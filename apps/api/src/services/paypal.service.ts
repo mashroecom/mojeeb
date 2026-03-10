@@ -117,13 +117,16 @@ async function getPayPalClient(): Promise<paypal.core.PayPalHttpClient> {
   const { clientId, clientSecret, mode } = await getPayPalConfig();
 
   if (!clientId || !clientSecret) {
-    throw new BadRequestError('PayPal is not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in your environment.');
+    throw new BadRequestError(
+      'PayPal is not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in your environment.',
+    );
   }
 
   // Create PayPal environment
-  const environment = mode === 'live'
-    ? new paypal.core.LiveEnvironment(clientId, clientSecret)
-    : new paypal.core.SandboxEnvironment(clientId, clientSecret);
+  const environment =
+    mode === 'live'
+      ? new paypal.core.LiveEnvironment(clientId, clientSecret)
+      : new paypal.core.SandboxEnvironment(clientId, clientSecret);
 
   paypalClient = new paypal.core.PayPalHttpClient(environment);
 
@@ -276,7 +279,9 @@ export class PayPalService {
       // Determine the plan (stored in custom_id during order creation)
       // For now, we'll upgrade based on the amount paid
       let targetPlan: string;
-      const paidAmount = parseFloat(capturedOrder.purchase_units[0]?.payments?.captures?.[0]?.amount?.value || '0');
+      const paidAmount = parseFloat(
+        capturedOrder.purchase_units[0]?.payments?.captures?.[0]?.amount?.value || '0',
+      );
 
       const starterPrice = await planConfigService.getPrice('STARTER');
       const professionalPrice = await planConfigService.getPrice('PROFESSIONAL');
@@ -286,7 +291,10 @@ export class PayPalService {
       } else if (Math.abs(paidAmount - professionalPrice) < 0.01) {
         targetPlan = 'PROFESSIONAL';
       } else {
-        logger.warn({ paidAmount, starterPrice, professionalPrice }, 'Unable to determine plan from paid amount, defaulting to STARTER');
+        logger.warn(
+          { paidAmount, starterPrice, professionalPrice },
+          'Unable to determine plan from paid amount, defaulting to STARTER',
+        );
         targetPlan = 'STARTER';
       }
 
@@ -320,9 +328,15 @@ export class PayPalService {
       // Clear subscription cache
       await cache.del(`subscription:${orgId}`);
 
-      logger.info({ orgId, orderId, captureId, plan: targetPlan }, 'PayPal payment captured and subscription upgraded');
+      logger.info(
+        { orgId, orderId, captureId, plan: targetPlan },
+        'PayPal payment captured and subscription upgraded',
+      );
     } else {
-      logger.warn({ orgId, orderId, status: capturedOrder.status }, 'PayPal payment capture failed');
+      logger.warn(
+        { orgId, orderId, status: capturedOrder.status },
+        'PayPal payment capture failed',
+      );
     }
 
     return {
@@ -400,7 +414,9 @@ export class PayPalService {
     }
 
     if (!subscription.paypalSubscriptionId) {
-      throw new BadRequestError('No PayPal subscription ID found. This appears to be a one-time payment.');
+      throw new BadRequestError(
+        'No PayPal subscription ID found. This appears to be a one-time payment.',
+      );
     }
 
     // Note: PayPal subscription cancellation would be implemented here
@@ -415,7 +431,10 @@ export class PayPalService {
     // Clear cache
     await cache.del(`subscription:${orgId}`);
 
-    logger.info({ orgId, paypalSubscriptionId: subscription.paypalSubscriptionId }, 'PayPal subscription marked for cancellation');
+    logger.info(
+      { orgId, paypalSubscriptionId: subscription.paypalSubscriptionId },
+      'PayPal subscription marked for cancellation',
+    );
 
     return {
       cancelledAt: new Date(),
@@ -474,7 +493,10 @@ export class PayPalService {
       },
     });
 
-    logger.info({ orgId: invoice.subscription.orgId, captureId }, 'PayPal payment capture completed');
+    logger.info(
+      { orgId: invoice.subscription.orgId, captureId },
+      'PayPal payment capture completed',
+    );
   }
 
   /**
@@ -532,7 +554,10 @@ export class PayPalService {
 
     await this.createSubscription(metadata.orgId, metadata.plan, paypalSubscriptionId);
 
-    logger.info({ orgId: metadata.orgId, paypalSubscriptionId }, 'PayPal subscription created from webhook');
+    logger.info(
+      { orgId: metadata.orgId, paypalSubscriptionId },
+      'PayPal subscription created from webhook',
+    );
   }
 
   /**
@@ -568,7 +593,10 @@ export class PayPalService {
     // Clear cache
     await cache.del(`subscription:${subscription.orgId}`);
 
-    logger.info({ orgId: subscription.orgId, paypalSubscriptionId }, 'PayPal subscription cancelled, downgraded to FREE');
+    logger.info(
+      { orgId: subscription.orgId, paypalSubscriptionId },
+      'PayPal subscription cancelled, downgraded to FREE',
+    );
   }
 
   /**

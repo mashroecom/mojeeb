@@ -58,9 +58,7 @@ export function RealTimeMetrics({ orgId }: RealTimeMetricsProps) {
     {
       key: 'averageWaitTime',
       label: 'Avg Wait Time',
-      value: metrics?.averageWaitTimeMs
-        ? `${Math.round(metrics.averageWaitTimeMs / 1000)}s`
-        : '0s',
+      value: metrics?.averageWaitTimeMs ? `${Math.round(metrics.averageWaitTimeMs / 1000)}s` : '0s',
       icon: Clock,
       color: 'text-blue-600 dark:text-blue-400',
       bg: 'bg-blue-100 dark:bg-blue-900/30',
@@ -98,9 +96,7 @@ export function RealTimeMetrics({ orgId }: RealTimeMetricsProps) {
               <div>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
                 <p className="text-2xl font-bold mt-0.5">
-                  {typeof stat.value === 'number'
-                    ? stat.value.toLocaleString()
-                    : stat.value}
+                  {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                 </p>
               </div>
             </div>

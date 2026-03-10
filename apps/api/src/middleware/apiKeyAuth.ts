@@ -68,8 +68,6 @@ export function requireScope(requiredScope: string) {
       return next();
     }
 
-    return next(new ForbiddenError(
-      `API key missing required scope: ${requiredScope}`,
-    ));
+    return next(new ForbiddenError(`API key missing required scope: ${requiredScope}`));
   };
 }

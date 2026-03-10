@@ -124,7 +124,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // DELETE /:webhookId - Delete webhook

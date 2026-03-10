@@ -123,7 +123,7 @@ export default function ConversationsPage() {
   }, [queryMessages, messagesByConversation, selectedConversationId]);
 
   const isTyping = selectedConversationId
-    ? typingByConversation[selectedConversationId] ?? false
+    ? (typingByConversation[selectedConversationId] ?? false)
     : false;
 
   const realtimeUpdate = selectedConversationId
@@ -341,10 +341,7 @@ export default function ConversationsPage() {
       cancelLabel: t('cancel'),
       variant: 'danger',
       onConfirm: () => {
-        bulkDelete.mutate(
-          { conversationIds: ids },
-          { onSuccess: () => setSelectedIds(new Set()) },
-        );
+        bulkDelete.mutate({ conversationIds: ids }, { onSuccess: () => setSelectedIds(new Set()) });
       },
     });
   }, [selectedIds, bulkDelete, t, confirm]);
@@ -407,9 +404,33 @@ export default function ConversationsPage() {
               <ConversationHeader
                 conversation={selectedConversation}
                 onBack={() => setSelectedConversationId(null)}
-                onHandoff={() => handoff.mutate({ conversationId: selectedConversationId }, { onSuccess: () => toast.success(tc('toast.handedOff')), onError: () => toast.error(tc('toast.handoffFailed')) })}
-                onResolve={() => resolve.mutate({ conversationId: selectedConversationId }, { onSuccess: () => toast.success(tc('toast.resolved')), onError: () => toast.error(tc('toast.resolveFailed')) })}
-                onReturnToAI={() => returnToAI.mutate({ conversationId: selectedConversationId }, { onSuccess: () => toast.success(tc('toast.returnedToAI')), onError: () => toast.error(tc('toast.returnToAIFailed')) })}
+                onHandoff={() =>
+                  handoff.mutate(
+                    { conversationId: selectedConversationId },
+                    {
+                      onSuccess: () => toast.success(tc('toast.handedOff')),
+                      onError: () => toast.error(tc('toast.handoffFailed')),
+                    },
+                  )
+                }
+                onResolve={() =>
+                  resolve.mutate(
+                    { conversationId: selectedConversationId },
+                    {
+                      onSuccess: () => toast.success(tc('toast.resolved')),
+                      onError: () => toast.error(tc('toast.resolveFailed')),
+                    },
+                  )
+                }
+                onReturnToAI={() =>
+                  returnToAI.mutate(
+                    { conversationId: selectedConversationId },
+                    {
+                      onSuccess: () => toast.success(tc('toast.returnedToAI')),
+                      onError: () => toast.error(tc('toast.returnToAIFailed')),
+                    },
+                  )
+                }
                 onDelete={handleDelete}
                 onToggleInsights={() => setInsightsOpen((v) => !v)}
                 onMobileInsightsOpen={() => setMobileInsightsOpen(true)}

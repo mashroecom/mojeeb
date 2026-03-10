@@ -19,9 +19,7 @@ export interface UseZodFormReturn<T extends z.ZodTypeAny> {
   handleChange: (
     field: keyof z.infer<T>,
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
-  handleBlur: (
-    field: keyof z.infer<T>,
-  ) => () => void;
+  handleBlur: (field: keyof z.infer<T>) => () => void;
   handleSubmit: (e?: React.FormEvent) => Promise<boolean>;
   setFieldValue: (field: keyof z.infer<T>, value: any) => void;
   setFieldError: (field: keyof z.infer<T>, error: string) => void;
@@ -144,9 +142,8 @@ export function useZodForm<T extends z.ZodTypeAny>({
   const handleChange = useCallback(
     (field: keyof z.infer<T>) =>
       (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const value = e.target.type === 'checkbox'
-          ? (e.target as HTMLInputElement).checked
-          : e.target.value;
+        const value =
+          e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
 
         setValuesState((prev) => ({
           ...prev,

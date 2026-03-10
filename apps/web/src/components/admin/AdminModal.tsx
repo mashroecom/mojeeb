@@ -10,7 +10,13 @@ interface AdminModalProps {
   maxWidth?: string;
 }
 
-export function AdminModal({ open, onClose, title, children, maxWidth = 'max-w-lg' }: AdminModalProps) {
+export function AdminModal({
+  open,
+  onClose,
+  title,
+  children,
+  maxWidth = 'max-w-lg',
+}: AdminModalProps) {
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -39,9 +45,7 @@ export function AdminModal({ open, onClose, title, children, maxWidth = 'max-w-l
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          {children}
-        </div>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
       </div>
     </div>
   );

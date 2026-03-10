@@ -61,7 +61,10 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
         };
 
         if (urlPatterns.trim()) {
-          payload.urlPatterns = urlPatterns.split(',').map(p => p.trim()).filter(Boolean);
+          payload.urlPatterns = urlPatterns
+            .split(',')
+            .map((p) => p.trim())
+            .filter(Boolean);
         }
 
         await api.post(`/organizations/${orgId}/knowledge-bases/${kbId}/crawl`, payload);
@@ -109,9 +112,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
 
       {/* Crawl Type */}
       <div>
-        <label className="block text-sm font-medium mb-1.5">
-          {t('crawlType')}
-        </label>
+        <label className="block text-sm font-medium mb-1.5">{t('crawlType')}</label>
         <div className="flex gap-3">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -137,9 +138,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
           </label>
         </div>
         <p className="text-xs text-muted-foreground mt-1.5">
-          {crawlType === 'single'
-            ? t('singlePageDescription')
-            : t('multiPageDescription')}
+          {crawlType === 'single' ? t('singlePageDescription') : t('multiPageDescription')}
         </p>
       </div>
 
@@ -180,9 +179,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   disabled={isSubmitting}
                 />
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  {t('maxDepthHint')}
-                </p>
+                <p className="text-xs text-muted-foreground mt-1.5">{t('maxDepthHint')}</p>
               </div>
 
               {/* URL Pattern Filter */}
@@ -199,9 +196,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   disabled={isSubmitting}
                 />
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  {t('urlPatternHint')}
-                </p>
+                <p className="text-xs text-muted-foreground mt-1.5">{t('urlPatternHint')}</p>
               </div>
             </div>
           )}

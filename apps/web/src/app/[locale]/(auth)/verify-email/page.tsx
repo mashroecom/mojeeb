@@ -76,9 +76,7 @@ export default function VerifyEmailPage() {
               </Link>
 
               <div className="mt-2 border-t pt-3 w-full">
-                <p className="mb-3 text-sm text-muted-foreground">
-                  {t('resendDescription')}
-                </p>
+                <p className="mb-3 text-sm text-muted-foreground">{t('resendDescription')}</p>
                 <button
                   type="button"
                   onClick={handleResend}
@@ -96,9 +94,7 @@ export default function VerifyEmailPage() {
                   </p>
                 )}
                 {resendStatus === 'error' && (
-                  <p className="mt-2 text-sm text-destructive">
-                    {t('resendError')}
-                  </p>
+                  <p className="mt-2 text-sm text-destructive">{t('resendError')}</p>
                 )}
               </div>
             </div>

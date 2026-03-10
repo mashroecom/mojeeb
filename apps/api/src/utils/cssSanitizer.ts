@@ -90,7 +90,10 @@ export function sanitizeCss(css: string): string {
   sanitized = sanitized.replace(DANGEROUS_PATTERNS.ATTRIBUTE_SELECTOR, '');
 
   // Remove url() with javascript: protocol
-  sanitized = sanitized.replace(DANGEROUS_PATTERNS.URL_JAVASCRIPT, 'url(/* BLOCKED: javascript */ ');
+  sanitized = sanitized.replace(
+    DANGEROUS_PATTERNS.URL_JAVASCRIPT,
+    'url(/* BLOCKED: javascript */ ',
+  );
 
   // Remove url() with data: protocol (can contain base64-encoded scripts)
   sanitized = sanitized.replace(DANGEROUS_PATTERNS.URL_DATA, 'url(/* BLOCKED: data */ ');

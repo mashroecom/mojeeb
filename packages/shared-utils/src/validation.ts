@@ -41,34 +41,55 @@ export const createAgentSchema = z.object({
   tone: z.enum(['friendly', 'professional', 'casual', 'empathetic']).optional().default('friendly'),
   responseLength: z.enum(['short', 'medium', 'detailed']).optional().default('medium'),
   // Data Collection
-  dataCollectionConfig: z.object({
-    requiredFields: z.array(z.enum(['name', 'email', 'phone', 'company', 'address', 'orderNumber'])).optional().default([]),
-    collectionStrategy: z.enum(['natural', 'upfront', 'end']).optional().default('natural'),
-    customFields: z.array(z.object({
-      name: z.string().min(1).max(50),
-      type: z.enum(['text', 'number', 'email', 'phone']),
-      label: z.string().min(1).max(100),
-      labelAr: z.string().max(100).optional().default(''),
-    })).optional().default([]),
-    confirmationEnabled: z.boolean().optional().default(true),
-  }).optional(),
+  dataCollectionConfig: z
+    .object({
+      requiredFields: z
+        .array(z.enum(['name', 'email', 'phone', 'company', 'address', 'orderNumber']))
+        .optional()
+        .default([]),
+      collectionStrategy: z.enum(['natural', 'upfront', 'end']).optional().default('natural'),
+      customFields: z
+        .array(
+          z.object({
+            name: z.string().min(1).max(50),
+            type: z.enum(['text', 'number', 'email', 'phone']),
+            label: z.string().min(1).max(100),
+            labelAr: z.string().max(100).optional().default(''),
+          }),
+        )
+        .optional()
+        .default([]),
+      confirmationEnabled: z.boolean().optional().default(true),
+    })
+    .optional(),
   // Escalation
   escalationKeywords: z.array(z.string().max(100)).max(20).optional().default([]),
   sentimentEscalation: z.boolean().optional().default(false),
   escalationMessageCount: z.number().int().min(2).max(20).optional().default(5),
   // Quick Replies
-  quickRepliesConfig: z.object({
-    enabled: z.boolean().optional().default(false),
-    maxButtons: z.number().int().min(2).max(5).optional().default(3),
-    aiSuggestions: z.boolean().optional().default(true),
-    predefinedSets: z.array(z.object({
-      trigger: z.enum(['greeting', 'faq', 'closing', 'custom']),
-      buttons: z.array(z.object({
-        text: z.string().min(1).max(40),
-        textAr: z.string().max(40).optional().default(''),
-      })).max(5),
-    })).optional().default([]),
-  }).optional(),
+  quickRepliesConfig: z
+    .object({
+      enabled: z.boolean().optional().default(false),
+      maxButtons: z.number().int().min(2).max(5).optional().default(3),
+      aiSuggestions: z.boolean().optional().default(true),
+      predefinedSets: z
+        .array(
+          z.object({
+            trigger: z.enum(['greeting', 'faq', 'closing', 'custom']),
+            buttons: z
+              .array(
+                z.object({
+                  text: z.string().min(1).max(40),
+                  textAr: z.string().max(40).optional().default(''),
+                }),
+              )
+              .max(5),
+          }),
+        )
+        .optional()
+        .default([]),
+    })
+    .optional(),
 });
 
 export const connectChannelSchema = z.object({

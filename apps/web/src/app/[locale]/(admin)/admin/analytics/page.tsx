@@ -3,11 +3,7 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDateShort, fmtDate } from '@/lib/dateFormat';
-import {
-  useAdminOverview,
-  useAdminGrowth,
-  useAdminRevenue,
-} from '@/hooks/useAdmin';
+import { useAdminOverview, useAdminGrowth, useAdminRevenue } from '@/hooks/useAdmin';
 import { PLAN_COLORS } from '@/lib/admin-constants';
 import { cn } from '@/lib/utils';
 import {
@@ -105,14 +101,15 @@ export default function AdminAnalyticsPage() {
 
   // Growth chart data
   const growthData: any[] = growth?.growth ?? growth?.data ?? [];
-  const maxGrowthValue = growthData.length > 0
-    ? Math.max(
-        ...growthData.map((d: any) =>
-          Math.max(d.users ?? 0, d.organizations ?? 0, d.conversations ?? 0)
-        ),
-        1
-      )
-    : 1;
+  const maxGrowthValue =
+    growthData.length > 0
+      ? Math.max(
+          ...growthData.map((d: any) =>
+            Math.max(d.users ?? 0, d.organizations ?? 0, d.conversations ?? 0),
+          ),
+          1,
+        )
+      : 1;
 
   // Revenue / plan distribution
   const planDistribution: any[] = revenue?.planDistribution ?? revenue?.plans ?? [];
@@ -252,9 +249,7 @@ export default function AdminAnalyticsPage() {
                         />
                       </div>
                       <span className="text-[10px] text-muted-foreground mt-1.5 truncate w-full text-center">
-                        {point.date
-                          ? fmtDateShort(point.date, locale)
-                          : ''}
+                        {point.date ? fmtDateShort(point.date, locale) : ''}
                       </span>
                     </div>
                   );
@@ -283,14 +278,9 @@ export default function AdminAnalyticsPage() {
                 </thead>
                 <tbody className="divide-y">
                   {growthData.map((point: any, index: number) => (
-                    <tr
-                      key={point.date ?? index}
-                      className="hover:bg-muted/50 transition-colors"
-                    >
+                    <tr key={point.date ?? index} className="hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-2.5 text-muted-foreground">
-                        {point.date
-                          ? fmtDate(point.date, locale)
-                          : '-'}
+                        {point.date ? fmtDate(point.date, locale) : '-'}
                       </td>
                       <td className="px-4 py-2.5 font-medium">
                         {(point.users ?? 0).toLocaleString(locale)}
@@ -332,26 +322,19 @@ export default function AdminAnalyticsPage() {
               const planName = (plan.plan ?? plan.name ?? 'FREE').toUpperCase();
               const count = plan.count ?? plan._count ?? 0;
               return (
-                <div
-                  key={planName}
-                  className="rounded-xl border bg-card p-5 flex-1 min-w-[180px]"
-                >
+                <div key={planName} className="rounded-xl border bg-card p-5 flex-1 min-w-[180px]">
                   <div className="flex items-center justify-between mb-3">
                     <span
                       className={cn(
                         'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold',
-                        PLAN_COLORS[planName] ?? PLAN_COLORS.FREE
+                        PLAN_COLORS[planName] ?? PLAN_COLORS.FREE,
                       )}
                     >
                       {t(`plan_${planName}`)}
                     </span>
                   </div>
-                  <p className="text-3xl font-bold">
-                    {Number(count).toLocaleString(locale)}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {t('subscriptions')}
-                  </p>
+                  <p className="text-3xl font-bold">{Number(count).toLocaleString(locale)}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t('subscriptions')}</p>
                 </div>
               );
             })}

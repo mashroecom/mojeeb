@@ -73,7 +73,10 @@ export default function RequestDemoPage() {
             <div className="grid gap-5 sm:grid-cols-2">
               {/* Name */}
               <div>
-                <label htmlFor="demo-name" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+                <label
+                  htmlFor="demo-name"
+                  className="mb-1.5 flex items-center gap-1.5 text-sm font-medium"
+                >
                   <User className="h-3.5 w-3.5 text-muted-foreground" />
                   {t('name')} <span className="text-red-500">*</span>
                 </label>
@@ -90,7 +93,10 @@ export default function RequestDemoPage() {
 
               {/* Email */}
               <div>
-                <label htmlFor="demo-email" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+                <label
+                  htmlFor="demo-email"
+                  className="mb-1.5 flex items-center gap-1.5 text-sm font-medium"
+                >
                   <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                   {t('email')} <span className="text-red-500">*</span>
                 </label>
@@ -110,7 +116,10 @@ export default function RequestDemoPage() {
             <div className="grid gap-5 sm:grid-cols-2">
               {/* Phone */}
               <div>
-                <label htmlFor="demo-phone" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+                <label
+                  htmlFor="demo-phone"
+                  className="mb-1.5 flex items-center gap-1.5 text-sm font-medium"
+                >
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                   {t('phone')} <span className="text-red-500">*</span>
                 </label>
@@ -128,7 +137,10 @@ export default function RequestDemoPage() {
 
               {/* Company */}
               <div>
-                <label htmlFor="demo-company" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+                <label
+                  htmlFor="demo-company"
+                  className="mb-1.5 flex items-center gap-1.5 text-sm font-medium"
+                >
                   <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                   {t('company')}
                 </label>
@@ -145,7 +157,10 @@ export default function RequestDemoPage() {
 
             {/* Message */}
             <div>
-              <label htmlFor="demo-message" className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+              <label
+                htmlFor="demo-message"
+                className="mb-1.5 flex items-center gap-1.5 text-sm font-medium"
+              >
                 <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                 {t('message')}
               </label>

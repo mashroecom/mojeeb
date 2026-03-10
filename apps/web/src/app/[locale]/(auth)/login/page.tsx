@@ -75,13 +75,13 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
+          <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
         )}
 
         <div>
-          <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium">{t('email')}</label>
+          <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium">
+            {t('email')}
+          </label>
           <input
             id="login-email"
             type="email"
@@ -99,7 +99,9 @@ export default function LoginPage() {
 
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <label htmlFor="login-password" className="text-sm font-medium">{t('password')}</label>
+            <label htmlFor="login-password" className="text-sm font-medium">
+              {t('password')}
+            </label>
             <Link href="/forgot-password" className="text-xs text-primary hover:underline">
               {t('forgotPassword')}
             </Link>

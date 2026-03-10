@@ -18,11 +18,7 @@ export class FileAccessService {
    * @param visitorId - Optional visitor/customer ID
    * @returns true if access is allowed, throws ForbiddenError otherwise
    */
-  async canAccessFile(
-    filename: string,
-    userId?: string,
-    visitorId?: string
-  ): Promise<boolean> {
+  async canAccessFile(filename: string, userId?: string, visitorId?: string): Promise<boolean> {
     // Check if file is public (landing page assets, etc.)
     if (await this.isPublicFile(filename)) {
       return true;
@@ -54,7 +50,10 @@ export class FileAccessService {
     // Check visitor access
     if (visitorId) {
       if (ownership.customerId === visitorId) {
-        logger.debug({ filename, visitorId, conversationId: ownership.conversationId }, 'Visitor file access granted');
+        logger.debug(
+          { filename, visitorId, conversationId: ownership.conversationId },
+          'Visitor file access granted',
+        );
         return true;
       }
       throw new ForbiddenError('Access denied to this file');
@@ -164,7 +163,7 @@ export class FileAccessService {
     ];
 
     // Check if filename matches any public pattern
-    const isPublicPattern = publicPatterns.some(pattern => pattern.test(filename));
+    const isPublicPattern = publicPatterns.some((pattern) => pattern.test(filename));
 
     if (isPublicPattern) {
       logger.debug({ filename }, 'File matched public pattern');

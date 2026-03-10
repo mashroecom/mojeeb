@@ -9,22 +9,26 @@ import { Radio, Trash2, Zap, Bell, Users, Shield, Settings, AlertTriangle } from
 // Helpers
 // ---------------------------------------------------------------------------
 
-
 function typeBadge(type: string, t: ReturnType<typeof useTranslations>) {
-  const baseClasses = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium';
+  const baseClasses =
+    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium';
   const label = t(`eventTypes.${type?.toLowerCase()}` as any);
   switch (type?.toLowerCase()) {
     case 'auth':
     case 'login':
       return (
-        <span className={`${baseClasses} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400`}>
+        <span
+          className={`${baseClasses} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400`}
+        >
           <Shield className="h-3 w-3" />
           {label}
         </span>
       );
     case 'user':
       return (
-        <span className={`${baseClasses} bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400`}>
+        <span
+          className={`${baseClasses} bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400`}
+        >
           <Users className="h-3 w-3" />
           {label}
         </span>
@@ -39,28 +43,36 @@ function typeBadge(type: string, t: ReturnType<typeof useTranslations>) {
       );
     case 'error':
       return (
-        <span className={`${baseClasses} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}>
+        <span
+          className={`${baseClasses} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400`}
+        >
           <AlertTriangle className="h-3 w-3" />
           {label}
         </span>
       );
     case 'webhook':
       return (
-        <span className={`${baseClasses} bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400`}>
+        <span
+          className={`${baseClasses} bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400`}
+        >
           <Zap className="h-3 w-3" />
           {label}
         </span>
       );
     case 'notification':
       return (
-        <span className={`${baseClasses} bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400`}>
+        <span
+          className={`${baseClasses} bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400`}
+        >
           <Bell className="h-3 w-3" />
           {label}
         </span>
       );
     default:
       return (
-        <span className={`${baseClasses} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`}>
+        <span
+          className={`${baseClasses} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`}
+        >
           <Zap className="h-3 w-3" />
           {type}
         </span>
@@ -110,9 +122,7 @@ export default function ActivityMonitorPage() {
       {/* Connection warning */}
       {!connected && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-center dark:border-yellow-800 dark:bg-yellow-950 mb-6">
-          <p className="text-sm text-yellow-600 dark:text-yellow-400">
-            {t('notConnectedWarning')}
-          </p>
+          <p className="text-sm text-yellow-600 dark:text-yellow-400">{t('notConnectedWarning')}</p>
         </div>
       )}
 
@@ -122,7 +132,9 @@ export default function ActivityMonitorPage() {
           {t('eventCount', { count: events.length })}
         </span>
         {events.length >= 200 && (
-          <span className="text-xs text-muted-foreground">{t('showingLatest', { count: 200 })}</span>
+          <span className="text-xs text-muted-foreground">
+            {t('showingLatest', { count: 200 })}
+          </span>
         )}
       </div>
 
@@ -131,7 +143,9 @@ export default function ActivityMonitorPage() {
         {events.length === 0 && (
           <div className="rounded-xl border bg-card p-16 text-center shadow-sm">
             <Radio className="mx-auto h-12 w-12 text-muted-foreground/40 mb-4" />
-            <p className="text-sm text-muted-foreground">{t('noEvents')} {t('noEventsDescription')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('noEvents')} {t('noEventsDescription')}
+            </p>
           </div>
         )}
 

@@ -4,8 +4,13 @@ import { organizationService } from '../services/organization.service';
 import { authenticate, orgContext, requireRole } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 
-interface OrgParams { orgId: string; [key: string]: string; }
-interface MemberParams extends OrgParams { memberId: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
+interface MemberParams extends OrgParams {
+  memberId: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
@@ -26,20 +31,33 @@ router.get('/', async (req, res, next) => {
 router.patch(
   '/',
   validate({
-    body: z.object({
-      name: z.string().min(1).max(200).trim().optional(),
-      slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens').optional(),
-      websiteUrl: z.string().url().max(500).optional().or(z.literal('')),
-      timezone: z.string().max(100).optional(),
-      defaultLanguage: z.string().max(10).optional(),
-      dateFormat: z.string().max(20).optional(),
-      primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-      secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-      customCss: z.string().max(10000).optional().nullable(),
-      contactEmail: z.string().email().max(254).optional().or(z.literal('')),
-    }).refine((d) => Object.values(d).some(v => v !== undefined), {
-      message: 'At least one field is required',
-    }),
+    body: z
+      .object({
+        name: z.string().min(1).max(200).trim().optional(),
+        slug: z
+          .string()
+          .min(1)
+          .max(100)
+          .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
+          .optional(),
+        websiteUrl: z.string().url().max(500).optional().or(z.literal('')),
+        timezone: z.string().max(100).optional(),
+        defaultLanguage: z.string().max(10).optional(),
+        dateFormat: z.string().max(20).optional(),
+        primaryColor: z
+          .string()
+          .regex(/^#[0-9a-fA-F]{6}$/)
+          .optional(),
+        secondaryColor: z
+          .string()
+          .regex(/^#[0-9a-fA-F]{6}$/)
+          .optional(),
+        customCss: z.string().max(10000).optional().nullable(),
+        contactEmail: z.string().email().max(254).optional().or(z.literal('')),
+      })
+      .refine((d) => Object.values(d).some((v) => v !== undefined), {
+        message: 'At least one field is required',
+      }),
   }),
   async (req, res, next) => {
     try {
@@ -98,7 +116,12 @@ router.patch(
     try {
       const { orgId, memberId } = req.params as MemberParams;
       const { role } = req.body;
-      const member = await organizationService.updateMemberRole(orgId, memberId, role, req.org!.role);
+      const member = await organizationService.updateMemberRole(
+        orgId,
+        memberId,
+        role,
+        req.org!.role,
+      );
       res.json({ success: true, data: member });
     } catch (err) {
       next(err);
@@ -122,7 +145,11 @@ router.post('/members/transfer-ownership', requireRole('OWNER'), async (req, res
   try {
     const { orgId } = req.params as OrgParams;
     const { membershipId } = req.body;
-    const result = await organizationService.transferOwnership(orgId, membershipId, req.user!.userId);
+    const result = await organizationService.transferOwnership(
+      orgId,
+      membershipId,
+      req.user!.userId,
+    );
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);

@@ -1,7 +1,13 @@
 import crypto from 'crypto';
 import argon2 from 'argon2';
 import { prisma } from '../config/database';
-import { NotFoundError, BadRequestError, ForbiddenError, ConflictError, UsageLimitError } from '../utils/errors';
+import {
+  NotFoundError,
+  BadRequestError,
+  ForbiddenError,
+  ConflictError,
+  UsageLimitError,
+} from '../utils/errors';
 import { SubscriptionPlan } from '@mojeeb/shared-types';
 import { planConfigService } from './planConfig.service';
 
@@ -242,11 +248,7 @@ export class OrganizationService {
     return { success: true };
   }
 
-  async transferOwnership(
-    orgId: string,
-    newOwnerMembershipId: string,
-    currentOwnerId: string,
-  ) {
+  async transferOwnership(orgId: string, newOwnerMembershipId: string, currentOwnerId: string) {
     // Verify the requesting user is the current OWNER
     const currentOwnerMembership = await prisma.orgMembership.findFirst({
       where: { orgId, userId: currentOwnerId, role: 'OWNER' },

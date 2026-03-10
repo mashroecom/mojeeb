@@ -14,10 +14,7 @@ interface DataCollectionSectionProps {
 const inputClass =
   'w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50';
 
-export function DataCollectionSection({
-  config,
-  setConfig,
-}: DataCollectionSectionProps) {
+export function DataCollectionSection({ config, setConfig }: DataCollectionSectionProps) {
   const t = useTranslations('dashboard.agents');
   const [newFieldName, setNewFieldName] = useState('');
 
@@ -59,9 +56,7 @@ export function DataCollectionSection({
   const removeCustomField = (fieldName: string) => {
     setConfig({
       ...config,
-      customFields: (config.customFields || []).filter(
-        (f) => f.name !== fieldName,
-      ),
+      customFields: (config.customFields || []).filter((f) => f.name !== fieldName),
     });
   };
 
@@ -75,9 +70,7 @@ export function DataCollectionSection({
           </div>
           <div>
             <h2 className="text-sm font-semibold">{t('collectionStrategy')}</h2>
-            <p className="text-xs text-muted-foreground">
-              {t('collectionStrategyHint')}
-            </p>
+            <p className="text-xs text-muted-foreground">{t('collectionStrategyHint')}</p>
           </div>
         </div>
 
@@ -87,9 +80,7 @@ export function DataCollectionSection({
               <button
                 key={strategy.value}
                 type="button"
-                onClick={() =>
-                  setConfig({ ...config, collectionStrategy: strategy.value })
-                }
+                onClick={() => setConfig({ ...config, collectionStrategy: strategy.value })}
                 className={cn(
                   'rounded-lg border px-4 py-3 text-start text-sm font-medium transition-colors',
                   config.collectionStrategy === strategy.value
@@ -112,9 +103,7 @@ export function DataCollectionSection({
           </div>
           <div>
             <h2 className="text-sm font-semibold">{t('requiredFields')}</h2>
-            <p className="text-xs text-muted-foreground">
-              {t('requiredFieldsHint')}
-            </p>
+            <p className="text-xs text-muted-foreground">{t('requiredFieldsHint')}</p>
           </div>
         </div>
 
@@ -129,9 +118,7 @@ export function DataCollectionSection({
                 onClick={() => toggleRequiredField(field.value)}
                 className={cn(
                   'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-                  config.requiredFields.includes(field.value)
-                    ? 'bg-primary'
-                    : 'bg-muted',
+                  config.requiredFields.includes(field.value) ? 'bg-primary' : 'bg-muted',
                 )}
               >
                 <span
@@ -156,9 +143,7 @@ export function DataCollectionSection({
           </div>
           <div>
             <h2 className="text-sm font-semibold">{t('customFields')}</h2>
-            <p className="text-xs text-muted-foreground">
-              {t('customFieldsHint')}
-            </p>
+            <p className="text-xs text-muted-foreground">{t('customFieldsHint')}</p>
           </div>
         </div>
 
@@ -214,9 +199,7 @@ export function DataCollectionSection({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">{t('confirmationEnabled')}</p>
-              <p className="text-xs text-muted-foreground">
-                {t('confirmationEnabledHint')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('confirmationEnabledHint')}</p>
             </div>
             <button
               type="button"

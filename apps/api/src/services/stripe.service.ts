@@ -70,7 +70,9 @@ async function getStripeClient(): Promise<Stripe> {
   const { secretKey } = await getStripeConfig();
 
   if (!secretKey) {
-    throw new BadRequestError('Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment.');
+    throw new BadRequestError(
+      'Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment.',
+    );
   }
 
   stripeClient = new Stripe(secretKey, {
@@ -247,7 +249,7 @@ export class StripeService {
       subscription.stripeSubscriptionId,
       {
         cancel_at_period_end: true,
-      }
+      },
     );
 
     // Update local subscription
@@ -261,7 +263,10 @@ export class StripeService {
     // Clear cache
     await cache.del(`subscription:${orgId}`);
 
-    logger.info({ orgId, stripeSubscriptionId: subscription.stripeSubscriptionId }, 'Stripe subscription cancelled');
+    logger.info(
+      { orgId, stripeSubscriptionId: subscription.stripeSubscriptionId },
+      'Stripe subscription cancelled',
+    );
 
     return {
       cancelledAt: new Date(),
@@ -290,7 +295,9 @@ export class StripeService {
     }
 
     const stripe = await getStripeClient();
-    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId);
+    const stripeSubscription = await stripe.subscriptions.retrieve(
+      subscription.stripeSubscriptionId,
+    );
 
     return {
       id: stripeSubscription.id,
@@ -373,7 +380,10 @@ export class StripeService {
       },
     });
 
-    logger.info({ orgId, invoiceId: invoice.id, stripeInvoiceId: stripeInvoice.id }, 'Stripe invoice created');
+    logger.info(
+      { orgId, invoiceId: invoice.id, stripeInvoiceId: stripeInvoice.id },
+      'Stripe invoice created',
+    );
 
     return invoice;
   }
@@ -411,7 +421,10 @@ export class StripeService {
       },
     });
 
-    logger.info({ orgId: subscription.orgId, invoiceId: stripeInvoice.id }, 'Invoice payment succeeded');
+    logger.info(
+      { orgId: subscription.orgId, invoiceId: stripeInvoice.id },
+      'Invoice payment succeeded',
+    );
   }
 
   /**
@@ -442,7 +455,10 @@ export class StripeService {
       },
     });
 
-    logger.warn({ orgId: subscription.orgId, invoiceId: stripeInvoice.id }, 'Invoice payment failed');
+    logger.warn(
+      { orgId: subscription.orgId, invoiceId: stripeInvoice.id },
+      'Invoice payment failed',
+    );
   }
 
   /**
@@ -454,7 +470,10 @@ export class StripeService {
     });
 
     if (!subscription) {
-      logger.warn({ stripeSubscriptionId: stripeSubscription.id }, 'Subscription not found for update');
+      logger.warn(
+        { stripeSubscriptionId: stripeSubscription.id },
+        'Subscription not found for update',
+      );
       return;
     }
 
@@ -472,7 +491,10 @@ export class StripeService {
     // Clear cache
     await cache.del(`subscription:${subscription.orgId}`);
 
-    logger.info({ orgId: subscription.orgId, stripeSubscriptionId: stripeSubscription.id }, 'Subscription updated');
+    logger.info(
+      { orgId: subscription.orgId, stripeSubscriptionId: stripeSubscription.id },
+      'Subscription updated',
+    );
   }
 
   /**
@@ -484,7 +506,10 @@ export class StripeService {
     });
 
     if (!subscription) {
-      logger.warn({ stripeSubscriptionId: stripeSubscription.id }, 'Subscription not found for deletion');
+      logger.warn(
+        { stripeSubscriptionId: stripeSubscription.id },
+        'Subscription not found for deletion',
+      );
       return;
     }
 
@@ -506,7 +531,10 @@ export class StripeService {
     // Clear cache
     await cache.del(`subscription:${subscription.orgId}`);
 
-    logger.info({ orgId: subscription.orgId, stripeSubscriptionId: stripeSubscription.id }, 'Subscription deleted, downgraded to FREE');
+    logger.info(
+      { orgId: subscription.orgId, stripeSubscriptionId: stripeSubscription.id },
+      'Subscription deleted, downgraded to FREE',
+    );
   }
 
   /**

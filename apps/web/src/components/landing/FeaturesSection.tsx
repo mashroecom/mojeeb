@@ -2,7 +2,11 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import { MessageSquare, Heart, GitBranch, UserCheck, BarChart3, Clock } from 'lucide-react';
-import { useLandingPageContent, parseLandingFeatures, type LandingFeature } from '@/hooks/useLandingPage';
+import {
+  useLandingPageContent,
+  parseLandingFeatures,
+  type LandingFeature,
+} from '@/hooks/useLandingPage';
 import { ICON_MAP } from '@/components/admin/IconPicker';
 
 const featureIcons: Record<string, typeof MessageSquare> = {
@@ -16,7 +20,14 @@ const featureIcons: Record<string, typeof MessageSquare> = {
   availability: Clock,
 };
 
-const DEFAULT_FEATURE_KEYS = ['multichannel', 'emotion', 'routing', 'leads', 'analytics', 'availability'] as const;
+const DEFAULT_FEATURE_KEYS = [
+  'multichannel',
+  'emotion',
+  'routing',
+  'leads',
+  'analytics',
+  'availability',
+] as const;
 
 export function FeaturesSection() {
   const t = useTranslations('landing.features');
@@ -53,8 +64,12 @@ export function FeaturesSection() {
                     <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                       <Icon className="h-6 w-6" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">{(isAr ? feature.titleAr : feature.title) || feature.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{(isAr ? feature.descriptionAr : feature.description) || feature.description}</p>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {(isAr ? feature.titleAr : feature.title) || feature.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {(isAr ? feature.descriptionAr : feature.description) || feature.description}
+                    </p>
                   </div>
                 );
               })
@@ -69,7 +84,9 @@ export function FeaturesSection() {
                       <Icon className="h-6 w-6" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2">{t(`${key}.title`)}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{t(`${key}.description`)}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {t(`${key}.description`)}
+                    </p>
                   </div>
                 );
               })}

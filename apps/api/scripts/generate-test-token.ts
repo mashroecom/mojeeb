@@ -4,12 +4,13 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function generateTestToken() {
-  const JWT_SECRET = process.env.JWT_SECRET || '7WNY0G2duEskv+NXSlppbIZV1bHuiSIFbjy5rFLTE59t1GmwYQ/pp/zt4JDR/uzc';
+  const JWT_SECRET =
+    process.env.JWT_SECRET || '7WNY0G2duEskv+NXSlppbIZV1bHuiSIFbjy5rFLTE59t1GmwYQ/pp/zt4JDR/uzc';
   const ORG_ID = process.env.ORG_ID || 'test-org-10k';
 
   // Find or create test user
   let user = await prisma.user.findFirst({
-    where: { email: 'test@example.com' }
+    where: { email: 'test@example.com' },
   });
 
   if (!user) {
@@ -20,7 +21,7 @@ async function generateTestToken() {
         passwordHash: 'dummy-hash-for-testing',
         firstName: 'Test',
         lastName: 'User',
-      }
+      },
     });
   }
 
@@ -30,8 +31,8 @@ async function generateTestToken() {
       userId_orgId: {
         userId: user.id,
         orgId: ORG_ID,
-      }
-    }
+      },
+    },
   });
 
   if (!membership) {
@@ -41,7 +42,7 @@ async function generateTestToken() {
         userId: user.id,
         orgId: ORG_ID,
         role: 'OWNER',
-      }
+      },
     });
   }
 
@@ -52,7 +53,7 @@ async function generateTestToken() {
       email: user.email,
     },
     JWT_SECRET,
-    { expiresIn: '1h' }
+    { expiresIn: '1h' },
   );
 
   console.log('\n✅ Test token generated successfully!\n');

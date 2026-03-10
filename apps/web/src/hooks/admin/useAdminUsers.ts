@@ -6,16 +6,26 @@ import { api } from '@/lib/api';
 export const adminUserKeys = {
   users: (params?: object) => ['admin', 'users', params] as const,
   userDetail: (userId: string) => ['admin', 'users', userId] as const,
-  userApiKeys: (userId: string, page: number, limit: number) => ['admin', 'users', userId, 'api-keys', page, limit] as const,
-  userConversations: (userId: string, page: number, limit: number) => ['admin', 'users', userId, 'conversations', page, limit] as const,
-  userLeads: (userId: string, page: number, limit: number) => ['admin', 'users', userId, 'leads', page, limit] as const,
-  userNotifications: (userId: string, page: number, limit: number) => ['admin', 'users', userId, 'notifications', page, limit] as const,
-  userActions: (userId: string, page: number, limit: number) => ['admin', 'users', userId, 'actions', page, limit] as const,
+  userApiKeys: (userId: string, page: number, limit: number) =>
+    ['admin', 'users', userId, 'api-keys', page, limit] as const,
+  userConversations: (userId: string, page: number, limit: number) =>
+    ['admin', 'users', userId, 'conversations', page, limit] as const,
+  userLeads: (userId: string, page: number, limit: number) =>
+    ['admin', 'users', userId, 'leads', page, limit] as const,
+  userNotifications: (userId: string, page: number, limit: number) =>
+    ['admin', 'users', userId, 'notifications', page, limit] as const,
+  userActions: (userId: string, page: number, limit: number) =>
+    ['admin', 'users', userId, 'actions', page, limit] as const,
 };
 
 // ===== User Management =====
 
-export function useAdminUsers(params: { page: number; limit: number; search?: string; status?: string }) {
+export function useAdminUsers(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminUserKeys.users(params),
     queryFn: async () => {
@@ -45,7 +55,10 @@ export function useAdminUserDetail(userId: string) {
 export function useAdminUserApiKeys(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: adminUserKeys.userApiKeys(userId, page, limit),
-    queryFn: () => api.get(`/admin/users/${userId}/api-keys?page=${page}&limit=${limit}`).then(r => r.data.data),
+    queryFn: () =>
+      api
+        .get(`/admin/users/${userId}/api-keys?page=${page}&limit=${limit}`)
+        .then((r) => r.data.data),
     enabled: !!userId,
   });
 }
@@ -53,7 +66,10 @@ export function useAdminUserApiKeys(userId: string, page = 1, limit = 10) {
 export function useAdminUserConversations(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: adminUserKeys.userConversations(userId, page, limit),
-    queryFn: () => api.get(`/admin/users/${userId}/conversations?page=${page}&limit=${limit}`).then(r => r.data.data),
+    queryFn: () =>
+      api
+        .get(`/admin/users/${userId}/conversations?page=${page}&limit=${limit}`)
+        .then((r) => r.data.data),
     enabled: !!userId,
   });
 }
@@ -61,7 +77,8 @@ export function useAdminUserConversations(userId: string, page = 1, limit = 10) 
 export function useAdminUserLeads(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: adminUserKeys.userLeads(userId, page, limit),
-    queryFn: () => api.get(`/admin/users/${userId}/leads?page=${page}&limit=${limit}`).then(r => r.data.data),
+    queryFn: () =>
+      api.get(`/admin/users/${userId}/leads?page=${page}&limit=${limit}`).then((r) => r.data.data),
     enabled: !!userId,
   });
 }
@@ -69,7 +86,10 @@ export function useAdminUserLeads(userId: string, page = 1, limit = 10) {
 export function useAdminUserNotifications(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: adminUserKeys.userNotifications(userId, page, limit),
-    queryFn: () => api.get(`/admin/users/${userId}/notifications?page=${page}&limit=${limit}`).then(r => r.data.data),
+    queryFn: () =>
+      api
+        .get(`/admin/users/${userId}/notifications?page=${page}&limit=${limit}`)
+        .then((r) => r.data.data),
     enabled: !!userId,
   });
 }
@@ -77,7 +97,10 @@ export function useAdminUserNotifications(userId: string, page = 1, limit = 10) 
 export function useAdminUserActions(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: adminUserKeys.userActions(userId, page, limit),
-    queryFn: () => api.get(`/admin/audit-log?userId=${userId}&page=${page}&limit=${limit}`).then(r => r.data.data),
+    queryFn: () =>
+      api
+        .get(`/admin/audit-log?userId=${userId}&page=${page}&limit=${limit}`)
+        .then((r) => r.data.data),
     enabled: !!userId,
   });
 }
@@ -171,8 +194,19 @@ export function useResetUserPassword() {
 
 export function useSendUserEmail() {
   return useMutation({
-    mutationFn: async ({ userId, subject, body: emailBody }: { userId: string; subject: string; body: string }) => {
-      const { data } = await api.post(`/admin/users/${userId}/send-email`, { subject, body: emailBody });
+    mutationFn: async ({
+      userId,
+      subject,
+      body: emailBody,
+    }: {
+      userId: string;
+      subject: string;
+      body: string;
+    }) => {
+      const { data } = await api.post(`/admin/users/${userId}/send-email`, {
+        subject,
+        body: emailBody,
+      });
       return data.data;
     },
   });
@@ -190,7 +224,16 @@ export function useImpersonateUser() {
 export function useUpdateUserProfile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ userId, ...updates }: { userId: string; firstName?: string; lastName?: string; email?: string; newPassword?: string }) => {
+    mutationFn: async ({
+      userId,
+      ...updates
+    }: {
+      userId: string;
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      newPassword?: string;
+    }) => {
       const { data } = await api.patch(`/admin/users/${userId}/profile`, updates);
       return data.data;
     },

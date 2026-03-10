@@ -3,12 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDateTime } from '@/lib/dateFormat';
-import {
-  useAdminFiles,
-  useAdminFileStats,
-  useDeleteFile,
-  useUploadFile,
-} from '@/hooks/useAdmin';
+import { useAdminFiles, useAdminFileStats, useDeleteFile, useUploadFile } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import { AdminPagination } from '@/components/admin/AdminPagination';
@@ -35,7 +30,6 @@ function formatBytes(bytes: number) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
-
 
 // typeOptions moved inside component to use translations
 
@@ -76,11 +70,21 @@ function StatSkeleton() {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-40 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-16 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-16 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-7 w-16 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-40 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-16 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-16 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-7 w-16 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -174,17 +178,10 @@ export default function FilesPage() {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t('subtitle')}
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
         </div>
         <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            onChange={handleFileSelect}
-          />
+          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadMutation.isPending}
@@ -202,23 +199,20 @@ export default function FilesPage() {
 
       {/* Drop zone */}
       <div
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         className={cn(
           'mb-6 rounded-lg border-2 border-dashed p-6 text-center transition-colors',
-          isDragging
-            ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/20',
+          isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/20',
         )}
       >
         <Upload className="mx-auto h-8 w-8 text-muted-foreground/50 mb-2" />
-        <p className="text-sm text-muted-foreground">
-          {t('dragDrop')}
-        </p>
-        <p className="text-xs text-muted-foreground/70 mt-1">
-          {t('maxSize')}
-        </p>
+        <p className="text-sm text-muted-foreground">{t('dragDrop')}</p>
+        <p className="text-xs text-muted-foreground/70 mt-1">{t('maxSize')}</p>
       </div>
 
       {/* Stats Bar */}
@@ -341,8 +335,7 @@ export default function FilesPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
+              {isLoading && Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
 
               {!isLoading && !isError && files.length === 0 && (
                 <tr>
@@ -356,7 +349,10 @@ export default function FilesPage() {
               {!isLoading &&
                 !isError &&
                 files.map((file) => (
-                  <tr key={file.relativePath} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+                  <tr
+                    key={file.relativePath}
+                    className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {getFileIcon(file.mimeType)}
@@ -377,15 +373,17 @@ export default function FilesPage() {
                       {fmtDateTime(file.modifiedAt, locale)}
                     </td>
                     <td className="px-4 py-3">
-                      {!file.isDirectory && (
-                        deleteConfirmPath === file.relativePath ? (
+                      {!file.isDirectory &&
+                        (deleteConfirmPath === file.relativePath ? (
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleDelete(file.relativePath)}
                               disabled={deleteMutation.isPending}
                               className="inline-flex items-center gap-1 rounded-lg bg-destructive px-2 py-1 text-[10px] font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
                             >
-                              {deleteMutation.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+                              {deleteMutation.isPending && (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              )}
                               {tc('confirm')}
                             </button>
                             <button
@@ -403,8 +401,7 @@ export default function FilesPage() {
                             <Trash2 className="h-3 w-3" />
                             {tc('delete')}
                           </button>
-                        )
-                      )}
+                        ))}
                     </td>
                   </tr>
                 ))}
@@ -415,7 +412,15 @@ export default function FilesPage() {
 
       {/* Pagination */}
       {!isLoading && (
-        <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          previousLabel={tc('previous')}
+          nextLabel={tc('next')}
+          pageLabel={tc('page')}
+          ofLabel={tc('of')}
+        />
       )}
     </div>
   );

@@ -74,7 +74,8 @@ export function SpendingCapSection({
           <div className="flex gap-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3 text-sm">
             <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
             <p className="text-blue-900 dark:text-blue-200">
-              {t('spendingCapDescription') || 'Set a maximum limit for overage charges. Once reached, AI features will be paused until the next billing cycle.'}
+              {t('spendingCapDescription') ||
+                'Set a maximum limit for overage charges. Once reached, AI features will be paused until the next billing cycle.'}
             </p>
           </div>
 
@@ -85,7 +86,8 @@ export function SpendingCapSection({
                 {t('spendingCapEnabled') || 'Enable Spending Cap'}
               </label>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {t('spendingCapEnabledHint') || 'Protect your budget from unexpected overage charges'}
+                {t('spendingCapEnabledHint') ||
+                  'Protect your budget from unexpected overage charges'}
               </p>
             </div>
             <button
@@ -124,15 +126,19 @@ export function SpendingCapSection({
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value)}
                   placeholder="100.00"
-                  className={cn(inputClass, 'pl-7', error && 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500')}
+                  className={cn(
+                    inputClass,
+                    'pl-7',
+                    error &&
+                      'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500',
+                  )}
                   dir="ltr"
                 />
               </div>
-              {error && (
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{error}</p>
-              )}
+              {error && <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{error}</p>}
               <p className="text-xs text-muted-foreground mt-1.5">
-                {t('spendingCapAmountHint') || 'Enter the maximum amount you want to spend on overages per billing cycle'}
+                {t('spendingCapAmountHint') ||
+                  'Enter the maximum amount you want to spend on overages per billing cycle'}
               </p>
             </div>
           )}

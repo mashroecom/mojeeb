@@ -81,7 +81,11 @@ export default function LeadsPage() {
     };
   }, [searchInput]);
 
-  const { data: leadsData, isLoading, isError } = useLeads({
+  const {
+    data: leadsData,
+    isLoading,
+    isError,
+  } = useLeads({
     page,
     limit: 20,
     status: statusFilter,
@@ -264,218 +268,284 @@ export default function LeadsPage() {
 
   return (
     <>
-    <div>
-      <Breadcrumb
-        items={[
-          { label: tb('dashboard'), href: '/dashboard' },
-          { label: ts('leads') },
-        ]}
-        className="mb-4"
-      />
+      <div>
+        <Breadcrumb
+          items={[{ label: tb('dashboard'), href: '/dashboard' }, { label: ts('leads') }]}
+          className="mb-4"
+        />
 
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{t('title')}</h1>
-            <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {stats && (
-              <div className="text-sm text-muted-foreground">
-                {stats.total} {t('total')}
-              </div>
-            )}
-            <button
-              onClick={openCreate}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              {t('createLead')}
-            </button>
-            <button
-              onClick={handleExport}
-              disabled={!leads.length}
-              className="inline-flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
-            >
-              <Download className="h-4 w-4" />
-              {t('export')}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Search + Filters Row */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        {/* Search Input */}
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={t('searchLeads')}
-            className="w-full rounded-lg border bg-card ps-9 pe-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-          />
-        </div>
-
-        {/* Confidence Slider */}
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-          <label className="text-xs text-muted-foreground whitespace-nowrap">
-            {t('minConfidence')}
-          </label>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={10}
-            value={minConfidence}
-            onChange={(e) => setMinConfidence(Number(e.target.value))}
-            className="w-24 accent-primary"
-          />
-          <span className="text-xs font-medium text-muted-foreground w-8">
-            {minConfidence}%
-          </span>
-        </div>
-
-        {/* Source Filter */}
-        {distinctSources.length > 0 && (
-          <select
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-            className="rounded-lg border bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-          >
-            <option value="">{t('allSources')}</option>
-            {distinctSources.map((src) => (
-              <option key={src} value={src}>
-                {sourceLabel(src)}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
-      {/* Status Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key ?? 'all'}
-            onClick={() => {
-              setStatusFilter(tab.key);
-              setPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              statusFilter === tab.key
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            {tab.label}
-            {tab.count !== undefined && (
-              <span className="ms-1.5 text-xs opacity-70">({tab.count})</span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Error state */}
-      {!isLoading && isError && (
-        <div className="rounded-xl border bg-card p-12 shadow-sm">
-          <div className="flex flex-col items-center justify-center text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-              <AlertCircle className="h-6 w-6 text-destructive" />
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">{t('title')}</h1>
+              <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
             </div>
-            <p className="font-medium">{tc('somethingWentWrong')}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{tc('errorDescription')}</p>
+            <div className="flex items-center gap-3">
+              {stats && (
+                <div className="text-sm text-muted-foreground">
+                  {stats.total} {t('total')}
+                </div>
+              )}
+              <button
+                onClick={openCreate}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                {t('createLead')}
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={!leads.length}
+                className="inline-flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <Download className="h-4 w-4" />
+                {t('export')}
+              </button>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Table / Cards */}
-      {isLoading ? (
-        <div className="rounded-xl border bg-card shadow-sm">
-          <div className="p-6 space-y-4 animate-pulse">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-12 rounded bg-muted" />
-            ))}
+        {/* Search + Filters Row */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={t('searchLeads')}
+              className="w-full rounded-lg border bg-card ps-9 pe-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            />
           </div>
-        </div>
-      ) : isError ? null : leads.length === 0 ? (
-        <div className="rounded-xl border bg-card p-12 shadow-sm">
-          <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
-            <Users className="mb-3 h-12 w-12 opacity-30" />
-            <p className="text-sm">{t('noLeads')}</p>
+
+          {/* Confidence Slider */}
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+            <label className="text-xs text-muted-foreground whitespace-nowrap">
+              {t('minConfidence')}
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={10}
+              value={minConfidence}
+              onChange={(e) => setMinConfidence(Number(e.target.value))}
+              className="w-24 accent-primary"
+            />
+            <span className="text-xs font-medium text-muted-foreground w-8">{minConfidence}%</span>
           </div>
+
+          {/* Source Filter */}
+          {distinctSources.length > 0 && (
+            <select
+              value={sourceFilter}
+              onChange={(e) => setSourceFilter(e.target.value)}
+              className="rounded-lg border bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            >
+              <option value="">{t('allSources')}</option>
+              {distinctSources.map((src) => (
+                <option key={src} value={src}>
+                  {sourceLabel(src)}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
-      ) : (
-        <>
-          {/* Desktop Table */}
-          <div className="hidden md:block rounded-xl border bg-card shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
-                    {t('name')}
-                  </th>
-                  <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
-                    {t('email')}
-                  </th>
-                  <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
-                    {t('phone')}
-                  </th>
-                  <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
-                    {t('confidence')}
-                  </th>
-                  <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
-                    {t('source')}
-                  </th>
-                  <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
-                    {t('status')}
-                  </th>
-                  <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
-                    {t('date')}
-                  </th>
-                  <th className="px-4 py-3 text-end text-xs font-medium text-muted-foreground uppercase">
-                    {t('actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {leads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-muted/50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium">
-                      {lead.name || t('unknown')}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {lead.email || '\u2014'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground" dir="ltr">
-                      {lead.phone || '\u2014'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-16 rounded-full bg-muted">
-                          <div
-                            className={`h-2 rounded-full ${confidenceColor(lead.confidence)}`}
-                            style={{ width: `${Math.round(lead.confidence * 100)}%` }}
-                          />
+
+        {/* Status Tabs */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key ?? 'all'}
+              onClick={() => {
+                setStatusFilter(tab.key);
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === tab.key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {tab.label}
+              {tab.count !== undefined && (
+                <span className="ms-1.5 text-xs opacity-70">({tab.count})</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Error state */}
+        {!isLoading && isError && (
+          <div className="rounded-xl border bg-card p-12 shadow-sm">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                <AlertCircle className="h-6 w-6 text-destructive" />
+              </div>
+              <p className="font-medium">{tc('somethingWentWrong')}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{tc('errorDescription')}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Table / Cards */}
+        {isLoading ? (
+          <div className="rounded-xl border bg-card shadow-sm">
+            <div className="p-6 space-y-4 animate-pulse">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-12 rounded bg-muted" />
+              ))}
+            </div>
+          </div>
+        ) : isError ? null : leads.length === 0 ? (
+          <div className="rounded-xl border bg-card p-12 shadow-sm">
+            <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
+              <Users className="mb-3 h-12 w-12 opacity-30" />
+              <p className="text-sm">{t('noLeads')}</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Desktop Table */}
+            <div className="hidden md:block rounded-xl border bg-card shadow-sm overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
+                      {t('name')}
+                    </th>
+                    <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
+                      {t('email')}
+                    </th>
+                    <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
+                      {t('phone')}
+                    </th>
+                    <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
+                      {t('confidence')}
+                    </th>
+                    <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
+                      {t('source')}
+                    </th>
+                    <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
+                      {t('status')}
+                    </th>
+                    <th className="px-4 py-3 text-start text-xs font-medium text-muted-foreground uppercase">
+                      {t('date')}
+                    </th>
+                    <th className="px-4 py-3 text-end text-xs font-medium text-muted-foreground uppercase">
+                      {t('actions')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {leads.map((lead) => (
+                    <tr key={lead.id} className="hover:bg-muted/50 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium">{lead.name || t('unknown')}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {lead.email || '\u2014'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground" dir="ltr">
+                        {lead.phone || '\u2014'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-16 rounded-full bg-muted">
+                            <div
+                              className={`h-2 rounded-full ${confidenceColor(lead.confidence)}`}
+                              style={{ width: `${Math.round(lead.confidence * 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {Math.round(lead.confidence * 100)}%
+                          </span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {Math.round(lead.confidence * 100)}%
-                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {lead.source ? sourceLabel(lead.source) : '\u2014'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={lead.status}
+                          onChange={(e) =>
+                            handleStatusChange(lead.id, e.target.value as Lead['status'])
+                          }
+                          className={`rounded-lg px-2 py-1 text-xs font-medium border-0 cursor-pointer ${STATUS_COLORS[lead.status]}`}
+                        >
+                          {ALL_STATUSES.map((s) => (
+                            <option key={s} value={s}>
+                              {statusLabel(s)}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {fmtDate(lead.createdAt, locale)}
+                      </td>
+                      <td className="px-4 py-3 text-end">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEdit(lead)}
+                            className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            title={t('editLead')}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(lead.id)}
+                            className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {leads.map((lead) => (
+                <div key={lead.id} className="rounded-xl border bg-card p-4 shadow-sm">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="font-medium">{lead.name || t('unknown')}</p>
+                      {lead.email && <p className="text-sm text-muted-foreground">{lead.email}</p>}
+                      {lead.phone && (
+                        <p className="text-sm text-muted-foreground" dir="ltr">
+                          {lead.phone}
+                        </p>
+                      )}
+                    </div>
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[lead.status]}`}
+                    >
+                      {statusLabel(lead.status)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-16 rounded-full bg-muted">
+                        <div
+                          className={`h-2 rounded-full ${confidenceColor(lead.confidence)}`}
+                          style={{ width: `${Math.round(lead.confidence * 100)}%` }}
+                        />
                       </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {lead.source ? sourceLabel(lead.source) : '\u2014'}
-                    </td>
-                    <td className="px-4 py-3">
+                      <span className="text-xs text-muted-foreground">
+                        {Math.round(lead.confidence * 100)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <select
                         value={lead.status}
                         onChange={(e) =>
                           handleStatusChange(lead.id, e.target.value as Lead['status'])
                         }
-                        className={`rounded-lg px-2 py-1 text-xs font-medium border-0 cursor-pointer ${STATUS_COLORS[lead.status]}`}
+                        className="rounded-lg px-2 py-1 text-xs border bg-background"
                       >
                         {ALL_STATUSES.map((s) => (
                           <option key={s} value={s}>
@@ -483,250 +553,191 @@ export default function LeadsPage() {
                           </option>
                         ))}
                       </select>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {fmtDate(lead.createdAt, locale)}
-                    </td>
-                    <td className="px-4 py-3 text-end">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openEdit(lead)}
-                          className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                          title={t('editLead')}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(lead.id)}
-                          className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards */}
-          <div className="md:hidden space-y-3">
-            {leads.map((lead) => (
-              <div key={lead.id} className="rounded-xl border bg-card p-4 shadow-sm">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="font-medium">{lead.name || t('unknown')}</p>
-                    {lead.email && (
-                      <p className="text-sm text-muted-foreground">{lead.email}</p>
-                    )}
-                    {lead.phone && (
-                      <p className="text-sm text-muted-foreground" dir="ltr">
-                        {lead.phone}
-                      </p>
-                    )}
-                  </div>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[lead.status]}`}
-                  >
-                    {statusLabel(lead.status)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-16 rounded-full bg-muted">
-                      <div
-                        className={`h-2 rounded-full ${confidenceColor(lead.confidence)}`}
-                        style={{ width: `${Math.round(lead.confidence * 100)}%` }}
-                      />
+                      <button
+                        onClick={() => openEdit(lead)}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(lead.id)}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {Math.round(lead.confidence * 100)}%
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={lead.status}
-                      onChange={(e) =>
-                        handleStatusChange(lead.id, e.target.value as Lead['status'])
-                      }
-                      className="rounded-lg px-2 py-1 text-xs border bg-background"
-                    >
-                      {ALL_STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {statusLabel(s)}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => openEdit(lead)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(lead.id)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {pagination && pagination.totalPages > 1 && (
-            <Pagination
-              page={page}
-              totalPages={pagination.totalPages}
-              onPageChange={setPage}
-              className="mt-6"
-            />
-          )}
-        </>
-      )}
-    </div>
-
-    {/* Create / Edit Lead Dialog */}
-    {showCreateDialog && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-card rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
-          {/* Dialog Header */}
-          <div className="flex items-center justify-between p-5 border-b">
-            <h2 className="text-lg font-semibold">
-              {editingLead ? t('editLead') : t('createLead')}
-            </h2>
-            <button
-              onClick={closeDialog}
-              className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Dialog Body */}
-          <div className="p-5 space-y-4">
-            {/* Name */}
-            <div>
-              <label htmlFor="lead-name" className="block text-sm font-medium mb-1.5">{t('name')}</label>
-              <input
-                id="lead-name"
-                type="text"
-                value={form.name ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder={t('namePlaceholder')}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-              />
+              ))}
             </div>
 
-            {/* Email */}
-            <div>
-              <label htmlFor="lead-email" className="block text-sm font-medium mb-1.5">{t('email')}</label>
-              <input
-                id="lead-email"
-                type="email"
-                value={form.email ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                placeholder="email@example.com"
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                dir="ltr"
+            {/* Pagination */}
+            {pagination && pagination.totalPages > 1 && (
+              <Pagination
+                page={page}
+                totalPages={pagination.totalPages}
+                onPageChange={setPage}
+                className="mt-6"
               />
-            </div>
+            )}
+          </>
+        )}
+      </div>
 
-            {/* Phone */}
-            <div>
-              <label htmlFor="lead-phone" className="block text-sm font-medium mb-1.5">{t('phone')}</label>
-              <input
-                id="lead-phone"
-                type="tel"
-                value={form.phone ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                placeholder="+20 1xx xxx xxxx"
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                dir="ltr"
-              />
-            </div>
-
-            {/* Company */}
-            <div>
-              <label htmlFor="lead-company" className="block text-sm font-medium mb-1.5">{t('company')}</label>
-              <input
-                id="lead-company"
-                type="text"
-                value={form.company ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
-                placeholder={t('companyPlaceholder')}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-              />
-            </div>
-
-            {/* Source */}
-            <div>
-              <label htmlFor="lead-source" className="block text-sm font-medium mb-1.5">{t('source')}</label>
-              <input
-                id="lead-source"
-                type="text"
-                value={form.source ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
-                placeholder={t('sourcePlaceholder')}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-              />
-            </div>
-
-            {/* Status */}
-            <div>
-              <label htmlFor="lead-status" className="block text-sm font-medium mb-1.5">{t('status')}</label>
-              <select
-                id="lead-status"
-                value={form.status ?? 'NEW'}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as Lead['status'] }))}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      {/* Create / Edit Lead Dialog */}
+      {showCreateDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between p-5 border-b">
+              <h2 className="text-lg font-semibold">
+                {editingLead ? t('editLead') : t('createLead')}
+              </h2>
+              <button
+                onClick={closeDialog}
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors"
               >
-                {ALL_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {statusLabel(s)}
-                  </option>
-                ))}
-              </select>
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            {/* Notes */}
-            <div>
-              <label htmlFor="lead-notes" className="block text-sm font-medium mb-1.5">{t('notes')}</label>
-              <textarea
-                id="lead-notes"
-                value={form.notes ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                placeholder={t('notesPlaceholder')}
-                rows={3}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 resize-none"
-              />
-            </div>
-          </div>
+            {/* Dialog Body */}
+            <div className="p-5 space-y-4">
+              {/* Name */}
+              <div>
+                <label htmlFor="lead-name" className="block text-sm font-medium mb-1.5">
+                  {t('name')}
+                </label>
+                <input
+                  id="lead-name"
+                  type="text"
+                  value={form.name ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder={t('namePlaceholder')}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                />
+              </div>
 
-          {/* Dialog Footer */}
-          <div className="flex items-center justify-end gap-3 p-5 border-t">
-            <button
-              onClick={closeDialog}
-              className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-            >
-              {t('cancel')}
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              {isSaving ? '...' : editingLead ? t('saveChanges') : t('createLead')}
-            </button>
+              {/* Email */}
+              <div>
+                <label htmlFor="lead-email" className="block text-sm font-medium mb-1.5">
+                  {t('email')}
+                </label>
+                <input
+                  id="lead-email"
+                  type="email"
+                  value={form.email ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  placeholder="email@example.com"
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  dir="ltr"
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label htmlFor="lead-phone" className="block text-sm font-medium mb-1.5">
+                  {t('phone')}
+                </label>
+                <input
+                  id="lead-phone"
+                  type="tel"
+                  value={form.phone ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                  placeholder="+20 1xx xxx xxxx"
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  dir="ltr"
+                />
+              </div>
+
+              {/* Company */}
+              <div>
+                <label htmlFor="lead-company" className="block text-sm font-medium mb-1.5">
+                  {t('company')}
+                </label>
+                <input
+                  id="lead-company"
+                  type="text"
+                  value={form.company ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
+                  placeholder={t('companyPlaceholder')}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                />
+              </div>
+
+              {/* Source */}
+              <div>
+                <label htmlFor="lead-source" className="block text-sm font-medium mb-1.5">
+                  {t('source')}
+                </label>
+                <input
+                  id="lead-source"
+                  type="text"
+                  value={form.source ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
+                  placeholder={t('sourcePlaceholder')}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                />
+              </div>
+
+              {/* Status */}
+              <div>
+                <label htmlFor="lead-status" className="block text-sm font-medium mb-1.5">
+                  {t('status')}
+                </label>
+                <select
+                  id="lead-status"
+                  value={form.status ?? 'NEW'}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, status: e.target.value as Lead['status'] }))
+                  }
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                >
+                  {ALL_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {statusLabel(s)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label htmlFor="lead-notes" className="block text-sm font-medium mb-1.5">
+                  {t('notes')}
+                </label>
+                <textarea
+                  id="lead-notes"
+                  value={form.notes ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                  placeholder={t('notesPlaceholder')}
+                  rows={3}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Dialog Footer */}
+            <div className="flex items-center justify-end gap-3 p-5 border-t">
+              <button
+                onClick={closeDialog}
+                className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {isSaving ? '...' : editingLead ? t('saveChanges') : t('createLead')}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
-    <ConfirmDialog {...confirmProps} />
+      <ConfirmDialog {...confirmProps} />
     </>
   );
 }

@@ -34,9 +34,7 @@ export function useApiKeys() {
   return useQuery({
     queryKey: apiKeyKeys.list(orgId!),
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<ApiKey[]>>(
-        `/organizations/${orgId}/api-keys`,
-      );
+      const { data } = await api.get<ApiResponse<ApiKey[]>>(`/organizations/${orgId}/api-keys`);
       return data.data;
     },
     enabled: !!orgId,

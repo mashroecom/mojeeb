@@ -40,7 +40,13 @@ export function useAdminAnnouncements(params: { page: number; limit: number }) {
 export function useCreateAnnouncement() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { title: string; body: string; type?: string; startsAt?: string; endsAt?: string }) => {
+    mutationFn: async (body: {
+      title: string;
+      body: string;
+      type?: string;
+      startsAt?: string;
+      endsAt?: string;
+    }) => {
       const { data } = await api.post('/admin/announcements', body);
       return data.data;
     },
@@ -57,7 +63,16 @@ export function useCreateAnnouncement() {
 export function useUpdateAnnouncement() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...body }: { id: string; title?: string; body?: string; type?: string; isActive?: boolean }) => {
+    mutationFn: async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      title?: string;
+      body?: string;
+      type?: string;
+      isActive?: boolean;
+    }) => {
       const { data } = await api.patch(`/admin/announcements/${id}`, body);
       return data.data;
     },

@@ -11,13 +11,7 @@ import {
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
-import {
-  Bell,
-  Trash2,
-  Loader2,
-  CheckCheck,
-  Eye,
-} from 'lucide-react';
+import { Bell, Trash2, Loader2, CheckCheck, Eye } from 'lucide-react';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 
 // ---------------------------------------------------------------------------
@@ -36,7 +30,6 @@ interface Notification {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
 
 const typeBadge: Record<string, string> = {
   NEW_USER: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -128,9 +121,7 @@ export default function NotificationsPage() {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t('subtitle')}
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
         </div>
         <button
           onClick={handleMarkAllRead}
@@ -232,9 +223,7 @@ export default function NotificationsPage() {
                   >
                     {typeLabel(n.type)}
                   </span>
-                  {!n.isRead && (
-                    <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                  )}
+                  {!n.isRead && <span className="h-2 w-2 rounded-full bg-primary shrink-0" />}
                 </div>
                 <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
                   {fmtDateTime(n.createdAt, locale)}
@@ -242,14 +231,17 @@ export default function NotificationsPage() {
               </div>
 
               {/* Title */}
-              <h3 className={cn('text-sm mb-1', !n.isRead ? 'font-semibold' : 'font-medium text-muted-foreground')}>
+              <h3
+                className={cn(
+                  'text-sm mb-1',
+                  !n.isRead ? 'font-semibold' : 'font-medium text-muted-foreground',
+                )}
+              >
                 {n.title}
               </h3>
 
               {/* Body */}
-              <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                {n.body}
-              </p>
+              <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{n.body}</p>
 
               {/* Actions */}
               <div className="flex items-center justify-end gap-2 border-t pt-3">
@@ -297,7 +289,17 @@ export default function NotificationsPage() {
       )}
 
       {/* Pagination */}
-      {!isLoading && <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />}
+      {!isLoading && (
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          previousLabel={tc('previous')}
+          nextLabel={tc('next')}
+          pageLabel={tc('page')}
+          ofLabel={tc('of')}
+        />
+      )}
     </div>
   );
 }

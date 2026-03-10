@@ -41,9 +41,7 @@ export function useUserDetailActions(
   function handleToggleSuspension() {
     if (!user) return;
     const isSuspended = !!user.suspendedAt;
-    const message = isSuspended
-      ? t('users.confirmActivate')
-      : t('users.confirmSuspend');
+    const message = isSuspended ? t('users.confirmActivate') : t('users.confirmSuspend');
     setConfirmDialog({
       open: true,
       title: isSuspended ? t('users.activate') : t('users.suspend'),
@@ -77,12 +75,19 @@ export function useUserDetailActions(
     setConfirmDialog({
       open: true,
       title: user.emailVerified ? t('userActions.unverifyEmail') : t('userActions.verifyEmail'),
-      message: user.emailVerified ? t('userActions.confirmUnverifyEmail') : t('userActions.confirmVerifyEmail'),
+      message: user.emailVerified
+        ? t('userActions.confirmUnverifyEmail')
+        : t('userActions.confirmVerifyEmail'),
       variant: user.emailVerified ? 'danger' : 'default',
       onConfirm: () => {
         verifyEmail.mutate(userId, {
           onSuccess: () =>
-            addToast('success', user.emailVerified ? t('userActions.emailUnverified') : t('userActions.emailVerifiedSuccess')),
+            addToast(
+              'success',
+              user.emailVerified
+                ? t('userActions.emailUnverified')
+                : t('userActions.emailVerifiedSuccess'),
+            ),
         });
       },
     });
@@ -105,9 +110,7 @@ export function useUserDetailActions(
           onSuccess: () =>
             addToast(
               'success',
-              user.isSuperAdmin
-                ? t('userActions.demoted')
-                : t('userActions.promoted'),
+              user.isSuperAdmin ? t('userActions.demoted') : t('userActions.promoted'),
             ),
         });
       },
@@ -122,8 +125,7 @@ export function useUserDetailActions(
       variant: 'danger',
       onConfirm: () => {
         resetPassword.mutate(userId, {
-          onSuccess: () =>
-            addToast('success', t('userActions.resetPasswordSuccess')),
+          onSuccess: () => addToast('success', t('userActions.resetPasswordSuccess')),
         });
       },
     });

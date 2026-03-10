@@ -14,7 +14,16 @@ export const adminAuditKeys = {
 };
 
 // Audit Log
-export function useAdminAuditLog(params: { page: number; limit: number; action?: string; targetType?: string; userId?: string; targetId?: string; startDate?: string; endDate?: string }) {
+export function useAdminAuditLog(params: {
+  page: number;
+  limit: number;
+  action?: string;
+  targetType?: string;
+  userId?: string;
+  targetId?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
   return useQuery({
     queryKey: adminAuditKeys.auditLog(params),
     queryFn: async () => {
@@ -35,7 +44,15 @@ export function useAdminAuditLog(params: { page: number; limit: number; action?:
 }
 
 // ===== Login Activity =====
-export function useAdminLoginActivity(params: { page: number; limit: number; email?: string; ip?: string; success?: string; startDate?: string; endDate?: string }) {
+export function useAdminLoginActivity(params: {
+  page: number;
+  limit: number;
+  email?: string;
+  ip?: string;
+  success?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
   return useQuery({
     queryKey: adminAuditKeys.loginActivity(params),
     queryFn: async () => {

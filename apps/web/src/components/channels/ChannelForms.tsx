@@ -156,17 +156,11 @@ export function WhatsAppForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(
-      { phoneNumberId, accessToken, appSecret, verifyToken },
-      `WhatsApp - ${phoneNumberId}`,
-    );
+    onSubmit({ phoneNumberId, accessToken, appSecret, verifyToken }, `WhatsApp - ${phoneNumberId}`);
   };
 
   const isValid =
-    phoneNumberId.trim() &&
-    accessToken.trim() &&
-    appSecret.trim() &&
-    verifyToken.trim();
+    phoneNumberId.trim() && accessToken.trim() && appSecret.trim() && verifyToken.trim();
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -376,9 +370,7 @@ export function WebChatForm({
 
       {/* Color Picker */}
       <div>
-        <label className="mb-1.5 block text-sm font-medium">
-          {t('primaryColor')}
-        </label>
+        <label className="mb-1.5 block text-sm font-medium">{t('primaryColor')}</label>
         <div className="flex items-center gap-3">
           <input
             type="color"
@@ -407,9 +399,7 @@ export function WebChatForm({
 
       {/* Greeting Message */}
       <div>
-        <label className="mb-1.5 block text-sm font-medium">
-          {t('greeting')}
-        </label>
+        <label className="mb-1.5 block text-sm font-medium">{t('greeting')}</label>
         <textarea
           value={greeting}
           onChange={(e) => setGreeting(e.target.value)}
@@ -421,9 +411,7 @@ export function WebChatForm({
 
       {/* Widget Position */}
       <div>
-        <label className="mb-1.5 block text-sm font-medium">
-          {t('widgetPosition')}
-        </label>
+        <label className="mb-1.5 block text-sm font-medium">{t('widgetPosition')}</label>
         <select
           value={position}
           onChange={(e) => setPosition(e.target.value)}
@@ -465,7 +453,10 @@ export function WebChatSettingsPanel({
   isPending,
 }: {
   channel: Channel;
-  onSave: (channelId: string, settings: { primaryColor?: string; greeting?: string; position?: string }) => void;
+  onSave: (
+    channelId: string,
+    settings: { primaryColor?: string; greeting?: string; position?: string },
+  ) => void;
   isPending: boolean;
 }) {
   const t = useTranslations('dashboard.channels');
@@ -590,11 +581,7 @@ export function ConnectModal({
   open: boolean;
   onClose: () => void;
   channelKey: string;
-  onConnect: (
-    type: ChannelType,
-    credentials: Record<string, string>,
-    name: string,
-  ) => void;
+  onConnect: (type: ChannelType, credentials: Record<string, string>, name: string) => void;
   isPending: boolean;
 }) {
   const t = useTranslations('dashboard.channels');
@@ -614,18 +601,14 @@ export function ConnectModal({
 
   return (
     <Modal open={open} onClose={onClose} title={t(titleKey)}>
-      {channelKey === 'whatsapp' && (
-        <WhatsAppForm onSubmit={handleSubmit} isPending={isPending} />
-      )}
+      {channelKey === 'whatsapp' && <WhatsAppForm onSubmit={handleSubmit} isPending={isPending} />}
       {channelKey === 'messenger' && (
         <MessengerForm onSubmit={handleSubmit} isPending={isPending} />
       )}
       {channelKey === 'instagram' && (
         <InstagramForm onSubmit={handleSubmit} isPending={isPending} />
       )}
-      {channelKey === 'webchat' && (
-        <WebChatForm onSubmit={handleSubmit} isPending={isPending} />
-      )}
+      {channelKey === 'webchat' && <WebChatForm onSubmit={handleSubmit} isPending={isPending} />}
     </Modal>
   );
 }
@@ -652,9 +635,7 @@ export function DisconnectModal({
       <div className="space-y-4">
         <div className="flex items-start gap-3 rounded-lg bg-yellow-50 p-3 dark:bg-yellow-950/40">
           <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
-          <p className="text-sm text-yellow-700 dark:text-yellow-300">
-            {t('disconnectConfirm')}
-          </p>
+          <p className="text-sm text-yellow-700 dark:text-yellow-300">{t('disconnectConfirm')}</p>
         </div>
         <div className="flex gap-3 justify-end">
           <button

@@ -1,19 +1,11 @@
-import {
-  Bot,
-  User,
-  Headphones,
-  Hash,
-} from 'lucide-react';
+import { Bot, User, Headphones, Hash } from 'lucide-react';
 import type { Conversation } from '@/hooks/useConversations';
 
 export const API_SERVER_URL = (
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'
 ).replace(/\/api\/v1$/, '');
 
-export function getMediaUrl(
-  content: string,
-  metadata?: { fileUrl?: string } | null,
-): string {
+export function getMediaUrl(content: string, metadata?: { fileUrl?: string } | null): string {
   const url =
     content.startsWith('/uploads/') || content.startsWith('http')
       ? content
@@ -72,8 +64,7 @@ export const EMOTION_EMOJI: Record<string, string> = {
 };
 
 export function emotionBadgeClass(emotion: string | null | undefined): string {
-  if (!emotion)
-    return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+  if (!emotion) return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
   return (
     EMOTION_COLORS[emotion.toLowerCase()] ??
     'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
@@ -158,9 +149,7 @@ export function getConversationSummary(conv: Conversation): string {
   if (conv.summary) return conv.summary;
   const lastMsg = conv.messages?.[0];
   if (lastMsg) {
-    return lastMsg.content.length > 80
-      ? lastMsg.content.slice(0, 80) + '...'
-      : lastMsg.content;
+    return lastMsg.content.length > 80 ? lastMsg.content.slice(0, 80) + '...' : lastMsg.content;
   }
   return '';
 }

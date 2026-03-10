@@ -32,7 +32,7 @@ router.get('/health', async (_req: Request, res: Response, next: NextFunction) =
     try {
       const queueModule = await import('../../queues');
       const anyQueue = Object.values(queueModule).find(
-        (v) => v && typeof (v as any).getJobCounts === 'function'
+        (v) => v && typeof (v as any).getJobCounts === 'function',
       );
       if (anyQueue) {
         await (anyQueue as any).getJobCounts('waiting');
@@ -53,16 +53,25 @@ router.get('/health', async (_req: Request, res: Response, next: NextFunction) =
 // GET /queues - BullMQ queue stats
 router.get('/queues', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const result: Record<string, { waiting: number; active: number; completed: number; failed: number; delayed: number }> = {};
+    const result: Record<
+      string,
+      { waiting: number; active: number; completed: number; failed: number; delayed: number }
+    > = {};
 
     try {
       const queueModule = await import('../../queues');
       const queueEntries = Object.entries(queueModule).filter(
-        ([, value]) => value && typeof (value as any).getJobCounts === 'function'
+        ([, value]) => value && typeof (value as any).getJobCounts === 'function',
       );
 
       for (const [name, queue] of queueEntries) {
-        const counts = await (queue as any).getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed');
+        const counts = await (queue as any).getJobCounts(
+          'waiting',
+          'active',
+          'completed',
+          'failed',
+          'delayed',
+        );
         // Use a display-friendly name (strip "Queue" suffix from export name)
         const displayName = name.replace(/Queue$/, '');
         result[displayName] = {

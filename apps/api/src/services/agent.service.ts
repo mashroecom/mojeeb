@@ -6,32 +6,36 @@ import { NotFoundError } from '../utils/errors';
 import { subscriptionService } from './subscription.service';
 
 export class AgentService {
-  async create(orgId: string, data: {
-    name: string;
-    description?: string;
-    aiProvider?: string;
-    aiModel?: string;
-    systemPrompt?: string;
-    templateType?: string;
-    temperature?: number;
-    maxTokens?: number;
-    language?: string;
-    enableEmotionDetection?: boolean;
-    enableLeadExtraction?: boolean;
-    enableHumanHandoff?: boolean;
-    handoffThreshold?: number;
-    tone?: string;
-    responseLength?: string;
-    dataCollectionConfig?: any;
-    escalationKeywords?: string[];
-    sentimentEscalation?: boolean;
-    escalationMessageCount?: number;
-    quickRepliesConfig?: any;
-  }) {
+  async create(
+    orgId: string,
+    data: {
+      name: string;
+      description?: string;
+      aiProvider?: string;
+      aiModel?: string;
+      systemPrompt?: string;
+      templateType?: string;
+      temperature?: number;
+      maxTokens?: number;
+      language?: string;
+      enableEmotionDetection?: boolean;
+      enableLeadExtraction?: boolean;
+      enableHumanHandoff?: boolean;
+      handoffThreshold?: number;
+      tone?: string;
+      responseLength?: string;
+      dataCollectionConfig?: any;
+      escalationKeywords?: string[];
+      sentimentEscalation?: boolean;
+      escalationMessageCount?: number;
+      quickRepliesConfig?: any;
+    },
+  ) {
     // Check limit and increment agent usage counter
     await subscriptionService.incrementUsage(orgId, 'agents');
 
-    const defaultPrompt = 'You are a helpful AI assistant. Answer questions clearly and professionally.';
+    const defaultPrompt =
+      'You are a helpful AI assistant. Answer questions clearly and professionally.';
 
     return prisma.agent.create({
       data: {
@@ -87,28 +91,32 @@ export class AgentService {
     });
   }
 
-  async update(orgId: string, agentId: string, data: Partial<{
-    name: string;
-    description: string;
-    aiProvider: string;
-    aiModel: string;
-    systemPrompt: string;
-    temperature: number;
-    maxTokens: number;
-    language: string;
-    isActive: boolean;
-    enableEmotionDetection: boolean;
-    enableLeadExtraction: boolean;
-    enableHumanHandoff: boolean;
-    handoffThreshold: number;
-    tone: string;
-    responseLength: string;
-    dataCollectionConfig: any;
-    escalationKeywords: string[];
-    sentimentEscalation: boolean;
-    escalationMessageCount: number;
-    quickRepliesConfig: any;
-  }>) {
+  async update(
+    orgId: string,
+    agentId: string,
+    data: Partial<{
+      name: string;
+      description: string;
+      aiProvider: string;
+      aiModel: string;
+      systemPrompt: string;
+      temperature: number;
+      maxTokens: number;
+      language: string;
+      isActive: boolean;
+      enableEmotionDetection: boolean;
+      enableLeadExtraction: boolean;
+      enableHumanHandoff: boolean;
+      handoffThreshold: number;
+      tone: string;
+      responseLength: string;
+      dataCollectionConfig: any;
+      escalationKeywords: string[];
+      sentimentEscalation: boolean;
+      escalationMessageCount: number;
+      quickRepliesConfig: any;
+    }>,
+  ) {
     const agent = await prisma.agent.findFirst({ where: { id: agentId, orgId } });
     if (!agent) throw new NotFoundError('Agent not found');
 
@@ -199,10 +207,7 @@ export class AgentService {
       customInstructions: agent.systemPrompt,
     });
 
-    const messages = [
-      ...(history ?? []),
-      { role: 'user' as const, content: message },
-    ];
+    const messages = [...(history ?? []), { role: 'user' as const, content: message }];
 
     const response = await provider.generateResponse({
       systemPrompt,

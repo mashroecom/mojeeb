@@ -93,7 +93,9 @@ async function seed() {
     });
 
     const batchDuration = Date.now() - batchStart;
-    console.log(`  Batch ${batch + 1}/${batches}: Created ${recordsInBatch} conversations (${batchDuration}ms)`);
+    console.log(
+      `  Batch ${batch + 1}/${batches}: Created ${recordsInBatch} conversations (${batchDuration}ms)`,
+    );
   }
 
   const finalCount = await prisma.conversation.count({

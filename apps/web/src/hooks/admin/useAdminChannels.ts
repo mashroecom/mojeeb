@@ -34,7 +34,7 @@ export function useAdminChannels(params: {
     queryFn: async () => {
       const sp = new URLSearchParams({
         page: String(params.page),
-        limit: String(params.limit)
+        limit: String(params.limit),
       });
       if (params.search) sp.set('search', params.search);
       if (params.orgId) sp.set('orgId', params.orgId);

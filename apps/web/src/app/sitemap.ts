@@ -4,7 +4,17 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://mojeeb.app';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const locales = ['en', 'ar'];
-  const pages = ['', '/features', '/pricing', '/about', '/contact', '/request-demo', '/careers', '/privacy', '/terms'];
+  const pages = [
+    '',
+    '/features',
+    '/pricing',
+    '/about',
+    '/contact',
+    '/request-demo',
+    '/careers',
+    '/privacy',
+    '/terms',
+  ];
   const now = new Date();
 
   const entries: MetadataRoute.Sitemap = [];

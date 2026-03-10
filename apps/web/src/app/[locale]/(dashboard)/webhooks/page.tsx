@@ -81,7 +81,9 @@ export default function WebhooksPage() {
   const [createdWebhook, setCreatedWebhook] = useState<WebhookWithSecret | null>(null);
   const [copiedSecret, setCopiedSecret] = useState(false);
   const [newSecret, setNewSecret] = useState<string | null>(null);
-  const [testStatus, setTestStatus] = useState<{ id: string; type: 'success' | 'error' } | null>(null);
+  const [testStatus, setTestStatus] = useState<{ id: string; type: 'success' | 'error' } | null>(
+    null,
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editUrl, setEditUrl] = useState('');
   const [editEvents, setEditEvents] = useState<string[]>([]);
@@ -205,10 +207,7 @@ export default function WebhooksPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <Breadcrumb
-        items={[
-          { label: tb('dashboard'), href: '/dashboard' },
-          { label: ts('webhooks') },
-        ]}
+        items={[{ label: tb('dashboard'), href: '/dashboard' }, { label: ts('webhooks') }]}
       />
 
       {/* Header */}
@@ -394,10 +393,14 @@ export default function WebhooksPage() {
                           : 'hover:bg-accent hover:border-border/80',
                       )}
                     >
-                      <div className={cn(
-                        'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg',
-                        isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
-                      )}>
+                      <div
+                        className={cn(
+                          'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg',
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground',
+                        )}
+                      >
                         <Icon className="h-3 w-3" />
                       </div>
                       <div className="min-w-0">
@@ -501,30 +504,34 @@ export default function WebhooksPage() {
                     <div className="min-w-0 flex-1">
                       {/* URL + status */}
                       <div className="flex items-center gap-2.5">
-                        <div className={cn(
-                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                          webhook.isActive
-                            ? 'bg-green-100 dark:bg-green-900/30'
-                            : 'bg-muted',
-                        )}>
-                          <Globe className={cn(
-                            'h-4 w-4',
-                            webhook.isActive
-                              ? 'text-green-600 dark:text-green-400'
-                              : 'text-muted-foreground',
-                          )} />
+                        <div
+                          className={cn(
+                            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                            webhook.isActive ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted',
+                          )}
+                        >
+                          <Globe
+                            className={cn(
+                              'h-4 w-4',
+                              webhook.isActive
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-muted-foreground',
+                            )}
+                          />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="block truncate text-sm font-medium" dir="ltr">
                               {webhook.url}
                             </span>
-                            <span className={cn(
-                              'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
-                              webhook.isActive
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-muted text-muted-foreground',
-                            )}>
+                            <span
+                              className={cn(
+                                'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
+                                webhook.isActive
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  : 'bg-muted text-muted-foreground',
+                              )}
+                            >
                               {webhook.isActive ? t('active') : t('inactive')}
                             </span>
                           </div>
@@ -537,11 +544,17 @@ export default function WebhooksPage() {
                                 : t('never')}
                             </span>
                             {testStatus?.id === webhook.id && (
-                              <span className={cn(
-                                'flex items-center gap-1 font-medium',
-                                testStatus.type === 'success' ? 'text-green-600' : 'text-red-500',
-                              )}>
-                                {testStatus.type === 'success' ? <CheckCircle className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+                              <span
+                                className={cn(
+                                  'flex items-center gap-1 font-medium',
+                                  testStatus.type === 'success' ? 'text-green-600' : 'text-red-500',
+                                )}
+                              >
+                                {testStatus.type === 'success' ? (
+                                  <CheckCircle className="h-3 w-3" />
+                                ) : (
+                                  <AlertTriangle className="h-3 w-3" />
+                                )}
                                 {testStatus.type === 'success' ? t('testSent') : t('testFailed')}
                               </span>
                             )}
@@ -576,7 +589,11 @@ export default function WebhooksPage() {
                       onClick={() => setExpandedId(isExpanded ? null : webhook.id)}
                       className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-accent transition-colors"
                     >
-                      {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -616,7 +633,7 @@ export default function WebhooksPage() {
                       <div className="h-4 w-px bg-border" />
                       <button
                         type="button"
-                        onClick={() => isEditing ? setEditingId(null) : startEditing(webhook)}
+                        onClick={() => (isEditing ? setEditingId(null) : startEditing(webhook))}
                         className={cn(
                           'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                           isEditing
@@ -666,7 +683,9 @@ export default function WebhooksPage() {
                       <div className="border-t px-5 py-4 space-y-4">
                         <div>
                           <label className="text-sm font-medium">{t('url')}</label>
-                          <p className="text-xs text-muted-foreground mt-0.5 mb-1.5">{t('endpointUrlHint')}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 mb-1.5">
+                            {t('endpointUrlHint')}
+                          </p>
                           <div className="relative">
                             <ExternalLink className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <input
@@ -680,7 +699,9 @@ export default function WebhooksPage() {
                         </div>
                         <div>
                           <label className="text-sm font-medium">{t('events')}</label>
-                          <p className="text-xs text-muted-foreground mt-0.5 mb-2">{t('eventsHint')}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                            {t('eventsHint')}
+                          </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {EVENTS.map((event) => {
                               const Icon = EVENT_ICONS[event] || Zap;
@@ -697,14 +718,23 @@ export default function WebhooksPage() {
                                       : 'hover:bg-accent hover:border-border/80',
                                   )}
                                 >
-                                  <div className={cn(
-                                    'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg',
-                                    isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
-                                  )}>
+                                  <div
+                                    className={cn(
+                                      'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg',
+                                      isSelected
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-muted text-muted-foreground',
+                                    )}
+                                  >
                                     <Icon className="h-3 w-3" />
                                   </div>
                                   <div className="min-w-0">
-                                    <p className={cn('text-sm font-medium', isSelected && 'text-primary')}>
+                                    <p
+                                      className={cn(
+                                        'text-sm font-medium',
+                                        isSelected && 'text-primary',
+                                      )}
+                                    >
                                       {t(`eventTypes.${event.replace(/\./g, '_')}` as any)}
                                     </p>
                                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -727,10 +757,14 @@ export default function WebhooksPage() {
                           <button
                             type="button"
                             onClick={handleSaveEdit}
-                            disabled={!editUrl.trim() || editEvents.length === 0 || updateWebhook.isPending}
+                            disabled={
+                              !editUrl.trim() || editEvents.length === 0 || updateWebhook.isPending
+                            }
                             className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
                           >
-                            {updateWebhook.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                            {updateWebhook.isPending && (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            )}
                             {ct('save')}
                           </button>
                         </div>
@@ -767,12 +801,14 @@ export default function WebhooksPage() {
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2.5">
-                                    <span className={cn(
-                                      'inline-flex items-center justify-center rounded-lg px-2 py-0.5 font-mono font-bold',
-                                      log.success
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-400'
-                                        : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-400',
-                                    )}>
+                                    <span
+                                      className={cn(
+                                        'inline-flex items-center justify-center rounded-lg px-2 py-0.5 font-mono font-bold',
+                                        log.success
+                                          ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-400'
+                                          : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-400',
+                                      )}
+                                    >
                                       {log.statusCode ?? '---'}
                                     </span>
                                     <span className="font-medium text-muted-foreground">

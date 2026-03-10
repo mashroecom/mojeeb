@@ -45,7 +45,15 @@ export default function AdminUserDetailPage() {
   }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
 
   const [activeTab, setActiveTab] = useState<
-    'orgs' | 'logins' | 'sessions' | 'audit' | 'apikeys' | 'conversations' | 'leads' | 'notifications' | 'useractions'
+    | 'orgs'
+    | 'logins'
+    | 'sessions'
+    | 'audit'
+    | 'apikeys'
+    | 'conversations'
+    | 'leads'
+    | 'notifications'
+    | 'useractions'
   >('orgs');
   const [loginPage, setLoginPage] = useState(1);
   const [notificationsPage, setNotificationsPage] = useState(1);

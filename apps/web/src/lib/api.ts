@@ -163,10 +163,9 @@ api.interceptors.response.use(
 
         // Call refresh endpoint with current refresh token
         // Note: We use axios directly (not api) to avoid interceptor recursion
-        const response = await axios.post<RefreshTokenResponse>(
-          `${API_BASE_URL}/auth/refresh`,
-          { refreshToken }
-        );
+        const response = await axios.post<RefreshTokenResponse>(`${API_BASE_URL}/auth/refresh`, {
+          refreshToken,
+        });
         const { accessToken, refreshToken: newRefreshToken } = response.data.data.tokens;
 
         // Update stored tokens in localStorage
@@ -210,5 +209,5 @@ api.interceptors.response.use(
     // For all other errors (network, 404, 500, etc.), reject as-is
     // This allows callers to handle errors appropriately
     return Promise.reject(error);
-  }
+  },
 );

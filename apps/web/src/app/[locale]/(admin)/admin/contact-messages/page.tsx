@@ -12,14 +12,7 @@ import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { cn } from '@/lib/utils';
 import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
-import {
-  Mail,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  Download,
-  Search,
-} from 'lucide-react';
+import { Mail, Trash2, ChevronDown, ChevronUp, Download, Search } from 'lucide-react';
 
 type StatusFilter = '' | 'NEW' | 'READ' | 'REPLIED' | 'ARCHIVED';
 
@@ -235,9 +228,7 @@ export default function ContactMessagesPage() {
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm">
-                          {msg.name || '—'}
-                        </td>
+                        <td className="px-4 py-3 text-sm">{msg.name || '—'}</td>
                         <td className="px-4 py-3 text-sm text-muted-foreground" dir="ltr">
                           {msg.email || '—'}
                         </td>
@@ -280,9 +271,7 @@ export default function ContactMessagesPage() {
                               <p className="text-xs font-medium text-muted-foreground mb-1">
                                 {t('message')}
                               </p>
-                              <p className="text-sm whitespace-pre-wrap">
-                                {msg.message || '—'}
-                              </p>
+                              <p className="text-sm whitespace-pre-wrap">{msg.message || '—'}</p>
                             </div>
                           </td>
                         </tr>
@@ -297,17 +286,16 @@ export default function ContactMessagesPage() {
             <div className="md:hidden space-y-3">
               {messages.map((msg: any) => (
                 <div key={msg.id} className="rounded-xl border bg-card shadow-sm overflow-hidden">
-                  <div
-                    className="p-4 cursor-pointer"
-                    onClick={() => toggleExpand(msg.id)}
-                  >
+                  <div className="p-4 cursor-pointer" onClick={() => toggleExpand(msg.id)}>
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className={cn('font-medium', msg.status === 'NEW' && 'text-foreground')}>
                           {msg.name || '—'}
                         </p>
                         {msg.email && (
-                          <p className="text-sm text-muted-foreground" dir="ltr">{msg.email}</p>
+                          <p className="text-sm text-muted-foreground" dir="ltr">
+                            {msg.email}
+                          </p>
                         )}
                       </div>
                       <span
@@ -361,7 +349,15 @@ export default function ContactMessagesPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+              <AdminPagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                previousLabel={tc('previous')}
+                nextLabel={tc('next')}
+                pageLabel={tc('page')}
+                ofLabel={tc('of')}
+              />
             )}
           </>
         )}

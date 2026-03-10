@@ -50,118 +50,120 @@ router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
 });
 
 // PATCH / — update landing page content
-const updateSchema = z.object({
-  // Hero
-  heroEnabled: z.boolean().optional(),
-  heroTitle: z.string().optional(),
-  heroTitleAr: z.string().optional(),
-  heroSubtitle: z.string().optional(),
-  heroSubtitleAr: z.string().optional(),
-  heroCta: z.string().optional(),
-  heroCtaAr: z.string().optional(),
-  heroCtaLink: z.string().optional(),
-  heroImage: z.string().nullable().optional(),
-  showNoCreditCard: z.boolean().optional(),
-  badgeText: z.string().optional(),
-  badgeTextAr: z.string().optional(),
+const updateSchema = z
+  .object({
+    // Hero
+    heroEnabled: z.boolean().optional(),
+    heroTitle: z.string().optional(),
+    heroTitleAr: z.string().optional(),
+    heroSubtitle: z.string().optional(),
+    heroSubtitleAr: z.string().optional(),
+    heroCta: z.string().optional(),
+    heroCtaAr: z.string().optional(),
+    heroCtaLink: z.string().optional(),
+    heroImage: z.string().nullable().optional(),
+    showNoCreditCard: z.boolean().optional(),
+    badgeText: z.string().optional(),
+    badgeTextAr: z.string().optional(),
 
-  // Trusted By
-  trustedByEnabled: z.boolean().optional(),
-  trustedByTitle: z.string().optional(),
-  trustedByTitleAr: z.string().optional(),
-  trustedByLogos: z.any().optional(),
+    // Trusted By
+    trustedByEnabled: z.boolean().optional(),
+    trustedByTitle: z.string().optional(),
+    trustedByTitleAr: z.string().optional(),
+    trustedByLogos: z.any().optional(),
 
-  // Features
-  featuresEnabled: z.boolean().optional(),
-  featuresTitle: z.string().optional(),
-  featuresTitleAr: z.string().optional(),
-  featuresSubtitle: z.string().optional(),
-  featuresSubtitleAr: z.string().optional(),
-  features: z.any().optional(),
-  featuresAr: z.any().optional(),
+    // Features
+    featuresEnabled: z.boolean().optional(),
+    featuresTitle: z.string().optional(),
+    featuresTitleAr: z.string().optional(),
+    featuresSubtitle: z.string().optional(),
+    featuresSubtitleAr: z.string().optional(),
+    features: z.any().optional(),
+    featuresAr: z.any().optional(),
 
-  // Stats
-  statsEnabled: z.boolean().optional(),
-  statsCustomers: z.string().optional(),
-  statsMessages: z.string().optional(),
-  statsLanguages: z.string().optional(),
-  statsUptime: z.string().optional(),
+    // Stats
+    statsEnabled: z.boolean().optional(),
+    statsCustomers: z.string().optional(),
+    statsMessages: z.string().optional(),
+    statsLanguages: z.string().optional(),
+    statsUptime: z.string().optional(),
 
-  // Pricing
-  pricingEnabled: z.boolean().optional(),
-  pricingTitle: z.string().optional(),
-  pricingTitleAr: z.string().optional(),
-  pricingSubtitle: z.string().optional(),
-  pricingSubtitleAr: z.string().optional(),
-  showYearlyToggle: z.boolean().optional(),
-  yearlyDiscount: z.number().optional(),
-  enterpriseCtaText: z.string().optional(),
-  enterpriseCtaTextAr: z.string().optional(),
-  enterpriseCtaLink: z.string().optional(),
+    // Pricing
+    pricingEnabled: z.boolean().optional(),
+    pricingTitle: z.string().optional(),
+    pricingTitleAr: z.string().optional(),
+    pricingSubtitle: z.string().optional(),
+    pricingSubtitleAr: z.string().optional(),
+    showYearlyToggle: z.boolean().optional(),
+    yearlyDiscount: z.number().optional(),
+    enterpriseCtaText: z.string().optional(),
+    enterpriseCtaTextAr: z.string().optional(),
+    enterpriseCtaLink: z.string().optional(),
 
-  // Testimonials
-  testimonialsEnabled: z.boolean().optional(),
-  testimonialsTitle: z.string().optional(),
-  testimonialsTitleAr: z.string().optional(),
-  testimonialsSubtitle: z.string().optional(),
-  testimonialsSubtitleAr: z.string().optional(),
-  testimonialsMaxDisplay: z.number().optional(),
-  testimonials: z.any().optional(),
-  testimonialsAr: z.any().optional(),
+    // Testimonials
+    testimonialsEnabled: z.boolean().optional(),
+    testimonialsTitle: z.string().optional(),
+    testimonialsTitleAr: z.string().optional(),
+    testimonialsSubtitle: z.string().optional(),
+    testimonialsSubtitleAr: z.string().optional(),
+    testimonialsMaxDisplay: z.number().optional(),
+    testimonials: z.any().optional(),
+    testimonialsAr: z.any().optional(),
 
-  // FAQ
-  faqEnabled: z.boolean().optional(),
-  faqTitle: z.string().optional(),
-  faqTitleAr: z.string().optional(),
-  faqSubtitle: z.string().optional(),
-  faqSubtitleAr: z.string().optional(),
-  faqMaxDisplay: z.number().optional(),
-  faqShowViewAll: z.boolean().optional(),
+    // FAQ
+    faqEnabled: z.boolean().optional(),
+    faqTitle: z.string().optional(),
+    faqTitleAr: z.string().optional(),
+    faqSubtitle: z.string().optional(),
+    faqSubtitleAr: z.string().optional(),
+    faqMaxDisplay: z.number().optional(),
+    faqShowViewAll: z.boolean().optional(),
 
-  // Bottom CTA
-  bottomCtaEnabled: z.boolean().optional(),
-  bottomCtaTitle: z.string().optional(),
-  bottomCtaTitleAr: z.string().optional(),
-  bottomCtaSubtitle: z.string().optional(),
-  bottomCtaSubtitleAr: z.string().optional(),
-  bottomCtaButtonText: z.string().optional(),
-  bottomCtaButtonTextAr: z.string().optional(),
-  bottomCtaButtonLink: z.string().optional(),
+    // Bottom CTA
+    bottomCtaEnabled: z.boolean().optional(),
+    bottomCtaTitle: z.string().optional(),
+    bottomCtaTitleAr: z.string().optional(),
+    bottomCtaSubtitle: z.string().optional(),
+    bottomCtaSubtitleAr: z.string().optional(),
+    bottomCtaButtonText: z.string().optional(),
+    bottomCtaButtonTextAr: z.string().optional(),
+    bottomCtaButtonLink: z.string().optional(),
 
-  // Footer
-  footerCopyrightText: z.string().optional(),
-  footerCopyrightTextAr: z.string().optional(),
-  footerShowSocialLinks: z.boolean().optional(),
-  footerTwitter: z.string().optional(),
-  footerLinkedin: z.string().optional(),
-  footerInstagram: z.string().optional(),
-  footerFacebook: z.string().optional(),
-  footerLinks: z.any().optional(),
-  footerText: z.string().optional(),
-  footerTextAr: z.string().optional(),
-  customCss: z.string().max(50000).nullable().optional(),
+    // Footer
+    footerCopyrightText: z.string().optional(),
+    footerCopyrightTextAr: z.string().optional(),
+    footerShowSocialLinks: z.boolean().optional(),
+    footerTwitter: z.string().optional(),
+    footerLinkedin: z.string().optional(),
+    footerInstagram: z.string().optional(),
+    footerFacebook: z.string().optional(),
+    footerLinks: z.any().optional(),
+    footerText: z.string().optional(),
+    footerTextAr: z.string().optional(),
+    customCss: z.string().max(50000).nullable().optional(),
 
-  // SEO
-  seoMetaTitle: z.string().optional(),
-  seoMetaTitleAr: z.string().optional(),
-  seoMetaDescription: z.string().optional(),
-  seoMetaDescriptionAr: z.string().optional(),
-  seoOgImage: z.string().nullable().optional(),
-  seoGoogleAnalyticsId: z.string().optional(),
-  seoCustomHeadCode: z.string().nullable().optional(),
-  seoCustomFooterCode: z.string().nullable().optional(),
-  seoFavicon: z.string().nullable().optional(),
+    // SEO
+    seoMetaTitle: z.string().optional(),
+    seoMetaTitleAr: z.string().optional(),
+    seoMetaDescription: z.string().optional(),
+    seoMetaDescriptionAr: z.string().optional(),
+    seoOgImage: z.string().nullable().optional(),
+    seoGoogleAnalyticsId: z.string().optional(),
+    seoCustomHeadCode: z.string().nullable().optional(),
+    seoCustomFooterCode: z.string().nullable().optional(),
+    seoFavicon: z.string().nullable().optional(),
 
-  // Maintenance
-  maintenanceEnabled: z.boolean().optional(),
-  maintenanceTitle: z.string().optional(),
-  maintenanceTitleAr: z.string().optional(),
-  maintenanceMessage: z.string().optional(),
-  maintenanceMessageAr: z.string().optional(),
+    // Maintenance
+    maintenanceEnabled: z.boolean().optional(),
+    maintenanceTitle: z.string().optional(),
+    maintenanceTitleAr: z.string().optional(),
+    maintenanceMessage: z.string().optional(),
+    maintenanceMessageAr: z.string().optional(),
 
-  // Section order
-  sectionOrder: z.any().optional(),
-}).passthrough();
+    // Section order
+    sectionOrder: z.any().optional(),
+  })
+  .passthrough();
 
 router.patch(
   '/',

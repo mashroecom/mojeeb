@@ -63,7 +63,11 @@ router.post('/', upload.single('file'), async (req: Request, res: Response, next
       action: 'UPLOAD_FILE',
       targetType: 'File',
       targetId: filename,
-      metadata: { originalName: req.file.originalname, size: req.file.size, mimeType: req.file.mimetype },
+      metadata: {
+        originalName: req.file.originalname,
+        size: req.file.size,
+        mimeType: req.file.mimetype,
+      },
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
     });

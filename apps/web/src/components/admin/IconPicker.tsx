@@ -261,12 +261,13 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
 
   return (
     <div ref={ref} className="relative">
-      {label && (
-        <label className="text-xs font-medium text-muted-foreground">{label}</label>
-      )}
+      {label && <label className="text-xs font-medium text-muted-foreground">{label}</label>}
       <button
         type="button"
-        onClick={() => { setOpen(!open); setSearch(''); }}
+        onClick={() => {
+          setOpen(!open);
+          setSearch('');
+        }}
         className={cn(
           'mt-1 w-full flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm outline-none hover:bg-muted/50 transition-colors text-start focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
           open && 'ring-2 ring-primary/40 border-primary',
@@ -283,7 +284,10 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
         {value && (
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onChange(''); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange('');
+            }}
             className="ms-auto shrink-0 rounded p-0.5 hover:bg-muted"
             aria-label="Clear icon"
           >
@@ -312,9 +316,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
           {/* Icon grid */}
           <div className="p-2 max-h-[240px] overflow-y-auto">
             {filtered.length === 0 ? (
-              <p className="text-center text-xs text-muted-foreground py-4">
-                No icons found
-              </p>
+              <p className="text-center text-xs text-muted-foreground py-4">No icons found</p>
             ) : (
               <div className="grid grid-cols-8 gap-1">
                 {filtered.map((entry) => {
@@ -325,7 +327,10 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
                       key={entry.name}
                       type="button"
                       title={entry.name}
-                      onClick={() => { onChange(entry.name); setOpen(false); }}
+                      onClick={() => {
+                        onChange(entry.name);
+                        setOpen(false);
+                      }}
                       className={cn(
                         'flex items-center justify-center rounded-lg p-2 transition-colors',
                         isSelected

@@ -16,9 +16,7 @@ function Stars({ count, max = 5 }: { count: number; max?: number }) {
           key={i}
           className={cn(
             'h-4 w-4',
-            i < count
-              ? 'fill-yellow-400 text-yellow-400'
-              : 'text-muted-foreground/30',
+            i < count ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30',
           )}
         />
       ))}
@@ -131,7 +129,10 @@ export default function CsatAnalyticsPage() {
         {/* Rating filter tabs */}
         <div className="flex gap-1">
           <button
-            onClick={() => { setRatingFilter(undefined); setPage(1); }}
+            onClick={() => {
+              setRatingFilter(undefined);
+              setPage(1);
+            }}
             className={cn(
               'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
               !ratingFilter
@@ -144,7 +145,10 @@ export default function CsatAnalyticsPage() {
           {[5, 4, 3, 2, 1].map((r) => (
             <button
               key={r}
-              onClick={() => { setRatingFilter(r); setPage(1); }}
+              onClick={() => {
+                setRatingFilter(r);
+                setPage(1);
+              }}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-1',
                 ratingFilter === r
@@ -162,14 +166,20 @@ export default function CsatAnalyticsPage() {
           <input
             type="date"
             value={startDate}
-            onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              setPage(1);
+            }}
             className="rounded-lg border bg-background px-2 py-1.5 text-sm"
           />
           <span className="text-sm text-muted-foreground">—</span>
           <input
             type="date"
             value={endDate}
-            onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setEndDate(e.target.value);
+              setPage(1);
+            }}
             className="rounded-lg border bg-background px-2 py-1.5 text-sm"
           />
         </div>
@@ -233,7 +243,9 @@ export default function CsatAnalyticsPage() {
                           <MessageSquare className="h-3 w-3" />
                           {r.conversation.channel?.name || t('conversation')}
                         </span>
-                      ) : '—'}
+                      ) : (
+                        '—'
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {fmtDate(r.createdAt, locale)}
@@ -254,9 +266,7 @@ export default function CsatAnalyticsPage() {
                   </p>
                   <Stars count={r.rating} />
                 </div>
-                {r.feedback && (
-                  <p className="text-sm text-muted-foreground mb-2">{r.feedback}</p>
-                )}
+                {r.feedback && <p className="text-sm text-muted-foreground mb-2">{r.feedback}</p>}
                 <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                   <span>{fmtDate(r.createdAt, locale)}</span>
                   {r.conversation && (

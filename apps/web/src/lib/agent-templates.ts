@@ -19,7 +19,7 @@ export interface AgentTemplate {
 const langNote = (language: string) =>
   language === 'ar'
     ? 'تحدث بالعربية بشكل طبيعي. استخدم لهجة مصرية/خليجية حسب أسلوب العميل.'
-    : 'Respond in English. Match the customer\'s tone and formality level.';
+    : "Respond in English. Match the customer's tone and formality level.";
 
 const commonRules = `
 IMPORTANT formatting rules (MUST follow):

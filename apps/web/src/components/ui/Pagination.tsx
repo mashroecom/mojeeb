@@ -64,9 +64,7 @@ export function Pagination({
   return (
     <div className={cn('flex items-center justify-between gap-4', className)}>
       {showInfo && (
-        <span className="text-sm text-muted-foreground">
-          {t('pageInfo', { page, totalPages })}
-        </span>
+        <span className="text-sm text-muted-foreground">{t('pageInfo', { page, totalPages })}</span>
       )}
 
       <div className="flex items-center gap-1">
@@ -93,9 +91,7 @@ export function Pagination({
               onClick={() => onPageChange(p)}
               className={cn(
                 buttonBase,
-                p === page
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-muted',
+                p === page ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
               )}
               aria-current={p === page ? 'page' : undefined}
             >

@@ -12,8 +12,7 @@ const isDev = process.env.NODE_ENV !== 'production';
 function createRedisStore(prefix: string) {
   return new RedisStore({
     // Use ioredis .call() to send raw Redis commands
-    sendCommand: (...args: string[]) =>
-      (redis as any).call(...args),
+    sendCommand: (...args: string[]) => (redis as any).call(...args),
     prefix: `rl:${prefix}:`,
   });
 }

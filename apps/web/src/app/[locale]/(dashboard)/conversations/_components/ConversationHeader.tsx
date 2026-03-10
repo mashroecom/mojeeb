@@ -191,7 +191,10 @@ export function ConversationHeader({
               <div className="absolute end-0 top-full mt-1 z-50 w-56 rounded-xl border bg-popover p-1.5 shadow-lg">
                 {isHandedOff ? (
                   <button
-                    onClick={() => { onReturnToAI(); setMenuOpen(false); }}
+                    onClick={() => {
+                      onReturnToAI();
+                      setMenuOpen(false);
+                    }}
                     disabled={isReturnToAIPending}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
                   >
@@ -200,7 +203,10 @@ export function ConversationHeader({
                   </button>
                 ) : (
                   <button
-                    onClick={() => { onHandoff(); setMenuOpen(false); }}
+                    onClick={() => {
+                      onHandoff();
+                      setMenuOpen(false);
+                    }}
                     disabled={isHandoffPending}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
                   >
@@ -209,7 +215,10 @@ export function ConversationHeader({
                   </button>
                 )}
                 <button
-                  onClick={() => { onResolve(); setMenuOpen(false); }}
+                  onClick={() => {
+                    onResolve();
+                    setMenuOpen(false);
+                  }}
                   disabled={isResolvePending}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
                 >
@@ -218,7 +227,10 @@ export function ConversationHeader({
                 </button>
                 <div className="my-1 border-t" />
                 <button
-                  onClick={() => { onDelete(); setMenuOpen(false); }}
+                  onClick={() => {
+                    onDelete();
+                    setMenuOpen(false);
+                  }}
                   disabled={isDeletePending}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30"
                 >

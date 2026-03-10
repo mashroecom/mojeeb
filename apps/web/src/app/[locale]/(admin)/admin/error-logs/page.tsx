@@ -36,7 +36,6 @@ interface ErrorLogEntry {
 // Helpers
 // ---------------------------------------------------------------------------
 
-
 function truncateMessage(msg: string, max = 80) {
   if (!msg) return '-';
   return msg.length > max ? msg.slice(0, max) + '...' : msg;
@@ -78,11 +77,21 @@ function levelBadge(level: string) {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-5 w-16 rounded-full bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-48 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-5 w-16 rounded-full bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-48 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -188,7 +197,11 @@ export default function ErrorLogsPage() {
         <div className="mb-6 rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium">{t('deleteOldLogs')}</h3>
-            <button onClick={() => setShowCleanup(false)} aria-label={tc('close')} className="text-muted-foreground hover:text-foreground">
+            <button
+              onClick={() => setShowCleanup(false)}
+              aria-label={tc('close')}
+              className="text-muted-foreground hover:text-foreground"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -232,7 +245,9 @@ export default function ErrorLogsPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {/* Level */}
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('level')}</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
+              {t('level')}
+            </label>
             <select
               value={level}
               onChange={(e) => updateFilter(setLevel)(e.target.value)}
@@ -247,7 +262,9 @@ export default function ErrorLogsPage() {
 
           {/* Source */}
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('source')}</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
+              {t('source')}
+            </label>
             <input
               type="text"
               value={source}
@@ -339,8 +356,7 @@ export default function ErrorLogsPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
+              {isLoading && Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
 
               {!isLoading && !isError && entries.length === 0 && (
                 <tr>
@@ -367,14 +383,22 @@ export default function ErrorLogsPage() {
                           ) : (
                             <ChevronDown className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
                           )}
-                          <span className="text-sm truncate block max-w-[300px]" title={entry.message}>
+                          <span
+                            className="text-sm truncate block max-w-[300px]"
+                            title={entry.message}
+                          >
                             {truncateMessage(entry.message)}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{entry.source || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {entry.source || '-'}
+                      </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm font-mono text-muted-foreground truncate block max-w-[200px]" title={entry.path}>
+                        <span
+                          className="text-sm font-mono text-muted-foreground truncate block max-w-[200px]"
+                          title={entry.path}
+                        >
                           {entry.path || '-'}
                         </span>
                       </td>
@@ -386,7 +410,9 @@ export default function ErrorLogsPage() {
                       <tr className="border-b last:border-b-0 bg-muted/10">
                         <td colSpan={5} className="px-4 py-3">
                           <div className="rounded-lg border bg-background p-3">
-                            <p className="text-xs font-medium text-muted-foreground mb-2">{t('stackTrace')}</p>
+                            <p className="text-xs font-medium text-muted-foreground mb-2">
+                              {t('stackTrace')}
+                            </p>
                             <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all max-h-64 overflow-y-auto">
                               {entry.stack}
                             </pre>
@@ -403,9 +429,16 @@ export default function ErrorLogsPage() {
 
       {/* Pagination */}
       {!isLoading && (
-        <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          previousLabel={tc('previous')}
+          nextLabel={tc('next')}
+          pageLabel={tc('page')}
+          ofLabel={tc('of')}
+        />
       )}
     </div>
   );
 }
-

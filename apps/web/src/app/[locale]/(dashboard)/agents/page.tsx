@@ -115,9 +115,7 @@ function AgentCard({ agent }: { agent: Agent }) {
             <div
               className={cn(
                 'flex h-10 w-10 items-center justify-center rounded-lg',
-                agent.isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'bg-muted text-muted-foreground',
+                agent.isActive ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
               )}
             >
               <Icon className="h-5 w-5" />
@@ -228,10 +226,7 @@ export default function AgentsPage() {
   return (
     <div>
       <Breadcrumb
-        items={[
-          { label: tb('dashboard'), href: '/dashboard' },
-          { label: ts('agents') },
-        ]}
+        items={[{ label: tb('dashboard'), href: '/dashboard' }, { label: ts('agents') }]}
         className="mb-4"
       />
 

@@ -29,7 +29,10 @@ router.get('/stats', async (_req: Request, res: Response, next: NextFunction) =>
       deliveryStatusBreakdown[row.deliveryStatus] = row._count._all;
     }
 
-    const messagesByProvider: Record<string, { count: number; avgLatency: number; avgTokens: number }> = {};
+    const messagesByProvider: Record<
+      string,
+      { count: number; avgLatency: number; avgTokens: number }
+    > = {};
     for (const row of byProvider) {
       if (row.aiProvider) {
         messagesByProvider[row.aiProvider] = {
@@ -59,7 +62,9 @@ router.get('/stats', async (_req: Request, res: Response, next: NextFunction) =>
 // GET /trends - Last 30 days daily message trends
 router.get('/trends', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const trends = await prisma.$queryRaw<{ date: string; count: number; avgLatency: number; totalTokens: number }[]>`
+    const trends = await prisma.$queryRaw<
+      { date: string; count: number; avgLatency: number; totalTokens: number }[]
+    >`
       SELECT DATE("createdAt") as date,
              COUNT(*)::int as count,
              COALESCE(AVG("latencyMs"), 0)::int as "avgLatency",

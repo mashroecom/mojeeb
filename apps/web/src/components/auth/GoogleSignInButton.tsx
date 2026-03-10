@@ -146,10 +146,7 @@ export function GoogleSignInButton({ text = 'continue_with' }: GoogleSignInButto
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div
-          ref={buttonRef}
-          className="flex items-center justify-center [&>div]:w-full"
-        />
+        <div ref={buttonRef} className="flex items-center justify-center [&>div]:w-full" />
       )}
 
       {/* Fallback if Google script doesn't load */}

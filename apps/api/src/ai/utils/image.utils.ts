@@ -32,7 +32,7 @@ export function resolveUploadPath(uploadUrl: string): string {
 }
 
 export async function imageToBase64DataUrl(
-  uploadUrl: string
+  uploadUrl: string,
 ): Promise<{ dataUrl: string; mimeType: string } | null> {
   try {
     const filePath = resolveUploadPath(uploadUrl);
@@ -46,7 +46,10 @@ export async function imageToBase64DataUrl(
 
     const stat = await fs.stat(filePath);
     if (stat.size > MAX_IMAGE_SIZE) {
-      logger.warn({ uploadUrl, sizeMB: Math.round(stat.size / 1024 / 1024) }, 'Image too large for vision, skipping');
+      logger.warn(
+        { uploadUrl, sizeMB: Math.round(stat.size / 1024 / 1024) },
+        'Image too large for vision, skipping',
+      );
       return null;
     }
 
@@ -56,7 +59,7 @@ export async function imageToBase64DataUrl(
 
     logger.debug(
       { uploadUrl, mimeType, fileSizeKB: Math.round(buffer.length / 1024) },
-      'Image converted to base64 for vision'
+      'Image converted to base64 for vision',
     );
 
     return { dataUrl, mimeType };

@@ -12,6 +12,6 @@ export abstract class ChannelAdapter {
 
   abstract sendMessage(
     credentials: Record<string, string>,
-    message: OutboundMessage
+    message: OutboundMessage,
   ): Promise<SendResult>;
 }

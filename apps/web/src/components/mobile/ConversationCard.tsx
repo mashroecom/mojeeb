@@ -60,9 +60,7 @@ export function ConversationCard({ conversation, statusLabel }: ConversationCard
 
           {/* Email */}
           {customerEmail && (
-            <p className="text-sm text-muted-foreground truncate mb-2">
-              {customerEmail}
-            </p>
+            <p className="text-sm text-muted-foreground truncate mb-2">{customerEmail}</p>
           )}
 
           {/* Channel + Message count */}
@@ -90,9 +88,7 @@ export function ConversationCard({ conversation, statusLabel }: ConversationCard
               {statusLabel(conversation.status)}
             </span>
             {conversation.lastEmotion && (
-              <span className="text-xs text-muted-foreground">
-                {conversation.lastEmotion}
-              </span>
+              <span className="text-xs text-muted-foreground">{conversation.lastEmotion}</span>
             )}
           </div>
         </div>

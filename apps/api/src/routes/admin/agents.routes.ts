@@ -141,7 +141,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // DELETE /:agentId - Delete agent

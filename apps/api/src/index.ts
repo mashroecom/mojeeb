@@ -5,7 +5,16 @@ import { logger } from './config/logger';
 import { prisma } from './config/database';
 import { redis } from './config/redis';
 import { setupWebSocket, getIO } from './websocket';
-import { inboundQueue, aiQueue, outboundQueue, analyticsQueue, webhookQueue, bulkEmailQueue, emailQueue, deadLetterQueue } from './queues';
+import {
+  inboundQueue,
+  aiQueue,
+  outboundQueue,
+  analyticsQueue,
+  webhookQueue,
+  bulkEmailQueue,
+  emailQueue,
+  deadLetterQueue,
+} from './queues';
 import { configService } from './services/config.service';
 import type { Worker } from 'bullmq';
 

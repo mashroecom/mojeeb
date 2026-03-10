@@ -9,18 +9,76 @@ import { auditLogService } from '../../services/auditLog.service';
 const router: Router = Router();
 
 // Default security settings to seed if they don't exist
-const SECURITY_DEFAULTS: Record<string, { value: string; label: string; description: string; isSecret: boolean }> = {
-  MIN_PASSWORD_LENGTH: { value: '8', label: 'Minimum Password Length', description: 'Minimum number of characters required for passwords', isSecret: false },
-  REQUIRE_UPPERCASE: { value: 'true', label: 'Require Uppercase', description: 'Require at least one uppercase letter', isSecret: false },
-  REQUIRE_NUMBERS: { value: 'true', label: 'Require Numbers', description: 'Require at least one number', isSecret: false },
-  REQUIRE_SPECIAL_CHARS: { value: 'false', label: 'Require Special Characters', description: 'Require at least one special character', isSecret: false },
-  PASSWORD_EXPIRY_DAYS: { value: '0', label: 'Password Expiry (Days)', description: 'Days before password expires (0 = never)', isSecret: false },
-  SESSION_TIMEOUT_MINUTES: { value: '1440', label: 'Session Timeout (Minutes)', description: 'Session timeout in minutes (1440 = 24 hours)', isSecret: false },
-  MAX_SESSIONS_PER_USER: { value: '5', label: 'Max Sessions Per User', description: 'Maximum concurrent sessions allowed per user', isSecret: false },
-  MAX_LOGIN_ATTEMPTS: { value: '10', label: 'Max Login Attempts', description: 'Maximum failed login attempts before lockout', isSecret: false },
-  LOCKOUT_DURATION_MINUTES: { value: '30', label: 'Lockout Duration (Minutes)', description: 'Account lockout duration after max failed attempts', isSecret: false },
-  ENABLE_2FA: { value: 'false', label: 'Enable Two-Factor Auth', description: 'Allow users to enable 2FA', isSecret: false },
-  ENFORCE_2FA_FOR_ADMINS: { value: 'false', label: 'Enforce 2FA for Admins', description: 'Require 2FA for all admin users', isSecret: false },
+const SECURITY_DEFAULTS: Record<
+  string,
+  { value: string; label: string; description: string; isSecret: boolean }
+> = {
+  MIN_PASSWORD_LENGTH: {
+    value: '8',
+    label: 'Minimum Password Length',
+    description: 'Minimum number of characters required for passwords',
+    isSecret: false,
+  },
+  REQUIRE_UPPERCASE: {
+    value: 'true',
+    label: 'Require Uppercase',
+    description: 'Require at least one uppercase letter',
+    isSecret: false,
+  },
+  REQUIRE_NUMBERS: {
+    value: 'true',
+    label: 'Require Numbers',
+    description: 'Require at least one number',
+    isSecret: false,
+  },
+  REQUIRE_SPECIAL_CHARS: {
+    value: 'false',
+    label: 'Require Special Characters',
+    description: 'Require at least one special character',
+    isSecret: false,
+  },
+  PASSWORD_EXPIRY_DAYS: {
+    value: '0',
+    label: 'Password Expiry (Days)',
+    description: 'Days before password expires (0 = never)',
+    isSecret: false,
+  },
+  SESSION_TIMEOUT_MINUTES: {
+    value: '1440',
+    label: 'Session Timeout (Minutes)',
+    description: 'Session timeout in minutes (1440 = 24 hours)',
+    isSecret: false,
+  },
+  MAX_SESSIONS_PER_USER: {
+    value: '5',
+    label: 'Max Sessions Per User',
+    description: 'Maximum concurrent sessions allowed per user',
+    isSecret: false,
+  },
+  MAX_LOGIN_ATTEMPTS: {
+    value: '10',
+    label: 'Max Login Attempts',
+    description: 'Maximum failed login attempts before lockout',
+    isSecret: false,
+  },
+  LOCKOUT_DURATION_MINUTES: {
+    value: '30',
+    label: 'Lockout Duration (Minutes)',
+    description: 'Account lockout duration after max failed attempts',
+    isSecret: false,
+  },
+  ENABLE_2FA: {
+    value: 'false',
+    label: 'Enable Two-Factor Auth',
+    description: 'Allow users to enable 2FA',
+    isSecret: false,
+  },
+  ENFORCE_2FA_FOR_ADMINS: {
+    value: 'false',
+    label: 'Enforce 2FA for Admins',
+    description: 'Require 2FA for all admin users',
+    isSecret: false,
+  },
 };
 
 // Ensure all security config keys exist

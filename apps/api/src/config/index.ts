@@ -114,7 +114,9 @@ export function validateConfig() {
       'jwt-secret',
     ];
     if (jwtPlaceholders.some((p) => config.jwt.secret.toLowerCase().includes(p.toLowerCase()))) {
-      throw new Error('JWT_SECRET contains a placeholder value. Set a strong random secret for production.');
+      throw new Error(
+        'JWT_SECRET contains a placeholder value. Set a strong random secret for production.',
+      );
     }
 
     // Validate encryption key length (must be 64 hex chars = 32 bytes)
@@ -123,8 +125,12 @@ export function validateConfig() {
     }
 
     // Reject the example encryption key from .env.example
-    if (config.encryption.key === '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef') {
-      throw new Error('ENCRYPTION_KEY is using the example value. Generate a random key: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+    if (
+      config.encryption.key === '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+    ) {
+      throw new Error(
+        "ENCRYPTION_KEY is using the example value. Generate a random key: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
+      );
     }
 
     // Validate encryption key is valid hex

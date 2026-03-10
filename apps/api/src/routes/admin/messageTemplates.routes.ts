@@ -58,33 +58,28 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 // GET /analytics - Template usage analytics
 router.get('/analytics', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const [
-      totalTemplates,
-      activeTemplates,
-      categoryStats,
-      mostUsedTemplates,
-      sharedTemplates,
-    ] = await Promise.all([
-      prisma.messageTemplate.count(),
-      prisma.messageTemplate.count({ where: { isActive: true } }),
-      prisma.messageTemplate.groupBy({
-        by: ['category'],
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-      }),
-      prisma.messageTemplate.findMany({
-        orderBy: { usageCount: 'desc' },
-        take: 10,
-        select: {
-          id: true,
-          title: true,
-          category: true,
-          usageCount: true,
-          org: { select: { name: true } },
-        },
-      }),
-      prisma.messageTemplate.count({ where: { isShared: true } }),
-    ]);
+    const [totalTemplates, activeTemplates, categoryStats, mostUsedTemplates, sharedTemplates] =
+      await Promise.all([
+        prisma.messageTemplate.count(),
+        prisma.messageTemplate.count({ where: { isActive: true } }),
+        prisma.messageTemplate.groupBy({
+          by: ['category'],
+          _count: { id: true },
+          orderBy: { _count: { id: 'desc' } },
+        }),
+        prisma.messageTemplate.findMany({
+          orderBy: { usageCount: 'desc' },
+          take: 10,
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            usageCount: true,
+            org: { select: { name: true } },
+          },
+        }),
+        prisma.messageTemplate.count({ where: { isShared: true } }),
+      ]);
 
     const data = {
       totalTemplates,
@@ -175,7 +170,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // PATCH /:id - Update template
@@ -210,7 +205,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // DELETE /:id - Delete template

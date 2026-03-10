@@ -6,15 +6,7 @@ import { Link } from '@/i18n/navigation';
 import { useAgents } from '@/hooks/useAgents';
 import { useChannels } from '@/hooks/useChannels';
 import { cn } from '@/lib/utils';
-import {
-  Rocket,
-  X,
-  Bot,
-  Globe,
-  MessageSquare,
-  Check,
-  ArrowRight,
-} from 'lucide-react';
+import { Rocket, X, Bot, Globe, MessageSquare, Check, ArrowRight } from 'lucide-react';
 
 const DISMISS_KEY = 'mojeeb_getting_started_dismissed';
 
@@ -97,10 +89,7 @@ export function GettingStartedCard() {
         {steps.map((step) => {
           const Icon = step.icon;
           return (
-            <div
-              key={step.label}
-              className="flex items-center gap-4 px-6 py-4"
-            >
+            <div key={step.label} className="flex items-center gap-4 px-6 py-4">
               <div
                 className={cn(
                   'flex h-9 w-9 items-center justify-center rounded-full shrink-0 transition-colors',

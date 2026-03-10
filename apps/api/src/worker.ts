@@ -3,7 +3,17 @@ import { config, validateConfig } from './config';
 import { logger } from './config/logger';
 import { prisma } from './config/database';
 import { redis } from './config/redis';
-import { inboundQueue, aiQueue, outboundQueue, analyticsQueue, webhookQueue, bulkEmailQueue, emailQueue, crawlerQueue, deadLetterQueue } from './queues';
+import {
+  inboundQueue,
+  aiQueue,
+  outboundQueue,
+  analyticsQueue,
+  webhookQueue,
+  bulkEmailQueue,
+  emailQueue,
+  crawlerQueue,
+  deadLetterQueue,
+} from './queues';
 
 // Import workers (named exports for graceful shutdown)
 import { inboundWorker } from './queues/workers/inbound.worker';
@@ -54,7 +64,11 @@ async function main() {
         await prisma.$queryRaw`SELECT 1`;
         checks.database = { status: 'healthy', latencyMs: Date.now() - dbStart };
       } catch (err: any) {
-        checks.database = { status: 'unhealthy', latencyMs: Date.now() - dbStart, error: err.message };
+        checks.database = {
+          status: 'unhealthy',
+          latencyMs: Date.now() - dbStart,
+          error: err.message,
+        };
       }
 
       // Check Redis
@@ -63,7 +77,11 @@ async function main() {
         await redis.ping();
         checks.redis = { status: 'healthy', latencyMs: Date.now() - redisStart };
       } catch (err: any) {
-        checks.redis = { status: 'unhealthy', latencyMs: Date.now() - redisStart, error: err.message };
+        checks.redis = {
+          status: 'unhealthy',
+          latencyMs: Date.now() - redisStart,
+          error: err.message,
+        };
       }
 
       // Check workers (ensure they're running)

@@ -18,7 +18,7 @@ export class RoutingPipeline {
   async decide(
     message: string,
     history: ConversationMessage[],
-    emotion: EmotionResult | null
+    emotion: EmotionResult | null,
   ): Promise<RoutingDecision> {
     // Rule-based checks first (fast, no API call)
     if (HUMAN_REQUEST_PATTERNS.some((p) => p.test(message))) {
@@ -30,11 +30,7 @@ export class RoutingPipeline {
     }
 
     // High anger/frustration threshold
-    if (
-      emotion &&
-      ['angry', 'frustrated'].includes(emotion.emotion) &&
-      emotion.score > 0.8
-    ) {
+    if (emotion && ['angry', 'frustrated'].includes(emotion.emotion) && emotion.score > 0.8) {
       return {
         shouldHandoff: true,
         reason: `High ${emotion.emotion} detected (score: ${emotion.score})`,
@@ -68,10 +64,7 @@ export class RoutingPipeline {
         confidence: number;
       }>({
         systemPrompt: ROUTING_DECISION_PROMPT,
-        messages: [
-          ...history.slice(-5),
-          { role: 'user', content: message },
-        ],
+        messages: [...history.slice(-5), { role: 'user', content: message }],
         temperature: 0.1,
         maxTokens: 150,
       });

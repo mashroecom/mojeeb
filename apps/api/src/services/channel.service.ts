@@ -82,9 +82,7 @@ export class ChannelService {
         },
       });
       if (existing) {
-        throw new ConflictError(
-          `A ${data.type} channel with this identifier already exists`,
-        );
+        throw new ConflictError(`A ${data.type} channel with this identifier already exists`);
       }
     }
 
@@ -164,9 +162,7 @@ export class ChannelService {
     });
 
     // Invalidate agent caches so the new isActive value is reflected
-    await Promise.all(
-      channel.agents.map((ca) => cache.del(`agent:${ca.agentId}`)),
-    );
+    await Promise.all(channel.agents.map((ca) => cache.del(`agent:${ca.agentId}`)));
 
     return updated;
   }
@@ -176,11 +172,7 @@ export class ChannelService {
    * If isPrimary is true, unset any existing primary agent first.
    * Enforces: each agent can have at most one channel of each type.
    */
-  async assignAgent(
-    channelId: string,
-    agentId: string,
-    isPrimary: boolean,
-  ) {
+  async assignAgent(channelId: string, agentId: string, isPrimary: boolean) {
     // Verify channel and agent exist
     const channel = await prisma.channel.findUnique({
       where: { id: channelId },
@@ -245,8 +237,7 @@ export class ChannelService {
     });
     if (!channel) throw new NotFoundError('Channel not found');
 
-    const existingCredentials =
-      (channel.credentials as Record<string, string>) || {};
+    const existingCredentials = (channel.credentials as Record<string, string>) || {};
 
     const mergedCredentials = { ...existingCredentials, ...settings };
 
@@ -298,14 +289,10 @@ export class ChannelService {
   /**
    * Encrypt sensitive values in a credentials object before persisting.
    */
-  private encryptCredentials(
-    credentials: Record<string, string>,
-  ): Record<string, string> {
+  private encryptCredentials(credentials: Record<string, string>): Record<string, string> {
     const result: Record<string, string> = {};
     for (const [key, value] of Object.entries(credentials)) {
-      result[key] = ChannelService.SENSITIVE_KEYS.has(key)
-        ? encrypt(value)
-        : value;
+      result[key] = ChannelService.SENSITIVE_KEYS.has(key) ? encrypt(value) : value;
     }
     return result;
   }
@@ -313,9 +300,7 @@ export class ChannelService {
   /**
    * Decrypt sensitive values in a credentials object after loading.
    */
-  private decryptCredentials(
-    credentials: Record<string, string>,
-  ): Record<string, string> {
+  private decryptCredentials(credentials: Record<string, string>): Record<string, string> {
     const result: Record<string, string> = {};
     for (const [key, value] of Object.entries(credentials)) {
       if (ChannelService.SENSITIVE_KEYS.has(key)) {
@@ -337,18 +322,10 @@ export class ChannelService {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  private validateCredentials(
-    type: ChannelType,
-    credentials: Record<string, string>,
-  ) {
+  private validateCredentials(type: ChannelType, credentials: Record<string, string>) {
     switch (type) {
       case 'WHATSAPP': {
-        const required = [
-          'phoneNumberId',
-          'accessToken',
-          'appSecret',
-          'verifyToken',
-        ];
+        const required = ['phoneNumberId', 'accessToken', 'appSecret', 'verifyToken'];
         for (const key of required) {
           if (!credentials[key]?.trim()) {
             throw new BadRequestError(`Missing required field: ${key}`);
@@ -382,10 +359,7 @@ export class ChannelService {
     }
   }
 
-  private deriveExternalId(
-    type: ChannelType,
-    credentials: Record<string, string>,
-  ): string | null {
+  private deriveExternalId(type: ChannelType, credentials: Record<string, string>): string | null {
     switch (type) {
       case 'WHATSAPP':
         return credentials.phoneNumberId || null;

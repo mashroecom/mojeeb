@@ -159,7 +159,10 @@ export class IPBlockService {
       const alreadyBlocked = await prisma.blockedIP.findUnique({ where: { ip } });
       if (alreadyBlocked) return;
 
-      const failedCount = await loginActivityService.getFailedCountByIP(ip, AUTO_BLOCK_WINDOW_MINUTES);
+      const failedCount = await loginActivityService.getFailedCountByIP(
+        ip,
+        AUTO_BLOCK_WINDOW_MINUTES,
+      );
 
       if (failedCount >= AUTO_BLOCK_THRESHOLD) {
         await this.block({

@@ -153,10 +153,7 @@ export class WebhookService {
 
     await webhookQueue.addBulk(jobs);
 
-    logger.info(
-      { orgId, event, count: webhooks.length },
-      'Webhook dispatch jobs enqueued',
-    );
+    logger.info({ orgId, event, count: webhooks.length }, 'Webhook dispatch jobs enqueued');
   }
 }
 

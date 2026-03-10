@@ -106,7 +106,9 @@ export function PricingSection({
                 onClick={() => setIsYearly(false)}
                 className={cn(
                   'rounded-full px-5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                  !isYearly ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  !isYearly
+                    ? 'bg-background shadow-sm text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
                 )}
               >
                 {t('monthly')}
@@ -115,7 +117,9 @@ export function PricingSection({
                 onClick={() => setIsYearly(true)}
                 className={cn(
                   'rounded-full px-5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                  isYearly ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  isYearly
+                    ? 'bg-background shadow-sm text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
                 )}
               >
                 {t('yearly')}
@@ -129,16 +133,19 @@ export function PricingSection({
           )}
         </div>
 
-        <div className={cn(
-          'mx-auto grid max-w-5xl grid-cols-1 gap-8',
-          plans.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-4',
-        )}>
+        <div
+          className={cn(
+            'mx-auto grid max-w-5xl grid-cols-1 gap-8',
+            plans.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-4',
+          )}
+        >
           {plans.map((plan) => {
             const features = parseFeatures(isAr ? plan.featuresAr : plan.features);
-            const name = isAr ? (plan.displayNameAr || plan.displayName) : plan.displayName;
+            const name = isAr ? plan.displayNameAr || plan.displayName : plan.displayName;
 
             const monthlyPrice = plan.monthlyPrice;
-            const yearlyPrice = plan.yearlyPrice || Math.round(monthlyPrice * 12 * (1 - yearlyDiscount / 100));
+            const yearlyPrice =
+              plan.yearlyPrice || Math.round(monthlyPrice * 12 * (1 - yearlyDiscount / 100));
             const yearlyMonthly = Math.round((yearlyPrice / 12) * 100) / 100;
             const price = isYearly ? yearlyMonthly : monthlyPrice;
             const showSave = isYearly && monthlyPrice > 0;
@@ -150,7 +157,7 @@ export function PricingSection({
                   'relative flex flex-col rounded-xl border p-8',
                   plan.isPopular
                     ? 'border-primary shadow-lg md:scale-105'
-                    : 'border-border shadow-sm'
+                    : 'border-border shadow-sm',
                 )}
               >
                 {plan.isPopular && (
@@ -166,14 +173,12 @@ export function PricingSection({
                       {price === 0 ? t('freeLabel') : `$${price}`}
                     </span>
                     {price > 0 && (
-                      <span className="text-sm text-muted-foreground">
-                        {t('perMonth')}
-                      </span>
+                      <span className="text-sm text-muted-foreground">{t('perMonth')}</span>
                     )}
                   </div>
                   {showSave && (
                     <p className="mt-1 text-xs text-green-600 dark:text-green-400">
-                      {t('savings', { amount: Math.round((monthlyPrice * 12) - yearlyPrice) })}
+                      {t('savings', { amount: Math.round(monthlyPrice * 12 - yearlyPrice) })}
                     </p>
                   )}
                 </div>
@@ -193,7 +198,7 @@ export function PricingSection({
                     'block rounded-lg px-4 py-2.5 text-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
                     plan.isPopular
                       ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                      : 'border hover:bg-accent'
+                      : 'border hover:bg-accent',
                   )}
                 >
                   {t('getStarted')}
@@ -206,9 +211,7 @@ export function PricingSection({
         {/* Enterprise CTA */}
         {enterpriseCtaText && (
           <div className="mt-12 text-center">
-            <p className="text-muted-foreground mb-4">
-              {t('enterpriseCta')}
-            </p>
+            <p className="text-muted-foreground mb-4">{t('enterpriseCta')}</p>
             <a
               href={enterpriseCtaLink || '/contact'}
               className="inline-flex items-center gap-2 rounded-lg border border-primary px-6 py-3 text-sm font-medium text-primary hover:bg-primary/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"

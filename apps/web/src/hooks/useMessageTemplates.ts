@@ -63,14 +63,19 @@ interface ApiResponse<T> {
 export const templateKeys = {
   all: (orgId: string) => ['organizations', orgId, 'message-templates'] as const,
   detail: (orgId: string, id: string) => ['organizations', orgId, 'message-templates', id] as const,
-  shortcut: (orgId: string, shortcut: string) => ['organizations', orgId, 'message-templates', 'shortcut', shortcut] as const,
+  shortcut: (orgId: string, shortcut: string) =>
+    ['organizations', orgId, 'message-templates', 'shortcut', shortcut] as const,
 };
 
 // ---------------------------------------------------------------------------
 // Hooks
 // ---------------------------------------------------------------------------
 
-export function useMessageTemplates(filters?: { category?: string; search?: string; agentId?: string }) {
+export function useMessageTemplates(filters?: {
+  category?: string;
+  search?: string;
+  agentId?: string;
+}) {
   const orgId = useAuthStore((s) => s.organization?.id);
 
   return useQuery({
@@ -181,7 +186,13 @@ export function useUseTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ templateId, variables }: { templateId: string; variables?: Record<string, string> }) => {
+    mutationFn: async ({
+      templateId,
+      variables,
+    }: {
+      templateId: string;
+      variables?: Record<string, string>;
+    }) => {
       const { data } = await api.post<ApiResponse<MessageTemplate>>(
         `/organizations/${orgId}/message-templates/${templateId}/use`,
         { variables },

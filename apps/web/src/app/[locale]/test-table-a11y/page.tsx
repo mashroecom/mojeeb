@@ -68,7 +68,9 @@ export default function TableAccessibilityTestPage() {
       <div className="space-y-4 rounded-lg border p-6 bg-card">
         <h2 className="text-xl font-semibold">Test Instructions</h2>
         <div className="space-y-2 text-sm">
-          <p><strong>Test 1: Loading State (aria-busy)</strong></p>
+          <p>
+            <strong>Test 1: Loading State (aria-busy)</strong>
+          </p>
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>Enable your screen reader (NVDA, JAWS, VoiceOver, or Orca)</li>
             <li>Click the "Simulate Loading" button below</li>
@@ -77,7 +79,9 @@ export default function TableAccessibilityTestPage() {
             <li>After 3 seconds, verify the busy state clears</li>
           </ul>
 
-          <p className="pt-4"><strong>Test 2: Sortable Columns (aria-sort="none")</strong></p>
+          <p className="pt-4">
+            <strong>Test 2: Sortable Columns (aria-sort="none")</strong>
+          </p>
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>Navigate to the table header row</li>
             <li>Move through each column header (Name, Email, Role, Status)</li>
@@ -85,14 +89,18 @@ export default function TableAccessibilityTestPage() {
             <li>Verify the ID column (non-sortable) has no sorting announcement</li>
           </ul>
 
-          <p className="pt-4"><strong>Test 3: Sort Indicators (aria-label)</strong></p>
+          <p className="pt-4">
+            <strong>Test 3: Sort Indicators (aria-label)</strong>
+          </p>
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>Navigate to a sortable column header (e.g., "Name")</li>
             <li>Listen for the complete announcement including chevron icons</li>
             <li>Verify "Sort ascending" and "Sort descending" are announced</li>
           </ul>
 
-          <p className="pt-4"><strong>Test 4: Sort Interaction</strong></p>
+          <p className="pt-4">
+            <strong>Test 4: Sort Interaction</strong>
+          </p>
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>Focus on a sortable column header</li>
             <li>Press Enter or Space to activate sorting</li>
@@ -101,7 +109,9 @@ export default function TableAccessibilityTestPage() {
             <li>Press Enter/Space once more, verify it returns to "sortable, none"</li>
           </ul>
 
-          <p className="pt-4"><strong>Test 5: Visual Appearance</strong></p>
+          <p className="pt-4">
+            <strong>Test 5: Visual Appearance</strong>
+          </p>
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>Verify the table looks normal (no visible ARIA text)</li>
             <li>Verify chevron icons display correctly and change opacity when sorting</li>
@@ -130,25 +140,39 @@ export default function TableAccessibilityTestPage() {
       <div className="space-y-4 rounded-lg border p-6 bg-card">
         <h2 className="text-xl font-semibold">Expected HTML Attributes</h2>
         <div className="space-y-2 text-sm font-mono bg-muted p-4 rounded">
-          <p><strong>When loading:</strong></p>
+          <p>
+            <strong>When loading:</strong>
+          </p>
           <p className="ml-4">&lt;table aria-busy="true"&gt;</p>
 
-          <p className="pt-4"><strong>When not loading:</strong></p>
+          <p className="pt-4">
+            <strong>When not loading:</strong>
+          </p>
           <p className="ml-4">&lt;table&gt; (no aria-busy attribute)</p>
 
-          <p className="pt-4"><strong>Sortable, unsorted column:</strong></p>
+          <p className="pt-4">
+            <strong>Sortable, unsorted column:</strong>
+          </p>
           <p className="ml-4">&lt;th aria-sort="none"&gt;</p>
 
-          <p className="pt-4"><strong>Sorted ascending:</strong></p>
+          <p className="pt-4">
+            <strong>Sorted ascending:</strong>
+          </p>
           <p className="ml-4">&lt;th aria-sort="ascending"&gt;</p>
 
-          <p className="pt-4"><strong>Sorted descending:</strong></p>
+          <p className="pt-4">
+            <strong>Sorted descending:</strong>
+          </p>
           <p className="ml-4">&lt;th aria-sort="descending"&gt;</p>
 
-          <p className="pt-4"><strong>Non-sortable column (ID):</strong></p>
+          <p className="pt-4">
+            <strong>Non-sortable column (ID):</strong>
+          </p>
           <p className="ml-4">&lt;th&gt; (no aria-sort attribute)</p>
 
-          <p className="pt-4"><strong>Chevron icons:</strong></p>
+          <p className="pt-4">
+            <strong>Chevron icons:</strong>
+          </p>
           <p className="ml-4">&lt;svg aria-label="Sort ascending"&gt; (up chevron)</p>
           <p className="ml-4">&lt;svg aria-label="Sort descending"&gt; (down chevron)</p>
         </div>
@@ -178,7 +202,9 @@ export default function TableAccessibilityTestPage() {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-green-600">✓</span>
-            <span>Screen reader announces "Sort ascending" and "Sort descending" for chevron icons</span>
+            <span>
+              Screen reader announces "Sort ascending" and "Sort descending" for chevron icons
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-green-600">✓</span>

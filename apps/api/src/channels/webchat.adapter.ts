@@ -41,7 +41,7 @@ export class WebchatAdapter extends ChannelAdapter {
 
   async sendMessage(
     _credentials: Record<string, string>,
-    message: OutboundMessage
+    message: OutboundMessage,
   ): Promise<SendResult> {
     // Webchat messages are sent via WebSocket, not via external API
     // This adapter just acknowledges the send

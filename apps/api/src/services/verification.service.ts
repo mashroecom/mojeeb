@@ -70,8 +70,12 @@ export class VerificationService {
 
     // Send welcome email (non-blocking)
     emailQueue
-      .add('welcome', { type: 'welcome', to: verificationToken.user.email, firstName: verificationToken.user.firstName })
-      .catch(err => logger.warn({ err }, 'Failed to queue welcome email'));
+      .add('welcome', {
+        type: 'welcome',
+        to: verificationToken.user.email,
+        firstName: verificationToken.user.firstName,
+      })
+      .catch((err) => logger.warn({ err }, 'Failed to queue welcome email'));
   }
 
   /**
@@ -101,7 +105,11 @@ export class VerificationService {
 
     // Create new token and send email
     const token = await this.createEmailVerificationToken(userId);
-    await emailQueue.add('verification', { type: 'verification', to: user.email, verifyToken: token });
+    await emailQueue.add('verification', {
+      type: 'verification',
+      to: user.email,
+      verifyToken: token,
+    });
   }
 
   /**
@@ -146,7 +154,11 @@ export class VerificationService {
       },
     });
 
-    await emailQueue.add('passwordReset', { type: 'passwordReset', to: user.email, resetToken: token });
+    await emailQueue.add('passwordReset', {
+      type: 'passwordReset',
+      to: user.email,
+      resetToken: token,
+    });
   }
 
   /**

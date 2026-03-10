@@ -59,14 +59,14 @@ export function NotificationsTab({
             'flex items-center justify-between p-4 rounded-xl border',
             notif.isRead
               ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700'
-              : 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800'
+              : 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800',
           )}
         >
           <div className="flex items-center gap-3">
             <Bell
               className={cn(
                 'w-5 h-5',
-                notif.isRead ? 'text-gray-400' : 'text-blue-600 dark:text-blue-400'
+                notif.isRead ? 'text-gray-400' : 'text-blue-600 dark:text-blue-400',
               )}
             />
             <div>
@@ -83,7 +83,7 @@ export function NotificationsTab({
                 'px-2 py-1 rounded-full text-xs font-medium',
                 notif.isRead
                   ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
               )}
             >
               {notif.isRead ? t('userDetail.read') : t('userDetail.unread')}

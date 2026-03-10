@@ -28,10 +28,7 @@ const worker = new Worker<WebhookJobData>(
       timestamp: new Date().toISOString(),
     });
 
-    const signature = crypto
-      .createHmac('sha256', webhook.secret)
-      .update(body)
-      .digest('hex');
+    const signature = crypto.createHmac('sha256', webhook.secret).update(body).digest('hex');
 
     const startTime = Date.now();
     let res: globalThis.Response | undefined;
@@ -129,7 +126,12 @@ const worker = new Worker<WebhookJobData>(
 worker.on('failed', (job, err) => {
   if (job) {
     logger.warn(
-      { webhookId: job.data.webhookId, event: job.data.event, attempt: job.attemptsMade, err: err.message },
+      {
+        webhookId: job.data.webhookId,
+        event: job.data.event,
+        attempt: job.attemptsMade,
+        err: err.message,
+      },
       'Webhook delivery failed, will retry',
     );
     moveToDeadLetterQueue('webhook-dispatch', job, err, 5);

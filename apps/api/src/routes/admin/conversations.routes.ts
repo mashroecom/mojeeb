@@ -168,7 +168,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /bulk-status - Bulk update conversation statuses
@@ -201,7 +201,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // DELETE /:conversationId - Delete a single conversation
@@ -248,9 +248,15 @@ router.post(
 
       // Delete related records first
       await prisma.message.deleteMany({ where: { conversationId: { in: conversationIds } } });
-      await prisma.conversationRating.deleteMany({ where: { conversationId: { in: conversationIds } } });
-      await prisma.conversationTag.deleteMany({ where: { conversationId: { in: conversationIds } } });
-      await prisma.conversationNote.deleteMany({ where: { conversationId: { in: conversationIds } } });
+      await prisma.conversationRating.deleteMany({
+        where: { conversationId: { in: conversationIds } },
+      });
+      await prisma.conversationTag.deleteMany({
+        where: { conversationId: { in: conversationIds } },
+      });
+      await prisma.conversationNote.deleteMany({
+        where: { conversationId: { in: conversationIds } },
+      });
       await prisma.lead.deleteMany({ where: { conversationId: { in: conversationIds } } });
 
       const result = await prisma.conversation.deleteMany({
@@ -269,7 +275,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 export default router;

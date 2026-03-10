@@ -61,10 +61,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       ];
     } else {
       // Default: show both shared templates and user's personal templates
-      where.OR = [
-        { isShared: true },
-        { userId },
-      ];
+      where.OR = [{ isShared: true }, { userId }];
     }
 
     const templates = await prisma.messageTemplate.findMany({
@@ -90,10 +87,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
           },
         },
       },
-      orderBy: [
-        { usageCount: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy: [{ usageCount: 'desc' }, { createdAt: 'desc' }],
     });
 
     res.json({
@@ -128,10 +122,7 @@ router.get('/:templateId', async (req: Request, res: Response, next: NextFunctio
         id: templateId,
         orgId,
         isActive: true,
-        OR: [
-          { isShared: true },
-          { userId },
-        ],
+        OR: [{ isShared: true }, { userId }],
       },
       select: {
         id: true,
@@ -190,10 +181,7 @@ router.post('/:templateId/use', async (req: Request, res: Response, next: NextFu
         id: templateId,
         orgId,
         isActive: true,
-        OR: [
-          { isShared: true },
-          { userId },
-        ],
+        OR: [{ isShared: true }, { userId }],
       },
     });
 
@@ -279,7 +267,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 export default router;

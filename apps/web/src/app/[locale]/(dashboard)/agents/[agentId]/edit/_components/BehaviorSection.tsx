@@ -113,9 +113,7 @@ export function BehaviorSection({
           </div>
           <div>
             <h2 className="text-sm font-semibold">{t('responseLength')}</h2>
-            <p className="text-xs text-muted-foreground">
-              {t('responseLengthHint')}
-            </p>
+            <p className="text-xs text-muted-foreground">{t('responseLengthHint')}</p>
           </div>
         </div>
 

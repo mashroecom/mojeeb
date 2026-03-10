@@ -155,10 +155,7 @@ export const ConversationList = React.memo(function ConversationList({
             title={t('refresh')}
           >
             <RefreshCw
-              className={cn(
-                'h-4 w-4 text-muted-foreground',
-                isFetching && 'animate-spin',
-              )}
+              className={cn('h-4 w-4 text-muted-foreground', isFetching && 'animate-spin')}
             />
           </button>
         </div>
@@ -384,9 +381,7 @@ export const ConversationList = React.memo(function ConversationList({
                   {/* Top row: name + emoji + time */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 truncate">
-                      <span className="truncate text-sm font-medium">
-                        {displayName}
-                      </span>
+                      <span className="truncate text-sm font-medium">{displayName}</span>
                       {emoji && (
                         <span
                           className="shrink-0 text-sm"
@@ -439,8 +434,7 @@ export const ConversationList = React.memo(function ConversationList({
                       <span
                         className={cn(
                           'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium',
-                          CHANNEL_BADGE[channelType] ??
-                            'bg-muted text-muted-foreground',
+                          CHANNEL_BADGE[channelType] ?? 'bg-muted text-muted-foreground',
                         )}
                       >
                         {CHANNEL_TRANSLATION_KEY[channelType]

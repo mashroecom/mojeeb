@@ -189,7 +189,9 @@ let currentStripeSecretKey: string | null = null;
 async function getStripeClient(): Promise<Stripe> {
   const stripeConfig = await getStripeConfig();
   if (!stripeConfig.secretKey) {
-    throw new BadRequestError('Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment.');
+    throw new BadRequestError(
+      'Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment.',
+    );
   }
   if (!stripeClient || currentStripeSecretKey !== stripeConfig.secretKey) {
     stripeClient = new Stripe(stripeConfig.secretKey, {
@@ -261,7 +263,9 @@ let paypalClient: paypal.core.PayPalHttpClient | null = null;
 async function getPayPalClient(): Promise<paypal.core.PayPalHttpClient> {
   const paypalConfig = await getPayPalConfig();
   if (!paypalConfig.clientId || !paypalConfig.clientSecret) {
-    throw new BadRequestError('PayPal is not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in your environment.');
+    throw new BadRequestError(
+      'PayPal is not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in your environment.',
+    );
   }
 
   if (!paypalClient) {
@@ -294,7 +298,11 @@ export class SubscriptionService {
    * Create a Kashier checkout session for upgrading to a paid plan.
    * In development without Kashier credentials, upgrades directly (demo mode).
    */
-  async createCheckout(orgId: string, plan: string, billingCycle: 'monthly' | 'yearly' = 'monthly') {
+  async createCheckout(
+    orgId: string,
+    plan: string,
+    billingCycle: 'monthly' | 'yearly' = 'monthly',
+  ) {
     // Validate the target plan
     if (plan !== 'STARTER' && plan !== 'PROFESSIONAL') {
       throw new BadRequestError('Invalid plan. Must be STARTER or PROFESSIONAL.');
@@ -317,7 +325,9 @@ export class SubscriptionService {
 
     // If Kashier credentials are not configured, payment is not available
     if (!kashier.apiKey || !kashier.merchantId) {
-      throw new BadRequestError('Payment gateway is not configured. Please set KASHIER_API_KEY and KASHIER_MERCHANT_ID in your environment.');
+      throw new BadRequestError(
+        'Payment gateway is not configured. Please set KASHIER_API_KEY and KASHIER_MERCHANT_ID in your environment.',
+      );
     }
 
     const merchantOrderId = `mojeeb_${orgId}_${Date.now()}`;
@@ -327,10 +337,7 @@ export class SubscriptionService {
     // Path format: /?payment=mid.orderId.amount.currency
     // Hash = HMAC-SHA256(path, apiKey)
     const hashPath = `/?payment=${kashier.merchantId}.${merchantOrderId}.${amount}.${currency}`;
-    const hash = crypto
-      .createHmac('sha256', kashier.apiKey)
-      .update(hashPath)
-      .digest('hex');
+    const hash = crypto.createHmac('sha256', kashier.apiKey).update(hashPath).digest('hex');
 
     const redirectUrl = `${config.frontendUrl}/billing?status=success`;
     const failureRedirectUrl = `${config.frontendUrl}/billing?status=failed`;
@@ -375,17 +382,23 @@ export class SubscriptionService {
    * Confirm a payment from Kashier redirect parameters.
    * This is used when the webhook can't reach the server (e.g., localhost).
    */
-  async confirmPayment(orgId: string, params: {
-    merchantOrderId: string;
-    paymentStatus: string;
-    transactionId?: string;
-    amount: string;
-    currency: string;
-    signature?: string;
-  }) {
+  async confirmPayment(
+    orgId: string,
+    params: {
+      merchantOrderId: string;
+      paymentStatus: string;
+      transactionId?: string;
+      amount: string;
+      currency: string;
+      signature?: string;
+    },
+  ) {
     const { merchantOrderId, paymentStatus, transactionId, amount } = params;
 
-    logger.info({ orgId, merchantOrderId, paymentStatus, amount: params.amount }, 'Confirming payment from redirect');
+    logger.info(
+      { orgId, merchantOrderId, paymentStatus, amount: params.amount },
+      'Confirming payment from redirect',
+    );
 
     if (paymentStatus !== 'SUCCESS') {
       throw new BadRequestError('Payment was not successful.');
@@ -414,9 +427,19 @@ export class SubscriptionService {
     // Verify amount matches (use parseFloat + String to handle Prisma Decimal safely)
     const paidAmountNum = parseFloat(amount);
     const invoiceAmountNum = parseFloat(String(invoice.amount));
-    logger.info({ paidAmountNum, invoiceAmountNum, rawAmount: amount, rawInvoiceAmount: String(invoice.amount) }, 'Comparing payment amounts');
+    logger.info(
+      {
+        paidAmountNum,
+        invoiceAmountNum,
+        rawAmount: amount,
+        rawInvoiceAmount: String(invoice.amount),
+      },
+      'Comparing payment amounts',
+    );
     if (paidAmountNum !== invoiceAmountNum) {
-      throw new BadRequestError(`Payment amount (${paidAmountNum}) does not match invoice amount (${invoiceAmountNum}).`);
+      throw new BadRequestError(
+        `Payment amount (${paidAmountNum}) does not match invoice amount (${invoiceAmountNum}).`,
+      );
     }
 
     // Determine the new plan from the payment amount
@@ -601,7 +624,9 @@ export class SubscriptionService {
     const invoiceAmountNum = parseFloat(String(invoice.amount));
     logger.info({ paidAmountNum, invoiceAmountNum }, 'Comparing payment amounts');
     if (Math.abs(paidAmountNum - invoiceAmountNum) > 0.01) {
-      throw new BadRequestError(`Payment amount (${paidAmountNum}) does not match invoice amount (${invoiceAmountNum}).`);
+      throw new BadRequestError(
+        `Payment amount (${paidAmountNum}) does not match invoice amount (${invoiceAmountNum}).`,
+      );
     }
 
     // Determine the new plan from the payment amount
@@ -645,10 +670,7 @@ export class SubscriptionService {
 
     await cache.del(`subscription:${orgId}`);
 
-    logger.info(
-      { orgId, newPlan, sessionId },
-      'Stripe payment confirmed, subscription upgraded',
-    );
+    logger.info({ orgId, newPlan, sessionId }, 'Stripe payment confirmed, subscription upgraded');
 
     return this.getByOrgId(orgId);
   }
@@ -783,7 +805,9 @@ export class SubscriptionService {
     const invoiceAmountNum = parseFloat(String(invoice.amount));
     logger.info({ paidAmountNum, invoiceAmountNum }, 'Comparing payment amounts');
     if (Math.abs(paidAmountNum - invoiceAmountNum) > 0.01) {
-      throw new BadRequestError(`Payment amount (${paidAmountNum}) does not match invoice amount (${invoiceAmountNum}).`);
+      throw new BadRequestError(
+        `Payment amount (${paidAmountNum}) does not match invoice amount (${invoiceAmountNum}).`,
+      );
     }
 
     // Determine the new plan from the payment amount
@@ -827,10 +851,7 @@ export class SubscriptionService {
 
     await cache.del(`subscription:${orgId}`);
 
-    logger.info(
-      { orgId, newPlan, orderId },
-      'PayPal payment confirmed, subscription upgraded',
-    );
+    logger.info({ orgId, newPlan, orderId }, 'PayPal payment confirmed, subscription upgraded');
 
     return this.getByOrgId(orgId);
   }
@@ -990,7 +1011,10 @@ export class SubscriptionService {
     logger.info({ sessionId: session.id }, 'Stripe checkout session completed');
 
     if (session.payment_status !== 'paid') {
-      logger.info({ sessionId: session.id, status: session.payment_status }, 'Payment not completed yet');
+      logger.info(
+        { sessionId: session.id, status: session.payment_status },
+        'Payment not completed yet',
+      );
       return;
     }
 
@@ -1359,10 +1383,7 @@ export class SubscriptionService {
    * Check if the organization is within its usage limits.
    * Returns true if usage is allowed, false if at/over limit.
    */
-  async checkUsage(
-    orgId: string,
-    type: 'messages' | 'agents',
-  ): Promise<boolean> {
+  async checkUsage(orgId: string, type: 'messages' | 'agents'): Promise<boolean> {
     const subscription = await this.getByOrgId(orgId);
 
     switch (type) {
@@ -1378,10 +1399,7 @@ export class SubscriptionService {
   /**
    * Increment a usage counter. Throws UsageLimitError if the limit is reached.
    */
-  async incrementUsage(
-    orgId: string,
-    type: 'messages' | 'agents',
-  ) {
+  async incrementUsage(orgId: string, type: 'messages' | 'agents') {
     const allowed = await this.checkUsage(orgId, type);
     if (!allowed) {
       throw new UsageLimitError(
@@ -1407,10 +1425,7 @@ export class SubscriptionService {
   /**
    * Decrement a usage counter (e.g. when deleting an agent).
    */
-  async decrementUsage(
-    orgId: string,
-    type: 'agents',
-  ) {
+  async decrementUsage(orgId: string, type: 'agents') {
     const fieldMap = {
       agents: 'agentsUsed',
     } as const;
@@ -1439,7 +1454,10 @@ export class SubscriptionService {
   /**
    * Get paginated invoices for an organization.
    */
-  async getInvoices(orgId: string, { page = 1, limit = 20 }: { page?: number; limit?: number } = {}) {
+  async getInvoices(
+    orgId: string,
+    { page = 1, limit = 20 }: { page?: number; limit?: number } = {},
+  ) {
     const subscription = await prisma.subscription.findUnique({
       where: { orgId },
     });
@@ -1492,7 +1510,6 @@ export class SubscriptionService {
 
     return invoice;
   }
-
 }
 
 export const subscriptionService = new SubscriptionService();

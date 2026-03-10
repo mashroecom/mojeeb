@@ -67,7 +67,10 @@ export default function TagsPage() {
               type="text"
               placeholder={t('search')}
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="w-full rounded-lg border bg-background ps-9 pe-3 py-2 text-sm"
             />
           </div>

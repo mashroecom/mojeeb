@@ -193,7 +193,10 @@ router.get('/legal/:type', async (req: Request, res: Response, next: NextFunctio
     });
 
     if (!content) {
-      return res.json({ success: true, data: { id: type, contentEn: '', contentAr: '', updatedAt: null } });
+      return res.json({
+        success: true,
+        data: { id: type, contentEn: '', contentAr: '', updatedAt: null },
+      });
     }
 
     res.json({ success: true, data: content });

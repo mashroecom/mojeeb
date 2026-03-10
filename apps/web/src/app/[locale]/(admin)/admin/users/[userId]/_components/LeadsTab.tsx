@@ -29,12 +29,7 @@ interface LeadsTabProps {
   onPageChange: (page: number) => void;
 }
 
-export function LeadsTab({
-  isLoading,
-  leadsData,
-  currentPage,
-  onPageChange,
-}: LeadsTabProps) {
+export function LeadsTab({ isLoading, leadsData, currentPage, onPageChange }: LeadsTabProps) {
   const t = useTranslations('admin');
   const locale = useLocale();
 
@@ -48,9 +43,7 @@ export function LeadsTab({
 
   if (!leadsData?.leads?.length) {
     return (
-      <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-        {t('userDetail.noLeads')}
-      </p>
+      <p className="text-center text-gray-500 dark:text-gray-400 py-8">{t('userDetail.noLeads')}</p>
     );
   }
 
@@ -102,7 +95,7 @@ export function LeadsTab({
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                       : lead.status === 'CONVERTED'
                         ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
               )}
             >
               {lead.status}

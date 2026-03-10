@@ -57,13 +57,9 @@ export default function TermsPage() {
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <Scale className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            {t('title')}
-          </h1>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{t('title')}</h1>
           <p className="mt-4 text-muted-foreground">
-            {lastUpdated
-              ? `${t('lastUpdatedLabel')}: ${lastUpdated}`
-              : t('lastUpdated')}
+            {lastUpdated ? `${t('lastUpdatedLabel')}: ${lastUpdated}` : t('lastUpdated')}
           </p>
         </div>
 
@@ -89,12 +85,8 @@ export default function TermsPage() {
           <div className="space-y-10">
             {sections.map((section) => (
               <section key={section} className="rounded-xl border bg-card p-6 sm:p-8">
-                <h2 className="mb-4 text-xl font-semibold sm:text-2xl">
-                  {t(`${section}.title`)}
-                </h2>
-                <p className="leading-relaxed text-muted-foreground">
-                  {t(`${section}.content`)}
-                </p>
+                <h2 className="mb-4 text-xl font-semibold sm:text-2xl">{t(`${section}.title`)}</h2>
+                <p className="leading-relaxed text-muted-foreground">{t(`${section}.content`)}</p>
                 {sectionsWithItems.includes(section) && (
                   <ul className="mt-4 list-disc space-y-2 ps-6 text-muted-foreground">
                     {(t.raw(`${section}.items`) as string[]).map((item, index) => (
@@ -122,7 +114,10 @@ function renderMarkdown(md: string): string {
     .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+    .replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+    )
     .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
     .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
     .replace(/\n\n/g, '</p><p>')

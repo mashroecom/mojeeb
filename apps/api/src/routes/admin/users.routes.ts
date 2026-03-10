@@ -65,7 +65,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /bulk-delete - Bulk delete users
@@ -88,7 +88,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /bulk-unsuspend - Bulk unsuspend users
@@ -111,7 +111,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // GET /:userId - Get user detail
@@ -164,40 +164,53 @@ router.delete('/:userId', async (req: Request, res: Response, next: NextFunction
 });
 
 // PATCH /:userId/toggle-superadmin - Toggle superadmin role
-router.patch('/:userId/toggle-superadmin', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { userId } = req.params as { userId: string };
-    // Prevent self-demotion
-    if (userId === req.user!.userId) {
-      return res.status(400).json({ success: false, error: 'Cannot modify your own superadmin status' });
+router.patch(
+  '/:userId/toggle-superadmin',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params as { userId: string };
+      // Prevent self-demotion
+      if (userId === req.user!.userId) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'Cannot modify your own superadmin status' });
+      }
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { isSuperAdmin: true },
+      });
+      if (!user) throw new NotFoundError('User not found');
+
+      const updated = await prisma.user.update({
+        where: { id: userId },
+        data: { isSuperAdmin: !user.isSuperAdmin },
+        select: { id: true, isSuperAdmin: true },
+      });
+
+      auditLogService
+        .log({
+          userId: req.user!.userId,
+          action: updated.isSuperAdmin ? 'USER_PROMOTED_SUPERADMIN' : 'USER_DEMOTED_SUPERADMIN',
+          targetType: 'User',
+          targetId: userId,
+        })
+        .catch(() => {});
+
+      res.json({ success: true, data: updated });
+    } catch (err) {
+      next(err);
     }
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { isSuperAdmin: true } });
-    if (!user) throw new NotFoundError('User not found');
-
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: { isSuperAdmin: !user.isSuperAdmin },
-      select: { id: true, isSuperAdmin: true },
-    });
-
-    auditLogService.log({
-      userId: req.user!.userId,
-      action: updated.isSuperAdmin ? 'USER_PROMOTED_SUPERADMIN' : 'USER_DEMOTED_SUPERADMIN',
-      targetType: 'User',
-      targetId: userId,
-    }).catch(() => {});
-
-    res.json({ success: true, data: updated });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // POST /:userId/reset-password - Send password reset email
 router.post('/:userId/reset-password', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId } = req.params as { userId: string };
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true },
+    });
     if (!user) throw new NotFoundError('User not found');
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -210,12 +223,14 @@ router.post('/:userId/reset-password', async (req: Request, res: Response, next:
 
     await emailQueue.add('passwordReset', { type: 'passwordReset', to: user.email, resetToken });
 
-    auditLogService.log({
-      userId: req.user!.userId,
-      action: 'USER_PASSWORD_RESET_SENT',
-      targetType: 'User',
-      targetId: userId,
-    }).catch(() => {});
+    auditLogService
+      .log({
+        userId: req.user!.userId,
+        action: 'USER_PASSWORD_RESET_SENT',
+        targetType: 'User',
+        targetId: userId,
+      })
+      .catch(() => {});
 
     res.json({ success: true, data: { message: 'Password reset email sent' } });
   } catch (err) {
@@ -232,24 +247,35 @@ router.post(
       const { userId } = req.params as { userId: string };
       const { subject, body: emailBody } = req.body as z.infer<typeof sendEmailSchema>;
 
-      const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, email: true, firstName: true } });
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, firstName: true },
+      });
       if (!user) throw new NotFoundError('User not found');
 
-      await emailQueue.add('custom', { type: 'custom', to: user.email, subject, body: emailBody, firstName: user.firstName });
+      await emailQueue.add('custom', {
+        type: 'custom',
+        to: user.email,
+        subject,
+        body: emailBody,
+        firstName: user.firstName,
+      });
 
-      auditLogService.log({
-        userId: req.user!.userId,
-        action: 'USER_EMAIL_SENT',
-        targetType: 'User',
-        targetId: userId,
-        metadata: { subject },
-      }).catch(() => {});
+      auditLogService
+        .log({
+          userId: req.user!.userId,
+          action: 'USER_EMAIL_SENT',
+          targetType: 'User',
+          targetId: userId,
+          metadata: { subject },
+        })
+        .catch(() => {});
 
       res.json({ success: true, data: { message: 'Email sent' } });
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /:userId/impersonate - Generate short-lived token for user
@@ -266,21 +292,28 @@ router.post('/:userId/impersonate', async (req: Request, res: Response, next: Ne
     const token = jwt.sign(
       { userId: user.id, email: user.email, impersonatedBy: req.user!.userId },
       config.jwt.secret,
-      { expiresIn: '1h' }
+      { expiresIn: '1h' },
     );
 
-    auditLogService.log({
-      userId: req.user!.userId,
-      action: 'USER_IMPERSONATED',
-      targetType: 'User',
-      targetId: userId,
-    }).catch(() => {});
+    auditLogService
+      .log({
+        userId: req.user!.userId,
+        action: 'USER_IMPERSONATED',
+        targetType: 'User',
+        targetId: userId,
+      })
+      .catch(() => {});
 
     res.json({
       success: true,
       data: {
         accessToken: token,
-        user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName },
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
       },
     });
   } catch (err) {
@@ -324,26 +357,31 @@ router.patch(
         select: { id: true, firstName: true, lastName: true, email: true },
       });
 
-      auditLogService.log({
-        userId: req.user!.userId,
-        action: newPassword ? 'USER_PASSWORD_CHANGED' : 'USER_PROFILE_UPDATED',
-        targetType: 'User',
-        targetId: userId,
-        metadata: { ...profileUpdates, passwordChanged: !!newPassword },
-      }).catch(() => {});
+      auditLogService
+        .log({
+          userId: req.user!.userId,
+          action: newPassword ? 'USER_PASSWORD_CHANGED' : 'USER_PROFILE_UPDATED',
+          targetType: 'User',
+          targetId: userId,
+          metadata: { ...profileUpdates, passwordChanged: !!newPassword },
+        })
+        .catch(() => {});
 
       res.json({ success: true, data: updated });
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /:userId/verify-email - Manually verify user email
 router.post('/:userId/verify-email', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId } = req.params as { userId: string };
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, emailVerified: true } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, emailVerified: true },
+    });
     if (!user) throw new NotFoundError('User not found');
 
     const updated = await prisma.user.update({
@@ -352,12 +390,14 @@ router.post('/:userId/verify-email', async (req: Request, res: Response, next: N
       select: { id: true, emailVerified: true },
     });
 
-    auditLogService.log({
-      userId: req.user!.userId,
-      action: updated.emailVerified ? 'USER_EMAIL_VERIFIED' : 'USER_EMAIL_UNVERIFIED',
-      targetType: 'User',
-      targetId: userId,
-    }).catch(() => {});
+    auditLogService
+      .log({
+        userId: req.user!.userId,
+        action: updated.emailVerified ? 'USER_EMAIL_VERIFIED' : 'USER_EMAIL_UNVERIFIED',
+        targetType: 'User',
+        targetId: userId,
+      })
+      .catch(() => {});
 
     res.json({ success: true, data: updated });
   } catch (err) {
@@ -394,7 +434,10 @@ router.get('/:userId/api-keys', async (req: Request, res: Response, next: NextFu
       prisma.apiKey.count({ where }),
     ]);
 
-    res.json({ success: true, data: { keys, total, page, limit, totalPages: Math.ceil(total / limit) } });
+    res.json({
+      success: true,
+      data: { keys, total, page, limit, totalPages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     next(err);
   }
@@ -429,7 +472,10 @@ router.get('/:userId/conversations', async (req: Request, res: Response, next: N
       prisma.conversation.count({ where }),
     ]);
 
-    res.json({ success: true, data: { conversations, total, page, limit, totalPages: Math.ceil(total / limit) } });
+    res.json({
+      success: true,
+      data: { conversations, total, page, limit, totalPages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     next(err);
   }
@@ -464,7 +510,10 @@ router.get('/:userId/leads', async (req: Request, res: Response, next: NextFunct
       prisma.lead.count({ where }),
     ]);
 
-    res.json({ success: true, data: { leads, total, page, limit, totalPages: Math.ceil(total / limit) } });
+    res.json({
+      success: true,
+      data: { leads, total, page, limit, totalPages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     next(err);
   }
@@ -498,7 +547,10 @@ router.get('/:userId/notifications', async (req: Request, res: Response, next: N
       prisma.notification.count({ where }),
     ]);
 
-    res.json({ success: true, data: { notifications, total, page, limit, totalPages: Math.ceil(total / limit) } });
+    res.json({
+      success: true,
+      data: { notifications, total, page, limit, totalPages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     next(err);
   }

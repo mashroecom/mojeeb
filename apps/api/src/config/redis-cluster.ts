@@ -22,7 +22,7 @@ function parseClusterNodes(): { host: string; port: number }[] {
     const parts = node.trim().split(':');
     if (parts.length !== 2 || !parts[0] || !parts[1]) {
       throw new Error(
-        `Invalid Redis cluster node format: "${node}". Expected "host:port" (e.g., "redis-0.redis:6379")`
+        `Invalid Redis cluster node format: "${node}". Expected "host:port" (e.g., "redis-0.redis:6379")`,
       );
     }
     const [host, port] = parts;

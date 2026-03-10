@@ -35,9 +35,7 @@ export function usePublicSiteSettings() {
   return useQuery({
     queryKey: publicSiteSettingsKeys.settings,
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<PublicSiteSettings>>(
-        '/public/site-settings',
-      );
+      const { data } = await api.get<ApiResponse<PublicSiteSettings>>('/public/site-settings');
       return data.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

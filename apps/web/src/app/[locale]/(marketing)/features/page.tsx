@@ -71,9 +71,7 @@ export default function FeaturesPage() {
                   <div className={cn('mb-4 inline-flex rounded-xl p-3', feat.color)}>
                     <Icon className="h-6 w-6" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    {t(`core.${feat.key}.title`)}
-                  </h3>
+                  <h3 className="text-lg font-semibold mb-2">{t(`core.${feat.key}.title`)}</h3>
                   <p className="text-sm leading-relaxed text-muted-foreground">
                     {t(`core.${feat.key}.description`)}
                   </p>
@@ -92,17 +90,17 @@ export default function FeaturesPage() {
             {moreFeatures.map((feat) => {
               const Icon = feat.icon;
               return (
-                <div
-                  key={feat.key}
-                  className="flex gap-4 rounded-2xl border bg-card p-6"
-                >
-                  <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-xl', feat.color)}>
+                <div key={feat.key} className="flex gap-4 rounded-2xl border bg-card p-6">
+                  <div
+                    className={cn(
+                      'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl',
+                      feat.color,
+                    )}
+                  >
                     <Icon className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold mb-1">
-                      {t(`more.${feat.key}.title`)}
-                    </h3>
+                    <h3 className="text-base font-semibold mb-1">{t(`more.${feat.key}.title`)}</h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
                       {t(`more.${feat.key}.description`)}
                     </p>

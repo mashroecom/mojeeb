@@ -18,9 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-muted/30">
                 <AnnouncementBanner />
                 <ErrorBoundary>
-                  <div className="animate-page-in">
-                    {children}
-                  </div>
+                  <div className="animate-page-in">{children}</div>
                 </ErrorBoundary>
               </main>
             </div>

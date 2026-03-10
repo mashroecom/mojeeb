@@ -11,7 +11,12 @@ export const adminOrgKeys = {
 
 // ===== Organization Management =====
 
-export function useAdminOrganizations(params: { page: number; limit: number; search?: string; status?: string }) {
+export function useAdminOrganizations(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminOrgKeys.orgs(params),
     queryFn: async () => {

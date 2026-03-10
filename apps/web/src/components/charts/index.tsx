@@ -11,25 +11,25 @@ import dynamic from 'next/dynamic';
 
 export const SparklineChart = dynamic(
   () => import('./SparklineChart').then((mod) => mod.SparklineChart),
-  { ssr: false }
+  { ssr: false },
 );
 
 export const MojeebLineChart = dynamic(
   () => import('./MojeebLineChart').then((mod) => mod.MojeebLineChart),
-  { ssr: false }
+  { ssr: false },
 );
 
 export const MojeebBarChart = dynamic(
   () => import('./MojeebBarChart').then((mod) => mod.MojeebBarChart),
-  { ssr: false }
+  { ssr: false },
 );
 
 export const MojeebDonutChart = dynamic(
   () => import('./MojeebDonutChart').then((mod) => mod.MojeebDonutChart),
-  { ssr: false }
+  { ssr: false },
 );
 
 export const MojeebHeatmapChart = dynamic(
   () => import('./MojeebHeatmapChart').then((mod) => mod.MojeebHeatmapChart),
-  { ssr: false }
+  { ssr: false },
 );

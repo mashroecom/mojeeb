@@ -96,12 +96,7 @@ async function walkDir(dir: string, baseDir: string): Promise<FileEntry[]> {
 }
 
 export class FileManagerService {
-  async listFiles(params: {
-    page: number;
-    limit: number;
-    search?: string;
-    type?: string;
-  }) {
+  async listFiles(params: { page: number; limit: number; search?: string; type?: string }) {
     const { page, limit, search, type } = params;
 
     // Ensure uploads directory exists

@@ -4,8 +4,15 @@ import { prisma } from '../config/database';
 import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 
-interface OrgParams { orgId: string; [key: string]: string; }
-interface TemplateParams { orgId: string; templateId: string; [key: string]: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
+interface TemplateParams {
+  orgId: string;
+  templateId: string;
+  [key: string]: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
@@ -128,7 +135,17 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { orgId } = req.params as unknown as OrgParams;
-      const { title, contentEn, contentAr, shortcut, category, variables, agentId, isActive, autoTrigger } = req.body;
+      const {
+        title,
+        contentEn,
+        contentAr,
+        shortcut,
+        category,
+        variables,
+        agentId,
+        isActive,
+        autoTrigger,
+      } = req.body;
 
       // Check shortcut uniqueness within org
       if (shortcut) {
@@ -169,7 +186,17 @@ router.put(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { orgId, templateId } = req.params as unknown as TemplateParams;
-      const { title, contentEn, contentAr, shortcut, category, variables, agentId, isActive, autoTrigger } = req.body;
+      const {
+        title,
+        contentEn,
+        contentAr,
+        shortcut,
+        category,
+        variables,
+        agentId,
+        isActive,
+        autoTrigger,
+      } = req.body;
 
       const template = await prisma.messageTemplate.findFirst({
         where: { id: templateId, orgId },
@@ -214,7 +241,17 @@ router.patch(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { orgId, templateId } = req.params as unknown as TemplateParams;
-      const { title, contentEn, contentAr, shortcut, category, variables, agentId, isActive, autoTrigger } = req.body;
+      const {
+        title,
+        contentEn,
+        contentAr,
+        shortcut,
+        category,
+        variables,
+        agentId,
+        isActive,
+        autoTrigger,
+      } = req.body;
 
       const template = await prisma.messageTemplate.findFirst({
         where: { id: templateId, orgId },
@@ -291,8 +328,14 @@ router.post('/:templateId/use', async (req: Request, res: Response, next: NextFu
     if (varValues && typeof varValues === 'object') {
       for (const [key, value] of Object.entries(varValues)) {
         const placeholder = `{{${key}}}`;
-        contentEn = contentEn.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), String(value));
-        contentAr = contentAr.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), String(value));
+        contentEn = contentEn.replace(
+          new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'),
+          String(value),
+        );
+        contentAr = contentAr.replace(
+          new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'),
+          String(value),
+        );
       }
     }
 

@@ -5,16 +5,13 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const variantStyles = {
-  primary:
-    'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary',
+  primary: 'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary',
   secondary:
     'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-secondary',
   danger:
     'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive',
-  ghost:
-    'hover:bg-muted text-foreground focus-visible:ring-muted',
-  outline:
-    'border bg-background text-foreground hover:bg-muted focus-visible:ring-primary',
+  ghost: 'hover:bg-muted text-foreground focus-visible:ring-muted',
+  outline: 'border bg-background text-foreground hover:bg-muted focus-visible:ring-primary',
 } as const;
 
 const sizeStyles = {
@@ -32,15 +29,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    {
-      variant = 'primary',
-      size = 'md',
-      loading = false,
-      disabled,
-      className,
-      children,
-      ...rest
-    },
+    { variant = 'primary', size = 'md', loading = false, disabled, className, children, ...rest },
     ref,
   ) => {
     return (
@@ -57,9 +46,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {...rest}
       >
-        {loading && (
-          <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-        )}
+        {loading && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
         {children}
       </button>
     );

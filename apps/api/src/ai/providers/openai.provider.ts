@@ -38,27 +38,30 @@ export class OpenAIProvider extends AIProvider {
     const startTime = Date.now();
     const model = params.model || 'gpt-4o';
 
-    const mappedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = params.messages.map((m) => {
-      if (typeof m.content === 'string') {
-        if (m.role === 'user') return { role: 'user' as const, content: m.content };
-        if (m.role === 'system') return { role: 'system' as const, content: m.content };
-        return { role: 'assistant' as const, content: m.content };
-      }
-      // Multimodal content (vision) — only valid for user messages
-      const parts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = m.content.map((part): OpenAI.Chat.Completions.ChatCompletionContentPart => {
-        if (part.type === 'text') {
-          return { type: 'text' as const, text: part.text };
+    const mappedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
+      params.messages.map((m) => {
+        if (typeof m.content === 'string') {
+          if (m.role === 'user') return { role: 'user' as const, content: m.content };
+          if (m.role === 'system') return { role: 'system' as const, content: m.content };
+          return { role: 'assistant' as const, content: m.content };
         }
-        return {
-          type: 'image_url' as const,
-          image_url: {
-            url: part.imageUrl,
-            detail: (part.detail || 'auto') as 'low' | 'high' | 'auto',
+        // Multimodal content (vision) — only valid for user messages
+        const parts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = m.content.map(
+          (part): OpenAI.Chat.Completions.ChatCompletionContentPart => {
+            if (part.type === 'text') {
+              return { type: 'text' as const, text: part.text };
+            }
+            return {
+              type: 'image_url' as const,
+              image_url: {
+                url: part.imageUrl,
+                detail: (part.detail || 'auto') as 'low' | 'high' | 'auto',
+              },
+            };
           },
-        };
+        );
+        return { role: 'user' as const, content: parts };
       });
-      return { role: 'user' as const, content: parts };
-    });
 
     const openaiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: 'system' as const, content: params.systemPrompt },
@@ -76,22 +79,25 @@ export class OpenAIProvider extends AIProvider {
     const durationMs = Date.now() - startTime;
     const usage = response.usage;
 
-    logger.info({
-      type: 'openai_request',
-      method: 'generateResponse',
-      model: response.model,
-      temperature: params.temperature,
-      maxTokens: params.maxTokens,
-      messagesCount: openaiMessages.length,
-      systemPromptLength: params.systemPrompt.length,
-      inputTokens: usage?.prompt_tokens || 0,
-      outputTokens: usage?.completion_tokens || 0,
-      totalTokens: usage?.total_tokens || 0,
-      cachedTokens: (usage as any)?.prompt_tokens_details?.cached_tokens || 0,
-      durationMs,
-      finishReason: response.choices[0]?.finish_reason,
-      responsePreview: (response.choices[0]?.message?.content || '').slice(0, 100),
-    }, `OpenAI [${response.model}] ${usage?.prompt_tokens}in/${usage?.completion_tokens}out = ${usage?.total_tokens}tok (${durationMs}ms)`);
+    logger.info(
+      {
+        type: 'openai_request',
+        method: 'generateResponse',
+        model: response.model,
+        temperature: params.temperature,
+        maxTokens: params.maxTokens,
+        messagesCount: openaiMessages.length,
+        systemPromptLength: params.systemPrompt.length,
+        inputTokens: usage?.prompt_tokens || 0,
+        outputTokens: usage?.completion_tokens || 0,
+        totalTokens: usage?.total_tokens || 0,
+        cachedTokens: (usage as any)?.prompt_tokens_details?.cached_tokens || 0,
+        durationMs,
+        finishReason: response.choices[0]?.finish_reason,
+        responsePreview: (response.choices[0]?.message?.content || '').slice(0, 100),
+      },
+      `OpenAI [${response.model}] ${usage?.prompt_tokens}in/${usage?.completion_tokens}out = ${usage?.total_tokens}tok (${durationMs}ms)`,
+    );
 
     return {
       content: response.choices[0]?.message?.content || '',
@@ -113,7 +119,10 @@ export class OpenAIProvider extends AIProvider {
       { role: 'system' as const, content: params.systemPrompt },
       ...params.messages.map((m) => {
         // generateJSON is text-only (analysis pipeline)
-        const content = typeof m.content === 'string' ? m.content : m.content.map((p) => p.type === 'text' ? p.text : '').join(' ');
+        const content =
+          typeof m.content === 'string'
+            ? m.content
+            : m.content.map((p) => (p.type === 'text' ? p.text : '')).join(' ');
         if (m.role === 'user') return { role: 'user' as const, content };
         if (m.role === 'system') return { role: 'system' as const, content };
         return { role: 'assistant' as const, content };
@@ -133,26 +142,32 @@ export class OpenAIProvider extends AIProvider {
     const usage = response.usage;
     const content = response.choices[0]?.message?.content || '{}';
 
-    logger.info({
-      type: 'openai_request',
-      method: 'generateJSON',
-      model: response.model,
-      temperature: params.temperature,
-      maxTokens: params.maxTokens,
-      messagesCount: openaiMessages.length,
-      systemPromptLength: params.systemPrompt.length,
-      inputTokens: usage?.prompt_tokens || 0,
-      outputTokens: usage?.completion_tokens || 0,
-      totalTokens: usage?.total_tokens || 0,
-      cachedTokens: (usage as any)?.prompt_tokens_details?.cached_tokens || 0,
-      durationMs,
-      responseBody: content,
-    }, `OpenAI [${response.model}] ${usage?.prompt_tokens}in/${usage?.completion_tokens}out = ${usage?.total_tokens}tok (${durationMs}ms)`);
+    logger.info(
+      {
+        type: 'openai_request',
+        method: 'generateJSON',
+        model: response.model,
+        temperature: params.temperature,
+        maxTokens: params.maxTokens,
+        messagesCount: openaiMessages.length,
+        systemPromptLength: params.systemPrompt.length,
+        inputTokens: usage?.prompt_tokens || 0,
+        outputTokens: usage?.completion_tokens || 0,
+        totalTokens: usage?.total_tokens || 0,
+        cachedTokens: (usage as any)?.prompt_tokens_details?.cached_tokens || 0,
+        durationMs,
+        responseBody: content,
+      },
+      `OpenAI [${response.model}] ${usage?.prompt_tokens}in/${usage?.completion_tokens}out = ${usage?.total_tokens}tok (${durationMs}ms)`,
+    );
 
     try {
       return JSON.parse(content) as T;
     } catch (parseErr) {
-      logger.error({ parseErr, content: content.slice(0, 500) }, 'Failed to parse OpenAI JSON response');
+      logger.error(
+        { parseErr, content: content.slice(0, 500) },
+        'Failed to parse OpenAI JSON response',
+      );
       throw new Error('Failed to parse AI response as JSON');
     }
   }
@@ -168,14 +183,17 @@ export class OpenAIProvider extends AIProvider {
 
     const durationMs = Date.now() - startTime;
 
-    logger.info({
-      type: 'openai_request',
-      method: 'generateEmbedding',
-      model: 'text-embedding-3-small',
-      inputLength: text.length,
-      totalTokens: response.usage?.total_tokens || 0,
-      durationMs,
-    }, `OpenAI [embedding] ${response.usage?.total_tokens}tok (${durationMs}ms)`);
+    logger.info(
+      {
+        type: 'openai_request',
+        method: 'generateEmbedding',
+        model: 'text-embedding-3-small',
+        inputLength: text.length,
+        totalTokens: response.usage?.total_tokens || 0,
+        durationMs,
+      },
+      `OpenAI [embedding] ${response.usage?.total_tokens}tok (${durationMs}ms)`,
+    );
 
     if (!response.data[0]?.embedding) {
       throw new Error('No embedding returned from OpenAI API');

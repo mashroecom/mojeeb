@@ -52,13 +52,16 @@ export class KnowledgeBaseService {
     return prisma.knowledgeBase.delete({ where: { id: kbId } });
   }
 
-  async addDocument(kbId: string, data: {
-    title: string;
-    content?: string;
-    contentType?: string;
-    sourceUrl?: string;
-    fileBase64?: string;
-  }) {
+  async addDocument(
+    kbId: string,
+    data: {
+      title: string;
+      content?: string;
+      contentType?: string;
+      sourceUrl?: string;
+      fileBase64?: string;
+    },
+  ) {
     let textContent = data.content || '';
     const contentType = data.contentType || 'TEXT';
 
@@ -138,14 +141,21 @@ export class KnowledgeBaseService {
     const queryEmbedding = await cache.getOrSet<number[]>(
       cacheKey,
       86400, // 24 hours
-      async () => await provider.generateEmbedding(query)
+      async () => await provider.generateEmbedding(query),
     );
 
     const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
     // Find documents that belong to this KB
     const results = await prisma.$queryRaw<
-      Array<{ id: string; content: string; chunkIndex: number; documentId: string; score: number; documentTitle: string }>
+      Array<{
+        id: string;
+        content: string;
+        chunkIndex: number;
+        documentId: string;
+        score: number;
+        documentTitle: string;
+      }>
     >`
       SELECT c.id, c.content, c."chunkIndex", c."documentId",
              1 - (c.embedding <=> ${embeddingStr}::vector) as score,
@@ -176,7 +186,7 @@ export class KnowledgeBaseService {
       maxDepth?: number;
       urlPattern?: string;
       configId?: string;
-    }
+    },
   ) {
     // Validate knowledge base exists
     const kb = await prisma.knowledgeBase.findUnique({
@@ -216,7 +226,7 @@ export class KnowledgeBaseService {
       maxDepth?: number;
       urlPattern?: string;
       configId?: string;
-    }
+    },
   ) {
     // Validate knowledge base exists
     const kb = await prisma.knowledgeBase.findUnique({
@@ -235,7 +245,10 @@ export class KnowledgeBaseService {
     // Parse URL patterns if provided
     let urlPatterns: string[] = [];
     if (data.urlPattern) {
-      urlPatterns = data.urlPattern.split(',').map((p) => p.trim()).filter(Boolean);
+      urlPatterns = data.urlPattern
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean);
     }
 
     // Create crawl job in database
@@ -394,7 +407,7 @@ export class KnowledgeBaseService {
       maxDepth?: number;
       urlPattern?: string;
       startUrl?: string;
-    }
+    },
   ) {
     // Validate knowledge base exists
     const kb = await prisma.knowledgeBase.findUnique({
@@ -449,7 +462,7 @@ export class KnowledgeBaseService {
 
     logger.info(
       { kbId, configId: config.id, enabled: data.enabled, frequency: data.frequency },
-      'Crawl schedule updated'
+      'Crawl schedule updated',
     );
 
     return config;

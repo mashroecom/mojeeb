@@ -179,18 +179,12 @@ export default function MobileInboxPage() {
       </div>
 
       {/* ── Conversation list ─────────────────────────────── */}
-      <div
-        className="flex-1 overflow-y-auto px-4 py-4"
-        onScroll={handleScroll}
-      >
+      <div className="flex-1 overflow-y-auto px-4 py-4" onScroll={handleScroll}>
         {isLoading && page === 1 ? (
           /* Loading skeleton */
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="rounded-xl border bg-card p-4 animate-pulse"
-              >
+              <div key={i} className="rounded-xl border bg-card p-4 animate-pulse">
                 <div className="flex gap-3">
                   <div className="h-12 w-12 rounded-full bg-muted" />
                   <div className="flex-1 space-y-2">
@@ -213,11 +207,7 @@ export default function MobileInboxPage() {
           /* Conversation cards */
           <div className="space-y-3">
             {conversations.map((conv: any) => (
-              <ConversationCard
-                key={conv.id}
-                conversation={conv}
-                statusLabel={statusLabel}
-              />
+              <ConversationCard key={conv.id} conversation={conv} statusLabel={statusLabel} />
             ))}
 
             {/* Loading more indicator */}
@@ -229,9 +219,7 @@ export default function MobileInboxPage() {
 
             {/* End of list indicator */}
             {!hasMore && conversations.length > 0 && (
-              <div className="text-center py-4 text-xs text-muted-foreground">
-                {t('endOfList')}
-              </div>
+              <div className="text-center py-4 text-xs text-muted-foreground">{t('endOfList')}</div>
             )}
           </div>
         )}

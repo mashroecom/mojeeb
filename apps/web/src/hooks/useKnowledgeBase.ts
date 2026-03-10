@@ -233,7 +233,9 @@ export function useUpdateKnowledgeBase() {
     },
     onSuccess: (_data, variables) => {
       if (orgId) {
-        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.detail(orgId, variables.kbId) });
+        queryClient.invalidateQueries({
+          queryKey: knowledgeBaseKeys.detail(orgId, variables.kbId),
+        });
         queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.all(orgId) });
       }
     },
@@ -348,7 +350,9 @@ export function useBulkImportDocuments() {
     },
     onSuccess: (_data, variables) => {
       if (orgId) {
-        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.detail(orgId, variables.kbId) });
+        queryClient.invalidateQueries({
+          queryKey: knowledgeBaseKeys.detail(orgId, variables.kbId),
+        });
         queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.all(orgId) });
       }
     },
@@ -391,7 +395,9 @@ export function useUpdateCrawlSchedule() {
     },
     onSuccess: (_data, variables) => {
       if (orgId) {
-        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.schedule(orgId, variables.kbId) });
+        queryClient.invalidateQueries({
+          queryKey: knowledgeBaseKeys.schedule(orgId, variables.kbId),
+        });
       }
     },
   });
@@ -415,7 +421,9 @@ export function useStartCrawl() {
     },
     onSuccess: (_data, variables) => {
       if (orgId) {
-        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.crawlJobs(orgId, variables.kbId) });
+        queryClient.invalidateQueries({
+          queryKey: knowledgeBaseKeys.crawlJobs(orgId, variables.kbId),
+        });
       }
     },
   });
@@ -477,7 +485,9 @@ export function useCancelCrawlJob() {
         queryClient.invalidateQueries({
           queryKey: knowledgeBaseKeys.crawlJob(orgId, variables.kbId, variables.jobId),
         });
-        queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.crawlJobs(orgId, variables.kbId) });
+        queryClient.invalidateQueries({
+          queryKey: knowledgeBaseKeys.crawlJobs(orgId, variables.kbId),
+        });
       }
     },
   });

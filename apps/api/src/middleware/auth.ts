@@ -34,7 +34,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
   try {
     const payload = jwt.verify(token, config.jwt.secret) as JwtPayload;
 
-    if (payload.jti && await tokenBlacklistService.isBlacklisted(payload.jti)) {
+    if (payload.jti && (await tokenBlacklistService.isBlacklisted(payload.jti))) {
       return next(new UnauthorizedError('Token has been revoked'));
     }
 

@@ -5,16 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useAdminPlans, useUpdatePlan } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
-import {
-  Loader2,
-  Save,
-  Pencil,
-  X,
-  Plus,
-  Trash2,
-  Star,
-  Check,
-} from 'lucide-react';
+import { Loader2, Save, Pencil, X, Plus, Trash2, Star, Check } from 'lucide-react';
 
 const PLAN_COLORS: Record<string, string> = {
   FREE: 'border-border',
@@ -76,7 +67,22 @@ export default function PlansPage() {
     if (!editingPlan) return;
 
     const body: Record<string, unknown> = {};
-    const fields = ['displayName', 'displayNameAr', 'monthlyPrice', 'yearlyPrice', 'currency', 'messagesPerMonth', 'maxAgents', 'maxChannels', 'maxKnowledgeBases', 'maxTeamMembers', 'apiAccess', 'isPopular', 'features', 'featuresAr'] as const;
+    const fields = [
+      'displayName',
+      'displayNameAr',
+      'monthlyPrice',
+      'yearlyPrice',
+      'currency',
+      'messagesPerMonth',
+      'maxAgents',
+      'maxChannels',
+      'maxKnowledgeBases',
+      'maxTeamMembers',
+      'apiAccess',
+      'isPopular',
+      'features',
+      'featuresAr',
+    ] as const;
 
     for (const field of fields) {
       if (editForm[field] !== undefined) {
@@ -96,7 +102,11 @@ export default function PlansPage() {
   }
 
   function getFeatures(featuresStr: string): string[] {
-    try { return JSON.parse(featuresStr); } catch { return []; }
+    try {
+      return JSON.parse(featuresStr);
+    } catch {
+      return [];
+    }
   }
 
   function setFeatures(features: string[]) {
@@ -125,8 +135,8 @@ export default function PlansPage() {
       <div className="grid gap-6 md:grid-cols-2">
         {(plans || []).map((plan: PlanData) => {
           const isEditing = editingPlan === plan.plan;
-          const features = getFeatures(isEditing ? (editForm.features || '[]') : plan.features);
-          const featuresAr = getFeatures(isEditing ? (editForm.featuresAr || '[]') : plan.featuresAr);
+          const features = getFeatures(isEditing ? editForm.features || '[]' : plan.features);
+          const featuresAr = getFeatures(isEditing ? editForm.featuresAr || '[]' : plan.featuresAr);
 
           return (
             <div
@@ -146,14 +156,18 @@ export default function PlansPage() {
                       <input
                         type="text"
                         value={editForm.displayName || ''}
-                        onChange={(e) => setEditForm((s) => ({ ...s, displayName: e.target.value }))}
+                        onChange={(e) =>
+                          setEditForm((s) => ({ ...s, displayName: e.target.value }))
+                        }
                         placeholder={t('displayName')}
                         className="w-full rounded-lg border bg-background px-3 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                       />
                       <input
                         type="text"
                         value={editForm.displayNameAr || ''}
-                        onChange={(e) => setEditForm((s) => ({ ...s, displayNameAr: e.target.value }))}
+                        onChange={(e) =>
+                          setEditForm((s) => ({ ...s, displayNameAr: e.target.value }))
+                        }
                         placeholder={t('displayNameAr')}
                         dir="rtl"
                         className="w-full rounded-lg border bg-background px-3 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -175,15 +189,29 @@ export default function PlansPage() {
                   )}
                   {isEditing ? (
                     <div className="flex gap-1">
-                      <button onClick={savePlan} disabled={updatePlan.isPending} className="rounded-lg p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 disabled:opacity-50">
-                        {updatePlan.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      <button
+                        onClick={savePlan}
+                        disabled={updatePlan.isPending}
+                        className="rounded-lg p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 disabled:opacity-50"
+                      >
+                        {updatePlan.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4" />
+                        )}
                       </button>
-                      <button onClick={cancelEdit} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted">
+                      <button
+                        onClick={cancelEdit}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted"
+                      >
                         <X className="h-4 w-4" />
                       </button>
                     </div>
                   ) : (
-                    <button onClick={() => startEdit(plan)} className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10">
+                    <button
+                      onClick={() => startEdit(plan)}
+                      className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                    >
                       <Pencil className="h-4 w-4" />
                     </button>
                   )}
@@ -195,12 +223,34 @@ export default function PlansPage() {
                 {isEditing ? (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">{t('monthlyPrice')}</label>
-                      <input type="number" min={0} step={0.01} value={editForm.monthlyPrice ?? 0} onChange={(e) => setEditForm((s) => ({ ...s, monthlyPrice: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border bg-background px-2 py-1 text-sm" />
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {t('monthlyPrice')}
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={editForm.monthlyPrice ?? 0}
+                        onChange={(e) =>
+                          setEditForm((s) => ({ ...s, monthlyPrice: Number(e.target.value) }))
+                        }
+                        className="mt-1 w-full rounded-lg border bg-background px-2 py-1 text-sm"
+                      />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">{t('yearlyPrice')}</label>
-                      <input type="number" min={0} step={0.01} value={editForm.yearlyPrice ?? 0} onChange={(e) => setEditForm((s) => ({ ...s, yearlyPrice: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border bg-background px-2 py-1 text-sm" />
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {t('yearlyPrice')}
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={editForm.yearlyPrice ?? 0}
+                        onChange={(e) =>
+                          setEditForm((s) => ({ ...s, yearlyPrice: Number(e.target.value) }))
+                        }
+                        className="mt-1 w-full rounded-lg border bg-background px-2 py-1 text-sm"
+                      />
                     </div>
                   </div>
                 ) : (
@@ -216,31 +266,56 @@ export default function PlansPage() {
 
               {/* Limits */}
               <div className="grid grid-cols-2 gap-3 mb-4">
-                {([
-                  ['messagesPerMonth', t('messagesPerMonth')],
-                  ['maxAgents', t('maxAgents')],
-                  ['maxChannels', t('maxChannels')],
-                  ['maxKnowledgeBases', t('maxKnowledgeBases')],
-                  ['maxTeamMembers', t('maxTeamMembers')],
-                ] as const).map(([key, label]) => (
+                {(
+                  [
+                    ['messagesPerMonth', t('messagesPerMonth')],
+                    ['maxAgents', t('maxAgents')],
+                    ['maxChannels', t('maxChannels')],
+                    ['maxKnowledgeBases', t('maxKnowledgeBases')],
+                    ['maxTeamMembers', t('maxTeamMembers')],
+                  ] as const
+                ).map(([key, label]) => (
                   <div key={key}>
                     <label className="text-xs font-medium text-muted-foreground">{label}</label>
                     {isEditing ? (
-                      <input type="number" min={0} value={(editForm as any)[key] ?? 0} onChange={(e) => setEditForm((s) => ({ ...s, [key]: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border bg-background px-2 py-1 text-sm" />
+                      <input
+                        type="number"
+                        min={0}
+                        value={(editForm as any)[key] ?? 0}
+                        onChange={(e) =>
+                          setEditForm((s) => ({ ...s, [key]: Number(e.target.value) }))
+                        }
+                        className="mt-1 w-full rounded-lg border bg-background px-2 py-1 text-sm"
+                      />
                     ) : (
-                      <p className="text-sm font-medium mt-0.5">{(plan as any)[key] >= 999999 ? t('unlimited') : (plan as any)[key].toLocaleString(locale)}</p>
+                      <p className="text-sm font-medium mt-0.5">
+                        {(plan as any)[key] >= 999999
+                          ? t('unlimited')
+                          : (plan as any)[key].toLocaleString(locale)}
+                      </p>
                     )}
                   </div>
                 ))}
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">{t('apiAccess')}</label>
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {t('apiAccess')}
+                  </label>
                   {isEditing ? (
                     <label className="mt-1 flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={editForm.apiAccess ?? false} onChange={(e) => setEditForm((s) => ({ ...s, apiAccess: e.target.checked }))} className="h-4 w-4 rounded" />
+                      <input
+                        type="checkbox"
+                        checked={editForm.apiAccess ?? false}
+                        onChange={(e) =>
+                          setEditForm((s) => ({ ...s, apiAccess: e.target.checked }))
+                        }
+                        className="h-4 w-4 rounded"
+                      />
                       <span className="text-sm">{editForm.apiAccess ? t('yes') : t('no')}</span>
                     </label>
                   ) : (
-                    <p className="text-sm font-medium mt-0.5">{plan.apiAccess ? <Check className="h-4 w-4 text-green-500" /> : '—'}</p>
+                    <p className="text-sm font-medium mt-0.5">
+                      {plan.apiAccess ? <Check className="h-4 w-4 text-green-500" /> : '—'}
+                    </p>
                   )}
                 </div>
               </div>
@@ -248,22 +323,43 @@ export default function PlansPage() {
               {/* Popular toggle */}
               {isEditing && (
                 <label className="flex items-center gap-2 cursor-pointer mb-4">
-                  <input type="checkbox" checked={editForm.isPopular ?? false} onChange={(e) => setEditForm((s) => ({ ...s, isPopular: e.target.checked }))} className="h-4 w-4 rounded" />
+                  <input
+                    type="checkbox"
+                    checked={editForm.isPopular ?? false}
+                    onChange={(e) => setEditForm((s) => ({ ...s, isPopular: e.target.checked }))}
+                    className="h-4 w-4 rounded"
+                  />
                   <span className="text-sm font-medium">{t('isPopular')}</span>
                 </label>
               )}
 
               {/* Features (EN) */}
               <div className="mb-3">
-                <label className="text-xs font-semibold text-muted-foreground uppercase">{t('features')}</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase">
+                  {t('features')}
+                </label>
                 <ul className="mt-2 space-y-1">
                   {features.map((f, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm">
                       <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
                       {isEditing ? (
                         <div className="flex-1 flex gap-1">
-                          <input type="text" value={f} onChange={(e) => { const arr = [...features]; arr[i] = e.target.value; setFeatures(arr); }} className="flex-1 rounded border bg-background px-2 py-0.5 text-sm" />
-                          <button onClick={() => setFeatures(features.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                          <input
+                            type="text"
+                            value={f}
+                            onChange={(e) => {
+                              const arr = [...features];
+                              arr[i] = e.target.value;
+                              setFeatures(arr);
+                            }}
+                            className="flex-1 rounded border bg-background px-2 py-0.5 text-sm"
+                          />
+                          <button
+                            onClick={() => setFeatures(features.filter((_, j) => j !== i))}
+                            className="text-red-400 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       ) : (
                         <span>{f}</span>
@@ -272,7 +368,10 @@ export default function PlansPage() {
                   ))}
                 </ul>
                 {isEditing && (
-                  <button onClick={() => setFeatures([...features, ''])} className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                  <button
+                    onClick={() => setFeatures([...features, ''])}
+                    className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
                     <Plus className="h-3 w-3" /> {t('addFeature')}
                   </button>
                 )}
@@ -281,19 +380,39 @@ export default function PlansPage() {
               {/* Features (AR) */}
               {isEditing && (
                 <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">{t('featuresAr')}</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase">
+                    {t('featuresAr')}
+                  </label>
                   <ul className="mt-2 space-y-1" dir="rtl">
                     {featuresAr.map((f, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm">
                         <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
                         <div className="flex-1 flex gap-1">
-                          <input type="text" value={f} onChange={(e) => { const arr = [...featuresAr]; arr[i] = e.target.value; setFeaturesAr(arr); }} className="flex-1 rounded border bg-background px-2 py-0.5 text-sm" dir="rtl" />
-                          <button onClick={() => setFeaturesAr(featuresAr.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                          <input
+                            type="text"
+                            value={f}
+                            onChange={(e) => {
+                              const arr = [...featuresAr];
+                              arr[i] = e.target.value;
+                              setFeaturesAr(arr);
+                            }}
+                            className="flex-1 rounded border bg-background px-2 py-0.5 text-sm"
+                            dir="rtl"
+                          />
+                          <button
+                            onClick={() => setFeaturesAr(featuresAr.filter((_, j) => j !== i))}
+                            className="text-red-400 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </li>
                     ))}
                   </ul>
-                  <button onClick={() => setFeaturesAr([...featuresAr, ''])} className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                  <button
+                    onClick={() => setFeaturesAr([...featuresAr, ''])}
+                    className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
                     <Plus className="h-3 w-3" /> {t('addFeature')}
                   </button>
                 </div>

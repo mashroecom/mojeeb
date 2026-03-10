@@ -11,7 +11,14 @@ export const adminInvoiceKeys = {
   stats: () => [...adminInvoiceKeys.all, 'stats'] as const,
 };
 
-export function useAdminInvoices(params: { page: number; limit: number; orgId?: string; status?: string; startDate?: string; endDate?: string }) {
+export function useAdminInvoices(params: {
+  page: number;
+  limit: number;
+  orgId?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
   return useQuery({
     queryKey: adminInvoiceKeys.list(params),
     queryFn: async () => {

@@ -68,7 +68,7 @@ export function Header() {
                 'text-sm font-medium transition-colors hover:text-primary',
                 pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
                   ? 'text-primary'
-                  : 'text-muted-foreground'
+                  : 'text-muted-foreground',
               )}
             >
               {item.label}
@@ -119,7 +119,11 @@ export function Header() {
               </Link>
             ))}
             <hr />
-            <Link href="/login" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
+            <Link
+              href="/login"
+              className="text-sm font-medium"
+              onClick={() => setMobileOpen(false)}
+            >
               {t('login')}
             </Link>
             <Link

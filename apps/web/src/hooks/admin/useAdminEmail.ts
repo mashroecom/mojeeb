@@ -17,7 +17,18 @@ export function useAdminEmailTemplates() {
 export function useUpsertEmailTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ key, ...body }: { key: string; subject: string; subjectAr?: string; bodyHtml: string; bodyHtmlAr?: string; bodyText?: string; variables?: string[] }) => {
+    mutationFn: async ({
+      key,
+      ...body
+    }: {
+      key: string;
+      subject: string;
+      subjectAr?: string;
+      bodyHtml: string;
+      bodyHtmlAr?: string;
+      bodyText?: string;
+      variables?: string[];
+    }) => {
       const { data } = await api.put(`/admin/email-templates/${key}`, body);
       return data.data;
     },
@@ -58,7 +69,10 @@ export function useAdminBulkEmails(params: { page: number; limit: number }) {
   return useQuery({
     queryKey: adminKeys.bulkEmail(params),
     queryFn: async () => {
-      const searchParams = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      const searchParams = new URLSearchParams({
+        page: String(params.page),
+        limit: String(params.limit),
+      });
       const { data } = await api.get(`/admin/bulk-email?${searchParams}`);
       return data.data;
     },
@@ -115,14 +129,19 @@ export function useCancelBulkEmail() {
   });
 }
 
-export function useRecipientCount(params: { plan?: string; status?: string; emailVerified?: boolean }) {
+export function useRecipientCount(params: {
+  plan?: string;
+  status?: string;
+  emailVerified?: boolean;
+}) {
   return useQuery({
     queryKey: adminKeys.recipientCount(params),
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       if (params.plan) searchParams.set('plan', params.plan);
       if (params.status) searchParams.set('status', params.status);
-      if (params.emailVerified !== undefined) searchParams.set('emailVerified', String(params.emailVerified));
+      if (params.emailVerified !== undefined)
+        searchParams.set('emailVerified', String(params.emailVerified));
       const { data } = await api.get(`/admin/bulk-email/recipient-count?${searchParams}`);
       return data.data;
     },

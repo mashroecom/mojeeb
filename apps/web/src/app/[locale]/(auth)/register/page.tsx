@@ -82,14 +82,14 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
+          <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label htmlFor="reg-firstName" className="mb-1.5 block text-sm font-medium">{t('firstName')}</label>
+            <label htmlFor="reg-firstName" className="mb-1.5 block text-sm font-medium">
+              {t('firstName')}
+            </label>
             <input
               id="reg-firstName"
               type="text"
@@ -103,7 +103,9 @@ export default function RegisterPage() {
             )}
           </div>
           <div>
-            <label htmlFor="reg-lastName" className="mb-1.5 block text-sm font-medium">{t('lastName')}</label>
+            <label htmlFor="reg-lastName" className="mb-1.5 block text-sm font-medium">
+              {t('lastName')}
+            </label>
             <input
               id="reg-lastName"
               type="text"
@@ -119,7 +121,9 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label htmlFor="reg-orgName" className="mb-1.5 block text-sm font-medium">{t('organizationName')}</label>
+          <label htmlFor="reg-orgName" className="mb-1.5 block text-sm font-medium">
+            {t('organizationName')}
+          </label>
           <input
             id="reg-orgName"
             type="text"
@@ -134,7 +138,9 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label htmlFor="reg-email" className="mb-1.5 block text-sm font-medium">{t('email')}</label>
+          <label htmlFor="reg-email" className="mb-1.5 block text-sm font-medium">
+            {t('email')}
+          </label>
           <input
             id="reg-email"
             type="email"
@@ -151,7 +157,9 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label htmlFor="reg-password" className="mb-1.5 block text-sm font-medium">{t('password')}</label>
+          <label htmlFor="reg-password" className="mb-1.5 block text-sm font-medium">
+            {t('password')}
+          </label>
           <input
             id="reg-password"
             type="password"

@@ -14,7 +14,12 @@ export const adminWebhookKeys = {
   logStats: () => [...adminWebhookKeys.logs(), 'stats'] as const,
 };
 
-export function useAdminWebhooks(params: { page: number; limit: number; orgId?: string; status?: string }) {
+export function useAdminWebhooks(params: {
+  page: number;
+  limit: number;
+  orgId?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminWebhookKeys.list(params),
     queryFn: async () => {
@@ -74,11 +79,23 @@ export function useDeleteAdminWebhook() {
   });
 }
 
-export function useAdminWebhookLogs(params: { page: number; limit: number; webhookId?: string; event?: string; success?: string; startDate?: string; endDate?: string; search?: string }) {
+export function useAdminWebhookLogs(params: {
+  page: number;
+  limit: number;
+  webhookId?: string;
+  event?: string;
+  success?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+}) {
   return useQuery({
     queryKey: adminWebhookKeys.logsList(params),
     queryFn: async () => {
-      const searchParams = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      const searchParams = new URLSearchParams({
+        page: String(params.page),
+        limit: String(params.limit),
+      });
       if (params.webhookId) searchParams.set('webhookId', params.webhookId);
       if (params.event) searchParams.set('event', params.event);
       if (params.success) searchParams.set('success', params.success);

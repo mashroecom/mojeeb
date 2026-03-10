@@ -47,13 +47,7 @@ export class CacheService {
     try {
       let cursor = '0';
       do {
-        const [nextCursor, keys] = await redis.scan(
-          cursor,
-          'MATCH',
-          pattern,
-          'COUNT',
-          100,
-        );
+        const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
         cursor = nextCursor;
         if (keys.length > 0) {
           await redis.del(...keys);
@@ -68,11 +62,7 @@ export class CacheService {
    * Get a cached value, or fetch it via the callback and cache the result.
    * If the cache is unavailable the callback result is still returned.
    */
-  async getOrSet<T>(
-    key: string,
-    ttlSeconds: number,
-    fetchFn: () => Promise<T>,
-  ): Promise<T> {
+  async getOrSet<T>(key: string, ttlSeconds: number, fetchFn: () => Promise<T>): Promise<T> {
     const cached = await this.get<T>(key);
     if (cached !== null) return cached;
 

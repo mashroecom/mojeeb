@@ -10,10 +10,22 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif' }}>
+        <div
+          style={{
+            display: 'flex',
+            minHeight: '100vh',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'system-ui, sans-serif',
+          }}
+        >
           <div style={{ textAlign: 'center', maxWidth: '400px', padding: '2rem' }}>
-            <h1 style={{ fontSize: '3rem', fontWeight: 'bold', color: '#6366f1', margin: 0 }}>500</h1>
-            <p style={{ fontSize: '1.25rem', color: '#6b7280', marginTop: '1rem' }}>Something went wrong</p>
+            <h1 style={{ fontSize: '3rem', fontWeight: 'bold', color: '#6366f1', margin: 0 }}>
+              500
+            </h1>
+            <p style={{ fontSize: '1.25rem', color: '#6b7280', marginTop: '1rem' }}>
+              Something went wrong
+            </p>
             <button
               onClick={reset}
               style={{

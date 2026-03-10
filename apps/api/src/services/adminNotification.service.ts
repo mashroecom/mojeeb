@@ -34,7 +34,7 @@ export class AdminNotificationService {
             type,
             title,
             body,
-            metadata: metadata as any ?? undefined,
+            metadata: (metadata as any) ?? undefined,
           },
         }),
       ),
@@ -60,10 +60,7 @@ export class AdminNotificationService {
   /**
    * List notifications for a specific admin user with pagination.
    */
-  async list(
-    userId: string,
-    params: { page: number; limit: number; unreadOnly?: boolean },
-  ) {
+  async list(userId: string, params: { page: number; limit: number; unreadOnly?: boolean }) {
     const { page, limit, unreadOnly } = params;
     const skip = (page - 1) * limit;
 

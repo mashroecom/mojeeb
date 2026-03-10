@@ -57,6 +57,8 @@ export async function maintenanceGuard(req: Request, res: Response, next: NextFu
   res.status(503).json({
     success: false,
     error: 'Service Unavailable',
-    message: status.maintenanceMessage || 'The site is currently under maintenance. Please try again later.',
+    message:
+      status.maintenanceMessage ||
+      'The site is currently under maintenance. Please try again later.',
   });
 }

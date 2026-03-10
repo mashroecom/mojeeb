@@ -8,7 +8,8 @@ import { api } from '@/lib/api';
 // ---------------------------------------------------------------------------
 
 export const adminTemplateKeys = {
-  messageTemplatesAdmin: (params?: Record<string, unknown>) => ['admin', 'message-templates-admin', params] as const,
+  messageTemplatesAdmin: (params?: Record<string, unknown>) =>
+    ['admin', 'message-templates-admin', params] as const,
   messageTemplateAnalytics: ['admin', 'message-template-analytics'] as const,
   tagsAdmin: (params?: Record<string, unknown>) => ['admin', 'tags-admin', params] as const,
 };
@@ -21,7 +22,12 @@ export const adminTemplateKeys = {
  * List all message templates across the platform with pagination.
  * Admin-only endpoint for viewing all organization message templates.
  */
-export function useAdminMessageTemplates(params: { page: number; limit: number; search?: string; category?: string }) {
+export function useAdminMessageTemplates(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  category?: string;
+}) {
   return useQuery({
     queryKey: adminTemplateKeys.messageTemplatesAdmin(params),
     queryFn: async () => {
@@ -41,7 +47,13 @@ export function useAdminMessageTemplates(params: { page: number; limit: number; 
 export function useCreateMessageTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { title: string; content: string; category?: string; shortcut?: string; orgId?: string }) => {
+    mutationFn: async (body: {
+      title: string;
+      content: string;
+      category?: string;
+      shortcut?: string;
+      orgId?: string;
+    }) => {
       const { data } = await api.post('/admin/message-templates-admin', body);
       return data.data;
     },
@@ -58,7 +70,17 @@ export function useCreateMessageTemplate() {
 export function useUpdateMessageTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...body }: { id: string; title?: string; content?: string; category?: string; shortcut?: string; orgId?: string }) => {
+    mutationFn: async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      title?: string;
+      content?: string;
+      category?: string;
+      shortcut?: string;
+      orgId?: string;
+    }) => {
       const { data } = await api.patch(`/admin/message-templates-admin/${id}`, body);
       return data.data;
     },

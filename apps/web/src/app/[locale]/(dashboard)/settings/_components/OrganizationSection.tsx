@@ -80,10 +80,7 @@ export function OrganizationSection({
       ) : (
         <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label
-              htmlFor="orgName"
-              className="block text-sm font-medium mb-1.5"
-            >
+            <label htmlFor="orgName" className="block text-sm font-medium mb-1.5">
               {t('orgName')}
             </label>
             <input
@@ -97,10 +94,7 @@ export function OrganizationSection({
           </div>
 
           <div>
-            <label
-              htmlFor="websiteUrl"
-              className="block text-sm font-medium mb-1.5"
-            >
+            <label htmlFor="websiteUrl" className="block text-sm font-medium mb-1.5">
               {t('website')}
             </label>
             <input
@@ -116,10 +110,7 @@ export function OrganizationSection({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label
-                htmlFor="timezone"
-                className="block text-sm font-medium mb-1.5"
-              >
+              <label htmlFor="timezone" className="block text-sm font-medium mb-1.5">
                 {t('timezone')}
               </label>
               <select
@@ -137,10 +128,7 @@ export function OrganizationSection({
             </div>
 
             <div>
-              <label
-                htmlFor="defaultLanguage"
-                className="block text-sm font-medium mb-1.5"
-              >
+              <label htmlFor="defaultLanguage" className="block text-sm font-medium mb-1.5">
                 {t('defaultLanguage')}
               </label>
               <select
@@ -161,8 +149,7 @@ export function OrganizationSection({
               disabled={updateOrgIsPending || !orgName.trim()}
               className={cn(
                 'inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90',
-                (updateOrgIsPending || !orgName.trim()) &&
-                  'cursor-not-allowed opacity-50',
+                (updateOrgIsPending || !orgName.trim()) && 'cursor-not-allowed opacity-50',
               )}
             >
               {updateOrgIsPending ? (

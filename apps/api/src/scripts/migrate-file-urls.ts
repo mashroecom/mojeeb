@@ -80,7 +80,7 @@ async function migrateFileUrls(dryRun: boolean = false): Promise<MigrationResult
               oldContent,
               newContent,
             },
-            '[DRY RUN] Would update message'
+            '[DRY RUN] Would update message',
           );
           result.messagesUpdated++;
         } else {
@@ -96,7 +96,7 @@ async function migrateFileUrls(dryRun: boolean = false): Promise<MigrationResult
               contentType: message.contentType,
               conversationId: message.conversationId,
             },
-            'Updated message file URL'
+            'Updated message file URL',
           );
           result.messagesUpdated++;
         }
@@ -108,7 +108,7 @@ async function migrateFileUrls(dryRun: boolean = false): Promise<MigrationResult
             messageId: message.id,
             content: message.content,
           },
-          'Error updating message'
+          'Error updating message',
         );
       }
     }
@@ -120,7 +120,7 @@ async function migrateFileUrls(dryRun: boolean = false): Promise<MigrationResult
         errors: result.errors,
         dryRun,
       },
-      'Migration completed'
+      'Migration completed',
     );
 
     return result;

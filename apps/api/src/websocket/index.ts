@@ -194,7 +194,10 @@ export function setupWebSocket(httpServer: HttpServer) {
         if (!membership) return;
         socket.join(`conv:${conversationId}`);
       } catch (err) {
-        logger.warn({ err, userId, conversationId }, 'Failed to verify conversation access for WebSocket');
+        logger.warn(
+          { err, userId, conversationId },
+          'Failed to verify conversation access for WebSocket',
+        );
       }
     });
 
@@ -258,7 +261,10 @@ export function setupWebSocket(httpServer: HttpServer) {
   });
 
   webchatNs.on('connection', (socket) => {
-    const { channelId, visitorId } = socket.handshake.auth as { channelId?: string; visitorId?: string };
+    const { channelId, visitorId } = socket.handshake.auth as {
+      channelId?: string;
+      visitorId?: string;
+    };
 
     if (!channelId || !visitorId) {
       socket.disconnect();
@@ -282,7 +288,10 @@ export function setupWebSocket(httpServer: HttpServer) {
         socket.join(`conv:${conversationId}`);
         logger.debug({ conversationId, visitorId }, 'Visitor joined conversation room');
       } catch (err) {
-        logger.warn({ err, visitorId, conversationId }, 'Failed to verify conversation ownership for webchat');
+        logger.warn(
+          { err, visitorId, conversationId },
+          'Failed to verify conversation ownership for webchat',
+        );
       }
     });
 

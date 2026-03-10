@@ -17,12 +17,7 @@ interface EditProfileModalProps {
   };
 }
 
-export function EditProfileModal({
-  isOpen,
-  onClose,
-  userId,
-  user,
-}: EditProfileModalProps) {
+export function EditProfileModal({ isOpen, onClose, userId, user }: EditProfileModalProps) {
   const t = useTranslations('admin');
   const addToast = useToastStore((s) => s.addToast);
   const updateProfile = useUpdateUserProfile();
@@ -80,10 +75,7 @@ export function EditProfileModal({
       <div className="w-full max-w-lg rounded-lg border bg-card p-6 shadow-xl mx-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">{t('userActions.editProfile')}</h3>
-          <button
-            onClick={handleClose}
-            className="rounded-md p-1 hover:bg-muted transition-colors"
-          >
+          <button onClick={handleClose} className="rounded-md p-1 hover:bg-muted transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>

@@ -28,12 +28,7 @@ interface ApiKeysTabProps {
   onPageChange: (page: number) => void;
 }
 
-export function ApiKeysTab({
-  isLoading,
-  apiKeysData,
-  currentPage,
-  onPageChange,
-}: ApiKeysTabProps) {
+export function ApiKeysTab({ isLoading, apiKeysData, currentPage, onPageChange }: ApiKeysTabProps) {
   const t = useTranslations('admin');
   const locale = useLocale();
 
@@ -87,7 +82,7 @@ export function ApiKeysTab({
                 'px-2 py-1 rounded-full text-xs font-medium',
                 key.revokedAt
                   ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                  : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                  : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
               )}
             >
               {key.revokedAt ? t('userDetail.revoked') : t('userDetail.active')}
@@ -96,9 +91,7 @@ export function ApiKeysTab({
               {t('userDetail.lastUsed')}:{' '}
               {key.lastUsedAt ? fmtDateTime(key.lastUsedAt, locale) : t('userDetail.never')}
             </p>
-            <p className="text-gray-400 dark:text-gray-500">
-              {fmtDate(key.createdAt, locale)}
-            </p>
+            <p className="text-gray-400 dark:text-gray-500">{fmtDate(key.createdAt, locale)}</p>
           </div>
         </div>
       ))}

@@ -116,9 +116,7 @@ export function MojeebBarChart({
 
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={data}>
-          {showGrid && (
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          )}
+          {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />}
           <XAxis
             dataKey={actualXKey}
             className="text-xs text-muted-foreground"

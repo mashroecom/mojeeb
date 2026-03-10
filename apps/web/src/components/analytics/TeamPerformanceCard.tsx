@@ -69,7 +69,7 @@ export function TeamPerformanceCard({ orgId, startDate, endDate }: TeamPerforman
           endDate,
           channel: channel === 'all' ? undefined : channel,
         }
-      : undefined
+      : undefined,
   );
 
   const agentMetrics: AgentMetric[] = historicalData?.agentMetrics ?? [];
@@ -82,9 +82,7 @@ export function TeamPerformanceCard({ orgId, startDate, endDate }: TeamPerforman
       const bValue = b[sortKey];
 
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortOrder === 'asc'
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
+        return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
 
       const aNum = Number(aValue) || 0;
@@ -147,7 +145,7 @@ export function TeamPerformanceCard({ orgId, startDate, endDate }: TeamPerforman
               'px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors',
               showComparison
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted'
+                : 'bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted',
             )}
           >
             AI vs Human

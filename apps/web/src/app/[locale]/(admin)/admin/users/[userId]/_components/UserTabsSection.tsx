@@ -23,8 +23,28 @@ import {
 
 interface UserTabsSectionProps {
   user: any;
-  activeTab: 'orgs' | 'logins' | 'sessions' | 'audit' | 'apikeys' | 'conversations' | 'leads' | 'notifications' | 'useractions';
-  onTabChange: (tab: 'orgs' | 'logins' | 'sessions' | 'audit' | 'apikeys' | 'conversations' | 'leads' | 'notifications' | 'useractions') => void;
+  activeTab:
+    | 'orgs'
+    | 'logins'
+    | 'sessions'
+    | 'audit'
+    | 'apikeys'
+    | 'conversations'
+    | 'leads'
+    | 'notifications'
+    | 'useractions';
+  onTabChange: (
+    tab:
+      | 'orgs'
+      | 'logins'
+      | 'sessions'
+      | 'audit'
+      | 'apikeys'
+      | 'conversations'
+      | 'leads'
+      | 'notifications'
+      | 'useractions',
+  ) => void;
   loginData: any;
   loginsLoading: boolean;
   loginPage: number;
@@ -84,7 +104,7 @@ export function UserTabsSection(props: UserTabsSectionProps) {
               'flex-1 flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors',
               props.activeTab === tab.key
                 ? 'border-b-2 border-primary text-primary'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
             )}
           >
             <tab.icon className="h-4 w-4" />
@@ -94,9 +114,7 @@ export function UserTabsSection(props: UserTabsSectionProps) {
       </div>
 
       <div className="p-6">
-        {props.activeTab === 'orgs' && (
-          <OrganizationsTab memberships={props.user.memberships} />
-        )}
+        {props.activeTab === 'orgs' && <OrganizationsTab memberships={props.user.memberships} />}
 
         {props.activeTab === 'logins' && (
           <LoginActivityTab

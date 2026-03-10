@@ -31,7 +31,12 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         where,
         include: {
           subscription: {
-            select: { id: true, plan: true, status: true, org: { select: { id: true, name: true } } },
+            select: {
+              id: true,
+              plan: true,
+              status: true,
+              org: { select: { id: true, name: true } },
+            },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -84,7 +89,12 @@ router.get('/:invoiceId', async (req: Request, res: Response, next: NextFunction
       where: { id: invoiceId },
       include: {
         subscription: {
-          select: { id: true, plan: true, status: true, org: { select: { id: true, name: true, slug: true } } },
+          select: {
+            id: true,
+            plan: true,
+            status: true,
+            org: { select: { id: true, name: true, slug: true } },
+          },
         },
       },
     });
@@ -172,7 +182,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 export default router;

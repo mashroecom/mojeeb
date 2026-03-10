@@ -40,7 +40,10 @@ export const outboundWorker = new Worker(
 
     if (!conversation) {
       // BUG FIX: return instead of throw — throwing causes infinite retries for deleted conversations
-      logger.warn({ conversationId: data.conversationId }, 'Conversation not found, skipping outbound message');
+      logger.warn(
+        { conversationId: data.conversationId },
+        'Conversation not found, skipping outbound message',
+      );
       return { success: false, error: 'Conversation not found' };
     }
 
@@ -48,16 +51,16 @@ export const outboundWorker = new Worker(
     const adapter = getChannelAdapter(data.channelType);
     let result: { success: boolean; externalId?: string; error?: string };
     try {
-      result = await adapter.sendMessage(
-        channel.credentials as Record<string, string>,
-        {
-          recipientId: conversation.customerId,
-          content: data.content,
-          contentType: data.contentType as any,
-        }
-      );
+      result = await adapter.sendMessage(channel.credentials as Record<string, string>, {
+        recipientId: conversation.customerId,
+        content: data.content,
+        contentType: data.contentType as any,
+      });
     } catch (adapterErr) {
-      logger.error({ err: adapterErr, channelType: data.channelType, messageId: data.messageId }, 'Channel adapter error');
+      logger.error(
+        { err: adapterErr, channelType: data.channelType, messageId: data.messageId },
+        'Channel adapter error',
+      );
       result = { success: false, error: (adapterErr as Error).message };
     }
 
@@ -72,7 +75,10 @@ export const outboundWorker = new Worker(
         },
       });
     } catch (dbErr) {
-      logger.error({ err: dbErr, messageId: data.messageId }, 'Failed to update message delivery status');
+      logger.error(
+        { err: dbErr, messageId: data.messageId },
+        'Failed to update message delivery status',
+      );
     }
 
     // Track
@@ -84,7 +90,10 @@ export const outboundWorker = new Worker(
         channelType: data.channelType,
       });
     } catch (analyticsErr) {
-      logger.warn({ err: analyticsErr, conversationId: data.conversationId }, 'Failed to queue outbound analytics');
+      logger.warn(
+        { err: analyticsErr, conversationId: data.conversationId },
+        'Failed to queue outbound analytics',
+      );
     }
 
     // Dispatch webhook event for successfully sent messages
@@ -110,7 +119,7 @@ export const outboundWorker = new Worker(
   {
     connection: redis,
     concurrency: 10,
-  }
+  },
 );
 
 outboundWorker.on('failed', (job, err) => {

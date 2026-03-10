@@ -8,7 +8,12 @@ export const adminMessagesKeys = {
 };
 
 // Demo Requests
-export function useAdminDemoRequests(params: { page: number; limit: number; status?: string; search?: string }) {
+export function useAdminDemoRequests(params: {
+  page: number;
+  limit: number;
+  status?: string;
+  search?: string;
+}) {
   return useQuery({
     queryKey: adminMessagesKeys.demoRequests(params),
     queryFn: async () => {
@@ -51,7 +56,12 @@ export function useDeleteDemoRequest() {
 }
 
 // Contact Messages
-export function useAdminContactMessages(params: { page: number; limit: number; status?: string; search?: string }) {
+export function useAdminContactMessages(params: {
+  page: number;
+  limit: number;
+  status?: string;
+  search?: string;
+}) {
   return useQuery({
     queryKey: adminMessagesKeys.contactMessages(params),
     queryFn: async () => {

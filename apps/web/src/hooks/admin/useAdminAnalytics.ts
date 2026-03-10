@@ -54,9 +54,7 @@ export function useAdminOverview() {
   return useQuery({
     queryKey: adminAnalyticsKeys.overview,
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<AdminOverviewData>>(
-        '/admin/analytics/overview',
-      );
+      const { data } = await api.get<ApiResponse<AdminOverviewData>>('/admin/analytics/overview');
       return data.data;
     },
     refetchInterval: 30000,
@@ -90,9 +88,7 @@ export function useAdminRevenue() {
   return useQuery({
     queryKey: adminAnalyticsKeys.revenue,
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<AdminRevenueData>>(
-        '/admin/analytics/revenue',
-      );
+      const { data } = await api.get<ApiResponse<AdminRevenueData>>('/admin/analytics/revenue');
       return data.data;
     },
   });

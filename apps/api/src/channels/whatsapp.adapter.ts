@@ -18,17 +18,12 @@ export class WhatsAppAdapter extends ChannelAdapter {
       ? (req as any).rawBody
       : Buffer.from(JSON.stringify(req.body));
 
-    const expectedSignature = 'sha256=' + crypto
-      .createHmac('sha256', config.meta.appSecret)
-      .update(body)
-      .digest('hex');
+    const expectedSignature =
+      'sha256=' + crypto.createHmac('sha256', config.meta.appSecret).update(body).digest('hex');
 
     // Use timing-safe comparison to prevent timing attacks
     try {
-      return crypto.timingSafeEqual(
-        Buffer.from(expectedSignature),
-        Buffer.from(signature),
-      );
+      return crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature));
     } catch {
       return false;
     }
@@ -81,36 +76,37 @@ export class WhatsAppAdapter extends ChannelAdapter {
 
   async sendMessage(
     credentials: Record<string, string>,
-    message: OutboundMessage
+    message: OutboundMessage,
   ): Promise<SendResult> {
     try {
       const phoneNumberId = credentials.phoneNumberId;
       const accessToken = credentials.accessToken;
 
       if (!phoneNumberId || !accessToken) {
-        return { externalId: '', success: false, error: 'Missing WhatsApp credentials (phoneNumberId or accessToken)' };
+        return {
+          externalId: '',
+          success: false,
+          error: 'Missing WhatsApp credentials (phoneNumberId or accessToken)',
+        };
       }
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch(
-        `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            to: message.recipientId,
-            type: 'text',
-            text: { body: message.content },
-          }),
-          signal: controller.signal,
-        }
-      );
+      const response = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: message.recipientId,
+          type: 'text',
+          text: { body: message.content },
+        }),
+        signal: controller.signal,
+      });
 
       clearTimeout(timeout);
 
@@ -118,7 +114,11 @@ export class WhatsAppAdapter extends ChannelAdapter {
       try {
         data = await response.json();
       } catch {
-        return { externalId: '', success: false, error: 'Invalid response format from WhatsApp API' };
+        return {
+          externalId: '',
+          success: false,
+          error: 'Invalid response format from WhatsApp API',
+        };
       }
 
       return {

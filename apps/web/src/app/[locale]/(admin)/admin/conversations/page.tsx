@@ -31,11 +31,11 @@ import {
 
 /* ── Status badge colours ─────────────────────────────────── */
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE:     'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  ACTIVE: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   HANDED_OFF: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  WAITING:    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  RESOLVED:   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  ARCHIVED:   'bg-muted text-muted-foreground',
+  WAITING: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  RESOLVED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  ARCHIVED: 'bg-muted text-muted-foreground',
 };
 
 const STATUS_OPTIONS = ['ACTIVE', 'HANDED_OFF', 'WAITING', 'RESOLVED', 'ARCHIVED'] as const;
@@ -55,7 +55,13 @@ export default function AdminConversationsPage() {
   const [endDate, setEndDate] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant?: 'danger' | 'default';
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
 
   // Debounce search input (300ms)
   useEffect(() => {
@@ -67,7 +73,9 @@ export default function AdminConversationsPage() {
   }, [search]);
 
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [status, startDate, endDate]);
+  useEffect(() => {
+    setPage(1);
+  }, [status, startDate, endDate]);
 
   // Clear selection when page, search, or status changes
   useEffect(() => {
@@ -126,9 +134,12 @@ export default function AdminConversationsPage() {
       message: t('confirmBulkResolve', { count: ids.length }),
       variant: 'default',
       onConfirm: () => {
-        bulkStatus.mutate({ conversationIds: ids, status: 'RESOLVED' }, {
-          onSuccess: () => setSelectedIds(new Set()),
-        });
+        bulkStatus.mutate(
+          { conversationIds: ids, status: 'RESOLVED' },
+          {
+            onSuccess: () => setSelectedIds(new Set()),
+          },
+        );
       },
     });
   }
@@ -168,9 +179,12 @@ export default function AdminConversationsPage() {
       message: t('confirmBulkArchive', { count: ids.length }),
       variant: 'danger',
       onConfirm: () => {
-        bulkStatus.mutate({ conversationIds: ids, status: 'ARCHIVED' }, {
-          onSuccess: () => setSelectedIds(new Set()),
-        });
+        bulkStatus.mutate(
+          { conversationIds: ids, status: 'ARCHIVED' },
+          {
+            onSuccess: () => setSelectedIds(new Set()),
+          },
+        );
       },
     });
   }
@@ -265,9 +279,7 @@ export default function AdminConversationsPage() {
           },
           {
             label: t('avgMessages'),
-            value: stats?.avgMessages != null
-              ? Number(stats.avgMessages).toFixed(1)
-              : undefined,
+            value: stats?.avgMessages != null ? Number(stats.avgMessages).toFixed(1) : undefined,
             icon: BarChart,
             color: 'text-primary',
           },
@@ -338,7 +350,9 @@ export default function AdminConversationsPage() {
             >
               <option value="">{t('allStatuses')}</option>
               {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>{statusLabel(s)}</option>
+                <option key={s} value={s}>
+                  {statusLabel(s)}
+                </option>
               ))}
             </select>
           </div>
@@ -424,14 +438,30 @@ export default function AdminConversationsPage() {
                       title={t('selectAll')}
                     />
                   </th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('customer')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('organization')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('channel')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('messages')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('status')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('emotion')}</th>
-                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">{t('lastMessage')}</th>
-                  <th className="text-end px-4 py-3 font-medium text-muted-foreground">{t('actions')}</th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('customer')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('organization')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('channel')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('messages')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('status')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('emotion')}
+                  </th>
+                  <th className="text-start px-4 py-3 font-medium text-muted-foreground">
+                    {t('lastMessage')}
+                  </th>
+                  <th className="text-end px-4 py-3 font-medium text-muted-foreground">
+                    {t('actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -442,7 +472,7 @@ export default function AdminConversationsPage() {
                       key={conv.id}
                       className={cn(
                         'hover:bg-muted/50 transition-colors',
-                        isSelected && 'bg-primary/5'
+                        isSelected && 'bg-primary/5',
                       )}
                     >
                       <td className="px-4 py-3">
@@ -484,9 +514,7 @@ export default function AdminConversationsPage() {
                       </td>
 
                       {/* Messages count */}
-                      <td className="px-4 py-3 font-medium">
-                        {conv._count?.messages ?? 0}
-                      </td>
+                      <td className="px-4 py-3 font-medium">{conv._count?.messages ?? 0}</td>
 
                       {/* Status */}
                       <td className="px-4 py-3">
@@ -600,8 +628,11 @@ export default function AdminConversationsPage() {
         title={confirmDialog.title}
         message={confirmDialog.message}
         variant={confirmDialog.variant}
-        onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog(prev => ({ ...prev, open: false })); }}
-        onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+        }}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
     </div>
   );

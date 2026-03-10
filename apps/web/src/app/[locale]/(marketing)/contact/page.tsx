@@ -51,7 +51,9 @@ export default function ContactPage() {
               <Mail className="h-5 w-5 text-primary mt-0.5" />
               <div>
                 <h3 className="font-medium">{t('emailLabel')}</h3>
-                <p className="text-sm text-muted-foreground">{settings?.supportEmail || 'support@mojeeb.app'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {settings?.supportEmail || 'support@mojeeb.app'}
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -118,9 +120,7 @@ export default function ContactPage() {
                     className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary resize-none"
                   />
                 </div>
-                {error && (
-                  <p className="text-sm text-red-500 text-center">{error}</p>
-                )}
+                {error && <p className="text-sm text-red-500 text-center">{error}</p>}
                 <button
                   type="submit"
                   disabled={loading}

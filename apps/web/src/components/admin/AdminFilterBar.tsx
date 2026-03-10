@@ -15,9 +15,7 @@ export function AdminFilterBar({ children }: AdminFilterBarProps) {
         <Filter className="h-4 w-4" />
         {t('filters')}
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {children}
-      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">{children}</div>
     </div>
   );
 }

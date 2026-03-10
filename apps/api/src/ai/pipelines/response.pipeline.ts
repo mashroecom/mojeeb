@@ -68,16 +68,14 @@ export class ResponsePipeline {
       select: { role: true, content: true, contentType: true },
     });
 
-    const filteredMessages = messages
-      .reverse()
-      .filter((m) => m.role !== 'SYSTEM'); // Exclude system messages (handoff notices etc.)
+    const filteredMessages = messages.reverse().filter((m) => m.role !== 'SYSTEM'); // Exclude system messages (handoff notices etc.)
 
     // Build multimodal context messages (images as vision content)
     const contextMessages: ConversationMessage[] = await Promise.all(
       filteredMessages.map(async (m) => ({
         role: m.role === 'CUSTOMER' ? ('user' as const) : ('assistant' as const),
         content: await this.buildMessageContent(m.content, m.contentType),
-      }))
+      })),
     );
 
     // Build text-only messages for analysis pipeline (no vision tokens)
@@ -90,15 +88,12 @@ export class ResponsePipeline {
     const incomingContentType = params.incomingMessageContentType || 'TEXT';
     const incomingContent = await this.buildMessageContent(
       params.incomingMessage,
-      incomingContentType
+      incomingContentType,
     );
     contextMessages.push({ role: 'user', content: incomingContent });
 
     // Text-only version for analysis
-    const annotatedMessage = this.annotateContentText(
-      params.incomingMessage,
-      incomingContentType
-    );
+    const annotatedMessage = this.annotateContentText(params.incomingMessage, incomingContentType);
     textOnlyMessages.push({ role: 'user', content: annotatedMessage });
 
     // 2. Retrieve knowledge base context + conversation data in parallel
@@ -201,30 +196,26 @@ export class ResponsePipeline {
         maxTokens: params.agent.maxTokens,
         model: params.agent.aiModel,
       }),
-      analysisPipeline.analyze(
-        annotatedMessage,
-        textOnlyMessages,
-        {
-          enableEmotion: params.agent.enableEmotionDetection,
-          enableLead: params.agent.enableLeadExtraction,
-          enableRouting: params.agent.enableHumanHandoff,
-          handoffThreshold: params.agent.handoffThreshold,
-          language: params.agent.language,
-          agentDescription: params.agent.description || undefined,
-          agentName: params.agent.name,
-          dataCollectionFields: dataCollectionConfig?.requiredFields || [],
-          escalationKeywords: params.agent.escalationKeywords || [],
-          sentimentEscalation: params.agent.sentimentEscalation || false,
-          escalationMessageCount: params.agent.escalationMessageCount || 5,
-          enableQuickReplies: !!(params.agent.quickRepliesConfig as any)?.enabled,
-        },
-      ),
+      analysisPipeline.analyze(annotatedMessage, textOnlyMessages, {
+        enableEmotion: params.agent.enableEmotionDetection,
+        enableLead: params.agent.enableLeadExtraction,
+        enableRouting: params.agent.enableHumanHandoff,
+        handoffThreshold: params.agent.handoffThreshold,
+        language: params.agent.language,
+        agentDescription: params.agent.description || undefined,
+        agentName: params.agent.name,
+        dataCollectionFields: dataCollectionConfig?.requiredFields || [],
+        escalationKeywords: params.agent.escalationKeywords || [],
+        sentimentEscalation: params.agent.sentimentEscalation || false,
+        escalationMessageCount: params.agent.escalationMessageCount || 5,
+        enableQuickReplies: !!(params.agent.quickRepliesConfig as any)?.enabled,
+      }),
     ]);
 
     const latencyMs = Date.now() - startTime;
     logger.info(
       { conversationId: params.conversationId, latencyMs, tokensUsed: aiResponse.tokensUsed.total },
-      'AI response generated'
+      'AI response generated',
     );
 
     return {
@@ -240,7 +231,7 @@ export class ResponsePipeline {
 
   private async buildMessageContent(
     content: string,
-    contentType: string
+    contentType: string,
   ): Promise<string | ContentPart[]> {
     if (contentType === 'IMAGE' && isSupportedImageFile(content)) {
       const result = await imageToBase64DataUrl(content);
@@ -276,10 +267,7 @@ export class ResponsePipeline {
     }
   }
 
-  private async retrieveKBContext(
-    agent: Agent,
-    query: string
-  ): Promise<string> {
+  private async retrieveKBContext(agent: Agent, query: string): Promise<string> {
     const kbIds = agent.knowledgeBases.map((kb) => kb.knowledgeBaseId);
     if (kbIds.length === 0) return '';
 
@@ -287,10 +275,8 @@ export class ResponsePipeline {
       const provider = getAIProvider('OPENAI');
 
       // Cache embeddings with 24-hour TTL (86400 seconds)
-      const queryEmbedding = await cache.getOrSet(
-        `embedding:${query}`,
-        86400,
-        async () => provider.generateEmbedding(query)
+      const queryEmbedding = await cache.getOrSet(`embedding:${query}`, 86400, async () =>
+        provider.generateEmbedding(query),
       );
 
       const embeddingStr = `[${queryEmbedding.join(',')}]`;

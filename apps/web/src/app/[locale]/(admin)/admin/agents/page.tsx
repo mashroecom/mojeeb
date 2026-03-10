@@ -12,14 +12,7 @@ import {
   useDeleteAdminAgent,
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
-import {
-  Bot,
-  Search,
-  CheckCircle,
-  XCircle,
-  Cpu,
-  Trash2,
-} from 'lucide-react';
+import { Bot, Search, CheckCircle, XCircle, Cpu, Trash2 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,15 +48,33 @@ function StatSkeleton() {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-5 w-16 rounded-full bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-12 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-8 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-7 w-24 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-5 w-16 rounded-full bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-12 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-8 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-7 w-24 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -83,7 +94,13 @@ export default function AgentsPage() {
   const [search, setSearch] = useState('');
   const [provider, setProvider] = useState('');
   const [status, setStatus] = useState('');
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant?: 'danger' | 'default';
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
 
   const params = useMemo(
     () => ({
@@ -216,7 +233,10 @@ export default function AgentsPage() {
         </button>
         <select
           value={provider}
-          onChange={(e) => { setProvider(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setProvider(e.target.value);
+            setPage(1);
+          }}
           className="rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
         >
           <option value="">{t('allProviders')}</option>
@@ -225,7 +245,10 @@ export default function AgentsPage() {
         </select>
         <select
           value={status}
-          onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
           className="rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
         >
           <option value="">{t('allStatuses')}</option>
@@ -283,8 +306,7 @@ export default function AgentsPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
+              {isLoading && Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
 
               {!isLoading && !isError && entries.length === 0 && (
                 <tr>
@@ -298,7 +320,10 @@ export default function AgentsPage() {
               {!isLoading &&
                 !isError &&
                 entries.map((agent) => (
-                  <tr key={agent.id} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+                  <tr
+                    key={agent.id}
+                    className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium truncate max-w-[180px] block">
                         {agent.name}
@@ -320,7 +345,9 @@ export default function AgentsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${agent.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${agent.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}
+                      >
                         {agent.isActive ? t('active') : t('inactive')}
                       </span>
                     </td>
@@ -344,7 +371,11 @@ export default function AgentsPage() {
                           disabled={updateAgent.isPending}
                           className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${agent.isActive ? 'border-orange-200 text-orange-600 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-900/20' : 'border-green-200 text-green-600 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-900/20'}`}
                         >
-                          {agent.isActive ? <XCircle className="h-3 w-3" /> : <CheckCircle className="h-3 w-3" />}
+                          {agent.isActive ? (
+                            <XCircle className="h-3 w-3" />
+                          ) : (
+                            <CheckCircle className="h-3 w-3" />
+                          )}
                           {agent.isActive ? t('inactive') : t('active')}
                         </button>
                         <button
@@ -366,7 +397,15 @@ export default function AgentsPage() {
 
       {/* Pagination */}
       {!isLoading && (
-        <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          previousLabel={tc('previous')}
+          nextLabel={tc('next')}
+          pageLabel={tc('page')}
+          ofLabel={tc('of')}
+        />
       )}
 
       <AdminConfirmDialog
@@ -374,8 +413,11 @@ export default function AgentsPage() {
         title={confirmDialog.title}
         message={confirmDialog.message}
         variant={confirmDialog.variant}
-        onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog(prev => ({ ...prev, open: false })); }}
-        onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+        }}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
     </div>
   );

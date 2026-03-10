@@ -74,11 +74,7 @@ export class PushNotificationService {
    * Send a push notification to a specific user.
    * Sends to all active subscriptions for that user.
    */
-  async sendToUser(
-    userId: string,
-    orgId: string,
-    payload: PushNotificationPayload,
-  ): Promise<void> {
+  async sendToUser(userId: string, orgId: string, payload: PushNotificationPayload): Promise<void> {
     // TODO: Implement web push sending using web-push library
     // 1. Fetch all active subscriptions for the user
     // 2. Send notification to each subscription
@@ -98,10 +94,7 @@ export class PushNotificationService {
    * Send a push notification to all members of an organization.
    * Useful for org-wide events (e.g., new urgent conversation, system alerts).
    */
-  async sendToOrgMembers(
-    orgId: string,
-    payload: PushNotificationPayload,
-  ): Promise<void> {
+  async sendToOrgMembers(orgId: string, payload: PushNotificationPayload): Promise<void> {
     // Fetch all members of the organization
     const members = await prisma.orgMembership.findMany({
       where: { orgId },

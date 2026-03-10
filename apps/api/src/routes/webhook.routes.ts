@@ -4,8 +4,13 @@ import { webhookService } from '../services/webhook.service';
 import { authenticate, orgContext, requireRole } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 
-interface OrgParams { orgId: string; [key: string]: string; }
-interface WebhookParams extends OrgParams { webhookId: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
+interface WebhookParams extends OrgParams {
+  webhookId: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
@@ -42,21 +47,17 @@ const createSchema = z.object({
   events: z.array(z.string()).min(1),
 });
 
-router.post(
-  '/',
-  validate({ body: createSchema }),
-  async (req, res, next) => {
-    try {
-      const { orgId } = req.params as OrgParams;
-      const { url, events } = req.body;
-      const webhook = await webhookService.create(orgId, { url, events });
-      // Return secret only on creation
-      res.status(201).json({ success: true, data: webhook });
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+router.post('/', validate({ body: createSchema }), async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    const { url, events } = req.body;
+    const webhook = await webhookService.create(orgId, { url, events });
+    // Return secret only on creation
+    res.status(201).json({ success: true, data: webhook });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // PATCH /api/v1/organizations/:orgId/webhooks/:webhookId
 const updateSchema = z.object({
@@ -65,21 +66,17 @@ const updateSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-router.patch(
-  '/:webhookId',
-  validate({ body: updateSchema }),
-  async (req, res, next) => {
-    try {
-      const { orgId, webhookId } = req.params as WebhookParams;
-      const data = req.body;
-      const webhook = await webhookService.update(orgId, webhookId, data);
-      const { secret, ...safe } = webhook;
-      res.json({ success: true, data: safe });
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+router.patch('/:webhookId', validate({ body: updateSchema }), async (req, res, next) => {
+  try {
+    const { orgId, webhookId } = req.params as WebhookParams;
+    const data = req.body;
+    const webhook = await webhookService.update(orgId, webhookId, data);
+    const { secret, ...safe } = webhook;
+    res.json({ success: true, data: safe });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // DELETE /api/v1/organizations/:orgId/webhooks/:webhookId
 router.delete('/:webhookId', async (req, res, next) => {

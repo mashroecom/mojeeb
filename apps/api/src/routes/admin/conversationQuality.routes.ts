@@ -108,7 +108,8 @@ router.get('/low-quality', async (req: Request, res: Response, next: NextFunctio
 
     const conversations = lowRatings.map((r) => {
       const durationMs = r.conversation.resolvedAt
-        ? new Date(r.conversation.resolvedAt).getTime() - new Date(r.conversation.createdAt).getTime()
+        ? new Date(r.conversation.resolvedAt).getTime() -
+          new Date(r.conversation.createdAt).getTime()
         : new Date().getTime() - new Date(r.conversation.createdAt).getTime();
       const durationMinutes = Math.round(durationMs / 60000);
 

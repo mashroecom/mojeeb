@@ -1,5 +1,8 @@
 import { Router, type Request, type Response } from 'express';
-import { subscriptionService, type KashierWebhookPayload } from '../../services/subscription.service';
+import {
+  subscriptionService,
+  type KashierWebhookPayload,
+} from '../../services/subscription.service';
 import { logger } from '../../config/logger';
 import { webhookLimiter } from '../../middleware/rateLimiter';
 

@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -67,8 +63,7 @@ export interface RemoveTagFromConversationParams {
 export const tagKeys = {
   all: (orgId: string) => ['organizations', orgId, 'tags'] as const,
   list: (orgId: string) => [...tagKeys.all(orgId), 'list'] as const,
-  detail: (orgId: string, tagId: string) =>
-    [...tagKeys.all(orgId), 'detail', tagId] as const,
+  detail: (orgId: string, tagId: string) => [...tagKeys.all(orgId), 'detail', tagId] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -81,9 +76,7 @@ export function useTags() {
   return useQuery({
     queryKey: tagKeys.list(orgId!),
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Tag[]>>(
-        `/organizations/${orgId}/tags`,
-      );
+      const { data } = await api.get<ApiResponse<Tag[]>>(`/organizations/${orgId}/tags`);
       return data;
     },
     enabled: !!orgId,
@@ -100,10 +93,7 @@ export function useCreateTag() {
 
   return useMutation({
     mutationFn: async (params: CreateTagParams) => {
-      const { data } = await api.post<ApiResponse<Tag>>(
-        `/organizations/${orgId}/tags`,
-        params,
-      );
+      const { data } = await api.post<ApiResponse<Tag>>(`/organizations/${orgId}/tags`, params);
       return data;
     },
     onSuccess: () => {
@@ -125,10 +115,7 @@ export function useUpdateTag() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      tagId,
-      ...params
-    }: UpdateTagParams & { tagId: string }) => {
+    mutationFn: async ({ tagId, ...params }: UpdateTagParams & { tagId: string }) => {
       const { data } = await api.patch<ApiResponse<Tag>>(
         `/organizations/${orgId}/tags/${tagId}`,
         params,
@@ -155,9 +142,7 @@ export function useDeleteTag() {
 
   return useMutation({
     mutationFn: async (tagId: string) => {
-      const { data } = await api.delete<ApiResponse<void>>(
-        `/organizations/${orgId}/tags/${tagId}`,
-      );
+      const { data } = await api.delete<ApiResponse<void>>(`/organizations/${orgId}/tags/${tagId}`);
       return data;
     },
     onSuccess: () => {

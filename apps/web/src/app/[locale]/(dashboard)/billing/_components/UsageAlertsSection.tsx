@@ -30,9 +30,10 @@ export function UsageAlertsSection({ subscription }: UsageAlertsSectionProps) {
       icon: MessageSquare,
       used: subscription.messagesUsed,
       limit: subscription.messagesLimit,
-      percentage: subscription.messagesLimit > 0
-        ? Math.round((subscription.messagesUsed / subscription.messagesLimit) * 100)
-        : 0,
+      percentage:
+        subscription.messagesLimit > 0
+          ? Math.round((subscription.messagesUsed / subscription.messagesLimit) * 100)
+          : 0,
       color: 'text-blue-600',
       bg: 'bg-blue-100',
     },
@@ -41,9 +42,10 @@ export function UsageAlertsSection({ subscription }: UsageAlertsSectionProps) {
       icon: Bot,
       used: subscription.agentsUsed,
       limit: subscription.agentsLimit,
-      percentage: subscription.agentsLimit > 0
-        ? Math.round((subscription.agentsUsed / subscription.agentsLimit) * 100)
-        : 0,
+      percentage:
+        subscription.agentsLimit > 0
+          ? Math.round((subscription.agentsUsed / subscription.agentsLimit) * 100)
+          : 0,
       color: 'text-purple-600',
       bg: 'bg-purple-100',
     },
@@ -52,9 +54,10 @@ export function UsageAlertsSection({ subscription }: UsageAlertsSectionProps) {
       icon: Zap,
       used: subscription.aiConversationsUsed,
       limit: subscription.aiConversationsLimit,
-      percentage: subscription.aiConversationsLimit > 0
-        ? Math.round((subscription.aiConversationsUsed / subscription.aiConversationsLimit) * 100)
-        : 0,
+      percentage:
+        subscription.aiConversationsLimit > 0
+          ? Math.round((subscription.aiConversationsUsed / subscription.aiConversationsLimit) * 100)
+          : 0,
       color: 'text-green-600',
       bg: 'bg-green-100',
     },
@@ -63,9 +66,10 @@ export function UsageAlertsSection({ subscription }: UsageAlertsSectionProps) {
       icon: Plug,
       used: subscription.integrationsUsed,
       limit: subscription.integrationsLimit,
-      percentage: subscription.integrationsLimit > 0
-        ? Math.round((subscription.integrationsUsed / subscription.integrationsLimit) * 100)
-        : 0,
+      percentage:
+        subscription.integrationsLimit > 0
+          ? Math.round((subscription.integrationsUsed / subscription.integrationsLimit) * 100)
+          : 0,
       color: 'text-orange-600',
       bg: 'bg-orange-100',
     },
@@ -107,9 +111,7 @@ export function UsageAlertsSection({ subscription }: UsageAlertsSectionProps) {
             >
               <div
                 className={`rounded-lg p-2 ${
-                  isAtLimit
-                    ? 'bg-red-100 dark:bg-red-900/40'
-                    : 'bg-amber-100 dark:bg-amber-900/40'
+                  isAtLimit ? 'bg-red-100 dark:bg-red-900/40' : 'bg-amber-100 dark:bg-amber-900/40'
                 }`}
               >
                 <metric.icon
@@ -123,9 +125,7 @@ export function UsageAlertsSection({ subscription }: UsageAlertsSectionProps) {
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2 mb-1">
-                  <h3 className="text-sm font-semibold">
-                    {metric.label}
-                  </h3>
+                  <h3 className="text-sm font-semibold">{metric.label}</h3>
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                       isAtLimit
@@ -160,9 +160,7 @@ export function UsageAlertsSection({ subscription }: UsageAlertsSectionProps) {
                 <div className="mt-2 h-2 w-full rounded-full bg-muted">
                   <div
                     className={`h-2 rounded-full transition-all ${
-                      isAtLimit
-                        ? 'bg-red-500 dark:bg-red-600'
-                        : 'bg-amber-500 dark:bg-amber-600'
+                      isAtLimit ? 'bg-red-500 dark:bg-red-600' : 'bg-amber-500 dark:bg-amber-600'
                     }`}
                     style={{ width: `${Math.min(100, metric.percentage)}%` }}
                   />
@@ -174,14 +172,11 @@ export function UsageAlertsSection({ subscription }: UsageAlertsSectionProps) {
       </div>
 
       {/* Info footer for overage charges if applicable */}
-      {subscription.plan !== 'FREE' &&
-        alerts.some((a) => a.label === t('aiConversations')) && (
-          <div className="mt-4 pt-4 border-t">
-            <p className="text-xs text-muted-foreground">
-              {t('usageAlertsOverageNote')}
-            </p>
-          </div>
-        )}
+      {subscription.plan !== 'FREE' && alerts.some((a) => a.label === t('aiConversations')) && (
+        <div className="mt-4 pt-4 border-t">
+          <p className="text-xs text-muted-foreground">{t('usageAlertsOverageNote')}</p>
+        </div>
+      )}
     </div>
   );
 }

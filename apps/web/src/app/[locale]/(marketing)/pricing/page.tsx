@@ -6,14 +6,7 @@ import { PricingSection } from '@/components/landing/PricingSection';
 import { useLandingPageContent } from '@/hooks/useLandingPage';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import {
-  Zap,
-  HelpCircle,
-  ChevronDown,
-  ChevronUp,
-  ArrowRight,
-  ArrowLeft,
-} from 'lucide-react';
+import { Zap, HelpCircle, ChevronDown, ChevronUp, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -44,11 +37,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
           <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
         )}
       </button>
-      {open && (
-        <p className="pb-5 text-sm leading-relaxed text-muted-foreground">
-          {answer}
-        </p>
-      )}
+      {open && <p className="pb-5 text-sm leading-relaxed text-muted-foreground">{answer}</p>}
     </div>
   );
 }
@@ -97,52 +86,56 @@ export default function PricingPage() {
         <PricingSection
           showYearlyToggle={cms?.showYearlyToggle}
           yearlyDiscount={cms?.yearlyDiscount}
-          enterpriseCtaText={(isAr ? cms?.enterpriseCtaTextAr : cms?.enterpriseCtaText) || undefined}
+          enterpriseCtaText={
+            (isAr ? cms?.enterpriseCtaTextAr : cms?.enterpriseCtaText) || undefined
+          }
           enterpriseCtaLink={cms?.enterpriseCtaLink || undefined}
         />
       </section>
 
       {/* FAQ (dynamic from DB – show limited, link to /faq for rest) */}
-      {faqs && faqs.length > 0 && (() => {
-        const displayFaqs = faqs.slice(0, PRICING_FAQ_LIMIT);
-        const hasMore = faqs.length > PRICING_FAQ_LIMIT;
-        const Arrow = isAr ? ArrowLeft : ArrowRight;
-        return (
-          <section className="py-16 sm:py-24">
-            <div className="container max-w-3xl">
-              <div className="mb-12 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                  <HelpCircle className="h-6 w-6 text-primary" />
+      {faqs &&
+        faqs.length > 0 &&
+        (() => {
+          const displayFaqs = faqs.slice(0, PRICING_FAQ_LIMIT);
+          const hasMore = faqs.length > PRICING_FAQ_LIMIT;
+          const Arrow = isAr ? ArrowLeft : ArrowRight;
+          return (
+            <section className="py-16 sm:py-24">
+              <div className="container max-w-3xl">
+                <div className="mb-12 text-center">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                    <HelpCircle className="h-6 w-6 text-primary" />
+                  </div>
+                  <h2 className="text-3xl font-bold">{t('faqTitle')}</h2>
+                  <p className="mt-2 text-muted-foreground">{t('faqSubtitle')}</p>
                 </div>
-                <h2 className="text-3xl font-bold">{t('faqTitle')}</h2>
-                <p className="mt-2 text-muted-foreground">{t('faqSubtitle')}</p>
-              </div>
 
-              <div className="rounded-2xl border bg-card px-6">
-                {displayFaqs.map((faq) => (
-                  <FAQItem
-                    key={faq.id}
-                    question={isAr ? faq.questionAr || faq.question : faq.question}
-                    answer={isAr ? faq.answerAr || faq.answer : faq.answer}
-                  />
-                ))}
-              </div>
-
-              {hasMore && (
-                <div className="mt-8 text-center">
-                  <Link
-                    href="/faq"
-                    className="inline-flex items-center gap-2 rounded-lg border border-primary px-6 py-3 text-sm font-medium text-primary hover:bg-primary/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                  >
-                    {t('viewAllFaqs')}
-                    <Arrow className="h-4 w-4" />
-                  </Link>
+                <div className="rounded-2xl border bg-card px-6">
+                  {displayFaqs.map((faq) => (
+                    <FAQItem
+                      key={faq.id}
+                      question={isAr ? faq.questionAr || faq.question : faq.question}
+                      answer={isAr ? faq.answerAr || faq.answer : faq.answer}
+                    />
+                  ))}
                 </div>
-              )}
-            </div>
-          </section>
-        );
-      })()}
+
+                {hasMore && (
+                  <div className="mt-8 text-center">
+                    <Link
+                      href="/faq"
+                      className="inline-flex items-center gap-2 rounded-lg border border-primary px-6 py-3 text-sm font-medium text-primary hover:bg-primary/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    >
+                      {t('viewAllFaqs')}
+                      <Arrow className="h-4 w-4" />
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+        })()}
 
       {/* CTA */}
       <section className="border-t bg-muted/30 py-16 sm:py-24">

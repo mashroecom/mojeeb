@@ -101,9 +101,7 @@ function ConfigItemCard({
             )}
           </div>
           {item.description && (
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-              {item.description}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
           )}
         </div>
       </div>
@@ -182,7 +180,9 @@ function TestResultsPanel({
       <div
         className={cn(
           'px-4 py-3 flex items-center justify-between',
-          data.success ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'bg-amber-50 dark:bg-amber-950/30',
+          data.success
+            ? 'bg-emerald-50 dark:bg-emerald-950/30'
+            : 'bg-amber-50 dark:bg-amber-950/30',
         )}
       >
         <div className="flex items-center gap-2">
@@ -329,11 +329,13 @@ export default function ConfigPage() {
         <TestResultsPanel
           data={currentTestResult}
           t={t}
-          onClose={() => setTestResults((prev) => {
-            const next = { ...prev };
-            delete next[activeTab];
-            return next;
-          })}
+          onClose={() =>
+            setTestResults((prev) => {
+              const next = { ...prev };
+              delete next[activeTab];
+              return next;
+            })
+          }
         />
       )}
 
@@ -343,9 +345,7 @@ export default function ConfigPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">{t(activeTab as any)}</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {t(`${activeTab}Desc` as any)}
-            </p>
+            <p className="text-sm text-muted-foreground mt-0.5">{t(`${activeTab}Desc` as any)}</p>
           </div>
           <button
             onClick={() => handleTest(activeTab)}

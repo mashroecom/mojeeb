@@ -55,19 +55,15 @@ router.get('/', async (req, res, next) => {
 });
 
 // POST /api/v1/organizations/:orgId/channels
-router.post(
-  '/',
-  validate({ body: connectSchema }),
-  async (req, res, next) => {
-    try {
-      const { orgId } = req.params as OrgParams;
-      const channel = await channelService.connect(orgId, req.body);
-      res.status(201).json({ success: true, data: channel });
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+router.post('/', validate({ body: connectSchema }), async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    const channel = await channelService.connect(orgId, req.body);
+    res.status(201).json({ success: true, data: channel });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /api/v1/organizations/:orgId/channels/:channelId
 router.get('/:channelId', async (req, res, next) => {
@@ -109,11 +105,7 @@ router.patch(
   async (req, res, next) => {
     try {
       const { orgId, channelId } = req.params as ChannelParams;
-      const channel = await channelService.updateSettings(
-        orgId,
-        channelId,
-        req.body,
-      );
+      const channel = await channelService.updateSettings(orgId, channelId, req.body);
       res.json({ success: true, data: channel });
     } catch (err) {
       next(err);
@@ -122,27 +114,19 @@ router.patch(
 );
 
 // POST /api/v1/organizations/:orgId/channels/:channelId/agents
-router.post(
-  '/:channelId/agents',
-  validate({ body: assignAgentSchema }),
-  async (req, res, next) => {
-    try {
-      const { orgId, channelId } = req.params as ChannelParams;
-      // Verify channel belongs to this org
-      const channel = await channelService.getById(orgId, channelId);
-      if (!channel) return res.status(404).json({ success: false, error: 'Channel not found' });
-      const { agentId, isPrimary } = req.body;
-      const assignment = await channelService.assignAgent(
-        channelId,
-        agentId,
-        isPrimary,
-      );
-      res.status(201).json({ success: true, data: assignment });
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+router.post('/:channelId/agents', validate({ body: assignAgentSchema }), async (req, res, next) => {
+  try {
+    const { orgId, channelId } = req.params as ChannelParams;
+    // Verify channel belongs to this org
+    const channel = await channelService.getById(orgId, channelId);
+    if (!channel) return res.status(404).json({ success: false, error: 'Channel not found' });
+    const { agentId, isPrimary } = req.body;
+    const assignment = await channelService.assignAgent(channelId, agentId, isPrimary);
+    res.status(201).json({ success: true, data: assignment });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // DELETE /api/v1/organizations/:orgId/channels/:channelId/agents/:agentId
 router.delete('/:channelId/agents/:agentId', async (req, res, next) => {

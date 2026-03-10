@@ -11,7 +11,10 @@ const createFlagSchema = z.object({
   key: z
     .string()
     .min(1, 'Key is required')
-    .regex(/^[a-z][a-z0-9_]*$/, 'Key must start with a lowercase letter and contain only lowercase letters, digits, and underscores'),
+    .regex(
+      /^[a-z][a-z0-9_]*$/,
+      'Key must start with a lowercase letter and contain only lowercase letters, digits, and underscores',
+    ),
   description: z.string().optional(),
   enabled: z.boolean().optional(),
 });
@@ -19,11 +22,13 @@ const createFlagSchema = z.object({
 const updateFlagSchema = z.object({
   enabled: z.boolean().optional(),
   description: z.string().optional(),
-  metadata: z.object({
-    rolloutPercentage: z.number().min(0).max(100).optional(),
-    targetOrgs: z.array(z.string()).optional(),
-    targetUsers: z.array(z.string()).optional(),
-  }).optional(),
+  metadata: z
+    .object({
+      rolloutPercentage: z.number().min(0).max(100).optional(),
+      targetOrgs: z.array(z.string()).optional(),
+      targetUsers: z.array(z.string()).optional(),
+    })
+    .optional(),
 });
 
 // GET / - List all feature flags
@@ -60,7 +65,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // PATCH /:key - Update a feature flag
@@ -88,7 +93,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // DELETE /:key - Delete a feature flag

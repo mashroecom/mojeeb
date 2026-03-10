@@ -12,10 +12,7 @@ function collectToBuffer(doc: PDFKit.PDFDocument): Promise<Buffer> {
 }
 
 function addTitle(doc: PDFKit.PDFDocument, title: string, dateRange: string) {
-  doc
-    .fontSize(22)
-    .font('Helvetica-Bold')
-    .text(title, { align: 'center' });
+  doc.fontSize(22).font('Helvetica-Bold').text(title, { align: 'center' });
   doc.moveDown(0.3);
   doc
     .fontSize(10)
@@ -346,11 +343,7 @@ export class PdfReportService {
     // Overall Metrics Section
     addSection(doc, 'Overall Performance');
     addKV(doc, 'Total Conversations', historicalData.totalConversations);
-    addKV(
-      doc,
-      'Avg Response Time',
-      `${(historicalData.avgResponseTimeMs / 1000).toFixed(2)}s`,
-    );
+    addKV(doc, 'Avg Response Time', `${(historicalData.avgResponseTimeMs / 1000).toFixed(2)}s`);
     addKV(
       doc,
       'Avg Resolution Time',
@@ -366,11 +359,7 @@ export class PdfReportService {
     doc.fontSize(12).font('Helvetica-Bold').text('AI Agent Performance:');
     doc.moveDown(0.2);
     addKV(doc, '  Conversations', aiVsHumanData.ai.conversationCount);
-    addKV(
-      doc,
-      '  Avg Response Time',
-      `${(aiVsHumanData.ai.avgResponseTimeMs / 1000).toFixed(2)}s`,
-    );
+    addKV(doc, '  Avg Response Time', `${(aiVsHumanData.ai.avgResponseTimeMs / 1000).toFixed(2)}s`);
     addKV(
       doc,
       '  Avg Resolution Time',
@@ -394,11 +383,7 @@ export class PdfReportService {
       `${(aiVsHumanData.human.avgResolutionTimeMs / 1000 / 60).toFixed(2)} min`,
     );
     addKV(doc, '  Avg CSAT', aiVsHumanData.human.avgCSAT.toFixed(2));
-    addKV(
-      doc,
-      '  Resolution Rate',
-      `${(aiVsHumanData.human.resolutionRate * 100).toFixed(2)}%`,
-    );
+    addKV(doc, '  Resolution Rate', `${(aiVsHumanData.human.resolutionRate * 100).toFixed(2)}%`);
 
     // Individual Agent Performance
     if (historicalData.agentMetrics.length > 0) {

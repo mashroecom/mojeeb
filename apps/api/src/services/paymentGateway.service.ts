@@ -28,16 +28,16 @@ export interface AvailableGateway {
  * MENA region timezones that should default to Kashier
  */
 const MENA_TIMEZONES = [
-  'Asia/Riyadh',      // Saudi Arabia
-  'Asia/Dubai',       // UAE
-  'Africa/Cairo',     // Egypt
-  'Asia/Kuwait',      // Kuwait
-  'Asia/Qatar',       // Qatar
-  'Asia/Bahrain',     // Bahrain
-  'Asia/Muscat',      // Oman
-  'Asia/Baghdad',     // Iraq
-  'Asia/Amman',       // Jordan
-  'Asia/Beirut',      // Lebanon
+  'Asia/Riyadh', // Saudi Arabia
+  'Asia/Dubai', // UAE
+  'Africa/Cairo', // Egypt
+  'Asia/Kuwait', // Kuwait
+  'Asia/Qatar', // Qatar
+  'Asia/Bahrain', // Bahrain
+  'Asia/Muscat', // Oman
+  'Asia/Baghdad', // Iraq
+  'Asia/Amman', // Jordan
+  'Asia/Beirut', // Lebanon
 ];
 
 /**
@@ -45,12 +45,12 @@ const MENA_TIMEZONES = [
  * MENA currencies default to Kashier, international currencies to Stripe/PayPal
  */
 const CURRENCY_GATEWAY_MAP: Record<string, PaymentGateway[]> = {
-  'SAR': [PaymentGateway.KASHIER, PaymentGateway.STRIPE],
-  'AED': [PaymentGateway.KASHIER, PaymentGateway.STRIPE],
-  'EGP': [PaymentGateway.KASHIER, PaymentGateway.STRIPE],
-  'USD': [PaymentGateway.STRIPE, PaymentGateway.PAYPAL],
-  'EUR': [PaymentGateway.STRIPE, PaymentGateway.PAYPAL],
-  'GBP': [PaymentGateway.STRIPE, PaymentGateway.PAYPAL],
+  SAR: [PaymentGateway.KASHIER, PaymentGateway.STRIPE],
+  AED: [PaymentGateway.KASHIER, PaymentGateway.STRIPE],
+  EGP: [PaymentGateway.KASHIER, PaymentGateway.STRIPE],
+  USD: [PaymentGateway.STRIPE, PaymentGateway.PAYPAL],
+  EUR: [PaymentGateway.STRIPE, PaymentGateway.PAYPAL],
+  GBP: [PaymentGateway.STRIPE, PaymentGateway.PAYPAL],
 };
 
 /**
@@ -76,10 +76,7 @@ export class PaymentGatewayService {
    * @param preferences - Optional preferences including preferred gateway and currency
    * @returns Selected payment gateway
    */
-  async selectGateway(
-    orgId: string,
-    preferences?: GatewayPreferences
-  ): Promise<PaymentGateway> {
+  async selectGateway(orgId: string, preferences?: GatewayPreferences): Promise<PaymentGateway> {
     // Fetch organization
     const org = await prisma.organization.findUnique({
       where: { id: orgId },
@@ -95,7 +92,7 @@ export class PaymentGatewayService {
       const isValid = this.isGatewayValid(preferences.preferredGateway);
       if (!isValid) {
         throw new BadRequestError(
-          `Invalid payment gateway: ${preferences.preferredGateway}. Must be one of: KASHIER, STRIPE, PAYPAL`
+          `Invalid payment gateway: ${preferences.preferredGateway}. Must be one of: KASHIER, STRIPE, PAYPAL`,
         );
       }
       logger.info({

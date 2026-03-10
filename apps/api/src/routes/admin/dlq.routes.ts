@@ -18,7 +18,11 @@ router.get('/', async (req, res, next) => {
     const limit = Math.min(100, parseInt(req.query.limit as string) || 20);
     const start = (page - 1) * limit;
 
-    const jobs = await deadLetterQueue.getJobs(['waiting', 'delayed', 'completed', 'failed'], start, start + limit - 1);
+    const jobs = await deadLetterQueue.getJobs(
+      ['waiting', 'delayed', 'completed', 'failed'],
+      start,
+      start + limit - 1,
+    );
     const total = await deadLetterQueue.getJobCounts();
 
     res.json({
@@ -28,7 +32,8 @@ router.get('/', async (req, res, next) => {
         data: j.data,
         timestamp: j.timestamp,
       })),
-      total: (total.waiting ?? 0) + (total.delayed ?? 0) + (total.completed ?? 0) + (total.failed ?? 0),
+      total:
+        (total.waiting ?? 0) + (total.delayed ?? 0) + (total.completed ?? 0) + (total.failed ?? 0),
       page,
       limit,
     });

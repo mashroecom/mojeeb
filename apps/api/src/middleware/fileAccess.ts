@@ -29,10 +29,14 @@ export async function validateFileAccess(req: Request, _res: Response, next: Nex
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       try {
-        const payload = jwt.verify(token, config.jwt.secret) as { userId: string; email: string; jti?: string };
+        const payload = jwt.verify(token, config.jwt.secret) as {
+          userId: string;
+          email: string;
+          jti?: string;
+        };
 
         // Check if token has been revoked
-        if (payload.jti && await tokenBlacklistService.isBlacklisted(payload.jti)) {
+        if (payload.jti && (await tokenBlacklistService.isBlacklisted(payload.jti))) {
           return next(new UnauthorizedError('Token has been revoked'));
         }
 
@@ -53,7 +57,7 @@ export async function validateFileAccess(req: Request, _res: Response, next: Nex
         const payload = jwt.verify(visitorToken, config.jwt.secret) as VisitorTokenPayload;
 
         // Check if token has been revoked
-        if (payload.jti && await tokenBlacklistService.isBlacklisted(payload.jti)) {
+        if (payload.jti && (await tokenBlacklistService.isBlacklisted(payload.jti))) {
           return next(new UnauthorizedError('Token has been revoked'));
         }
 

@@ -72,7 +72,6 @@ const typeIcons: Record<string, typeof Info> = {
   CRITICAL: AlertCircle,
 };
 
-
 function toInputDate(dateStr: string | null) {
   if (!dateStr) return '';
   return new Date(dateStr).toISOString().split('T')[0];
@@ -161,7 +160,9 @@ export default function AnnouncementsPage() {
     if (form.endsAt) payload.endsAt = form.endsAt;
 
     if (editingId) {
-      await updateMutation.mutateAsync({ id: editingId, ...payload } as Parameters<typeof updateMutation.mutateAsync>[0]);
+      await updateMutation.mutateAsync({ id: editingId, ...payload } as Parameters<
+        typeof updateMutation.mutateAsync
+      >[0]);
     } else {
       await createMutation.mutateAsync(payload as Parameters<typeof createMutation.mutateAsync>[0]);
     }
@@ -202,9 +203,7 @@ export default function AnnouncementsPage() {
           className="mb-6 rounded-xl border bg-card p-5 shadow-sm space-y-4"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">
-              {editingId ? t('edit') : t('create')}
-            </h2>
+            <h2 className="text-lg font-semibold">{editingId ? t('edit') : t('create')}</h2>
             <button
               type="button"
               onClick={closeForm}
@@ -245,7 +244,9 @@ export default function AnnouncementsPage() {
               <label className="block text-sm font-medium mb-1">{t('type')}</label>
               <select
                 value={form.type}
-                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as FormData['type'] }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, type: e.target.value as FormData['type'] }))
+                }
                 className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               >
                 <option value="INFO">{t('info')}</option>
@@ -347,12 +348,14 @@ export default function AnnouncementsPage() {
                 {/* Card Header */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-start gap-2 min-w-0">
-                    <TypeIcon className={cn(
-                      'h-5 w-5 mt-0.5 shrink-0',
-                      ann.type === 'INFO' && 'text-blue-500',
-                      ann.type === 'WARNING' && 'text-yellow-500',
-                      ann.type === 'CRITICAL' && 'text-red-500',
-                    )} />
+                    <TypeIcon
+                      className={cn(
+                        'h-5 w-5 mt-0.5 shrink-0',
+                        ann.type === 'INFO' && 'text-blue-500',
+                        ann.type === 'WARNING' && 'text-yellow-500',
+                        ann.type === 'CRITICAL' && 'text-red-500',
+                      )}
+                    />
                     <h3 className="text-sm font-semibold truncate">{ann.title}</h3>
                   </div>
                   <span
@@ -366,9 +369,7 @@ export default function AnnouncementsPage() {
                 </div>
 
                 {/* Body */}
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                  {ann.body}
-                </p>
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{ann.body}</p>
 
                 {/* Dates */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mb-4">
@@ -401,11 +402,19 @@ export default function AnnouncementsPage() {
                       <span
                         className={cn(
                           'inline-block h-4 w-4 rounded-full bg-white shadow transition-transform mt-0.5',
-                          ann.isActive ? 'translate-x-4 rtl:-translate-x-4' : 'translate-x-0.5 rtl:-translate-x-0.5',
+                          ann.isActive
+                            ? 'translate-x-4 rtl:-translate-x-4'
+                            : 'translate-x-0.5 rtl:-translate-x-0.5',
                         )}
                       />
                     </span>
-                    <span className={cn(ann.isActive ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground')}>
+                    <span
+                      className={cn(
+                        ann.isActive
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-muted-foreground',
+                      )}
+                    >
                       {ann.isActive ? t('active') : t('inactive')}
                     </span>
                   </button>
@@ -456,7 +465,15 @@ export default function AnnouncementsPage() {
 
       {/* Pagination */}
       {!isLoading && (
-        <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          previousLabel={tc('previous')}
+          nextLabel={tc('next')}
+          pageLabel={tc('page')}
+          ofLabel={tc('of')}
+        />
       )}
     </div>
   );

@@ -23,7 +23,7 @@ export default function MobilePage() {
 
     // Check if we've already attempted subscription
     const hasAttemptedSubscription = localStorage.getItem(
-      `push_subscription_attempted_${organization.id}`
+      `push_subscription_attempted_${organization.id}`,
     );
     if (hasAttemptedSubscription) return;
 
@@ -35,10 +35,7 @@ export default function MobilePage() {
     // Check current permission status
     const permission = getNotificationPermission();
     if (permission === 'denied') {
-      localStorage.setItem(
-        `push_subscription_attempted_${organization.id}`,
-        'denied'
-      );
+      localStorage.setItem(`push_subscription_attempted_${organization.id}`, 'denied');
       return;
     }
 
@@ -57,10 +54,7 @@ export default function MobilePage() {
         if (!result.success) {
           // Don't show error toast for user denying permission
           if (result.error?.includes('denied')) {
-            localStorage.setItem(
-              `push_subscription_attempted_${organization.id}`,
-              'denied'
-            );
+            localStorage.setItem(`push_subscription_attempted_${organization.id}`, 'denied');
           }
           return;
         }
@@ -77,10 +71,7 @@ export default function MobilePage() {
           });
 
           // Mark as successfully subscribed
-          localStorage.setItem(
-            `push_subscription_attempted_${organization.id}`,
-            'success'
-          );
+          localStorage.setItem(`push_subscription_attempted_${organization.id}`, 'success');
 
           toast.success(t('subscribed'));
         }
@@ -114,9 +105,7 @@ export default function MobilePage() {
             </div>
             <h2 className="font-semibold">Inbox</h2>
           </div>
-          <p className="text-sm text-muted-foreground">
-            View and manage customer conversations
-          </p>
+          <p className="text-sm text-muted-foreground">View and manage customer conversations</p>
         </div>
 
         <div className="rounded-lg border bg-card p-4 shadow-sm">
@@ -126,9 +115,7 @@ export default function MobilePage() {
             </div>
             <h2 className="font-semibold">Analytics</h2>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Track key metrics and performance
-          </p>
+          <p className="text-sm text-muted-foreground">Track key metrics and performance</p>
         </div>
 
         <div className="rounded-lg border bg-card p-4 shadow-sm">

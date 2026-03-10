@@ -27,7 +27,12 @@ const DEFAULT_COLOR_SCALE = {
   max: '#1e40af', // blue-800
 };
 
-function getColor(value: number, min: number, max: number, colorScale: { min: string; max: string }): string {
+function getColor(
+  value: number,
+  min: number,
+  max: number,
+  colorScale: { min: string; max: string },
+): string {
   if (min === max) {
     return colorScale.max;
   }
@@ -37,11 +42,13 @@ function getColor(value: number, min: number, max: number, colorScale: { min: st
   // Parse hex colors
   const parseHex = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 0, g: 0, b: 0 };
   };
 
   const minColor = parseHex(colorScale.min);
@@ -200,7 +207,7 @@ export function MojeebHeatmapChart({
                   )}
                 </g>
               );
-            })
+            }),
           )}
         </svg>
       </div>
@@ -218,7 +225,7 @@ export function MojeebHeatmapChart({
                   minValue + (i / 9) * (maxValue - minValue),
                   minValue,
                   maxValue,
-                  colorScale
+                  colorScale,
                 ),
               }}
             />

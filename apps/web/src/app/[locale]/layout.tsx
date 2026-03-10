@@ -64,7 +64,11 @@ async function getLandingCms(): Promise<LandingCmsSeo | null> {
   }
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
   const { locale } = await params;
   const isAr = locale === 'ar';
   const [settings, cms] = await Promise.all([getSiteSettings(), getLandingCms()]);
@@ -76,26 +80,39 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const seoTitle = isAr ? cms?.seoMetaTitleAr : cms?.seoMetaTitle;
   const seoDescription = isAr ? cms?.seoMetaDescriptionAr : cms?.seoMetaDescription;
 
-  const title = seoTitle || (isAr
-    ? `${siteName} - دعم العملاء بالذكاء الاصطناعي`
-    : `${siteName} - AI Customer Support`);
-  const description = seoDescription || siteDescription || (isAr
-    ? 'منصة دعم العملاء بالذكاء الاصطناعي للشرق الأوسط. أتمتة المحادثات عبر واتساب وماسنجر وإنستغرام.'
-    : 'AI-powered customer support platform for the Middle East. Automate conversations across WhatsApp, Messenger, and Instagram.');
+  const title =
+    seoTitle ||
+    (isAr ? `${siteName} - دعم العملاء بالذكاء الاصطناعي` : `${siteName} - AI Customer Support`);
+  const description =
+    seoDescription ||
+    siteDescription ||
+    (isAr
+      ? 'منصة دعم العملاء بالذكاء الاصطناعي للشرق الأوسط. أتمتة المحادثات عبر واتساب وماسنجر وإنستغرام.'
+      : 'AI-powered customer support platform for the Middle East. Automate conversations across WhatsApp, Messenger, and Instagram.');
 
   const keywordsStr = settings?.keywords || '';
   const keywords = keywordsStr
     ? keywordsStr.split(',').map((k) => k.trim())
     : isAr
       ? ['دعم العملاء', 'ذكاء اصطناعي', 'شات بوت', 'واتساب', 'ماسنجر', 'خدمة عملاء', siteName]
-      : ['customer support', 'AI chatbot', 'WhatsApp', 'Messenger', 'Instagram', 'help desk', siteName];
+      : [
+          'customer support',
+          'AI chatbot',
+          'WhatsApp',
+          'Messenger',
+          'Instagram',
+          'help desk',
+          siteName,
+        ];
 
   // Favicon: CMS landing page > site-settings
   const faviconUrl = cms?.seoFavicon || settings?.faviconUrl;
 
   // OG Image from CMS
   const ogImage = cms?.seoOgImage
-    ? (cms.seoOgImage.startsWith('http') ? cms.seoOgImage : `${SITE_URL}${cms.seoOgImage}`)
+    ? cms.seoOgImage.startsWith('http')
+      ? cms.seoOgImage
+      : `${SITE_URL}${cms.seoOgImage}`
     : undefined;
 
   return {
@@ -185,13 +202,11 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
           'min-h-screen bg-background antialiased',
           fontEnglish.variable,
           fontArabic.variable,
-          dir === 'rtl' ? 'font-arabic' : 'font-english'
+          dir === 'rtl' ? 'font-arabic' : 'font-english',
         )}
       >
         <NextIntlClientProvider messages={messages}>
-          <Providers>
-            {children}
-          </Providers>
+          <Providers>{children}</Providers>
         </NextIntlClientProvider>
         {/* Custom footer code from CMS */}
         {customFooter && (

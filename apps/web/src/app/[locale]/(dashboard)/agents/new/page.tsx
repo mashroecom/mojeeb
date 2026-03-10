@@ -122,9 +122,7 @@ export default function CreateAgentPage() {
         <div className="mx-auto max-w-4xl">
           <div className="mb-8 text-center">
             <h2 className="text-xl font-semibold">{t('chooseTemplate')}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t('chooseTemplateSubtitle')}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{t('chooseTemplateSubtitle')}</p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -179,12 +177,8 @@ export default function CreateAgentPage() {
               );
             })()}
             <div>
-              <h2 className="text-lg font-semibold">
-                {tt(selectedTemplate.nameKey)}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {tt(selectedTemplate.descriptionKey)}
-              </p>
+              <h2 className="text-lg font-semibold">{tt(selectedTemplate.nameKey)}</h2>
+              <p className="text-sm text-muted-foreground">{tt(selectedTemplate.descriptionKey)}</p>
             </div>
           </div>
 
@@ -253,7 +247,9 @@ export default function CreateAgentPage() {
                   type="button"
                   role="switch"
                   aria-checked={form.values.enableLeadExtraction || false}
-                  onClick={() => form.setFieldValue('enableLeadExtraction', !form.values.enableLeadExtraction)}
+                  onClick={() =>
+                    form.setFieldValue('enableLeadExtraction', !form.values.enableLeadExtraction)
+                  }
                   className={cn(
                     'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
                     form.values.enableLeadExtraction ? 'bg-primary' : 'bg-muted',
@@ -262,7 +258,9 @@ export default function CreateAgentPage() {
                   <span
                     className={cn(
                       'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
-                      form.values.enableLeadExtraction ? 'ltr:translate-x-5 rtl:-translate-x-5' : 'translate-x-0',
+                      form.values.enableLeadExtraction
+                        ? 'ltr:translate-x-5 rtl:-translate-x-5'
+                        : 'translate-x-0',
                     )}
                   />
                 </button>

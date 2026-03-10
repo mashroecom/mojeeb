@@ -42,7 +42,7 @@ export class CrawlerService {
       if (config.respectRobotsTxt !== false) {
         const isAllowed = await robotsTxtService.isAllowed(
           url,
-          config.userAgent || this.USER_AGENT
+          config.userAgent || this.USER_AGENT,
         );
         if (!isAllowed) {
           throw new BadRequestError('URL is disallowed by robots.txt');
@@ -53,7 +53,7 @@ export class CrawlerService {
       const response = await fetch(url, {
         headers: {
           'User-Agent': config.userAgent || this.USER_AGENT,
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8',
           'Accept-Encoding': 'gzip, deflate',
         },
@@ -128,7 +128,9 @@ export class CrawlerService {
       let textContent = '';
 
       // Try to find main content area first
-      const mainContent = $('main, article, [role="main"], .content, .main-content, #content, #main-content').first();
+      const mainContent = $(
+        'main, article, [role="main"], .content, .main-content, #content, #main-content',
+      ).first();
       if (mainContent.length > 0) {
         textContent = mainContent.text();
       } else {
@@ -142,8 +144,8 @@ export class CrawlerService {
         .replace(/\n{3,}/g, '\n\n')
         .replace(/[ \t]+/g, ' ')
         .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
         .join('\n')
         .trim();
 
@@ -241,9 +243,7 @@ export class CrawlerService {
         undefined;
 
       // Extract keywords
-      const keywords =
-        $('meta[name="keywords"]').attr('content') ||
-        undefined;
+      const keywords = $('meta[name="keywords"]').attr('content') || undefined;
 
       // Extract language
       const language =
@@ -278,7 +278,7 @@ export class CrawlerService {
     }
 
     try {
-      return patterns.some(pattern => {
+      return patterns.some((pattern) => {
         const regex = new RegExp(pattern);
         return regex.test(url);
       });

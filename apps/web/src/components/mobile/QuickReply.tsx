@@ -91,7 +91,7 @@ export function QuickReply({
       },
       () => {
         setIsOffline(true);
-      }
+      },
     );
 
     return cleanup;
@@ -104,15 +104,11 @@ export function QuickReply({
 
   /* ── Helpers ────────────────────────────────────────────── */
   function getTemplateContent(template: MessageTemplate): string {
-    return locale === 'ar' && template.contentAr
-      ? template.contentAr
-      : template.contentEn;
+    return locale === 'ar' && template.contentAr ? template.contentAr : template.contentEn;
   }
 
   function getTemplateTitle(template: MessageTemplate): string {
-    return locale === 'ar' && template.titleAr
-      ? template.titleAr
-      : template.title;
+    return locale === 'ar' && template.titleAr ? template.titleAr : template.title;
   }
 
   function interpolateVariables(content: string): string {
@@ -214,9 +210,7 @@ export function QuickReply({
         onClick={() => handleTemplateSelect(template)}
         className={cn(
           'w-full text-start p-4 rounded-lg border transition-colors',
-          isSelected
-            ? 'border-primary bg-primary/5'
-            : 'border-border bg-card hover:bg-muted/30',
+          isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card hover:bg-muted/30',
         )}
       >
         {/* Header */}
@@ -230,16 +224,12 @@ export function QuickReply({
         </div>
 
         {/* Content preview */}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-          {interpolatedContent}
-        </p>
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{interpolatedContent}</p>
 
         {/* Footer */}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="capitalize">{template.category.replace('_', ' ')}</span>
-          {template.usageCount > 0 && (
-            <span>{template.usageCount} uses</span>
-          )}
+          {template.usageCount > 0 && <span>{template.usageCount} uses</span>}
         </div>
       </button>
     );
@@ -334,10 +324,7 @@ export function QuickReply({
               /* Loading skeleton */
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="rounded-lg border bg-card p-4 animate-pulse"
-                  >
+                  <div key={i} className="rounded-lg border bg-card p-4 animate-pulse">
                     <div className="h-4 w-32 bg-muted rounded mb-2" />
                     <div className="h-3 w-full bg-muted rounded mb-1" />
                     <div className="h-3 w-3/4 bg-muted rounded" />
@@ -353,9 +340,7 @@ export function QuickReply({
               </div>
             ) : (
               /* Template items */
-              <div className="space-y-3">
-                {filteredTemplates.map(renderTemplateItem)}
-              </div>
+              <div className="space-y-3">{filteredTemplates.map(renderTemplateItem)}</div>
             )}
           </div>
 

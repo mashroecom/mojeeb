@@ -48,11 +48,13 @@ router.post('/', demoLimiter, async (req, res, next) => {
       .catch((err) => logger.warn({ err }, 'Failed to queue demo request notification email'));
 
     // Notify admins
-    adminNotificationService.create({
-      type: 'NEW_DEMO_REQUEST',
-      title: 'New Demo Request',
-      body: `${name} (${email}) submitted a demo request.${company ? ` Company: ${company}` : ''}`,
-    }).catch((err) => logger.debug({ err }, 'Admin notification failed'));
+    adminNotificationService
+      .create({
+        type: 'NEW_DEMO_REQUEST',
+        title: 'New Demo Request',
+        body: `${name} (${email}) submitted a demo request.${company ? ` Company: ${company}` : ''}`,
+      })
+      .catch((err) => logger.debug({ err }, 'Admin notification failed'));
 
     res.status(201).json({ success: true, data: { id: demoRequest.id } });
   } catch (err) {

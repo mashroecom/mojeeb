@@ -200,8 +200,7 @@ export function CrawlProgressView({ jobId, kbId }: CrawlProgressViewProps) {
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground border-t pt-3">
         {job.startedAt && (
           <div>
-            <span className="font-medium">{t('started')}</span>{' '}
-            {fmtDate(job.startedAt, locale)}
+            <span className="font-medium">{t('started')}</span> {fmtDate(job.startedAt, locale)}
           </div>
         )}
         {job.completedAt && (

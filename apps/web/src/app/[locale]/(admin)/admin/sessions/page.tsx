@@ -13,14 +13,7 @@ import {
   useKillUserSessions,
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
-import {
-  Monitor,
-  Search,
-  XCircle,
-  Users,
-  CalendarPlus,
-  Download,
-} from 'lucide-react';
+import { Monitor, Search, XCircle, Users, CalendarPlus, Download } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,7 +33,6 @@ interface SessionEntry {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
 
 function parseUA(ua: string): string {
   if (!ua) return '-';
@@ -79,12 +71,24 @@ function StatSkeleton() {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-32 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-7 w-24 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-32 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-7 w-24 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -102,7 +106,13 @@ export default function SessionsPage() {
   const [page, setPage] = useState(1);
   const [email, setEmail] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant?: 'danger' | 'default';
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
 
   const params = useMemo(
     () => ({
@@ -277,8 +287,7 @@ export default function SessionsPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
+              {isLoading && Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
 
               {!isLoading && !isError && entries.length === 0 && (
                 <tr>
@@ -292,7 +301,10 @@ export default function SessionsPage() {
               {!isLoading &&
                 !isError &&
                 entries.map((entry) => (
-                  <tr key={entry.id} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+                  <tr
+                    key={entry.id}
+                    className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <div className="text-sm font-medium truncate max-w-[200px]">
                         {entry.userEmail}
@@ -307,7 +319,9 @@ export default function SessionsPage() {
                       <span className="text-sm font-mono text-muted-foreground">{entry.ip}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-muted-foreground">{parseUA(entry.userAgent)}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {parseUA(entry.userAgent)}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
                       {fmtDateTime(entry.createdAt, locale)}
@@ -344,7 +358,15 @@ export default function SessionsPage() {
 
       {/* Pagination */}
       {!isLoading && (
-        <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          previousLabel={tc('previous')}
+          nextLabel={tc('next')}
+          pageLabel={tc('page')}
+          ofLabel={tc('of')}
+        />
       )}
 
       <AdminConfirmDialog
@@ -352,8 +374,11 @@ export default function SessionsPage() {
         title={confirmDialog.title}
         message={confirmDialog.message}
         variant={confirmDialog.variant}
-        onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog(prev => ({ ...prev, open: false })); }}
-        onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+        }}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
     </div>
   );

@@ -27,10 +27,7 @@ export function CreateKBForm({
   const tc = useTranslations('common');
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="mb-6 rounded-xl border bg-card p-6 shadow-sm"
-    >
+    <form onSubmit={onSubmit} className="mb-6 rounded-xl border bg-card p-6 shadow-sm">
       <h2 className="text-lg font-semibold mb-4">{t('createKb')}</h2>
 
       <div className="space-y-4">

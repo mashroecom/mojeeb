@@ -45,7 +45,9 @@ export default function ForgotPasswordPage() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="forgot-email" className="mb-1.5 block text-sm font-medium">{t('email')}</label>
+            <label htmlFor="forgot-email" className="mb-1.5 block text-sm font-medium">
+              {t('email')}
+            </label>
             <input
               id="forgot-email"
               type="email"

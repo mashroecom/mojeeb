@@ -39,20 +39,14 @@ export function TestAgentSection({ agentId }: { agentId: string }) {
       { agentId, message: userMessage, history },
       {
         onSuccess: (data) => {
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: data.reply },
-          ]);
+          setMessages((prev) => [...prev, { role: 'assistant', content: data.reply }]);
         },
         onError: (error) => {
           setMessages((prev) => [
             ...prev,
             {
               role: 'assistant',
-              content:
-                error instanceof Error
-                  ? error.message
-                  : t('testAgentError'),
+              content: error instanceof Error ? error.message : t('testAgentError'),
             },
           ]);
         },
@@ -118,8 +112,7 @@ export function TestAgentSection({ agentId }: { agentId: string }) {
             disabled={testAgent.isPending || !testInput.trim()}
             className={cn(
               'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90',
-              (testAgent.isPending || !testInput.trim()) &&
-                'cursor-not-allowed opacity-50',
+              (testAgent.isPending || !testInput.trim()) && 'cursor-not-allowed opacity-50',
             )}
           >
             <Send className="h-4 w-4" />

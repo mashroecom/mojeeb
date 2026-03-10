@@ -39,7 +39,7 @@ export function UsageTrendsChart({
       if (groupBy === 'day') {
         date.setDate(date.getDate() - i);
       } else if (groupBy === 'week') {
-        date.setDate(date.getDate() - (i * 7));
+        date.setDate(date.getDate() - i * 7);
       } else {
         date.setMonth(date.getMonth() - i);
       }
@@ -114,7 +114,7 @@ export function UsageTrendsChart({
       <div className="space-y-1">
         {usageData.map((item, idx) => {
           const percentage = maxUsage > 0 ? (item.conversations / maxUsage) * 100 : 0;
-          const isOverLimit = item.conversations > (aiConversationsLimit / usageData.length);
+          const isOverLimit = item.conversations > aiConversationsLimit / usageData.length;
 
           return (
             <div
@@ -132,9 +132,7 @@ export function UsageTrendsChart({
                   <div className="h-6 w-full rounded bg-muted">
                     <div
                       className={`h-6 rounded transition-all ${
-                        isOverLimit
-                          ? 'bg-red-500 dark:bg-red-600'
-                          : 'bg-primary dark:bg-primary'
+                        isOverLimit ? 'bg-red-500 dark:bg-red-600' : 'bg-primary dark:bg-primary'
                       }`}
                       style={{ width: `${percentage}%` }}
                     />
@@ -150,9 +148,7 @@ export function UsageTrendsChart({
               </div>
 
               {/* Count */}
-              <div className="w-12 text-right text-sm font-medium">
-                {item.conversations}
-              </div>
+              <div className="w-12 text-right text-sm font-medium">{item.conversations}</div>
             </div>
           );
         })}

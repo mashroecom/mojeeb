@@ -22,10 +22,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="w-full">
         {label && (
-          <label
-            htmlFor={selectId}
-            className="mb-1.5 block text-sm font-medium text-foreground"
-          >
+          <label htmlFor={selectId} className="mb-1.5 block text-sm font-medium text-foreground">
             {label}
           </label>
         )}
@@ -36,7 +33,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             'h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none transition-colors',
             'focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary',
             'disabled:cursor-not-allowed disabled:opacity-50',
-            error && 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive',
+            error &&
+              'border-destructive focus-visible:border-destructive focus-visible:ring-destructive',
             className,
           )}
           aria-invalid={error ? true : undefined}

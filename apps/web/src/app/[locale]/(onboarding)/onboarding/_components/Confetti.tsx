@@ -28,14 +28,9 @@ export function Confetti() {
           <div
             className="h-2 w-2 rounded-full"
             style={{
-              backgroundColor: [
-                '#ef4444',
-                '#f59e0b',
-                '#10b981',
-                '#3b82f6',
-                '#8b5cf6',
-                '#ec4899',
-              ][Math.floor(Math.random() * 6)],
+              backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'][
+                Math.floor(Math.random() * 6)
+              ],
             }}
           />
         </div>

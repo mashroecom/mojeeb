@@ -22,11 +22,26 @@ const uploadStorage = multer.diskStorage({
 });
 
 const ALLOWED_EXTENSIONS = new Set([
-  '.jpg', '.jpeg', '.png', '.gif', '.webp',
-  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-  '.txt', '.csv',
-  '.mp4', '.webm', '.mov',
-  '.mp3', '.ogg', '.wav',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.ppt',
+  '.pptx',
+  '.txt',
+  '.csv',
+  '.mp4',
+  '.webm',
+  '.mov',
+  '.mp3',
+  '.ogg',
+  '.wav',
 ]);
 
 const dashboardUpload = multer({
@@ -34,7 +49,10 @@ const dashboardUpload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowedTypes = new Set([
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
       'application/pdf',
     ]);
     const ext = path.extname(file.originalname).toLowerCase();
@@ -60,8 +78,15 @@ function generateSignedFileUrl(filename: string, userId: string): string {
   return `/files/${filename}?token=${token}`;
 }
 
-interface OrgParams { orgId: string; [key: string]: string; }
-interface ConvParams { orgId: string; convId: string; [key: string]: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
+interface ConvParams {
+  orgId: string;
+  convId: string;
+  [key: string]: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
@@ -135,7 +160,11 @@ router.post('/bulk-status', async (req, res, next) => {
       });
     }
 
-    const result = await conversationService.bulkUpdateStatus(orgId, conversationIds, status as ConversationStatus);
+    const result = await conversationService.bulkUpdateStatus(
+      orgId,
+      conversationIds,
+      status as ConversationStatus,
+    );
     emitToOrg(orgId, 'conversations:bulk-updated', {
       conversationIds,
       status,
@@ -205,49 +234,48 @@ router.get('/:convId/messages', async (req, res, next) => {
 });
 
 // POST /api/v1/organizations/:orgId/conversations/:convId/messages
-router.post(
-  '/:convId/messages',
-  validate({ body: sendMessageSchema }),
-  async (req, res, next) => {
-    try {
-      const { orgId, convId } = req.params as ConvParams;
-      // Verify conversation belongs to this organization
-      const conv = await prisma.conversation.findFirst({
-        where: { id: convId, orgId },
-        select: { id: true },
-      });
-      if (!conv) {
-        return res.status(404).json({ success: false, error: 'Conversation not found' });
-      }
-      const message = await conversationService.sendHumanMessage(
-        convId,
-        req.user!.userId,
-        req.body.content
-      );
-
-      // Emit via WebSocket
-      emitToConversation(convId, 'message:new', {
-        messageId: message.id,
-        conversationId: convId,
-        role: message.role,
-        content: message.content,
-        contentType: message.contentType,
-        createdAt: message.createdAt,
-      });
-
-      res.status(201).json({ success: true, data: message });
-    } catch (err) {
-      next(err);
+router.post('/:convId/messages', validate({ body: sendMessageSchema }), async (req, res, next) => {
+  try {
+    const { orgId, convId } = req.params as ConvParams;
+    // Verify conversation belongs to this organization
+    const conv = await prisma.conversation.findFirst({
+      where: { id: convId, orgId },
+      select: { id: true },
+    });
+    if (!conv) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
     }
+    const message = await conversationService.sendHumanMessage(
+      convId,
+      req.user!.userId,
+      req.body.content,
+    );
+
+    // Emit via WebSocket
+    emitToConversation(convId, 'message:new', {
+      messageId: message.id,
+      conversationId: convId,
+      role: message.role,
+      content: message.content,
+      contentType: message.contentType,
+      createdAt: message.createdAt,
+    });
+
+    res.status(201).json({ success: true, data: message });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // POST /api/v1/organizations/:orgId/conversations/:convId/handoff
 router.post('/:convId/handoff', async (req, res, next) => {
   try {
     const { orgId, convId } = req.params as ConvParams;
     // Verify conversation belongs to this organization
-    const existing = await prisma.conversation.findFirst({ where: { id: convId, orgId }, select: { id: true } });
+    const existing = await prisma.conversation.findFirst({
+      where: { id: convId, orgId },
+      select: { id: true },
+    });
     if (!existing) return res.status(404).json({ success: false, error: 'Conversation not found' });
     const conversation = await conversationService.handoff(convId, req.user!.userId);
     const handoffPayload = {
@@ -266,7 +294,10 @@ router.post('/:convId/handoff', async (req, res, next) => {
 router.post('/:convId/return-to-ai', async (req, res, next) => {
   try {
     const { orgId, convId } = req.params as ConvParams;
-    const existing = await prisma.conversation.findFirst({ where: { id: convId, orgId }, select: { id: true } });
+    const existing = await prisma.conversation.findFirst({
+      where: { id: convId, orgId },
+      select: { id: true },
+    });
     if (!existing) return res.status(404).json({ success: false, error: 'Conversation not found' });
     const conversation = await conversationService.returnToAI(convId);
     const returnPayload = {
@@ -285,7 +316,10 @@ router.post('/:convId/return-to-ai', async (req, res, next) => {
 router.post('/:convId/resolve', async (req, res, next) => {
   try {
     const { orgId, convId } = req.params as ConvParams;
-    const existing = await prisma.conversation.findFirst({ where: { id: convId, orgId }, select: { id: true } });
+    const existing = await prisma.conversation.findFirst({
+      where: { id: convId, orgId },
+      select: { id: true },
+    });
     if (!existing) return res.status(404).json({ success: false, error: 'Conversation not found' });
     const conversation = await conversationService.resolve(convId);
     const resolvePayload = {
@@ -302,66 +336,66 @@ router.post('/:convId/resolve', async (req, res, next) => {
 
 // POST /api/v1/organizations/:orgId/conversations/:convId/upload
 // Upload a file from the dashboard (human agent)
-router.post(
-  '/:convId/upload',
-  dashboardUpload.single('file'),
-  async (req, res, next) => {
-    try {
-      const { orgId, convId } = req.params as ConvParams;
-      // Verify conversation belongs to this organization
-      const existingConv = await prisma.conversation.findFirst({ where: { id: convId, orgId }, select: { id: true, status: true } });
-      if (!existingConv) return res.status(404).json({ success: false, error: 'Conversation not found' });
-      const file = req.file;
+router.post('/:convId/upload', dashboardUpload.single('file'), async (req, res, next) => {
+  try {
+    const { orgId, convId } = req.params as ConvParams;
+    // Verify conversation belongs to this organization
+    const existingConv = await prisma.conversation.findFirst({
+      where: { id: convId, orgId },
+      select: { id: true, status: true },
+    });
+    if (!existingConv)
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    const file = req.file;
 
-      if (!file) {
-        return res.status(400).json({ success: false, error: 'No file uploaded' });
-      }
-
-      let contentType: 'IMAGE' | 'DOCUMENT' = 'DOCUMENT';
-      if (file.mimetype.startsWith('image/')) contentType = 'IMAGE';
-
-      const fileUrl = generateSignedFileUrl(file.filename, req.user!.userId);
-
-      const message = await prisma.message.create({
-        data: {
-          conversationId: convId,
-          role: 'HUMAN_AGENT',
-          content: fileUrl,
-          contentType,
-          humanAgentId: req.user!.userId,
-        },
-      });
-
-      // Keep HANDED_OFF status — only "Return to AI" button should change it back
-      const convUpdateData: Record<string, unknown> = {
-        messageCount: { increment: 1 },
-        lastMessageAt: new Date(),
-      };
-      if (existingConv.status !== 'HANDED_OFF') {
-        convUpdateData.status = 'ACTIVE';
-      }
-
-      await prisma.conversation.update({
-        where: { id: convId },
-        data: convUpdateData,
-      });
-
-      emitToConversation(convId, 'message:new', {
-        messageId: message.id,
-        conversationId: convId,
-        role: message.role,
-        content: message.content,
-        contentType: message.contentType,
-        createdAt: message.createdAt,
-      });
-
-      res.status(201).json({ success: true, data: message });
-    } catch (err) {
-      logger.error({ err }, 'Error uploading file from dashboard');
-      next(err);
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'No file uploaded' });
     }
+
+    let contentType: 'IMAGE' | 'DOCUMENT' = 'DOCUMENT';
+    if (file.mimetype.startsWith('image/')) contentType = 'IMAGE';
+
+    const fileUrl = generateSignedFileUrl(file.filename, req.user!.userId);
+
+    const message = await prisma.message.create({
+      data: {
+        conversationId: convId,
+        role: 'HUMAN_AGENT',
+        content: fileUrl,
+        contentType,
+        humanAgentId: req.user!.userId,
+      },
+    });
+
+    // Keep HANDED_OFF status — only "Return to AI" button should change it back
+    const convUpdateData: Record<string, unknown> = {
+      messageCount: { increment: 1 },
+      lastMessageAt: new Date(),
+    };
+    if (existingConv.status !== 'HANDED_OFF') {
+      convUpdateData.status = 'ACTIVE';
+    }
+
+    await prisma.conversation.update({
+      where: { id: convId },
+      data: convUpdateData,
+    });
+
+    emitToConversation(convId, 'message:new', {
+      messageId: message.id,
+      conversationId: convId,
+      role: message.role,
+      content: message.content,
+      contentType: message.contentType,
+      createdAt: message.createdAt,
+    });
+
+    res.status(201).json({ success: true, data: message });
+  } catch (err) {
+    logger.error({ err }, 'Error uploading file from dashboard');
+    next(err);
   }
-);
+});
 
 // POST /api/v1/organizations/:orgId/conversations/:convId/archive
 router.post('/:convId/archive', async (req, res, next) => {

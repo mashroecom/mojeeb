@@ -5,7 +5,18 @@ import { logger } from '../config/logger';
 const REDIS_PREFIX = 'config:';
 const REDIS_TTL = 3600; // 1 hour
 
-const VALID_CATEGORIES = ['ai', 'payment', 'email', 'meta', 'oauth', 'general', 'security', 'notifications', 'org_defaults', 'token_pricing'] as const;
+const VALID_CATEGORIES = [
+  'ai',
+  'payment',
+  'email',
+  'meta',
+  'oauth',
+  'general',
+  'security',
+  'notifications',
+  'org_defaults',
+  'token_pricing',
+] as const;
 type ConfigCategory = (typeof VALID_CATEGORIES)[number];
 
 export class ConfigService {

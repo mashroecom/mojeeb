@@ -7,18 +7,13 @@ import { cn } from '@/lib/utils';
 
 export type CardProps = HTMLAttributes<HTMLDivElement>;
 
-export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, ...rest }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        'rounded-xl border bg-card text-card-foreground shadow-sm',
-        className,
-      )}
-      {...rest}
-    />
-  ),
-);
+export const Card = forwardRef<HTMLDivElement, CardProps>(({ className, ...rest }, ref) => (
+  <div
+    ref={ref}
+    className={cn('rounded-xl border bg-card text-card-foreground shadow-sm', className)}
+    {...rest}
+  />
+));
 Card.displayName = 'Card';
 
 /* ------------------------------- CardHeader ------------------------------- */
@@ -27,11 +22,7 @@ export type CardHeaderProps = HTMLAttributes<HTMLDivElement>;
 
 export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
   ({ className, ...rest }, ref) => (
-    <div
-      ref={ref}
-      className={cn('flex flex-col gap-1.5 p-6', className)}
-      {...rest}
-    />
+    <div ref={ref} className={cn('flex flex-col gap-1.5 p-6', className)} {...rest} />
   ),
 );
 CardHeader.displayName = 'CardHeader';
@@ -57,11 +48,7 @@ export type CardDescriptionProps = HTMLAttributes<HTMLParagraphElement>;
 
 export const CardDescription = forwardRef<HTMLParagraphElement, CardDescriptionProps>(
   ({ className, ...rest }, ref) => (
-    <p
-      ref={ref}
-      className={cn('text-sm text-muted-foreground', className)}
-      {...rest}
-    />
+    <p ref={ref} className={cn('text-sm text-muted-foreground', className)} {...rest} />
   ),
 );
 CardDescription.displayName = 'CardDescription';
@@ -72,11 +59,7 @@ export type CardContentProps = HTMLAttributes<HTMLDivElement>;
 
 export const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
   ({ className, ...rest }, ref) => (
-    <div
-      ref={ref}
-      className={cn('p-6 pt-0', className)}
-      {...rest}
-    />
+    <div ref={ref} className={cn('p-6 pt-0', className)} {...rest} />
   ),
 );
 CardContent.displayName = 'CardContent';
@@ -87,11 +70,7 @@ export type CardFooterProps = HTMLAttributes<HTMLDivElement>;
 
 export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
   ({ className, ...rest }, ref) => (
-    <div
-      ref={ref}
-      className={cn('flex items-center p-6 pt-0', className)}
-      {...rest}
-    />
+    <div ref={ref} className={cn('flex items-center p-6 pt-0', className)} {...rest} />
   ),
 );
 CardFooter.displayName = 'CardFooter';

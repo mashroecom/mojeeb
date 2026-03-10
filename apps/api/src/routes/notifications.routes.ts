@@ -4,7 +4,10 @@ import { notificationService } from '../services/notification.service';
 import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 
-interface OrgParams { orgId: string; [key: string]: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
@@ -103,7 +106,13 @@ router.put(
     try {
       const { orgId } = req.params as OrgParams;
       const userId = req.user!.userId;
-      const { emailNewConversation, emailHandoff, emailLeadExtracted, emailUsageWarning, emailWeeklyDigest } = req.body;
+      const {
+        emailNewConversation,
+        emailHandoff,
+        emailLeadExtracted,
+        emailUsageWarning,
+        emailWeeklyDigest,
+      } = req.body;
       const preferences = await notificationService.updatePreferences(userId, orgId, {
         emailNewConversation,
         emailHandoff,

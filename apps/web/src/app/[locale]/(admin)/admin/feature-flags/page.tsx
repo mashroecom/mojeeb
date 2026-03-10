@@ -12,14 +12,7 @@ import {
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
-import {
-  ToggleLeft,
-  Plus,
-  X,
-  Loader2,
-  Trash2,
-  Settings,
-} from 'lucide-react';
+import { ToggleLeft, Plus, X, Loader2, Trash2, Settings } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,7 +30,6 @@ interface FeatureFlag {
 // Helpers
 // ---------------------------------------------------------------------------
 
-
 // ---------------------------------------------------------------------------
 // Skeletons
 // ---------------------------------------------------------------------------
@@ -45,11 +37,21 @@ interface FeatureFlag {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-36 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-48 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-6 w-10 rounded-full bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-7 w-16 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-36 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-48 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-6 w-10 rounded-full bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-7 w-16 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -101,7 +103,13 @@ export default function FeatureFlagsPage() {
   const [formKey, setFormKey] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formEnabled, setFormEnabled] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant?: 'danger' | 'default';
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
   const [configureFlag, setConfigureFlag] = useState<FeatureFlag | null>(null);
   const [rolloutValue, setRolloutValue] = useState(100);
 
@@ -152,7 +160,10 @@ export default function FeatureFlagsPage() {
   const handleSaveRollout = async () => {
     if (!configureFlag) return;
     try {
-      await updateFlag.mutateAsync({ key: configureFlag.key, metadata: { rolloutPercentage: rolloutValue } } as any);
+      await updateFlag.mutateAsync({
+        key: configureFlag.key,
+        metadata: { rolloutPercentage: rolloutValue },
+      } as any);
       addToast('success', t('updated'));
       setConfigureFlag(null);
     } catch {
@@ -205,7 +216,9 @@ export default function FeatureFlagsPage() {
               <input
                 type="text"
                 value={formKey}
-                onChange={(e) => setFormKey(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                onChange={(e) =>
+                  setFormKey(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))
+                }
                 placeholder={t('keyPlaceholder')}
                 className="w-full rounded-lg border bg-background px-3 py-2 text-sm font-mono outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors"
               />
@@ -225,9 +238,7 @@ export default function FeatureFlagsPage() {
             </div>
             <div className="flex items-end gap-3">
               <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-muted-foreground">
-                  {t('enabled')}
-                </label>
+                <label className="text-xs font-medium text-muted-foreground">{t('enabled')}</label>
                 <ToggleSwitch enabled={formEnabled} onChange={() => setFormEnabled(!formEnabled)} />
               </div>
               <button
@@ -278,8 +289,7 @@ export default function FeatureFlagsPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 4 }).map((_, i) => <RowSkeleton key={i} />)}
+              {isLoading && Array.from({ length: 4 }).map((_, i) => <RowSkeleton key={i} />)}
 
               {!isLoading && !isError && flags.length === 0 && (
                 <tr>
@@ -293,7 +303,10 @@ export default function FeatureFlagsPage() {
               {!isLoading &&
                 !isError &&
                 flags.map((flag) => (
-                  <tr key={flag.key} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+                  <tr
+                    key={flag.key}
+                    className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <span className="text-sm font-mono font-medium">{flag.key}</span>
                     </td>
@@ -343,8 +356,11 @@ export default function FeatureFlagsPage() {
         title={confirmDialog.title}
         message={confirmDialog.message}
         variant={confirmDialog.variant}
-        onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog(prev => ({ ...prev, open: false })); }}
-        onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+        }}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
 
       {/* Configure Modal */}
@@ -360,7 +376,9 @@ export default function FeatureFlagsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">{t('configure')}: {configureFlag.key}</h3>
+                <h3 className="text-lg font-semibold">
+                  {t('configure')}: {configureFlag.key}
+                </h3>
                 <button
                   onClick={() => setConfigureFlag(null)}
                   className="rounded-lg p-1 hover:bg-muted transition-colors"

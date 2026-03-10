@@ -88,7 +88,12 @@ export async function scheduleRepeatableCrawl(configId: string): Promise<void> {
         configId: config.id,
         config: {
           maxDepth: config.maxDepth,
-          urlPatterns: config.urlPattern ? config.urlPattern.split(',').map((p) => p.trim()).filter(Boolean) : [],
+          urlPatterns: config.urlPattern
+            ? config.urlPattern
+                .split(',')
+                .map((p) => p.trim())
+                .filter(Boolean)
+            : [],
         },
       },
       {
@@ -96,12 +101,12 @@ export async function scheduleRepeatableCrawl(configId: string): Promise<void> {
           pattern: cronPattern,
         },
         jobId: `scheduled-crawl-${configId}`, // Use configId as jobId for idempotency
-      }
+      },
     );
 
     logger.info(
       { configId, kbId: config.knowledgeBaseId, frequency: config.scheduleFrequency, cronPattern },
-      'Repeatable crawl job scheduled'
+      'Repeatable crawl job scheduled',
     );
 
     // Update nextCrawlAt in the database
@@ -136,7 +141,9 @@ export async function scheduleRepeatableCrawl(configId: string): Promise<void> {
 export async function cancelRepeatableCrawl(configId: string): Promise<void> {
   try {
     // Remove repeatable job from BullMQ
-    await crawlerQueue.removeRepeatableByKey(`scheduled-crawl-${configId}:::${await getRepeatableJobKey(configId)}`);
+    await crawlerQueue.removeRepeatableByKey(
+      `scheduled-crawl-${configId}:::${await getRepeatableJobKey(configId)}`,
+    );
 
     logger.info({ configId }, 'Repeatable crawl job cancelled');
 
@@ -197,7 +204,7 @@ export async function initializeRepeatableCrawls(): Promise<void> {
       if (!lastJob || !lastJob.startUrl) {
         logger.warn(
           { configId: config.id, kbId: config.knowledgeBaseId },
-          'Skipping schedule initialization - no previous crawl job found'
+          'Skipping schedule initialization - no previous crawl job found',
         );
         continue;
       }
@@ -215,7 +222,10 @@ export async function initializeRepeatableCrawls(): Promise<void> {
             config: {
               maxDepth: config.maxDepth,
               urlPatterns: config.urlPattern
-                ? config.urlPattern.split(',').map((p) => p.trim()).filter(Boolean)
+                ? config.urlPattern
+                    .split(',')
+                    .map((p) => p.trim())
+                    .filter(Boolean)
                 : [],
             },
           },
@@ -224,12 +234,17 @@ export async function initializeRepeatableCrawls(): Promise<void> {
               pattern: cronPattern,
             },
             jobId: `scheduled-crawl-${config.id}`,
-          }
+          },
         );
 
         logger.info(
-          { configId: config.id, kbId: config.knowledgeBaseId, frequency: config.scheduleFrequency, cronPattern },
-          'Repeatable crawl job initialized'
+          {
+            configId: config.id,
+            kbId: config.knowledgeBaseId,
+            frequency: config.scheduleFrequency,
+            cronPattern,
+          },
+          'Repeatable crawl job initialized',
         );
       } catch (err: any) {
         logger.error({ err, configId: config.id }, 'Failed to initialize repeatable crawl job');
@@ -346,7 +361,10 @@ export const crawlerWorker = new Worker(
             }
           }
 
-          logger.info({ url, pagesCrawled, queueSize: queue.length, jobId }, 'URL crawled successfully');
+          logger.info(
+            { url, pagesCrawled, queueSize: queue.length, jobId },
+            'URL crawled successfully',
+          );
         } catch (err: any) {
           logger.error({ err, url, jobId }, 'Failed to crawl URL');
           // Continue with next URL instead of failing entire job
@@ -393,7 +411,7 @@ export const crawlerWorker = new Worker(
   {
     connection: redis,
     concurrency: 2, // Limit concurrency to avoid rate limiting
-  }
+  },
 );
 
 crawlerWorker.on('failed', (job, err) => {

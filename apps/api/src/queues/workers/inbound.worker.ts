@@ -31,44 +31,47 @@ export const inboundWorker = new Worker(
     };
 
     let isNewConversation = false;
-    const conversation = await prisma.$transaction(async (tx) => {
-      let conv = data.conversationId
-        ? await tx.conversation.findUnique({
-            where: { id: data.conversationId },
-            include: conversationInclude,
-          })
-        : await tx.conversation.findFirst({
-            where: {
+    const conversation = await prisma.$transaction(
+      async (tx) => {
+        let conv = data.conversationId
+          ? await tx.conversation.findUnique({
+              where: { id: data.conversationId },
+              include: conversationInclude,
+            })
+          : await tx.conversation.findFirst({
+              where: {
+                channelId: data.channelId,
+                customerId: data.message.senderId,
+                status: { in: ['ACTIVE', 'WAITING', 'HANDED_OFF'] },
+              },
+              include: conversationInclude,
+            });
+
+        if (!conv) {
+          const channel = await tx.channel.findUnique({
+            where: { id: data.channelId },
+            include: { agents: { where: { isPrimary: true } } },
+          });
+
+          conv = await tx.conversation.create({
+            data: {
+              orgId: data.orgId,
               channelId: data.channelId,
               customerId: data.message.senderId,
-              status: { in: ['ACTIVE', 'WAITING', 'HANDED_OFF'] },
+              customerName: data.message.senderName,
+              customerPhone: data.message.senderPhone,
+              agentId: channel?.agents[0]?.agentId || null,
+              status: 'ACTIVE',
             },
             include: conversationInclude,
           });
+          isNewConversation = true;
+        }
 
-      if (!conv) {
-        const channel = await tx.channel.findUnique({
-          where: { id: data.channelId },
-          include: { agents: { where: { isPrimary: true } } },
-        });
-
-        conv = await tx.conversation.create({
-          data: {
-            orgId: data.orgId,
-            channelId: data.channelId,
-            customerId: data.message.senderId,
-            customerName: data.message.senderName,
-            customerPhone: data.message.senderPhone,
-            agentId: channel?.agents[0]?.agentId || null,
-            status: 'ACTIVE',
-          },
-          include: conversationInclude,
-        });
-        isNewConversation = true;
-      }
-
-      return conv;
-    }, { isolationLevel: 'ReadCommitted' });
+        return conv;
+      },
+      { isolationLevel: 'ReadCommitted' },
+    );
 
     if (isNewConversation) {
       await analyticsQueue.add('track-event', {
@@ -97,7 +100,10 @@ export const inboundWorker = new Worker(
     `;
 
     if (updatedCount === 0) {
-      logger.warn({ orgId: data.orgId, conversationId: conversation.id }, 'Usage limit reached, rejecting message');
+      logger.warn(
+        { orgId: data.orgId, conversationId: conversation.id },
+        'Usage limit reached, rejecting message',
+      );
       return { conversationId: conversation.id, skipped: true, reason: 'limit_reached' };
     }
 
@@ -191,7 +197,7 @@ export const inboundWorker = new Worker(
   {
     connection: redis,
     concurrency: 10,
-  }
+  },
 );
 
 inboundWorker.on('failed', (job, err) => {

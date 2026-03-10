@@ -127,7 +127,11 @@ export function TemplatePicker({
 
   // Combine templates: AI suggestions first, then regular templates
   const allItems = useMemo(() => {
-    const items: Array<{ type: 'suggestion' | 'template'; data: Template; meta?: { relevance: number; reasoning: string } }> = [];
+    const items: Array<{
+      type: 'suggestion' | 'template';
+      data: Template;
+      meta?: { relevance: number; reasoning: string };
+    }> = [];
 
     // Add AI suggestions
     if (suggestions.length > 0) {
@@ -217,7 +221,11 @@ export function TemplatePicker({
 
   // Render template item
   const renderTemplateItem = (
-    item: { type: 'suggestion' | 'template'; data: Template; meta?: { relevance: number; reasoning: string } },
+    item: {
+      type: 'suggestion' | 'template';
+      data: Template;
+      meta?: { relevance: number; reasoning: string };
+    },
     index: number,
   ) => {
     const { data: template, type, meta } = item;
@@ -229,7 +237,9 @@ export function TemplatePicker({
     return (
       <button
         key={`${type}-${template.id}`}
-        ref={(el) => { itemRefs.current[index] = el; }}
+        ref={(el) => {
+          itemRefs.current[index] = el;
+        }}
         onClick={() => handleSelectTemplate(template)}
         className={cn(
           'w-full text-start p-3 rounded-lg border transition-colors',
@@ -242,9 +252,7 @@ export function TemplatePicker({
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-1">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {isSuggestion && (
-              <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
-            )}
+            {isSuggestion && <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />}
             <h3 className="text-sm font-medium truncate">{title}</h3>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -266,9 +274,7 @@ export function TemplatePicker({
         </div>
 
         {/* Content Preview */}
-        <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
-          {content}
-        </p>
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-1">{content}</p>
 
         {/* Variables */}
         {renderVariableBadges(template.variables)}
@@ -276,18 +282,14 @@ export function TemplatePicker({
         {/* AI Reasoning (for suggestions) */}
         {isSuggestion && meta?.reasoning && (
           <div className="mt-2 pt-2 border-t border-border">
-            <p className="text-[10px] text-muted-foreground italic">
-              {meta.reasoning}
-            </p>
+            <p className="text-[10px] text-muted-foreground italic">{meta.reasoning}</p>
           </div>
         )}
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-2 mt-2 text-[10px] text-muted-foreground">
           <span className="capitalize">{template.category.replace('_', ' ')}</span>
-          {template.usageCount > 0 && (
-            <span>Used {template.usageCount}×</span>
-          )}
+          {template.usageCount > 0 && <span>Used {template.usageCount}×</span>}
         </div>
       </button>
     );

@@ -205,36 +205,35 @@ export class TeamPerformanceService {
     const cacheKey = `historical:${orgId}:${start.toISOString().slice(0, 10)}:${end.toISOString().slice(0, 10)}`;
 
     return this.cached(cacheKey, 300, async () => {
-      const [totalConversations, handoffCount, avgResponseTime, agentMetrics] =
-        await Promise.all([
-          // Total conversations in period
-          prisma.conversation.count({
-            where: { orgId, createdAt: { gte: start, lte: end } },
-          }),
+      const [totalConversations, handoffCount, avgResponseTime, agentMetrics] = await Promise.all([
+        // Total conversations in period
+        prisma.conversation.count({
+          where: { orgId, createdAt: { gte: start, lte: end } },
+        }),
 
-          // Handoff count
-          prisma.analyticsEvent.count({
-            where: {
-              orgId,
-              eventType: 'HUMAN_HANDOFF',
-              date: { gte: start, lte: end },
-            },
-          }),
+        // Handoff count
+        prisma.analyticsEvent.count({
+          where: {
+            orgId,
+            eventType: 'HUMAN_HANDOFF',
+            date: { gte: start, lte: end },
+          },
+        }),
 
-          // Average response time
-          prisma.message.aggregate({
-            where: {
-              conversation: { orgId },
-              role: 'AI_AGENT',
-              createdAt: { gte: start, lte: end },
-              latencyMs: { not: null },
-            },
-            _avg: { latencyMs: true },
-          }),
+        // Average response time
+        prisma.message.aggregate({
+          where: {
+            conversation: { orgId },
+            role: 'AI_AGENT',
+            createdAt: { gte: start, lte: end },
+            latencyMs: { not: null },
+          },
+          _avg: { latencyMs: true },
+        }),
 
-          // Agent-level metrics
-          this.getAgentMetrics(orgId, start, end),
-        ]);
+        // Agent-level metrics
+        this.getAgentMetrics(orgId, start, end),
+      ]);
 
       // Calculate average resolution time
       const resolvedConversations = await prisma.conversation.findMany({
@@ -283,11 +282,7 @@ export class TeamPerformanceService {
     });
   }
 
-  private async getAgentMetrics(
-    orgId: string,
-    start: Date,
-    end: Date,
-  ): Promise<AgentMetrics[]> {
+  private async getAgentMetrics(orgId: string, start: Date, end: Date): Promise<AgentMetrics[]> {
     const agents = await prisma.agent.findMany({
       where: { orgId },
       select: { id: true, name: true },
@@ -500,50 +495,49 @@ export class TeamPerformanceService {
 
     return this.cached(cacheKey, 300, async () => {
       // AI conversations (not assigned to human)
-      const [aiConversations, aiResolvedConversations, aiResponseTime, aiCSAT] =
-        await Promise.all([
-          prisma.conversation.count({
-            where: {
+      const [aiConversations, aiResolvedConversations, aiResponseTime, aiCSAT] = await Promise.all([
+        prisma.conversation.count({
+          where: {
+            orgId,
+            createdAt: { gte: start, lte: end },
+            assignedToHuman: null,
+          },
+        }),
+
+        prisma.conversation.findMany({
+          where: {
+            orgId,
+            status: 'RESOLVED',
+            resolvedAt: { gte: start, lte: end },
+            assignedToHuman: null,
+          },
+          select: {
+            firstMessageAt: true,
+            resolvedAt: true,
+          },
+        }),
+
+        prisma.message.aggregate({
+          where: {
+            conversation: { orgId, assignedToHuman: null },
+            role: 'AI_AGENT',
+            createdAt: { gte: start, lte: end },
+            latencyMs: { not: null },
+          },
+          _avg: { latencyMs: true },
+        }),
+
+        prisma.conversationRating.aggregate({
+          where: {
+            conversation: {
               orgId,
               createdAt: { gte: start, lte: end },
               assignedToHuman: null,
             },
-          }),
-
-          prisma.conversation.findMany({
-            where: {
-              orgId,
-              status: 'RESOLVED',
-              resolvedAt: { gte: start, lte: end },
-              assignedToHuman: null,
-            },
-            select: {
-              firstMessageAt: true,
-              resolvedAt: true,
-            },
-          }),
-
-          prisma.message.aggregate({
-            where: {
-              conversation: { orgId, assignedToHuman: null },
-              role: 'AI_AGENT',
-              createdAt: { gte: start, lte: end },
-              latencyMs: { not: null },
-            },
-            _avg: { latencyMs: true },
-          }),
-
-          prisma.conversationRating.aggregate({
-            where: {
-              conversation: {
-                orgId,
-                createdAt: { gte: start, lte: end },
-                assignedToHuman: null,
-              },
-            },
-            _avg: { rating: true },
-          }),
-        ]);
+          },
+          _avg: { rating: true },
+        }),
+      ]);
 
       // Human conversations (assigned to human)
       const [humanConversations, humanResolvedConversations, humanResponseTime, humanCSAT] =

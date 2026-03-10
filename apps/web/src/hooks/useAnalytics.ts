@@ -72,15 +72,23 @@ export interface ResponseTimeTrendsData {
 
 export const analyticsKeys = {
   overview: (orgId: string) => ['organizations', orgId, 'analytics', 'overview'] as const,
-  conversationMetrics: (orgId: string, params?: { startDate?: string; endDate?: string; groupBy?: string }) =>
-    ['organizations', orgId, 'analytics', 'conversations-metrics', params] as const,
-  agentPerformance: (orgId: string) => ['organizations', orgId, 'analytics', 'agent-performance'] as const,
-  channelBreakdown: (orgId: string) => ['organizations', orgId, 'analytics', 'channel-breakdown'] as const,
+  conversationMetrics: (
+    orgId: string,
+    params?: { startDate?: string; endDate?: string; groupBy?: string },
+  ) => ['organizations', orgId, 'analytics', 'conversations-metrics', params] as const,
+  agentPerformance: (orgId: string) =>
+    ['organizations', orgId, 'analytics', 'agent-performance'] as const,
+  channelBreakdown: (orgId: string) =>
+    ['organizations', orgId, 'analytics', 'channel-breakdown'] as const,
   leadFunnel: (orgId: string) => ['organizations', orgId, 'analytics', 'lead-funnel'] as const,
-  csatTrends: (orgId: string, params?: { startDate?: string; endDate?: string; groupBy?: string }) =>
-    ['organizations', orgId, 'analytics', 'csat-trends', params] as const,
-  responseTimeTrends: (orgId: string, params?: { startDate?: string; endDate?: string; groupBy?: string }) =>
-    ['organizations', orgId, 'analytics', 'response-time-trends', params] as const,
+  csatTrends: (
+    orgId: string,
+    params?: { startDate?: string; endDate?: string; groupBy?: string },
+  ) => ['organizations', orgId, 'analytics', 'csat-trends', params] as const,
+  responseTimeTrends: (
+    orgId: string,
+    params?: { startDate?: string; endDate?: string; groupBy?: string },
+  ) => ['organizations', orgId, 'analytics', 'response-time-trends', params] as const,
 };
 
 export function useAnalyticsOverview() {

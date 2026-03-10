@@ -44,7 +44,9 @@ export default function ApiKeysPage() {
   const [showNewKeyDialog, setShowNewKeyDialog] = useState(false);
   const [createdKey, setCreatedKey] = useState<ApiKeyCreated | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
-  const [activeDocTab, setActiveDocTab] = useState<'overview' | 'auth' | 'endpoints' | 'examples'>('overview');
+  const [activeDocTab, setActiveDocTab] = useState<'overview' | 'auth' | 'endpoints' | 'examples'>(
+    'overview',
+  );
   const [copiedOrgId, setCopiedOrgId] = useState(false);
 
   const handleCreateApiKey = () => {
@@ -97,392 +99,496 @@ export default function ApiKeysPage() {
 
   return (
     <>
-    <div>
-      <Breadcrumb
-        items={[
-          { label: tb('dashboard'), href: '/dashboard' },
-          { label: ts('apiKeys') },
-        ]}
-        className="mb-4"
-      />
+      <div>
+        <Breadcrumb
+          items={[{ label: tb('dashboard'), href: '/dashboard' }, { label: ts('apiKeys') }]}
+          className="mb-4"
+        />
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
-      </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
+        </div>
 
-      <div className="mx-auto max-w-4xl space-y-6">
-        {/* Organization ID Section */}
-        {orgId && (
-          <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-              <Building className="h-5 w-5 text-primary" />
-              {t('orgIdSection')}
-            </h2>
-            <p className="text-sm text-muted-foreground mb-3">{t('orgIdDescription')}</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-lg bg-background border px-4 py-2.5 text-sm font-mono" dir="ltr">
-                {orgId}
-              </code>
-              <button
-                type="button"
-                onClick={handleCopyOrgId}
-                className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
-              >
-                {copiedOrgId ? (
-                  <>
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4" />
-                    {t('copyOrgId')}
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* API Keys Management */}
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Key className="h-5 w-5 text-muted-foreground" />
-            {t('manageKeys')}
-          </h2>
-
-          {/* Created key banner */}
-          {createdKey && (
-            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-              <p className="mb-2 text-sm font-medium text-green-800 dark:text-green-300">
-                {t('keyCreated')}
-              </p>
+        <div className="mx-auto max-w-4xl space-y-6">
+          {/* Organization ID Section */}
+          {orgId && (
+            <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-6 shadow-sm">
+              <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                <Building className="h-5 w-5 text-primary" />
+                {t('orgIdSection')}
+              </h2>
+              <p className="text-sm text-muted-foreground mb-3">{t('orgIdDescription')}</p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 rounded bg-white px-3 py-1.5 text-xs font-mono dark:bg-gray-900" dir="ltr">
-                  {createdKey.key}
+                <code
+                  className="flex-1 rounded-lg bg-background border px-4 py-2.5 text-sm font-mono"
+                  dir="ltr"
+                >
+                  {orgId}
                 </code>
                 <button
                   type="button"
-                  onClick={() => handleCopyKey(createdKey.key)}
-                  className="rounded-lg border px-2 py-1.5 text-xs hover:bg-accent"
+                  onClick={handleCopyOrgId}
+                  className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
                 >
-                  {copiedKeyId === createdKey.key ? (
-                    <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                  {copiedOrgId ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </>
                   ) : (
-                    <Copy className="h-3.5 w-3.5" />
+                    <>
+                      <Copy className="h-4 w-4" />
+                      {t('copyOrgId')}
+                    </>
                   )}
                 </button>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {t('copyWarning')}
-              </p>
-              <button
-                type="button"
-                onClick={() => setCreatedKey(null)}
-                className="mt-2 text-xs text-green-700 underline dark:text-green-400"
-              >
-                {t('dismiss')}
-              </button>
             </div>
           )}
 
-          {/* Create new key */}
-          {showNewKeyDialog ? (
-            <div className="mb-4 flex items-center gap-2">
-              <input
-                type="text"
-                value={newKeyName}
-                onChange={(e) => setNewKeyName(e.target.value)}
-                placeholder={t('keyNamePlaceholder')}
-                className={cn(inputClass, 'flex-1')}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleCreateApiKey();
-                  if (e.key === 'Escape') {
-                    setShowNewKeyDialog(false);
-                    setNewKeyName('');
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleCreateApiKey}
-                disabled={createApiKey.isPending || !newKeyName.trim()}
-                className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {createApiKey.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                {t('create')}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowNewKeyDialog(false);
-                  setNewKeyName('');
-                }}
-                className="rounded-lg border px-3 py-2 text-sm hover:bg-accent"
-              >
-                {t('cancel')}
-              </button>
-            </div>
-          ) : (
-            <div className="mb-4">
-              <button
-                type="button"
-                onClick={() => setShowNewKeyDialog(true)}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                <Plus className="h-4 w-4" />
-                {t('create')}
-              </button>
-            </div>
-          )}
+          {/* API Keys Management */}
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Key className="h-5 w-5 text-muted-foreground" />
+              {t('manageKeys')}
+            </h2>
 
-          {/* API keys list */}
-          {apiKeysLoading ? (
-            <div className="animate-pulse space-y-3">
-              {[1, 2].map((i) => (
-                <div key={i} className="h-12 w-full rounded bg-muted" />
-              ))}
-            </div>
-          ) : apiKeys && apiKeys.length > 0 ? (
-            <div className="space-y-2">
-              {apiKeys.map((apiKey) => (
-                <div
-                  key={apiKey.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 rounded-lg border px-4 py-3"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{apiKey.name}</span>
-                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground" dir="ltr">
-                        {apiKey.keyPrefix}...
-                      </code>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {t('createdOn')} {fmtDate(apiKey.createdAt, locale)}
-                      {apiKey.lastUsedAt && (
-                        <> &middot; {t('lastUsed')} {fmtDate(apiKey.lastUsedAt, locale)}</>
-                      )}
-                    </p>
-                  </div>
+            {/* Created key banner */}
+            {createdKey && (
+              <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                <p className="mb-2 text-sm font-medium text-green-800 dark:text-green-300">
+                  {t('keyCreated')}
+                </p>
+                <div className="flex items-center gap-2">
+                  <code
+                    className="flex-1 rounded bg-white px-3 py-1.5 text-xs font-mono dark:bg-gray-900"
+                    dir="ltr"
+                  >
+                    {createdKey.key}
+                  </code>
                   <button
                     type="button"
-                    onClick={() => handleRevokeApiKey(apiKey.id)}
-                    disabled={revokeApiKey.isPending}
-                    className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                    onClick={() => handleCopyKey(createdKey.key)}
+                    className="rounded-lg border px-2 py-1.5 text-xs hover:bg-accent"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    {t('revoke')}
+                    {copiedKeyId === createdKey.key ? (
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                   </button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t('noKeys')}</p>
-          )}
-        </div>
+                <p className="mt-2 text-xs text-muted-foreground">{t('copyWarning')}</p>
+                <button
+                  type="button"
+                  onClick={() => setCreatedKey(null)}
+                  className="mt-2 text-xs text-green-700 underline dark:text-green-400"
+                >
+                  {t('dismiss')}
+                </button>
+              </div>
+            )}
 
-        {/* API Documentation */}
-        <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-muted-foreground" />
-            {t('documentation')}
-          </h2>
+            {/* Create new key */}
+            {showNewKeyDialog ? (
+              <div className="mb-4 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newKeyName}
+                  onChange={(e) => setNewKeyName(e.target.value)}
+                  placeholder={t('keyNamePlaceholder')}
+                  className={cn(inputClass, 'flex-1')}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateApiKey();
+                    if (e.key === 'Escape') {
+                      setShowNewKeyDialog(false);
+                      setNewKeyName('');
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateApiKey}
+                  disabled={createApiKey.isPending || !newKeyName.trim()}
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {createApiKey.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  {t('create')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewKeyDialog(false);
+                    setNewKeyName('');
+                  }}
+                  className="rounded-lg border px-3 py-2 text-sm hover:bg-accent"
+                >
+                  {t('cancel')}
+                </button>
+              </div>
+            ) : (
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => setShowNewKeyDialog(true)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t('create')}
+                </button>
+              </div>
+            )}
 
-          {/* Doc tabs */}
-          <div className="flex gap-1 mb-6 border-b overflow-x-auto">
-            {(['overview', 'auth', 'endpoints', 'examples'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveDocTab(tab)}
-                className={cn(
-                  'px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px',
-                  activeDocTab === tab
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {t(`docs.${tab}`)}
-              </button>
-            ))}
+            {/* API keys list */}
+            {apiKeysLoading ? (
+              <div className="animate-pulse space-y-3">
+                {[1, 2].map((i) => (
+                  <div key={i} className="h-12 w-full rounded bg-muted" />
+                ))}
+              </div>
+            ) : apiKeys && apiKeys.length > 0 ? (
+              <div className="space-y-2">
+                {apiKeys.map((apiKey) => (
+                  <div
+                    key={apiKey.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 rounded-lg border px-4 py-3"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{apiKey.name}</span>
+                        <code
+                          className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground"
+                          dir="ltr"
+                        >
+                          {apiKey.keyPrefix}...
+                        </code>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {t('createdOn')} {fmtDate(apiKey.createdAt, locale)}
+                        {apiKey.lastUsedAt && (
+                          <>
+                            {' '}
+                            &middot; {t('lastUsed')} {fmtDate(apiKey.lastUsedAt, locale)}
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRevokeApiKey(apiKey.id)}
+                      disabled={revokeApiKey.isPending}
+                      className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {t('revoke')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t('noKeys')}</p>
+            )}
           </div>
 
-          {/* Overview Tab */}
-          {activeDocTab === 'overview' && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{t('docs.overviewText')}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-lg border p-4">
-                  <Code className="h-5 w-5 text-primary mb-2" />
-                  <h4 className="text-sm font-semibold mb-1">{t('docs.restApi')}</h4>
-                  <p className="text-xs text-muted-foreground">{t('docs.restApiDesc')}</p>
-                </div>
-                <div className="rounded-lg border p-4">
-                  <Shield className="h-5 w-5 text-primary mb-2" />
-                  <h4 className="text-sm font-semibold mb-1">{t('docs.secure')}</h4>
-                  <p className="text-xs text-muted-foreground">{t('docs.secureDesc')}</p>
-                </div>
-                <div className="rounded-lg border p-4">
-                  <Terminal className="h-5 w-5 text-primary mb-2" />
-                  <h4 className="text-sm font-semibold mb-1">{t('docs.easyIntegration')}</h4>
-                  <p className="text-xs text-muted-foreground">{t('docs.easyIntegrationDesc')}</p>
-                </div>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-4">
-                <h4 className="text-sm font-semibold mb-1">{t('docs.baseUrl')}</h4>
-                <code className="text-xs font-mono text-primary" dir="ltr">{baseUrl}</code>
-              </div>
-            </div>
-          )}
+          {/* API Documentation */}
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-muted-foreground" />
+              {t('documentation')}
+            </h2>
 
-          {/* Auth Tab */}
-          {activeDocTab === 'auth' && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{t('docs.authText')}</p>
-              <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
-                <pre className="text-xs text-green-400 font-mono whitespace-pre">
-{`# Include your API key in the Authorization header
+            {/* Doc tabs */}
+            <div className="flex gap-1 mb-6 border-b overflow-x-auto">
+              {(['overview', 'auth', 'endpoints', 'examples'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveDocTab(tab)}
+                  className={cn(
+                    'px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px',
+                    activeDocTab === tab
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {t(`docs.${tab}`)}
+                </button>
+              ))}
+            </div>
+
+            {/* Overview Tab */}
+            {activeDocTab === 'overview' && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">{t('docs.overviewText')}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="rounded-lg border p-4">
+                    <Code className="h-5 w-5 text-primary mb-2" />
+                    <h4 className="text-sm font-semibold mb-1">{t('docs.restApi')}</h4>
+                    <p className="text-xs text-muted-foreground">{t('docs.restApiDesc')}</p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <Shield className="h-5 w-5 text-primary mb-2" />
+                    <h4 className="text-sm font-semibold mb-1">{t('docs.secure')}</h4>
+                    <p className="text-xs text-muted-foreground">{t('docs.secureDesc')}</p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <Terminal className="h-5 w-5 text-primary mb-2" />
+                    <h4 className="text-sm font-semibold mb-1">{t('docs.easyIntegration')}</h4>
+                    <p className="text-xs text-muted-foreground">{t('docs.easyIntegrationDesc')}</p>
+                  </div>
+                </div>
+                <div className="rounded-lg bg-muted/50 p-4">
+                  <h4 className="text-sm font-semibold mb-1">{t('docs.baseUrl')}</h4>
+                  <code className="text-xs font-mono text-primary" dir="ltr">
+                    {baseUrl}
+                  </code>
+                </div>
+              </div>
+            )}
+
+            {/* Auth Tab */}
+            {activeDocTab === 'auth' && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">{t('docs.authText')}</p>
+                <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
+                  <pre className="text-xs text-green-400 font-mono whitespace-pre">
+                    {`# Include your API key in the Authorization header
 curl -H "Authorization: Bearer YOUR_API_KEY" \\
      -H "Content-Type: application/json" \\
      ${baseUrl}/organizations/${orgId || '{orgId}'}/agents`}
-                </pre>
-              </div>
-              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
-                <p className="text-xs text-yellow-800 dark:text-yellow-300">
-                  <strong>{t('docs.important')}:</strong> {t('docs.keepSecure')}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Endpoints Tab */}
-          {activeDocTab === 'endpoints' && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground mb-4">{t('docs.endpointsText')}</p>
-
-              {/* Agents */}
-              <div className="rounded-lg border overflow-hidden">
-                <div className="bg-muted/50 px-4 py-2 border-b">
-                  <h4 className="text-sm font-semibold">{t('docs.agentsApi')}</h4>
+                  </pre>
                 </div>
-                <div className="divide-y" dir="ltr">
-                  {[
-                    { method: 'GET', path: '/organizations/{orgId}/agents', descKey: 'docs.listAgents' },
-                    { method: 'POST', path: '/organizations/{orgId}/agents', descKey: 'docs.createAgent' },
-                    { method: 'GET', path: '/organizations/{orgId}/agents/{agentId}', descKey: 'docs.getAgent' },
-                    { method: 'PATCH', path: '/organizations/{orgId}/agents/{agentId}', descKey: 'docs.updateAgent' },
-                    { method: 'DELETE', path: '/organizations/{orgId}/agents/{agentId}', descKey: 'docs.deleteAgent' },
-                    { method: 'POST', path: '/organizations/{orgId}/agents/{agentId}/test', descKey: 'docs.testAgent' },
-                  ].map((ep) => (
-                    <div key={ep.path + ep.method} className="flex items-center gap-3 px-4 py-2 text-xs">
-                      <span className={cn(
-                        'rounded px-2 py-0.5 font-mono font-bold',
-                        ep.method === 'GET' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                        ep.method === 'POST' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                        ep.method === 'PATCH' && 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-                        ep.method === 'DELETE' && 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-                      )}>
-                        {ep.method}
-                      </span>
-                      <code className="font-mono text-muted-foreground flex-1">{ep.path}</code>
-                      <span className="text-muted-foreground">{t(ep.descKey)}</span>
-                    </div>
-                  ))}
+                <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
+                  <p className="text-xs text-yellow-800 dark:text-yellow-300">
+                    <strong>{t('docs.important')}:</strong> {t('docs.keepSecure')}
+                  </p>
                 </div>
               </div>
+            )}
 
-              {/* Conversations */}
-              <div className="rounded-lg border overflow-hidden">
-                <div className="bg-muted/50 px-4 py-2 border-b">
-                  <h4 className="text-sm font-semibold">{t('docs.conversationsApi')}</h4>
+            {/* Endpoints Tab */}
+            {activeDocTab === 'endpoints' && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground mb-4">{t('docs.endpointsText')}</p>
+
+                {/* Agents */}
+                <div className="rounded-lg border overflow-hidden">
+                  <div className="bg-muted/50 px-4 py-2 border-b">
+                    <h4 className="text-sm font-semibold">{t('docs.agentsApi')}</h4>
+                  </div>
+                  <div className="divide-y" dir="ltr">
+                    {[
+                      {
+                        method: 'GET',
+                        path: '/organizations/{orgId}/agents',
+                        descKey: 'docs.listAgents',
+                      },
+                      {
+                        method: 'POST',
+                        path: '/organizations/{orgId}/agents',
+                        descKey: 'docs.createAgent',
+                      },
+                      {
+                        method: 'GET',
+                        path: '/organizations/{orgId}/agents/{agentId}',
+                        descKey: 'docs.getAgent',
+                      },
+                      {
+                        method: 'PATCH',
+                        path: '/organizations/{orgId}/agents/{agentId}',
+                        descKey: 'docs.updateAgent',
+                      },
+                      {
+                        method: 'DELETE',
+                        path: '/organizations/{orgId}/agents/{agentId}',
+                        descKey: 'docs.deleteAgent',
+                      },
+                      {
+                        method: 'POST',
+                        path: '/organizations/{orgId}/agents/{agentId}/test',
+                        descKey: 'docs.testAgent',
+                      },
+                    ].map((ep) => (
+                      <div
+                        key={ep.path + ep.method}
+                        className="flex items-center gap-3 px-4 py-2 text-xs"
+                      >
+                        <span
+                          className={cn(
+                            'rounded px-2 py-0.5 font-mono font-bold',
+                            ep.method === 'GET' &&
+                              'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                            ep.method === 'POST' &&
+                              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                            ep.method === 'PATCH' &&
+                              'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+                            ep.method === 'DELETE' &&
+                              'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                          )}
+                        >
+                          {ep.method}
+                        </span>
+                        <code className="font-mono text-muted-foreground flex-1">{ep.path}</code>
+                        <span className="text-muted-foreground">{t(ep.descKey)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="divide-y" dir="ltr">
-                  {[
-                    { method: 'GET', path: '/organizations/{orgId}/conversations', descKey: 'docs.listConversations' },
-                    { method: 'GET', path: '/organizations/{orgId}/conversations/{id}', descKey: 'docs.getConversation' },
-                    { method: 'POST', path: '/organizations/{orgId}/conversations/{id}/messages', descKey: 'docs.sendMessage' },
-                  ].map((ep) => (
-                    <div key={ep.path + ep.method} className="flex items-center gap-3 px-4 py-2 text-xs">
-                      <span className={cn(
-                        'rounded px-2 py-0.5 font-mono font-bold',
-                        ep.method === 'GET' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                        ep.method === 'POST' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                      )}>
-                        {ep.method}
-                      </span>
-                      <code className="font-mono text-muted-foreground flex-1">{ep.path}</code>
-                      <span className="text-muted-foreground">{t(ep.descKey)}</span>
-                    </div>
-                  ))}
+
+                {/* Conversations */}
+                <div className="rounded-lg border overflow-hidden">
+                  <div className="bg-muted/50 px-4 py-2 border-b">
+                    <h4 className="text-sm font-semibold">{t('docs.conversationsApi')}</h4>
+                  </div>
+                  <div className="divide-y" dir="ltr">
+                    {[
+                      {
+                        method: 'GET',
+                        path: '/organizations/{orgId}/conversations',
+                        descKey: 'docs.listConversations',
+                      },
+                      {
+                        method: 'GET',
+                        path: '/organizations/{orgId}/conversations/{id}',
+                        descKey: 'docs.getConversation',
+                      },
+                      {
+                        method: 'POST',
+                        path: '/organizations/{orgId}/conversations/{id}/messages',
+                        descKey: 'docs.sendMessage',
+                      },
+                    ].map((ep) => (
+                      <div
+                        key={ep.path + ep.method}
+                        className="flex items-center gap-3 px-4 py-2 text-xs"
+                      >
+                        <span
+                          className={cn(
+                            'rounded px-2 py-0.5 font-mono font-bold',
+                            ep.method === 'GET' &&
+                              'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                            ep.method === 'POST' &&
+                              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                          )}
+                        >
+                          {ep.method}
+                        </span>
+                        <code className="font-mono text-muted-foreground flex-1">{ep.path}</code>
+                        <span className="text-muted-foreground">{t(ep.descKey)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Knowledge Base */}
+                <div className="rounded-lg border overflow-hidden">
+                  <div className="bg-muted/50 px-4 py-2 border-b">
+                    <h4 className="text-sm font-semibold">{t('docs.knowledgeBaseApi')}</h4>
+                  </div>
+                  <div className="divide-y" dir="ltr">
+                    {[
+                      {
+                        method: 'GET',
+                        path: '/organizations/{orgId}/knowledge-bases',
+                        descKey: 'docs.listKnowledgeBases',
+                      },
+                      {
+                        method: 'POST',
+                        path: '/organizations/{orgId}/knowledge-bases',
+                        descKey: 'docs.createKb',
+                      },
+                      {
+                        method: 'GET',
+                        path: '/organizations/{orgId}/knowledge-bases/{id}',
+                        descKey: 'docs.getKnowledgeBase',
+                      },
+                      {
+                        method: 'DELETE',
+                        path: '/organizations/{orgId}/knowledge-bases/{id}',
+                        descKey: 'docs.deleteKnowledgeBase',
+                      },
+                      {
+                        method: 'POST',
+                        path: '/organizations/{orgId}/knowledge-bases/{id}/documents',
+                        descKey: 'docs.addDocument',
+                      },
+                    ].map((ep) => (
+                      <div
+                        key={ep.path + ep.method}
+                        className="flex items-center gap-3 px-4 py-2 text-xs"
+                      >
+                        <span
+                          className={cn(
+                            'rounded px-2 py-0.5 font-mono font-bold',
+                            ep.method === 'GET' &&
+                              'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                            ep.method === 'POST' &&
+                              'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                            ep.method === 'DELETE' &&
+                              'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                          )}
+                        >
+                          {ep.method}
+                        </span>
+                        <code className="font-mono text-muted-foreground flex-1">{ep.path}</code>
+                        <span className="text-muted-foreground">{t(ep.descKey)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Analytics */}
+                <div className="rounded-lg border overflow-hidden">
+                  <div className="bg-muted/50 px-4 py-2 border-b">
+                    <h4 className="text-sm font-semibold">{t('docs.analyticsApi')}</h4>
+                  </div>
+                  <div className="divide-y" dir="ltr">
+                    {[
+                      {
+                        method: 'GET',
+                        path: '/organizations/{orgId}/analytics/overview',
+                        descKey: 'docs.getAnalytics',
+                      },
+                      {
+                        method: 'GET',
+                        path: '/organizations/{orgId}/leads',
+                        descKey: 'docs.listLeads',
+                      },
+                      {
+                        method: 'GET',
+                        path: '/organizations/{orgId}/leads/stats',
+                        descKey: 'docs.leadStatistics',
+                      },
+                    ].map((ep) => (
+                      <div
+                        key={ep.path + ep.method}
+                        className="flex items-center gap-3 px-4 py-2 text-xs"
+                      >
+                        <span className="rounded px-2 py-0.5 font-mono font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                          {ep.method}
+                        </span>
+                        <code className="font-mono text-muted-foreground flex-1">{ep.path}</code>
+                        <span className="text-muted-foreground">{t(ep.descKey)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
+            )}
 
-              {/* Knowledge Base */}
-              <div className="rounded-lg border overflow-hidden">
-                <div className="bg-muted/50 px-4 py-2 border-b">
-                  <h4 className="text-sm font-semibold">{t('docs.knowledgeBaseApi')}</h4>
-                </div>
-                <div className="divide-y" dir="ltr">
-                  {[
-                    { method: 'GET', path: '/organizations/{orgId}/knowledge-bases', descKey: 'docs.listKnowledgeBases' },
-                    { method: 'POST', path: '/organizations/{orgId}/knowledge-bases', descKey: 'docs.createKb' },
-                    { method: 'GET', path: '/organizations/{orgId}/knowledge-bases/{id}', descKey: 'docs.getKnowledgeBase' },
-                    { method: 'DELETE', path: '/organizations/{orgId}/knowledge-bases/{id}', descKey: 'docs.deleteKnowledgeBase' },
-                    { method: 'POST', path: '/organizations/{orgId}/knowledge-bases/{id}/documents', descKey: 'docs.addDocument' },
-                  ].map((ep) => (
-                    <div key={ep.path + ep.method} className="flex items-center gap-3 px-4 py-2 text-xs">
-                      <span className={cn(
-                        'rounded px-2 py-0.5 font-mono font-bold',
-                        ep.method === 'GET' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                        ep.method === 'POST' && 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                        ep.method === 'DELETE' && 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-                      )}>
-                        {ep.method}
-                      </span>
-                      <code className="font-mono text-muted-foreground flex-1">{ep.path}</code>
-                      <span className="text-muted-foreground">{t(ep.descKey)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Analytics */}
-              <div className="rounded-lg border overflow-hidden">
-                <div className="bg-muted/50 px-4 py-2 border-b">
-                  <h4 className="text-sm font-semibold">{t('docs.analyticsApi')}</h4>
-                </div>
-                <div className="divide-y" dir="ltr">
-                  {[
-                    { method: 'GET', path: '/organizations/{orgId}/analytics/overview', descKey: 'docs.getAnalytics' },
-                    { method: 'GET', path: '/organizations/{orgId}/leads', descKey: 'docs.listLeads' },
-                    { method: 'GET', path: '/organizations/{orgId}/leads/stats', descKey: 'docs.leadStatistics' },
-                  ].map((ep) => (
-                    <div key={ep.path + ep.method} className="flex items-center gap-3 px-4 py-2 text-xs">
-                      <span className="rounded px-2 py-0.5 font-mono font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                        {ep.method}
-                      </span>
-                      <code className="font-mono text-muted-foreground flex-1">{ep.path}</code>
-                      <span className="text-muted-foreground">{t(ep.descKey)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Examples Tab */}
-          {activeDocTab === 'examples' && (
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-sm font-semibold mb-2">{t('docs.listAgents')}</h4>
-                <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
-                  <pre className="text-xs text-green-400 font-mono whitespace-pre">
-{`curl -X GET \\
+            {/* Examples Tab */}
+            {activeDocTab === 'examples' && (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">{t('docs.listAgents')}</h4>
+                  <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
+                    <pre className="text-xs text-green-400 font-mono whitespace-pre">
+                      {`curl -X GET \\
   "${baseUrl}/organizations/${orgId || '{orgId}'}/agents" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json"
@@ -501,15 +607,15 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \\
     }
   ]
 }`}
-                  </pre>
+                    </pre>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <h4 className="text-sm font-semibold mb-2">{t('docs.createAgent')}</h4>
-                <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
-                  <pre className="text-xs text-green-400 font-mono whitespace-pre">
-{`curl -X POST \\
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">{t('docs.createAgent')}</h4>
+                  <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
+                    <pre className="text-xs text-green-400 font-mono whitespace-pre">
+                      {`curl -X POST \\
   "${baseUrl}/organizations/${orgId || '{orgId}'}/agents" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -532,15 +638,15 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \\
     ...
   }
 }`}
-                  </pre>
+                    </pre>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <h4 className="text-sm font-semibold mb-2">{t('docs.testAgent')}</h4>
-                <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
-                  <pre className="text-xs text-green-400 font-mono whitespace-pre">
-{`curl -X POST \\
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">{t('docs.testAgent')}</h4>
+                  <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
+                    <pre className="text-xs text-green-400 font-mono whitespace-pre">
+                      {`curl -X POST \\
   "${baseUrl}/organizations/${orgId || '{orgId}'}/agents/{agentId}/test" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -554,15 +660,15 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \\
     "tokensUsed": 150
   }
 }`}
-                  </pre>
+                    </pre>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <h4 className="text-sm font-semibold mb-2">{t('docs.sendMessage')}</h4>
-                <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
-                  <pre className="text-xs text-green-400 font-mono whitespace-pre">
-{`curl -X POST \\
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">{t('docs.sendMessage')}</h4>
+                  <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
+                    <pre className="text-xs text-green-400 font-mono whitespace-pre">
+                      {`curl -X POST \\
   "${baseUrl}/organizations/${orgId || '{orgId}'}/conversations/{conversationId}/messages" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -582,15 +688,15 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \\
     ...
   }
 }`}
-                  </pre>
+                    </pre>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <h4 className="text-sm font-semibold mb-2">{t('docs.getAnalytics')}</h4>
-                <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
-                  <pre className="text-xs text-green-400 font-mono whitespace-pre">
-{`curl -X GET \\
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">{t('docs.getAnalytics')}</h4>
+                  <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
+                    <pre className="text-xs text-green-400 font-mono whitespace-pre">
+                      {`curl -X GET \\
   "${baseUrl}/organizations/${orgId || '{orgId}'}/analytics/overview" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json"
@@ -608,15 +714,15 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \\
     ...
   }
 }`}
-                  </pre>
+                    </pre>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <h4 className="text-sm font-semibold mb-2">{t('docs.createKb')}</h4>
-                <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
-                  <pre className="text-xs text-green-400 font-mono whitespace-pre">
-{`curl -X POST \\
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">{t('docs.createKb')}</h4>
+                  <div className="rounded-lg bg-gray-900 p-4 overflow-x-auto" dir="ltr">
+                    <pre className="text-xs text-green-400 font-mono whitespace-pre">
+                      {`curl -X POST \\
   "${baseUrl}/organizations/${orgId || '{orgId}'}/knowledge-bases" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
@@ -634,15 +740,15 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \\
     ...
   }
 }`}
-                  </pre>
+                    </pre>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
-    <ConfirmDialog {...confirmProps} />
+      <ConfirmDialog {...confirmProps} />
     </>
   );
 }

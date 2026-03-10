@@ -8,17 +8,70 @@ import { auditLogService } from '../../services/auditLog.service';
 
 const router: Router = Router();
 
-const ORG_DEFAULTS: Record<string, { value: string; label: string; description: string; isSecret: boolean }> = {
-  DEFAULT_PLAN: { value: 'FREE', label: 'Default Plan', description: 'Default subscription plan for new organizations', isSecret: false },
-  TRIAL_PERIOD_DAYS: { value: '14', label: 'Trial Period (Days)', description: 'Number of trial days for new organizations', isSecret: false },
-  DEFAULT_TIMEZONE: { value: 'Asia/Riyadh', label: 'Default Timezone', description: 'Default timezone for new organizations', isSecret: false },
-  DEFAULT_MESSAGES_LIMIT: { value: '100', label: 'Default Messages Limit', description: 'Default monthly message limit', isSecret: false },
-  DEFAULT_AGENTS_LIMIT: { value: '1', label: 'Default Agents Limit', description: 'Default AI agents limit', isSecret: false },
-  DEFAULT_CHANNELS_LIMIT: { value: '1', label: 'Default Channels Limit', description: 'Default channels limit', isSecret: false },
-  DEFAULT_TEAM_MEMBERS_LIMIT: { value: '2', label: 'Default Team Members Limit', description: 'Default team members limit', isSecret: false },
-  DEFAULT_KB_LIMIT: { value: '1', label: 'Default Knowledge Bases Limit', description: 'Default knowledge bases limit', isSecret: false },
-  AUTO_CREATE_WEBCHAT_CHANNEL: { value: 'true', label: 'Auto-Create Webchat Channel', description: 'Automatically create a webchat channel for new organizations', isSecret: false },
-  REQUIRE_EMAIL_VERIFICATION: { value: 'true', label: 'Require Email Verification', description: 'Require email verification for new users', isSecret: false },
+const ORG_DEFAULTS: Record<
+  string,
+  { value: string; label: string; description: string; isSecret: boolean }
+> = {
+  DEFAULT_PLAN: {
+    value: 'FREE',
+    label: 'Default Plan',
+    description: 'Default subscription plan for new organizations',
+    isSecret: false,
+  },
+  TRIAL_PERIOD_DAYS: {
+    value: '14',
+    label: 'Trial Period (Days)',
+    description: 'Number of trial days for new organizations',
+    isSecret: false,
+  },
+  DEFAULT_TIMEZONE: {
+    value: 'Asia/Riyadh',
+    label: 'Default Timezone',
+    description: 'Default timezone for new organizations',
+    isSecret: false,
+  },
+  DEFAULT_MESSAGES_LIMIT: {
+    value: '100',
+    label: 'Default Messages Limit',
+    description: 'Default monthly message limit',
+    isSecret: false,
+  },
+  DEFAULT_AGENTS_LIMIT: {
+    value: '1',
+    label: 'Default Agents Limit',
+    description: 'Default AI agents limit',
+    isSecret: false,
+  },
+  DEFAULT_CHANNELS_LIMIT: {
+    value: '1',
+    label: 'Default Channels Limit',
+    description: 'Default channels limit',
+    isSecret: false,
+  },
+  DEFAULT_TEAM_MEMBERS_LIMIT: {
+    value: '2',
+    label: 'Default Team Members Limit',
+    description: 'Default team members limit',
+    isSecret: false,
+  },
+  DEFAULT_KB_LIMIT: {
+    value: '1',
+    label: 'Default Knowledge Bases Limit',
+    description: 'Default knowledge bases limit',
+    isSecret: false,
+  },
+  AUTO_CREATE_WEBCHAT_CHANNEL: {
+    value: 'true',
+    label: 'Auto-Create Webchat Channel',
+    description: 'Automatically create a webchat channel for new organizations',
+    isSecret: false,
+  },
+  REQUIRE_EMAIL_VERIFICATION: {
+    value: 'true',
+    label: 'Require Email Verification',
+    description: 'Require email verification for new users',
+    isSecret: false,
+  },
 };
 
 async function ensureOrgDefaults() {

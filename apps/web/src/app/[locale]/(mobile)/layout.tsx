@@ -10,9 +10,7 @@ export default function MobileLayout({ children }: { children: React.ReactNode }
         <div className="flex h-screen flex-col overflow-hidden bg-muted/30">
           <main className="flex-1 overflow-y-auto pb-16">
             <ErrorBoundary>
-              <div className="animate-page-in">
-                {children}
-              </div>
+              <div className="animate-page-in">{children}</div>
             </ErrorBoundary>
           </main>
           <MobileNav />

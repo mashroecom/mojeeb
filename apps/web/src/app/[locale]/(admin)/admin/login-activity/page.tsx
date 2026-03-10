@@ -35,7 +35,6 @@ interface LoginEntry {
 // Helpers
 // ---------------------------------------------------------------------------
 
-
 function truncateUA(ua: string, max = 60) {
   if (!ua) return '-';
   return ua.length > max ? ua.slice(0, max) + '...' : ua;
@@ -57,12 +56,24 @@ function StatSkeleton() {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-32 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-5 w-16 rounded-full bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-40 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-32 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-5 w-16 rounded-full bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-40 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -178,7 +189,9 @@ export default function LoginActivityPage() {
                 {t('successRate')}
               </div>
               <p className="text-2xl font-bold text-green-600">
-                {stats?.totalLogins ? `${Math.round((stats.successfulLogins / stats.totalLogins) * 100)}%` : '-'}
+                {stats?.totalLogins
+                  ? `${Math.round((stats.successfulLogins / stats.totalLogins) * 100)}%`
+                  : '-'}
               </p>
             </div>
           </>
@@ -306,8 +319,7 @@ export default function LoginActivityPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
+              {isLoading && Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
 
               {!isLoading && !isError && entries.length === 0 && (
                 <tr>
@@ -321,7 +333,10 @@ export default function LoginActivityPage() {
               {!isLoading &&
                 !isError &&
                 entries.map((entry) => (
-                  <tr key={entry.id} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+                  <tr
+                    key={entry.id}
+                    className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium truncate block max-w-[200px]">
                         {entry.email}
@@ -347,7 +362,10 @@ export default function LoginActivityPage() {
                       <span className="text-sm font-mono text-muted-foreground">{entry.ip}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-muted-foreground truncate block max-w-[200px]" title={entry.userAgent}>
+                      <span
+                        className="text-xs text-muted-foreground truncate block max-w-[200px]"
+                        title={entry.userAgent}
+                      >
                         {truncateUA(entry.userAgent)}
                       </span>
                     </td>
@@ -363,7 +381,15 @@ export default function LoginActivityPage() {
 
       {/* Pagination */}
       {!isLoading && (
-        <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          previousLabel={tc('previous')}
+          nextLabel={tc('next')}
+          pageLabel={tc('page')}
+          ofLabel={tc('of')}
+        />
       )}
     </div>
   );

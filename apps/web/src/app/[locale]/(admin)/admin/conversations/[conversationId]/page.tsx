@@ -4,10 +4,7 @@ import { use, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { fmtDateTime } from '@/lib/dateFormat';
-import {
-  useAdminConversationDetail,
-  useUpdateAdminConversation,
-} from '@/hooks/useAdmin';
+import { useAdminConversationDetail, useUpdateAdminConversation } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import {
@@ -29,28 +26,28 @@ import {
 
 /* ── Status badge colours ─────────────────────────────────── */
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE:     'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  ACTIVE: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   HANDED_OFF: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  WAITING:    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  RESOLVED:   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  ARCHIVED:   'bg-muted text-muted-foreground',
+  WAITING: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  RESOLVED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  ARCHIVED: 'bg-muted text-muted-foreground',
 };
 
 const STATUS_OPTIONS = ['ACTIVE', 'HANDED_OFF', 'WAITING', 'RESOLVED', 'ARCHIVED'] as const;
 
 /* ── Message bubble colours by role ───────────────────────── */
 const ROLE_BUBBLE: Record<string, string> = {
-  CUSTOMER:    'bg-blue-50 dark:bg-blue-950',
-  AI_AGENT:    'bg-green-50 dark:bg-green-950',
+  CUSTOMER: 'bg-blue-50 dark:bg-blue-950',
+  AI_AGENT: 'bg-green-50 dark:bg-green-950',
   HUMAN_AGENT: 'bg-purple-50 dark:bg-purple-950',
-  SYSTEM:      'bg-muted/50',
+  SYSTEM: 'bg-muted/50',
 };
 
 const ROLE_BADGE_COLORS: Record<string, string> = {
-  CUSTOMER:    'bg-muted text-muted-foreground',
-  AI_AGENT:    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  CUSTOMER: 'bg-muted text-muted-foreground',
+  AI_AGENT: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   HUMAN_AGENT: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  SYSTEM:      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  SYSTEM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
 };
 
 /* ── Page component ───────────────────────────────────────── */
@@ -155,7 +152,9 @@ export default function ConversationDetailPage({
             )}
           >
             {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{statusLabel(s)}</option>
+              <option key={s} value={s}>
+                {statusLabel(s)}
+              </option>
             ))}
           </select>
           {updateConversation.isPending && (
@@ -173,24 +172,40 @@ export default function ConversationDetailPage({
               {t('customerInfo')}
             </h3>
             <div className="space-y-3">
-              {(conversation.customerName || conversation.lead?.name || conversation.customer?.name) && (
+              {(conversation.customerName ||
+                conversation.lead?.name ||
+                conversation.customer?.name) && (
                 <div className="flex items-center gap-2 text-sm">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">
-                    {conversation.customerName ?? conversation.lead?.name ?? conversation.customer?.name}
+                    {conversation.customerName ??
+                      conversation.lead?.name ??
+                      conversation.customer?.name}
                   </span>
                 </div>
               )}
-              {(conversation.customerEmail || conversation.lead?.email || conversation.customer?.email) && (
+              {(conversation.customerEmail ||
+                conversation.lead?.email ||
+                conversation.customer?.email) && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Mail className="h-4 w-4" />
-                  <span>{conversation.customerEmail ?? conversation.lead?.email ?? conversation.customer?.email}</span>
+                  <span>
+                    {conversation.customerEmail ??
+                      conversation.lead?.email ??
+                      conversation.customer?.email}
+                  </span>
                 </div>
               )}
-              {(conversation.customerPhone || conversation.lead?.phone || conversation.customer?.phone) && (
+              {(conversation.customerPhone ||
+                conversation.lead?.phone ||
+                conversation.customer?.phone) && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="h-4 w-4" />
-                  <span>{conversation.customerPhone ?? conversation.lead?.phone ?? conversation.customer?.phone}</span>
+                  <span>
+                    {conversation.customerPhone ??
+                      conversation.lead?.phone ??
+                      conversation.customer?.phone}
+                  </span>
                 </div>
               )}
               {conversation.org?.name && (
@@ -249,7 +264,11 @@ export default function ConversationDetailPage({
                     <span
                       key={tag.id ?? idx}
                       className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                      style={tag.color ? { backgroundColor: `${tag.color}20`, color: tag.color } : undefined}
+                      style={
+                        tag.color
+                          ? { backgroundColor: `${tag.color}20`, color: tag.color }
+                          : undefined
+                      }
                     >
                       {tag.name ?? tag.label ?? tag}
                     </span>
@@ -312,16 +331,20 @@ export default function ConversationDetailPage({
                   <div key={note.id ?? idx} className="rounded-lg bg-muted/50 p-3">
                     <p className="text-sm">{note.content ?? note.body ?? note.text}</p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                      {(note.user?.firstName || note.author?.firstName || note.createdBy?.firstName) && (
+                      {(note.user?.firstName ||
+                        note.author?.firstName ||
+                        note.createdBy?.firstName) && (
                         <span className="font-medium">
-                          {note.user?.firstName ?? note.author?.firstName ?? note.createdBy?.firstName}
-                          {' '}
-                          {note.user?.lastName ?? note.author?.lastName ?? note.createdBy?.lastName ?? ''}
+                          {note.user?.firstName ??
+                            note.author?.firstName ??
+                            note.createdBy?.firstName}{' '}
+                          {note.user?.lastName ??
+                            note.author?.lastName ??
+                            note.createdBy?.lastName ??
+                            ''}
                         </span>
                       )}
-                      {note.createdAt && (
-                        <span>{fmtDateTime(note.createdAt, locale)}</span>
-                      )}
+                      {note.createdAt && <span>{fmtDateTime(note.createdAt, locale)}</span>}
                     </div>
                   </div>
                 ))}
@@ -337,7 +360,9 @@ export default function ConversationDetailPage({
               <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 <MessageSquare className="h-4 w-4" />
                 {t('messageThread')}
-                <span className="text-xs font-normal">({conversation.messageTotal ?? messages.length})</span>
+                <span className="text-xs font-normal">
+                  ({conversation.messageTotal ?? messages.length})
+                </span>
               </h3>
             </div>
 
@@ -365,7 +390,9 @@ export default function ConversationDetailPage({
                       <div className="flex items-center gap-1.5">
                         {role === 'CUSTOMER' && <User className="h-3 w-3 text-muted-foreground" />}
                         {role === 'AI_AGENT' && <Bot className="h-3 w-3 text-blue-500" />}
-                        {role === 'HUMAN_AGENT' && <Headphones className="h-3 w-3 text-purple-500" />}
+                        {role === 'HUMAN_AGENT' && (
+                          <Headphones className="h-3 w-3 text-purple-500" />
+                        )}
                         {role === 'SYSTEM' && <Info className="h-3 w-3 text-amber-500" />}
                         <span
                           className={cn(

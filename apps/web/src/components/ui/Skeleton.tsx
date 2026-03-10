@@ -11,12 +11,7 @@ export interface SkeletonProps {
   className?: string;
 }
 
-export function Skeleton({
-  variant = 'text',
-  width,
-  height,
-  className,
-}: SkeletonProps) {
+export function Skeleton({ variant = 'text', width, height, className }: SkeletonProps) {
   const variantStyles = {
     text: 'h-4 w-full rounded',
     circle: 'h-10 w-10 rounded-full',
@@ -26,11 +21,7 @@ export function Skeleton({
 
   return (
     <div
-      className={cn(
-        'animate-pulse bg-muted',
-        variantStyles[variant],
-        className,
-      )}
+      className={cn('animate-pulse bg-muted', variantStyles[variant], className)}
       style={{
         ...(width != null ? { width: typeof width === 'number' ? `${width}px` : width } : {}),
         ...(height != null ? { height: typeof height === 'number' ? `${height}px` : height } : {}),
@@ -50,11 +41,7 @@ export function SkeletonText({ lines = 3, className }: SkeletonTextProps) {
   return (
     <div className={cn('space-y-2', className)}>
       {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton
-          key={i}
-          variant="text"
-          className={i === lines - 1 ? 'w-3/4' : undefined}
-        />
+        <Skeleton key={i} variant="text" className={i === lines - 1 ? 'w-3/4' : undefined} />
       ))}
     </div>
   );
@@ -68,12 +55,7 @@ export interface SkeletonCardProps {
 
 export function SkeletonCard({ className }: SkeletonCardProps) {
   return (
-    <div
-      className={cn(
-        'rounded-xl border bg-card p-6 space-y-4',
-        className,
-      )}
-    >
+    <div className={cn('rounded-xl border bg-card p-6 space-y-4', className)}>
       <div className="flex items-center gap-3">
         <Skeleton variant="circle" />
         <div className="flex-1 space-y-2">

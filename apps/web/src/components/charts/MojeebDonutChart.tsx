@@ -1,14 +1,7 @@
 'use client';
 
 import { Loader2, PieChart as PieChartIcon, AlertCircle } from 'lucide-react';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface DataPoint {
   name: string;
@@ -107,9 +100,7 @@ export function MojeebDonutChart({
             innerRadius={innerRadius}
             outerRadius={outerRadius}
             dataKey="value"
-            label={({ name, percent }) =>
-              `${name} ${(percent * 100).toFixed(0)}%`
-            }
+            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
             labelLine={true}
           >
             {data.map((entry, index) => (

@@ -48,15 +48,11 @@ export default function AboutPage() {
           <div className="grid gap-8 md:grid-cols-2">
             <div className="rounded-2xl border bg-card p-8 sm:p-10">
               <h2 className="mb-4 text-2xl font-bold">{t('mission.title')}</h2>
-              <p className="leading-relaxed text-muted-foreground">
-                {t('mission.content')}
-              </p>
+              <p className="leading-relaxed text-muted-foreground">{t('mission.content')}</p>
             </div>
             <div className="rounded-2xl border bg-card p-8 sm:p-10">
               <h2 className="mb-4 text-2xl font-bold">{t('vision.title')}</h2>
-              <p className="leading-relaxed text-muted-foreground">
-                {t('vision.content')}
-              </p>
+              <p className="leading-relaxed text-muted-foreground">{t('vision.content')}</p>
             </div>
           </div>
         </div>
@@ -68,7 +64,11 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
             {[
               { value: cms?.statsCustomers || '500+', label: t('stats.customers'), icon: Users },
-              { value: cms?.statsMessages || '10M+', label: t('stats.messages'), icon: MessageSquare },
+              {
+                value: cms?.statsMessages || '10M+',
+                label: t('stats.messages'),
+                icon: MessageSquare,
+              },
               { value: cms?.statsLanguages || '20+', label: t('stats.languages'), icon: Globe },
               { value: cms?.statsUptime || '99.9%', label: t('stats.uptime'), icon: Clock },
             ].map((stat) => (
@@ -88,26 +88,17 @@ export default function AboutPage() {
       {/* Values */}
       <section className="border-t bg-muted/30 py-16 sm:py-24">
         <div className="container max-w-5xl">
-          <h2 className="mb-12 text-center text-3xl font-bold sm:text-4xl">
-            {t('values.title')}
-          </h2>
+          <h2 className="mb-12 text-center text-3xl font-bold sm:text-4xl">{t('values.title')}</h2>
           <div className="grid gap-6 sm:grid-cols-2">
-            {(
-              ['innovation', 'privacy', 'simplicity', 'support'] as const
-            ).map((value) => {
+            {(['innovation', 'privacy', 'simplicity', 'support'] as const).map((value) => {
               const Icon = valueIcons[value];
               return (
-                <div
-                  key={value}
-                  className="flex gap-4 rounded-2xl border bg-card p-6 sm:p-8"
-                >
+                <div key={value} className="flex gap-4 rounded-2xl border bg-card p-6 sm:p-8">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                     <Icon className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="mb-2 text-lg font-semibold">
-                      {t(`values.${value}.title`)}
-                    </h3>
+                    <h3 className="mb-2 text-lg font-semibold">{t(`values.${value}.title`)}</h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
                       {t(`values.${value}.description`)}
                     </p>

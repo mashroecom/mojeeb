@@ -54,7 +54,9 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
 
   // Schedule state
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
-  const [scheduleFrequency, setScheduleFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
+  const [scheduleFrequency, setScheduleFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>(
+    'WEEKLY',
+  );
 
   // Add document form state
   const [showAddDocForm, setShowAddDocForm] = useState(false);
@@ -174,10 +176,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
   }
 
   function handleDeleteDocument(docId: string) {
-    deleteDocMutation.mutate(
-      { kbId, docId },
-      { onSuccess: () => setConfirmDeleteDocId(null) },
-    );
+    deleteDocMutation.mutate({ kbId, docId }, { onSuccess: () => setConfirmDeleteDocId(null) });
   }
 
   function handleScheduleToggle(enabled: boolean) {
@@ -259,7 +258,10 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
         </button>
 
         {isEditing ? (
-          <form onSubmit={handleSaveEdit} className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+          <form
+            onSubmit={handleSaveEdit}
+            className="rounded-xl border bg-card p-4 shadow-sm space-y-3"
+          >
             <div>
               <label htmlFor="edit-kb-name" className="block text-sm font-medium mb-1">
                 {t('name')} <span className="text-red-500">*</span>
@@ -322,9 +324,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
                   <Pencil className="h-4 w-4" />
                 </button>
               </div>
-              {kb.description && (
-                <p className="text-muted-foreground mt-1">{kb.description}</p>
-              )}
+              {kb.description && <p className="text-muted-foreground mt-1">{kb.description}</p>}
             </div>
             {!showAddDocForm && (
               <button
@@ -360,7 +360,9 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
               <span
                 className={cn(
                   'inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm',
-                  scheduleEnabled ? 'translate-x-6 rtl:-translate-x-6' : 'translate-x-1 rtl:translate-x-6',
+                  scheduleEnabled
+                    ? 'translate-x-6 rtl:-translate-x-6'
+                    : 'translate-x-1 rtl:translate-x-6',
                 )}
               />
             </button>
@@ -400,13 +402,17 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
                 {schedule.lastCrawledAt && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">{t('lastCrawled')}</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      {t('lastCrawled')}
+                    </p>
                     <p className="text-sm">{fmtDate(schedule.lastCrawledAt, locale)}</p>
                   </div>
                 )}
                 {schedule.nextCrawlAt && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">{t('nextScheduledCrawl')}</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      {t('nextScheduledCrawl')}
+                    </p>
                     <p className="text-sm">{fmtDate(schedule.nextCrawlAt, locale)}</p>
                   </div>
                 )}
@@ -423,9 +429,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
         )}
 
         {!scheduleEnabled && (
-          <p className="text-sm text-muted-foreground">
-            {t('enableAutoSyncHint')}
-          </p>
+          <p className="text-sm text-muted-foreground">{t('enableAutoSyncHint')}</p>
         )}
       </div>
 
@@ -433,124 +437,120 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
       {showAddDocForm && docContentType === 'URL' ? (
         <div className="mb-6 rounded-xl border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">Website Crawl Configuration</h2>
-          <CrawlConfigForm
-            kbId={kbId}
-            onSuccess={resetForm}
-            onCancel={resetForm}
-          />
+          <CrawlConfigForm kbId={kbId} onSuccess={resetForm} onCancel={resetForm} />
         </div>
-      ) : showAddDocForm && (
-        <form
-          onSubmit={handleAddDocument}
-          className="mb-6 rounded-xl border bg-card p-6 shadow-sm"
-        >
-          <h2 className="text-lg font-semibold mb-4">{t('addDocument')}</h2>
+      ) : (
+        showAddDocForm && (
+          <form
+            onSubmit={handleAddDocument}
+            className="mb-6 rounded-xl border bg-card p-6 shadow-sm"
+          >
+            <h2 className="text-lg font-semibold mb-4">{t('addDocument')}</h2>
 
-          <div className="space-y-4">
-            {/* Content Type Selector */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t('contentType')}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {(['TEXT', 'FAQ', 'PDF', 'URL'] as const).map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setDocContentType(type)}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors border',
-                      docContentType === type
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background text-muted-foreground hover:bg-muted border-border',
-                    )}
-                  >
-                    {type === 'PDF' && <Upload className="h-3.5 w-3.5" />}
-                    {type === 'URL' && <Globe className="h-3.5 w-3.5" />}
-                    {type === 'TEXT' && <FileText className="h-3.5 w-3.5" />}
-                    {type === 'FAQ' && <FileText className="h-3.5 w-3.5" />}
-                    {t(`contentType${type[0]}${type.slice(1).toLowerCase()}` as any)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Title */}
-            <div>
-              <label htmlFor="doc-title" className="block text-sm font-medium mb-1">
-                {t('documentTitle')} <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="doc-title"
-                type="text"
-                required
-                value={docTitle}
-                onChange={(e) => setDocTitle(e.target.value)}
-                placeholder={t('documentTitlePlaceholder')}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-
-            {/* PDF Upload */}
-            {docContentType === 'PDF' && (
+            <div className="space-y-4">
+              {/* Content Type Selector */}
               <div>
-                <label htmlFor="doc-pdf" className="block text-sm font-medium mb-1">
-                  {t('pdfFile')} <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    id="doc-pdf"
-                    type="file"
-                    accept=".pdf"
-                    onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-sm file:font-medium file:text-primary"
-                  />
+                <label className="block text-sm font-medium mb-2">{t('contentType')}</label>
+                <div className="flex flex-wrap gap-2">
+                  {(['TEXT', 'FAQ', 'PDF', 'URL'] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setDocContentType(type)}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors border',
+                        docContentType === type
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background text-muted-foreground hover:bg-muted border-border',
+                      )}
+                    >
+                      {type === 'PDF' && <Upload className="h-3.5 w-3.5" />}
+                      {type === 'URL' && <Globe className="h-3.5 w-3.5" />}
+                      {type === 'TEXT' && <FileText className="h-3.5 w-3.5" />}
+                      {type === 'FAQ' && <FileText className="h-3.5 w-3.5" />}
+                      {t(`contentType${type[0]}${type.slice(1).toLowerCase()}` as any)}
+                    </button>
+                  ))}
                 </div>
-                {pdfFile && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {pdfFile.name} ({(pdfFile.size / 1024).toFixed(0)} KB)
-                  </p>
-                )}
               </div>
-            )}
 
-            {/* Text Content (TEXT and FAQ only) */}
-            {(docContentType === 'TEXT' || docContentType === 'FAQ') && (
+              {/* Title */}
               <div>
-                <label htmlFor="doc-content" className="block text-sm font-medium mb-1">
-                  {t('documentContent')} <span className="text-red-500">*</span>
+                <label htmlFor="doc-title" className="block text-sm font-medium mb-1">
+                  {t('documentTitle')} <span className="text-red-500">*</span>
                 </label>
-                <textarea
-                  id="doc-content"
+                <input
+                  id="doc-title"
+                  type="text"
                   required
-                  rows={6}
-                  value={docContent}
-                  onChange={(e) => setDocContent(e.target.value)}
-                  placeholder={t('documentContentPlaceholder')}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                  value={docTitle}
+                  onChange={(e) => setDocTitle(e.target.value)}
+                  placeholder={t('documentTitlePlaceholder')}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
-            )}
-          </div>
 
-          <div className="flex items-center gap-3 mt-4">
-            <button
-              type="submit"
-              disabled={addDocMutation.isPending || !docTitle.trim()}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {addDocMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t('addDocument')}
-            </button>
-            <button
-              type="button"
-              onClick={resetForm}
-              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
-            >
-              {tc('cancel')}
-            </button>
-          </div>
-        </form>
+              {/* PDF Upload */}
+              {docContentType === 'PDF' && (
+                <div>
+                  <label htmlFor="doc-pdf" className="block text-sm font-medium mb-1">
+                    {t('pdfFile')} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="doc-pdf"
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-sm file:font-medium file:text-primary"
+                    />
+                  </div>
+                  {pdfFile && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {pdfFile.name} ({(pdfFile.size / 1024).toFixed(0)} KB)
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Text Content (TEXT and FAQ only) */}
+              {(docContentType === 'TEXT' || docContentType === 'FAQ') && (
+                <div>
+                  <label htmlFor="doc-content" className="block text-sm font-medium mb-1">
+                    {t('documentContent')} <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="doc-content"
+                    required
+                    rows={6}
+                    value={docContent}
+                    onChange={(e) => setDocContent(e.target.value)}
+                    placeholder={t('documentContentPlaceholder')}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 mt-4">
+              <button
+                type="submit"
+                disabled={addDocMutation.isPending || !docTitle.trim()}
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {addDocMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                {t('addDocument')}
+              </button>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+              >
+                {tc('cancel')}
+              </button>
+            </div>
+          </form>
+        )
       )}
 
       {/* Empty state */}
@@ -601,19 +601,26 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <ContentTypeBadge type={doc.contentType} label={contentTypeLabels[doc.contentType] || doc.contentType} />
+                          <ContentTypeBadge
+                            type={doc.contentType}
+                            label={contentTypeLabels[doc.contentType] || doc.contentType}
+                          />
                         </td>
                         <td className="px-4 py-3">
-                          <StatusBadge status={doc.embeddingStatus} label={statusLabels[doc.embeddingStatus] || doc.embeddingStatus} />
+                          <StatusBadge
+                            status={doc.embeddingStatus}
+                            label={statusLabels[doc.embeddingStatus] || doc.embeddingStatus}
+                          />
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {doc.chunkCount ?? 0}
-                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{doc.chunkCount ?? 0}</td>
                         <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {fmtDate(doc.createdAt, locale)}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                          <div
+                            className="flex items-center justify-end gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {confirmDeleteDocId === doc.id ? (
                               <div className="flex items-center gap-2">
                                 <button
@@ -651,7 +658,9 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
                             <div className="bg-muted/10 px-4 py-4 border-t">
                               {doc.sourceUrl && (
                                 <div className="mb-3">
-                                  <span className="text-xs font-medium text-muted-foreground">{t('source')}:</span>{' '}
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    {t('source')}:
+                                  </span>{' '}
                                   <a
                                     href={doc.sourceUrl}
                                     target="_blank"

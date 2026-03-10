@@ -36,9 +36,7 @@ export function HeroSection() {
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            {title}
-          </h1>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">{title}</h1>
 
           {/* Subtitle */}
           <p className="mt-6 text-lg text-muted-foreground sm:text-xl leading-relaxed">
@@ -65,16 +63,18 @@ export function HeroSection() {
 
           {/* No credit card badge */}
           {showNoCreditCard && (
-            <p className="mt-4 text-xs text-muted-foreground">
-              {t('noCreditCard')}
-            </p>
+            <p className="mt-4 text-xs text-muted-foreground">{t('noCreditCard')}</p>
           )}
 
           {/* Hero image or chat demo preview */}
           {cms?.heroImage ? (
             <div className="mt-16 rounded-xl border bg-card p-2 sm:p-4 shadow-2xl">
               <img
-                src={cms.heroImage.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${cms.heroImage}` : cms.heroImage}
+                src={
+                  cms.heroImage.startsWith('/')
+                    ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${cms.heroImage}`
+                    : cms.heroImage
+                }
                 alt="Hero"
                 className="rounded-lg w-full object-cover"
               />
@@ -99,9 +99,18 @@ export function HeroSection() {
                   <div className="flex justify-start">
                     <div className="rounded-2xl rounded-ss-none bg-muted px-4 py-3">
                       <div className="flex gap-1">
-                        <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div
+                          className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce"
+                          style={{ animationDelay: '0ms' }}
+                        />
+                        <div
+                          className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce"
+                          style={{ animationDelay: '150ms' }}
+                        />
+                        <div
+                          className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce"
+                          style={{ animationDelay: '300ms' }}
+                        />
                       </div>
                     </div>
                   </div>

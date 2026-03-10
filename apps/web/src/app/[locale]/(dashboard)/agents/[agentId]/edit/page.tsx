@@ -129,9 +129,27 @@ export default function EditAgentPage() {
       sentimentEscalation !== (agent.sentimentEscalation ?? false) ||
       escalationMessageCount !== (agent.escalationMessageCount ?? 5) ||
       JSON.stringify(escalationKeywords) !== JSON.stringify(agent.escalationKeywords ?? []) ||
-      JSON.stringify(dataCollectionConfig) !== JSON.stringify(agent.dataCollectionConfig ?? { requiredFields: [], collectionStrategy: 'natural', customFields: [], confirmationEnabled: true })
+      JSON.stringify(dataCollectionConfig) !==
+        JSON.stringify(
+          agent.dataCollectionConfig ?? {
+            requiredFields: [],
+            collectionStrategy: 'natural',
+            customFields: [],
+            confirmationEnabled: true,
+          },
+        )
     );
-  }, [agent, form.values, tone, temperature, responseLength, sentimentEscalation, escalationMessageCount, escalationKeywords, dataCollectionConfig]);
+  }, [
+    agent,
+    form.values,
+    tone,
+    temperature,
+    responseLength,
+    sentimentEscalation,
+    escalationMessageCount,
+    escalationKeywords,
+    dataCollectionConfig,
+  ]);
 
   // Warn on browser navigation if unsaved changes
   useEffect(() => {
@@ -204,12 +222,8 @@ export default function EditAgentPage() {
     );
   };
 
-  const template = agent?.templateType
-    ? getTemplateById(agent.templateType)
-    : null;
-  const TemplateIcon = template
-    ? ICON_MAP[template.iconName] || Bot
-    : Bot;
+  const template = agent?.templateType ? getTemplateById(agent.templateType) : null;
+  const TemplateIcon = template ? ICON_MAP[template.iconName] || Bot : Bot;
 
   return (
     <div>
@@ -299,22 +313,15 @@ export default function EditAgentPage() {
                     <Bot className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold">
-                      {t('agentProfile')}
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                      {t('agentProfileHint')}
-                    </p>
+                    <h2 className="text-sm font-semibold">{t('agentProfile')}</h2>
+                    <p className="text-xs text-muted-foreground">{t('agentProfileHint')}</p>
                   </div>
                 </div>
 
                 <div className="space-y-5 p-6">
                   {/* Agent Name */}
                   <div>
-                    <label
-                      htmlFor="name"
-                      className="mb-1.5 block text-sm font-medium"
-                    >
+                    <label htmlFor="name" className="mb-1.5 block text-sm font-medium">
                       {t('name')} <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -326,7 +333,8 @@ export default function EditAgentPage() {
                       placeholder={t('namePlaceholder')}
                       className={cn(
                         inputClass,
-                        form.errors.name && 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        form.errors.name &&
+                          'border-red-500 focus:border-red-500 focus:ring-red-200',
                       )}
                     />
                     {form.errors.name && (
@@ -339,10 +347,7 @@ export default function EditAgentPage() {
 
                   {/* Response Language */}
                   <div>
-                    <label
-                      htmlFor="language"
-                      className="mb-1.5 block text-sm font-medium"
-                    >
+                    <label htmlFor="language" className="mb-1.5 block text-sm font-medium">
                       {t('responseLanguage')}
                     </label>
                     <select
@@ -369,17 +374,12 @@ export default function EditAgentPage() {
                     <Lightbulb className="h-4 w-4 text-amber-500" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold">
-                      {t('personalityTitle')}
-                    </h2>
+                    <h2 className="text-sm font-semibold">{t('personalityTitle')}</h2>
                   </div>
                 </div>
 
                 <div className="p-6">
-                  <label
-                    htmlFor="systemPrompt"
-                    className="mb-1.5 block text-sm font-medium"
-                  >
+                  <label htmlFor="systemPrompt" className="mb-1.5 block text-sm font-medium">
                     {t('personalityLabel')}
                   </label>
                   <textarea
@@ -392,7 +392,8 @@ export default function EditAgentPage() {
                     className={cn(
                       inputClass,
                       'resize-y',
-                      form.errors.systemPrompt && 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                      form.errors.systemPrompt &&
+                        'border-red-500 focus:border-red-500 focus:ring-red-200',
                     )}
                   />
                   {form.errors.systemPrompt && (
@@ -415,9 +416,7 @@ export default function EditAgentPage() {
                     <Settings className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold">
-                      {t('settingsTitle')}
-                    </h2>
+                    <h2 className="text-sm font-semibold">{t('settingsTitle')}</h2>
                   </div>
                 </div>
 
@@ -425,12 +424,8 @@ export default function EditAgentPage() {
                   {/* Agent Status */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">
-                        {t('agentStatus')}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t('agentStatusHint')}
-                      </p>
+                      <p className="text-sm font-medium">{t('agentStatus')}</p>
+                      <p className="text-xs text-muted-foreground">{t('agentStatusHint')}</p>
                     </div>
                     <button
                       type="button"
@@ -445,7 +440,9 @@ export default function EditAgentPage() {
                       <span
                         className={cn(
                           'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
-                          form.values.isActive ? 'ltr:translate-x-5 rtl:-translate-x-5' : 'translate-x-0',
+                          form.values.isActive
+                            ? 'ltr:translate-x-5 rtl:-translate-x-5'
+                            : 'translate-x-0',
                         )}
                       />
                     </button>
@@ -456,19 +453,18 @@ export default function EditAgentPage() {
                   {/* Smart Lead Capture */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">
-                        {t('smartLeadCapture')}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t('smartLeadCaptureHint')}
-                      </p>
+                      <p className="text-sm font-medium">{t('smartLeadCapture')}</p>
+                      <p className="text-xs text-muted-foreground">{t('smartLeadCaptureHint')}</p>
                     </div>
                     <button
                       type="button"
                       role="switch"
                       aria-checked={form.values.enableLeadExtraction ?? false}
                       onClick={() =>
-                        form.setFieldValue('enableLeadExtraction', !form.values.enableLeadExtraction)
+                        form.setFieldValue(
+                          'enableLeadExtraction',
+                          !form.values.enableLeadExtraction,
+                        )
                       }
                       className={cn(
                         'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
@@ -498,9 +494,7 @@ export default function EditAgentPage() {
                     </span>
                   )}
                   {updateAgent.isError && (
-                    <span className="text-sm text-red-600">
-                      {t('somethingWentWrong')}
-                    </span>
+                    <span className="text-sm text-red-600">{t('somethingWentWrong')}</span>
                   )}
                 </div>
 
@@ -575,9 +569,7 @@ export default function EditAgentPage() {
                   </span>
                 )}
                 {updateAgent.isError && (
-                  <span className="text-sm text-red-600">
-                    {t('somethingWentWrong')}
-                  </span>
+                  <span className="text-sm text-red-600">{t('somethingWentWrong')}</span>
                 )}
               </div>
               <div className="flex items-center gap-3">
@@ -609,14 +601,10 @@ export default function EditAgentPage() {
           )}
 
           {/* ── Knowledge Bases Tab ── */}
-          {activeTab === 'knowledge' && (
-            <KnowledgeBaseSection agentId={agentId} />
-          )}
+          {activeTab === 'knowledge' && <KnowledgeBaseSection agentId={agentId} />}
 
           {/* ── Channels Tab ── */}
-          {activeTab === 'channels' && (
-            <ChannelsSection agentId={agentId} />
-          )}
+          {activeTab === 'channels' && <ChannelsSection agentId={agentId} />}
 
           {/* ── Test Tab ── */}
           {activeTab === 'test' && <TestAgentSection agentId={agentId} />}

@@ -45,16 +45,18 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
   logger.error({ err }, 'Unhandled error');
 
   // Fire-and-forget error logging to DB
-  errorLogService.log({
-    level: 'ERROR',
-    message: err.message,
-    stack: err.stack,
-    source: 'api',
-    path: req.path,
-    method: req.method,
-    userId: (req as any).user?.userId,
-    ipAddress: req.ip,
-  }).catch(() => {});
+  errorLogService
+    .log({
+      level: 'ERROR',
+      message: err.message,
+      stack: err.stack,
+      source: 'api',
+      path: req.path,
+      method: req.method,
+      userId: (req as any).user?.userId,
+      ipAddress: req.ip,
+    })
+    .catch(() => {});
 
   res.status(500).json({
     success: false,

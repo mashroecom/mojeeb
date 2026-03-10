@@ -63,12 +63,10 @@ export class TemplateInterpolationService {
    */
   validate(
     template: string,
-    variables: InterpolationVariables
+    variables: InterpolationVariables,
   ): { isValid: boolean; missing: string[] } {
     const requiredVariables = this.extractVariables(template);
-    const missing = requiredVariables.filter(
-      (varName) => variables[varName] === undefined
-    );
+    const missing = requiredVariables.filter((varName) => variables[varName] === undefined);
 
     return {
       isValid: missing.length === 0,
@@ -84,7 +82,7 @@ export class TemplateInterpolationService {
    */
   interpolateBilingual(
     template: { content: string; contentAr?: string },
-    variables: InterpolationVariables
+    variables: InterpolationVariables,
   ): { content: string; contentAr: string } {
     return {
       content: this.interpolate(template.content, variables),

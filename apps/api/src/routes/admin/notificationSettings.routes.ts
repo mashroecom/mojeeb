@@ -8,17 +8,70 @@ import { auditLogService } from '../../services/auditLog.service';
 
 const router: Router = Router();
 
-const NOTIFICATION_DEFAULTS: Record<string, { value: string; label: string; description: string; isSecret: boolean }> = {
-  ENABLE_EMAIL_NOTIFICATIONS: { value: 'true', label: 'Enable Email Notifications', description: 'Master switch for email notifications', isSecret: false },
-  ADMIN_ALERT_EMAIL: { value: '', label: 'Admin Alert Email', description: 'Email address for admin alerts (leave empty for no alerts)', isSecret: false },
-  NOTIFY_NEW_USER_SIGNUP: { value: 'true', label: 'New User Signup', description: 'Send notification when a new user registers', isSecret: false },
-  NOTIFY_NEW_ORG_CREATED: { value: 'true', label: 'New Organization', description: 'Send notification when a new organization is created', isSecret: false },
-  NOTIFY_FAILED_PAYMENT: { value: 'true', label: 'Failed Payment', description: 'Send notification on payment failures', isSecret: false },
-  NOTIFY_SYSTEM_ERRORS: { value: 'true', label: 'System Errors', description: 'Send notification on critical system errors', isSecret: false },
-  NOTIFY_NEW_CONTACT_MESSAGE: { value: 'true', label: 'New Contact Message', description: 'Send notification for new contact form submissions', isSecret: false },
-  NOTIFY_NEW_DEMO_REQUEST: { value: 'true', label: 'New Demo Request', description: 'Send notification for new demo requests', isSecret: false },
-  ERROR_DIGEST_INTERVAL_HOURS: { value: '24', label: 'Error Digest Interval (Hours)', description: 'Send error digest every N hours', isSecret: false },
-  DAILY_SUMMARY_EMAIL: { value: 'false', label: 'Daily Summary Email', description: 'Send daily platform summary email to admin', isSecret: false },
+const NOTIFICATION_DEFAULTS: Record<
+  string,
+  { value: string; label: string; description: string; isSecret: boolean }
+> = {
+  ENABLE_EMAIL_NOTIFICATIONS: {
+    value: 'true',
+    label: 'Enable Email Notifications',
+    description: 'Master switch for email notifications',
+    isSecret: false,
+  },
+  ADMIN_ALERT_EMAIL: {
+    value: '',
+    label: 'Admin Alert Email',
+    description: 'Email address for admin alerts (leave empty for no alerts)',
+    isSecret: false,
+  },
+  NOTIFY_NEW_USER_SIGNUP: {
+    value: 'true',
+    label: 'New User Signup',
+    description: 'Send notification when a new user registers',
+    isSecret: false,
+  },
+  NOTIFY_NEW_ORG_CREATED: {
+    value: 'true',
+    label: 'New Organization',
+    description: 'Send notification when a new organization is created',
+    isSecret: false,
+  },
+  NOTIFY_FAILED_PAYMENT: {
+    value: 'true',
+    label: 'Failed Payment',
+    description: 'Send notification on payment failures',
+    isSecret: false,
+  },
+  NOTIFY_SYSTEM_ERRORS: {
+    value: 'true',
+    label: 'System Errors',
+    description: 'Send notification on critical system errors',
+    isSecret: false,
+  },
+  NOTIFY_NEW_CONTACT_MESSAGE: {
+    value: 'true',
+    label: 'New Contact Message',
+    description: 'Send notification for new contact form submissions',
+    isSecret: false,
+  },
+  NOTIFY_NEW_DEMO_REQUEST: {
+    value: 'true',
+    label: 'New Demo Request',
+    description: 'Send notification for new demo requests',
+    isSecret: false,
+  },
+  ERROR_DIGEST_INTERVAL_HOURS: {
+    value: '24',
+    label: 'Error Digest Interval (Hours)',
+    description: 'Send error digest every N hours',
+    isSecret: false,
+  },
+  DAILY_SUMMARY_EMAIL: {
+    value: 'false',
+    label: 'Daily Summary Email',
+    description: 'Send daily platform summary email to admin',
+    isSecret: false,
+  },
 };
 
 async function ensureNotificationDefaults() {
@@ -111,7 +164,9 @@ router.post('/test-email', async (req: Request, res: Response, next: NextFunctio
       );
       res.json({ success: true, message: 'Test email sent successfully' });
     } catch (emailErr: any) {
-      res.status(500).json({ success: false, error: `Failed to send test email: ${emailErr.message}` });
+      res
+        .status(500)
+        .json({ success: false, error: `Failed to send test email: ${emailErr.message}` });
     }
   } catch (err) {
     next(err);

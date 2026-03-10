@@ -16,12 +16,7 @@ export default function KnowledgeBasePage() {
   const { data: knowledgeBases, isLoading } = useKnowledgeBases();
 
   if (selectedKbId) {
-    return (
-      <KBDetailView
-        kbId={selectedKbId}
-        onBack={() => setSelectedKbId(null)}
-      />
-    );
+    return <KBDetailView kbId={selectedKbId} onBack={() => setSelectedKbId(null)} />;
   }
 
   return (

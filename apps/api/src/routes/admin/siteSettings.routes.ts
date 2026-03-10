@@ -22,7 +22,14 @@ const upload = multer({
   storage,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
   fileFilter: (_req, file, cb) => {
-    const allowed = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/x-icon', 'image/vnd.microsoft.icon'];
+    const allowed = [
+      'image/png',
+      'image/jpeg',
+      'image/svg+xml',
+      'image/webp',
+      'image/x-icon',
+      'image/vnd.microsoft.icon',
+    ];
     cb(null, allowed.includes(file.mimetype));
   },
 });
@@ -31,8 +38,14 @@ const updateSchema = z.object({
   siteName: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
   keywords: z.string().max(500).optional(),
-  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
+  secondaryColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
   twitterUrl: z.string().url().nullable().optional(),
   linkedinUrl: z.string().url().nullable().optional(),
   githubUrl: z.string().url().nullable().optional(),
@@ -52,7 +65,10 @@ const updateSchema = z.object({
   supportChatEnabled: z.boolean().optional(),
   supportChatChannelId: z.string().max(100).nullable().optional(),
   supportChatPosition: z.enum(['left', 'right']).optional(),
-  supportChatColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  supportChatColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
   supportChatWelcome: z.string().max(500).nullable().optional(),
   supportChatWelcomeAr: z.string().max(500).nullable().optional(),
 });
@@ -108,73 +124,87 @@ router.patch(
       // Clear maintenance cache so changes take effect immediately
       clearMaintenanceCache();
 
-      auditLogService.log({
-        userId: req.user!.userId,
-        action: 'SITE_SETTINGS_UPDATED',
-        targetType: 'SiteSettings',
-        targetId: 'singleton',
-        metadata: req.body,
-      }).catch(() => {});
+      auditLogService
+        .log({
+          userId: req.user!.userId,
+          action: 'SITE_SETTINGS_UPDATED',
+          targetType: 'SiteSettings',
+          targetId: 'singleton',
+          metadata: req.body,
+        })
+        .catch(() => {});
 
       res.json({ success: true, data: settings });
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /logo - Upload logo
-router.post('/logo', upload.single('logo'), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, error: 'No file uploaded' });
+router.post(
+  '/logo',
+  upload.single('logo'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No file uploaded' });
+      }
+      const logoUrl = `/uploads/${req.file.filename}`;
+      const settings = await prisma.siteSettings.upsert({
+        where: { id: 'singleton' },
+        update: { logoUrl },
+        create: { id: 'singleton', logoUrl },
+      });
+      res.json({ success: true, data: settings });
+    } catch (err) {
+      next(err);
     }
-    const logoUrl = `/uploads/${req.file.filename}`;
-    const settings = await prisma.siteSettings.upsert({
-      where: { id: 'singleton' },
-      update: { logoUrl },
-      create: { id: 'singleton', logoUrl },
-    });
-    res.json({ success: true, data: settings });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // POST /favicon - Upload favicon
-router.post('/favicon', upload.single('favicon'), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, error: 'No file uploaded' });
+router.post(
+  '/favicon',
+  upload.single('favicon'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No file uploaded' });
+      }
+      const faviconUrl = `/uploads/${req.file.filename}`;
+      const settings = await prisma.siteSettings.upsert({
+        where: { id: 'singleton' },
+        update: { faviconUrl },
+        create: { id: 'singleton', faviconUrl },
+      });
+      res.json({ success: true, data: settings });
+    } catch (err) {
+      next(err);
     }
-    const faviconUrl = `/uploads/${req.file.filename}`;
-    const settings = await prisma.siteSettings.upsert({
-      where: { id: 'singleton' },
-      update: { faviconUrl },
-      create: { id: 'singleton', faviconUrl },
-    });
-    res.json({ success: true, data: settings });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // POST /og-image - Upload OG image
-router.post('/og-image', upload.single('ogImage'), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, error: 'No file uploaded' });
+router.post(
+  '/og-image',
+  upload.single('ogImage'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No file uploaded' });
+      }
+      const ogImageUrl = `/uploads/${req.file.filename}`;
+      const settings = await prisma.siteSettings.upsert({
+        where: { id: 'singleton' },
+        update: { ogImageUrl },
+        create: { id: 'singleton', ogImageUrl },
+      });
+      res.json({ success: true, data: settings });
+    } catch (err) {
+      next(err);
     }
-    const ogImageUrl = `/uploads/${req.file.filename}`;
-    const settings = await prisma.siteSettings.upsert({
-      where: { id: 'singleton' },
-      update: { ogImageUrl },
-      create: { id: 'singleton', ogImageUrl },
-    });
-    res.json({ success: true, data: settings });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 export default router;

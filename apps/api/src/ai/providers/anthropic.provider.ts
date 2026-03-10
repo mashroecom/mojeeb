@@ -79,15 +79,17 @@ export class AnthropicProvider extends AIProvider {
               return { type: 'text' as const, text: part.text };
             }
             // Extract base64 data from data URL
-            const base64Match = part.imageUrl.match(
-              /^data:(image\/[^;]+);base64,(.+)$/
-            );
+            const base64Match = part.imageUrl.match(/^data:(image\/[^;]+);base64,(.+)$/);
             if (base64Match && base64Match[1] && base64Match[2]) {
               return {
                 type: 'image' as const,
                 source: {
                   type: 'base64' as const,
-                  media_type: base64Match[1] as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+                  media_type: base64Match[1] as
+                    | 'image/jpeg'
+                    | 'image/png'
+                    | 'image/gif'
+                    | 'image/webp',
                   data: base64Match[2],
                 },
               };

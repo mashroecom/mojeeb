@@ -49,9 +49,12 @@ router.get('/stats', async (_req: Request, res: Response, next: NextFunction) =>
 
     const totalAIMessages = models.reduce((s, m) => s + m.totalMessages, 0);
     const totalCost = models.reduce((s, m) => s + m.estimatedCost, 0);
-    const avgResponseTime = totalAIMessages > 0
-      ? Math.round(models.reduce((s, m) => s + m.avgLatency * m.totalMessages, 0) / totalAIMessages)
-      : 0;
+    const avgResponseTime =
+      totalAIMessages > 0
+        ? Math.round(
+            models.reduce((s, m) => s + m.avgLatency * m.totalMessages, 0) / totalAIMessages,
+          )
+        : 0;
 
     res.json({
       success: true,
@@ -70,7 +73,9 @@ router.get('/stats', async (_req: Request, res: Response, next: NextFunction) =>
 // GET /usage - Daily model usage for last 30 days
 router.get('/usage', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const usage = await prisma.$queryRaw<{ date: string; model: string; provider: string; count: number; totalTokens: number }[]>`
+    const usage = await prisma.$queryRaw<
+      { date: string; model: string; provider: string; count: number; totalTokens: number }[]
+    >`
       SELECT DATE("createdAt") as date,
              COALESCE("aiModel", 'unknown') as model,
              COALESCE("aiProvider"::text, 'unknown') as provider,

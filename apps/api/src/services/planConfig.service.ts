@@ -92,13 +92,14 @@ export class PlanConfigService {
     });
   }
 
-
   /**
    * Given a payment amount, return the matching SubscriptionPlan and billing cycle.
    * Loads all plan configs from cache, finds the plan whose price matches.
    * Falls back to hardcoded price comparison.
    */
-  async getPlanByPrice(amount: number): Promise<{ plan: SubscriptionPlan; billingCycle: 'monthly' | 'yearly' } | null> {
+  async getPlanByPrice(
+    amount: number,
+  ): Promise<{ plan: SubscriptionPlan; billingCycle: 'monthly' | 'yearly' } | null> {
     try {
       const plans = await cache.getOrSet(ALL_PLANS_KEY, CACHE_TTL, async () => {
         return prisma.planConfig.findMany({
@@ -107,10 +108,12 @@ export class PlanConfigService {
       });
 
       const monthlyMatch = plans.find((p) => p.monthlyPrice === amount);
-      if (monthlyMatch) return { plan: monthlyMatch.plan as SubscriptionPlan, billingCycle: 'monthly' };
+      if (monthlyMatch)
+        return { plan: monthlyMatch.plan as SubscriptionPlan, billingCycle: 'monthly' };
 
       const yearlyMatch = plans.find((p) => p.yearlyPrice === amount);
-      if (yearlyMatch) return { plan: yearlyMatch.plan as SubscriptionPlan, billingCycle: 'yearly' };
+      if (yearlyMatch)
+        return { plan: yearlyMatch.plan as SubscriptionPlan, billingCycle: 'yearly' };
     } catch (err) {
       logger.warn({ err, amount }, 'Failed to match plan by price from DB, using fallback');
     }

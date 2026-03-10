@@ -50,13 +50,20 @@ function formatCurrency(n: number, locale?: string): string {
   return `$${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function formatValue(n: number, format?: 'number' | 'currency' | 'percentage', locale?: string): string {
+function formatValue(
+  n: number,
+  format?: 'number' | 'currency' | 'percentage',
+  locale?: string,
+): string {
   if (format === 'currency') return formatCurrency(n, locale);
   if (format === 'percentage') return `${n.toFixed(1)}%`;
   return formatCompact(n, locale);
 }
 
-function timeAgo(dateStr: string, t: (key: string, values?: Record<string, number>) => string): string {
+function timeAgo(
+  dateStr: string,
+  t: (key: string, values?: Record<string, number>) => string,
+): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -74,14 +81,46 @@ function timeAgo(dateStr: string, t: (key: string, values?: Record<string, numbe
 // ---------------------------------------------------------------------------
 
 const STAT_ICONS: Record<string, { icon: typeof Users; color: string; bg: string }> = {
-  totalUsers: { icon: Users, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-  activeSubscriptions: { icon: CreditCard, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30' },
-  monthlyRevenue: { icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-  totalConversations: { icon: MessageSquare, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
-  totalTokensUsed: { icon: Zap, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-  totalCost: { icon: DollarSign, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
-  activeUsersToday: { icon: Activity, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
-  totalMessages: { icon: Mail, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+  totalUsers: {
+    icon: Users,
+    color: 'text-blue-600 dark:text-blue-400',
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+  },
+  activeSubscriptions: {
+    icon: CreditCard,
+    color: 'text-orange-600 dark:text-orange-400',
+    bg: 'bg-orange-100 dark:bg-orange-900/30',
+  },
+  monthlyRevenue: {
+    icon: DollarSign,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+  },
+  totalConversations: {
+    icon: MessageSquare,
+    color: 'text-green-600 dark:text-green-400',
+    bg: 'bg-green-100 dark:bg-green-900/30',
+  },
+  totalTokensUsed: {
+    icon: Zap,
+    color: 'text-purple-600 dark:text-purple-400',
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
+  },
+  totalCost: {
+    icon: DollarSign,
+    color: 'text-red-600 dark:text-red-400',
+    bg: 'bg-red-100 dark:bg-red-900/30',
+  },
+  activeUsersToday: {
+    icon: Activity,
+    color: 'text-indigo-600 dark:text-indigo-400',
+    bg: 'bg-indigo-100 dark:bg-indigo-900/30',
+  },
+  totalMessages: {
+    icon: Mail,
+    color: 'text-cyan-600 dark:text-cyan-400',
+    bg: 'bg-cyan-100 dark:bg-cyan-900/30',
+  },
 };
 
 const STAT_FORMATS: Record<string, 'number' | 'currency' | 'percentage'> = {
@@ -101,12 +140,30 @@ const PLAN_DONUT_COLORS: Record<string, string> = {
 const EVENT_TYPE_CONFIG: Record<string, { bg: string; color: string }> = {
   user_joined: { bg: 'bg-blue-100 dark:bg-blue-900/30', color: 'text-blue-600 dark:text-blue-400' },
   user_signup: { bg: 'bg-blue-100 dark:bg-blue-900/30', color: 'text-blue-600 dark:text-blue-400' },
-  org_created: { bg: 'bg-purple-100 dark:bg-purple-900/30', color: 'text-purple-600 dark:text-purple-400' },
-  conversation_created: { bg: 'bg-green-100 dark:bg-green-900/30', color: 'text-green-600 dark:text-green-400' },
-  subscription_created: { bg: 'bg-orange-100 dark:bg-orange-900/30', color: 'text-orange-600 dark:text-orange-400' },
-  payment_received: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', color: 'text-emerald-600 dark:text-emerald-400' },
-  agent_created: { bg: 'bg-indigo-100 dark:bg-indigo-900/30', color: 'text-indigo-600 dark:text-indigo-400' },
-  message_sent: { bg: 'bg-cyan-100 dark:bg-cyan-900/30', color: 'text-cyan-600 dark:text-cyan-400' },
+  org_created: {
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
+    color: 'text-purple-600 dark:text-purple-400',
+  },
+  conversation_created: {
+    bg: 'bg-green-100 dark:bg-green-900/30',
+    color: 'text-green-600 dark:text-green-400',
+  },
+  subscription_created: {
+    bg: 'bg-orange-100 dark:bg-orange-900/30',
+    color: 'text-orange-600 dark:text-orange-400',
+  },
+  payment_received: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    color: 'text-emerald-600 dark:text-emerald-400',
+  },
+  agent_created: {
+    bg: 'bg-indigo-100 dark:bg-indigo-900/30',
+    color: 'text-indigo-600 dark:text-indigo-400',
+  },
+  message_sent: {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/30',
+    color: 'text-cyan-600 dark:text-cyan-400',
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -203,10 +260,12 @@ function StatCard({
           <p className="text-2xl font-bold mt-1 tabular-nums">
             {formatValue(value, format, locale)}
           </p>
-          <div className={cn(
-            'flex items-center gap-1 mt-1 text-xs font-medium',
-            isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400',
-          )}>
+          <div
+            className={cn(
+              'flex items-center gap-1 mt-1 text-xs font-medium',
+              isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400',
+            )}
+          >
             <svg
               className={cn('h-3.5 w-3.5', !isPositive && 'rotate-180')}
               fill="none"
@@ -254,11 +313,7 @@ export default function AdminDashboardPage() {
   const locale = useLocale();
 
   // Data hooks
-  const {
-    data: overview,
-    isLoading: loadingOverview,
-    dataUpdatedAt,
-  } = useAdminDashboardOverview();
+  const { data: overview, isLoading: loadingOverview, dataUpdatedAt } = useAdminDashboardOverview();
 
   const { data: signupsData, isLoading: loadingSignups } = useAdminSignupsOverTime();
   const { data: revenueData, isLoading: loadingRevenue } = useAdminRevenueOverTime();
@@ -403,9 +458,7 @@ export default function AdminDashboardPage() {
             <MojeebLineChart
               data={signupsData ?? []}
               xKey="date"
-              lines={[
-                { key: 'count', color: '#3b82f6', name: t('dashboard.signups') },
-              ]}
+              lines={[{ key: 'count', color: '#3b82f6', name: t('dashboard.signups') }]}
               height={280}
               formatX={(val) => fmtDateShort(val, locale)}
               noDataMessage={t('dashboard.noData')}
@@ -425,9 +478,7 @@ export default function AdminDashboardPage() {
             <MojeebLineChart
               data={revenueData ?? []}
               xKey="date"
-              lines={[
-                { key: 'revenue', color: '#10b981', name: t('dashboard.revenueDollar') },
-              ]}
+              lines={[{ key: 'revenue', color: '#10b981', name: t('dashboard.revenueDollar') }]}
               height={280}
               formatX={(val) => fmtDateShort(val, locale)}
               formatY={(val) => `$${formatCompact(val, locale)}`}
@@ -473,8 +524,18 @@ export default function AdminDashboardPage() {
               data={tokenUsageData ?? []}
               xKey="date"
               bars={[
-                { key: 'inputTokens', color: '#6366f1', name: t('dashboard.inputTokens'), stackId: 'stack' },
-                { key: 'outputTokens', color: '#a78bfa', name: t('dashboard.outputTokens'), stackId: 'stack' },
+                {
+                  key: 'inputTokens',
+                  color: '#6366f1',
+                  name: t('dashboard.inputTokens'),
+                  stackId: 'stack',
+                },
+                {
+                  key: 'outputTokens',
+                  color: '#a78bfa',
+                  name: t('dashboard.outputTokens'),
+                  stackId: 'stack',
+                },
               ]}
               height={280}
               formatX={(val) => fmtDateShort(val, locale)}
@@ -543,10 +604,12 @@ export default function AdminDashboardPage() {
                         </div>
                       </td>
                       <td className="px-3 py-2.5 hidden sm:table-cell">
-                        <span className={cn(
-                          'inline-flex rounded-full px-2 py-0.5 text-xs font-semibold',
-                          PLAN_COLORS[user.plan] ?? PLAN_COLORS.FREE,
-                        )}>
+                        <span
+                          className={cn(
+                            'inline-flex rounded-full px-2 py-0.5 text-xs font-semibold',
+                            PLAN_COLORS[user.plan] ?? PLAN_COLORS.FREE,
+                          )}
+                        >
                           {t(`plan_${user.plan}`)}
                         </span>
                       </td>
@@ -576,10 +639,7 @@ export default function AdminDashboardPage() {
           {loadingHeatmap ? (
             <div className="h-[260px] w-full rounded bg-muted animate-pulse" />
           ) : (
-            <MojeebHeatmapChart
-              data={heatmapData ?? []}
-              height={260}
-            />
+            <MojeebHeatmapChart data={heatmapData ?? []} height={260} />
           )}
         </div>
       </div>
@@ -613,16 +673,19 @@ export default function AdminDashboardPage() {
           ) : (
             <div className="space-y-1 max-h-[400px] overflow-y-auto">
               {events.map((event, idx) => {
-                const config = EVENT_TYPE_CONFIG[event.type] ?? EVENT_TYPE_CONFIG.conversation_created;
+                const config =
+                  EVENT_TYPE_CONFIG[event.type] ?? EVENT_TYPE_CONFIG.conversation_created;
                 return (
                   <div
                     key={`${event.type}-${idx}`}
                     className="flex items-start gap-3 rounded-lg px-2 py-2.5 hover:bg-muted/50 transition-colors"
                   >
-                    <div className={cn(
-                      'flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0',
-                      config.bg,
-                    )}>
+                    <div
+                      className={cn(
+                        'flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0',
+                        config.bg,
+                      )}
+                    >
                       <span className={cn('text-sm', config.color)}>
                         {event.type === 'user_joined' || event.type === 'user_signup' ? (
                           <UserPlus className="h-4 w-4" />
@@ -640,7 +703,13 @@ export default function AdminDashboardPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{event.description}</p>
                       <p className="text-xs text-muted-foreground capitalize">
-                        {({ signup: t('dashboard.eventType_signup'), error: t('dashboard.eventType_error'), payment: t('dashboard.eventType_payment') } as Record<string, string>)[event.type] || event.type.replace(/_/g, ' ')}
+                        {(
+                          {
+                            signup: t('dashboard.eventType_signup'),
+                            error: t('dashboard.eventType_error'),
+                            payment: t('dashboard.eventType_payment'),
+                          } as Record<string, string>
+                        )[event.type] || event.type.replace(/_/g, ' ')}
                       </p>
                     </div>
                     <span className="text-[10px] text-muted-foreground whitespace-nowrap flex-shrink-0 mt-0.5">

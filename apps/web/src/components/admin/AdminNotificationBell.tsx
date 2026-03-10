@@ -5,7 +5,11 @@ import { useLocale, useTranslations } from 'next-intl';
 import { fmtDateTime } from '@/lib/dateFormat';
 import { Bell } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
-import { useAdminNotifications, useAdminUnreadCount, useMarkNotificationRead } from '@/hooks/useAdmin';
+import {
+  useAdminNotifications,
+  useAdminUnreadCount,
+  useMarkNotificationRead,
+} from '@/hooks/useAdmin';
 import { cn } from '@/lib/utils';
 
 export function AdminNotificationBell() {
@@ -14,7 +18,11 @@ export function AdminNotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { data: unreadData } = useAdminUnreadCount();
-  const { data: notificationsData } = useAdminNotifications({ page: 1, limit: 5, unreadOnly: false });
+  const { data: notificationsData } = useAdminNotifications({
+    page: 1,
+    limit: 5,
+    unreadOnly: false,
+  });
   const markRead = useMarkNotificationRead();
 
   const unreadCount = unreadData?.count ?? 0;
@@ -60,13 +68,17 @@ export function AdminNotificationBell() {
           </div>
           <div className="max-h-64 overflow-y-auto">
             {notifications.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">{t('noNotifications')}</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {t('noNotifications')}
+              </p>
             ) : (
               notifications.map((n: any) => (
                 <button
                   key={n.id}
                   type="button"
-                  onClick={() => { if (!n.isRead) markRead.mutate(n.id); }}
+                  onClick={() => {
+                    if (!n.isRead) markRead.mutate(n.id);
+                  }}
                   className={cn(
                     'block w-full text-start px-4 py-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors',
                     !n.isRead && 'bg-primary/5',

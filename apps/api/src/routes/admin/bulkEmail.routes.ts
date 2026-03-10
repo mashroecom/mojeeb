@@ -9,11 +9,14 @@ const router: Router = Router();
 const createSchema = z.object({
   subject: z.string().min(1),
   bodyHtml: z.string().min(1),
-  targetFilter: z.object({
-    plan: z.string().optional(),
-    status: z.string().optional(),
-    emailVerified: z.boolean().optional(),
-  }).optional().default({}),
+  targetFilter: z
+    .object({
+      plan: z.string().optional(),
+      status: z.string().optional(),
+      emailVerified: z.boolean().optional(),
+    })
+    .optional()
+    .default({}),
 });
 
 const recipientCountSchema = z.object({

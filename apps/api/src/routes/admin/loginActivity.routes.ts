@@ -35,7 +35,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       items: result.items.map((item: any) => ({
         id: item.id,
         email: item.email,
-        userName: item.user ? `${item.user.firstName ?? ''} ${item.user.lastName ?? ''}`.trim() : undefined,
+        userName: item.user
+          ? `${item.user.firstName ?? ''} ${item.user.lastName ?? ''}`.trim()
+          : undefined,
         success: item.success,
         ip: item.ipAddress ?? '',
         userAgent: item.userAgent ?? '',

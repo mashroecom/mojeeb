@@ -3,15 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDate } from '@/lib/dateFormat';
-import {
-  BookOpen,
-  Plus,
-  Trash2,
-  FileText,
-  Loader2,
-  Pencil,
-  Save,
-} from 'lucide-react';
+import { BookOpen, Plus, Trash2, FileText, Loader2, Pencil, Save } from 'lucide-react';
 import {
   useCreateKnowledgeBase,
   useUpdateKnowledgeBase,
@@ -71,7 +63,11 @@ export function KBListView({
     e.preventDefault();
     if (!editingKbId || !editName.trim()) return;
     updateMutation.mutate(
-      { kbId: editingKbId, name: editName.trim(), description: editDescription.trim() || undefined },
+      {
+        kbId: editingKbId,
+        name: editName.trim(),
+        description: editDescription.trim() || undefined,
+      },
       { onSuccess: () => cancelEditing() },
     );
   }

@@ -75,7 +75,11 @@ export function DashboardSidebar() {
       if (showMenu && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setShowMenu(false);
       }
-      if (showOrgSwitcher && orgSwitcherRef.current && !orgSwitcherRef.current.contains(e.target as Node)) {
+      if (
+        showOrgSwitcher &&
+        orgSwitcherRef.current &&
+        !orgSwitcherRef.current.contains(e.target as Node)
+      ) {
         setShowOrgSwitcher(false);
       }
     }
@@ -85,12 +89,8 @@ export function DashboardSidebar() {
     }
   }, [showMenu, showOrgSwitcher]);
 
-  const displayName = user
-    ? `${user.firstName} ${user.lastName}`
-    : t('user');
-  const initials = user
-    ? `${user.firstName[0] || ''}${user.lastName[0] || ''}`
-    : 'U';
+  const displayName = user ? `${user.firstName} ${user.lastName}` : t('user');
+  const initials = user ? `${user.firstName[0] || ''}${user.lastName[0] || ''}` : 'U';
 
   // Auto-expand settings group when a settings page is active
   useEffect(() => {
@@ -176,9 +176,7 @@ export function DashboardSidebar() {
               aria-haspopup="listbox"
             >
               <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="flex-1 truncate text-start font-medium">
-                {organization?.name}
-              </span>
+              <span className="flex-1 truncate text-start font-medium">{organization?.name}</span>
               <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             </button>
 
@@ -230,7 +228,7 @@ export function DashboardSidebar() {
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                       isActive
                         ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -270,7 +268,7 @@ export function DashboardSidebar() {
                           'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                           isActive
                             ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                         )}
                       >
                         <Icon className="h-4 w-4 shrink-0" />

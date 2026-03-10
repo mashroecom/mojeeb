@@ -4,21 +4,10 @@ import { useState, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDate } from '@/lib/dateFormat';
 import { cn } from '@/lib/utils';
-import {
-  useAdminInvoices,
-  useAdminInvoiceStats,
-  useUpdateAdminInvoice,
-} from '@/hooks/useAdmin';
+import { useAdminInvoices, useAdminInvoiceStats, useUpdateAdminInvoice } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { AdminPagination } from '@/components/admin/AdminPagination';
-import {
-  Receipt,
-  DollarSign,
-  Clock,
-  RefreshCw,
-  Loader2,
-  FileText,
-} from 'lucide-react';
+import { Receipt, DollarSign, Clock, RefreshCw, Loader2, FileText } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -53,14 +42,30 @@ function StatSkeleton() {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-16 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-16 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-7 w-24 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-16 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-16 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-7 w-24 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -167,27 +172,21 @@ export default function AdminInvoicesPage() {
                 <DollarSign className="h-4 w-4 text-green-500" />
                 {t('totalRevenue')}
               </div>
-              <p className="text-2xl font-bold text-green-600">
-                ${stats?.totalRevenue ?? 0}
-              </p>
+              <p className="text-2xl font-bold text-green-600">${stats?.totalRevenue ?? 0}</p>
             </div>
             <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Clock className="h-4 w-4 text-yellow-500" />
                 {t('pendingAmount')}
               </div>
-              <p className="text-2xl font-bold text-yellow-600">
-                ${stats?.pendingAmount ?? 0}
-              </p>
+              <p className="text-2xl font-bold text-yellow-600">${stats?.pendingAmount ?? 0}</p>
             </div>
             <div className="rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <RefreshCw className="h-4 w-4 text-blue-500" />
                 {t('refundedAmount')}
               </div>
-              <p className="text-2xl font-bold text-blue-600">
-                ${stats?.refundedAmount ?? 0}
-              </p>
+              <p className="text-2xl font-bold text-blue-600">${stats?.refundedAmount ?? 0}</p>
             </div>
           </>
         )}
@@ -297,8 +296,7 @@ export default function AdminInvoicesPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
+              {isLoading && Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
 
               {!isLoading && !isError && entries.length === 0 && (
                 <tr>

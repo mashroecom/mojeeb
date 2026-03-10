@@ -10,7 +10,7 @@ export interface ServerToClientEvents {
   'lead:extracted': (data: LeadEvent) => void;
   'typing:start': (data: TypingEvent) => void;
   'typing:stop': (data: TypingEvent) => void;
-  'notification': (data: NotificationEvent) => void;
+  notification: (data: NotificationEvent) => void;
 }
 
 export interface ClientToServerEvents {

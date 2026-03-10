@@ -79,7 +79,8 @@ export const adminKeys = {
   fileStats: ['admin', 'file-stats'] as const,
   bulkEmail: (params?: Record<string, unknown>) => ['admin', 'bulk-email', params] as const,
   bulkEmailDetail: (id: string) => ['admin', 'bulk-email', id] as const,
-  recipientCount: (params?: Record<string, unknown>) => ['admin', 'recipient-count', params] as const,
+  recipientCount: (params?: Record<string, unknown>) =>
+    ['admin', 'recipient-count', params] as const,
   notifications: (params?: Record<string, unknown>) => ['admin', 'notifications', params] as const,
   unreadCount: ['admin', 'unread-count'] as const,
   securitySettings: ['admin', 'security-settings'] as const,
@@ -96,7 +97,8 @@ export const adminKeys = {
   leads: (params?: Record<string, unknown>) => ['admin', 'leads', params] as const,
   leadDetail: (id: string) => ['admin', 'leads', id] as const,
   leadStats: ['admin', 'leads-stats'] as const,
-  knowledgeBases: (params?: Record<string, unknown>) => ['admin', 'knowledge-bases', params] as const,
+  knowledgeBases: (params?: Record<string, unknown>) =>
+    ['admin', 'knowledge-bases', params] as const,
   knowledgeBaseDetail: (id: string) => ['admin', 'knowledge-bases', id] as const,
   knowledgeBaseStats: ['admin', 'knowledge-bases-stats'] as const,
   apiKeys: (params?: Record<string, unknown>) => ['admin', 'api-keys', params] as const,
@@ -111,7 +113,8 @@ export const adminKeys = {
   ratings: (params?: Record<string, unknown>) => ['admin', 'ratings', params] as const,
   ratingStats: ['admin', 'rating-stats'] as const,
   // Message Templates (admin)
-  messageTemplatesAdmin: (params?: Record<string, unknown>) => ['admin', 'message-templates-admin', params] as const,
+  messageTemplatesAdmin: (params?: Record<string, unknown>) =>
+    ['admin', 'message-templates-admin', params] as const,
   messageTemplateAnalytics: ['admin', 'message-template-analytics'] as const,
   // Tags (admin)
   tagsAdmin: (params?: Record<string, unknown>) => ['admin', 'tags-admin', params] as const,
@@ -126,10 +129,12 @@ export const adminKeys = {
   aiModelUsage: ['admin', 'ai-model-usage'] as const,
   // Security Audit
   securityAuditStats: ['admin', 'security-audit-stats'] as const,
-  recentFailures: (params?: Record<string, unknown>) => ['admin', 'recent-failures', params] as const,
+  recentFailures: (params?: Record<string, unknown>) =>
+    ['admin', 'recent-failures', params] as const,
   // Conversation Quality
   conversationQualityStats: ['admin', 'conversation-quality-stats'] as const,
-  lowQualityConversations: (params?: Record<string, unknown>) => ['admin', 'low-quality-conversations', params] as const,
+  lowQualityConversations: (params?: Record<string, unknown>) =>
+    ['admin', 'low-quality-conversations', params] as const,
   // Lead Insights
   leadInsightsStats: ['admin', 'lead-insights-stats'] as const,
   topLeads: ['admin', 'top-leads'] as const,
@@ -182,7 +187,11 @@ export function useAdminOverview() {
 /**
  * Get platform growth analytics with optional date range and grouping.
  */
-export function useAdminGrowth(params?: { startDate?: string; endDate?: string; groupBy?: string }) {
+export function useAdminGrowth(params?: {
+  startDate?: string;
+  endDate?: string;
+  groupBy?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.growth(params),
     queryFn: async () => {
@@ -213,7 +222,12 @@ export function useAdminRevenue() {
 /**
  * List all users with pagination, search, and status filtering.
  */
-export function useAdminUsers(params: { page: number; limit: number; search?: string; status?: string }) {
+export function useAdminUsers(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.users(params),
     queryFn: async () => {
@@ -249,7 +263,10 @@ export function useAdminUserDetail(userId: string) {
 export function useAdminUserApiKeys(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ['admin', 'users', userId, 'api-keys', page, limit],
-    queryFn: () => api.get(`/admin/users/${userId}/api-keys?page=${page}&limit=${limit}`).then(r => r.data.data),
+    queryFn: () =>
+      api
+        .get(`/admin/users/${userId}/api-keys?page=${page}&limit=${limit}`)
+        .then((r) => r.data.data),
     enabled: !!userId,
   });
 }
@@ -260,7 +277,10 @@ export function useAdminUserApiKeys(userId: string, page = 1, limit = 10) {
 export function useAdminUserConversations(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ['admin', 'users', userId, 'conversations', page, limit],
-    queryFn: () => api.get(`/admin/users/${userId}/conversations?page=${page}&limit=${limit}`).then(r => r.data.data),
+    queryFn: () =>
+      api
+        .get(`/admin/users/${userId}/conversations?page=${page}&limit=${limit}`)
+        .then((r) => r.data.data),
     enabled: !!userId,
   });
 }
@@ -271,7 +291,8 @@ export function useAdminUserConversations(userId: string, page = 1, limit = 10) 
 export function useAdminUserLeads(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ['admin', 'users', userId, 'leads', page, limit],
-    queryFn: () => api.get(`/admin/users/${userId}/leads?page=${page}&limit=${limit}`).then(r => r.data.data),
+    queryFn: () =>
+      api.get(`/admin/users/${userId}/leads?page=${page}&limit=${limit}`).then((r) => r.data.data),
     enabled: !!userId,
   });
 }
@@ -282,7 +303,10 @@ export function useAdminUserLeads(userId: string, page = 1, limit = 10) {
 export function useAdminUserNotifications(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ['admin', 'users', userId, 'notifications', page, limit],
-    queryFn: () => api.get(`/admin/users/${userId}/notifications?page=${page}&limit=${limit}`).then(r => r.data.data),
+    queryFn: () =>
+      api
+        .get(`/admin/users/${userId}/notifications?page=${page}&limit=${limit}`)
+        .then((r) => r.data.data),
     enabled: !!userId,
   });
 }
@@ -293,7 +317,10 @@ export function useAdminUserNotifications(userId: string, page = 1, limit = 10) 
 export function useAdminUserActions(userId: string, page = 1, limit = 10) {
   return useQuery({
     queryKey: ['admin', 'users', userId, 'actions', page, limit],
-    queryFn: () => api.get(`/admin/audit-log?userId=${userId}&page=${page}&limit=${limit}`).then(r => r.data.data),
+    queryFn: () =>
+      api
+        .get(`/admin/audit-log?userId=${userId}&page=${page}&limit=${limit}`)
+        .then((r) => r.data.data),
     enabled: !!userId,
   });
 }
@@ -386,7 +413,12 @@ export function useBulkUnsuspendUsers() {
 /**
  * List all organizations with pagination, search, and status filtering.
  */
-export function useAdminOrganizations(params: { page: number; limit: number; search?: string; status?: string }) {
+export function useAdminOrganizations(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.orgs(params),
     queryFn: async () => {
@@ -467,7 +499,12 @@ export function useBulkSuspendOrgs() {
 }
 
 // Subscriptions
-export function useAdminSubscriptions(params: { page: number; limit: number; plan?: string; status?: string }) {
+export function useAdminSubscriptions(params: {
+  page: number;
+  limit: number;
+  plan?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.subscriptions(params),
     queryFn: async () => {
@@ -486,7 +523,16 @@ export function useAdminSubscriptions(params: { page: number; limit: number; pla
 export function useUpdateSubscription() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...body }: { id: string; plan?: string; messagesLimit?: number; agentsLimit?: number; integrationsLimit?: number }) => {
+    mutationFn: async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      plan?: string;
+      messagesLimit?: number;
+      agentsLimit?: number;
+      integrationsLimit?: number;
+    }) => {
       const { data } = await api.patch(`/admin/subscriptions/${id}`, body);
       return data.data;
     },
@@ -541,7 +587,12 @@ export function useSystemDbStats() {
 }
 
 // Demo Requests
-export function useAdminDemoRequests(params: { page: number; limit: number; status?: string; search?: string }) {
+export function useAdminDemoRequests(params: {
+  page: number;
+  limit: number;
+  status?: string;
+  search?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.demoRequests(params),
     queryFn: async () => {
@@ -584,7 +635,12 @@ export function useDeleteDemoRequest() {
 }
 
 // Contact Messages
-export function useAdminContactMessages(params: { page: number; limit: number; status?: string; search?: string }) {
+export function useAdminContactMessages(params: {
+  page: number;
+  limit: number;
+  status?: string;
+  search?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.contactMessages(params),
     queryFn: async () => {
@@ -644,7 +700,13 @@ export function useAdminAnnouncements(params: { page: number; limit: number }) {
 export function useCreateAnnouncement() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { title: string; body: string; type?: string; startsAt?: string; endsAt?: string }) => {
+    mutationFn: async (body: {
+      title: string;
+      body: string;
+      type?: string;
+      startsAt?: string;
+      endsAt?: string;
+    }) => {
       const { data } = await api.post('/admin/announcements', body);
       return data.data;
     },
@@ -657,7 +719,16 @@ export function useCreateAnnouncement() {
 export function useUpdateAnnouncement() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...body }: { id: string; title?: string; body?: string; type?: string; isActive?: boolean }) => {
+    mutationFn: async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      title?: string;
+      body?: string;
+      type?: string;
+      isActive?: boolean;
+    }) => {
       const { data } = await api.patch(`/admin/announcements/${id}`, body);
       return data.data;
     },
@@ -837,8 +908,19 @@ export function useResetUserPassword() {
 
 export function useSendUserEmail() {
   return useMutation({
-    mutationFn: async ({ userId, subject, body: emailBody }: { userId: string; subject: string; body: string }) => {
-      const { data } = await api.post(`/admin/users/${userId}/send-email`, { subject, body: emailBody });
+    mutationFn: async ({
+      userId,
+      subject,
+      body: emailBody,
+    }: {
+      userId: string;
+      subject: string;
+      body: string;
+    }) => {
+      const { data } = await api.post(`/admin/users/${userId}/send-email`, {
+        subject,
+        body: emailBody,
+      });
       return data.data;
     },
   });
@@ -856,7 +938,16 @@ export function useImpersonateUser() {
 export function useUpdateUserProfile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ userId, ...updates }: { userId: string; firstName?: string; lastName?: string; email?: string; newPassword?: string }) => {
+    mutationFn: async ({
+      userId,
+      ...updates
+    }: {
+      userId: string;
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      newPassword?: string;
+    }) => {
       const { data } = await api.patch(`/admin/users/${userId}/profile`, updates);
       return data.data;
     },
@@ -924,7 +1015,16 @@ export function useTestConfig() {
 }
 
 // Audit Log
-export function useAdminAuditLog(params: { page: number; limit: number; action?: string; targetType?: string; userId?: string; targetId?: string; startDate?: string; endDate?: string }) {
+export function useAdminAuditLog(params: {
+  page: number;
+  limit: number;
+  action?: string;
+  targetType?: string;
+  userId?: string;
+  targetId?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.auditLog(params),
     queryFn: async () => {
@@ -945,7 +1045,15 @@ export function useAdminAuditLog(params: { page: number; limit: number; action?:
 }
 
 // ===== Login Activity =====
-export function useAdminLoginActivity(params: { page: number; limit: number; email?: string; ip?: string; success?: string; startDate?: string; endDate?: string }) {
+export function useAdminLoginActivity(params: {
+  page: number;
+  limit: number;
+  email?: string;
+  ip?: string;
+  success?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.loginActivity(params),
     queryFn: async () => {
@@ -1096,7 +1204,14 @@ export function useCreateFeatureFlag() {
 export function useUpdateFeatureFlag() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ key, ...body }: { key: string; description?: string; enabled?: boolean }) => {
+    mutationFn: async ({
+      key,
+      ...body
+    }: {
+      key: string;
+      description?: string;
+      enabled?: boolean;
+    }) => {
       const { data } = await api.patch(`/admin/feature-flags/${key}`, body);
       return data.data;
     },
@@ -1120,11 +1235,22 @@ export function useDeleteFeatureFlag() {
 }
 
 // ===== Error Logs =====
-export function useAdminErrorLogs(params: { page: number; limit: number; level?: string; source?: string; startDate?: string; endDate?: string; search?: string }) {
+export function useAdminErrorLogs(params: {
+  page: number;
+  limit: number;
+  level?: string;
+  source?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.errorLogs(params),
     queryFn: async () => {
-      const searchParams = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      const searchParams = new URLSearchParams({
+        page: String(params.page),
+        limit: String(params.limit),
+      });
       if (params.level) searchParams.set('level', params.level);
       if (params.source) searchParams.set('source', params.source);
       if (params.startDate) searchParams.set('startDate', params.startDate);
@@ -1150,11 +1276,23 @@ export function useCleanupErrorLogs() {
 }
 
 // ===== Webhook Logs =====
-export function useAdminWebhookLogs(params: { page: number; limit: number; webhookId?: string; event?: string; success?: string; startDate?: string; endDate?: string; search?: string }) {
+export function useAdminWebhookLogs(params: {
+  page: number;
+  limit: number;
+  webhookId?: string;
+  event?: string;
+  success?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.webhookLogs(params),
     queryFn: async () => {
-      const searchParams = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      const searchParams = new URLSearchParams({
+        page: String(params.page),
+        limit: String(params.limit),
+      });
       if (params.webhookId) searchParams.set('webhookId', params.webhookId);
       if (params.event) searchParams.set('event', params.event);
       if (params.success) searchParams.set('success', params.success);
@@ -1192,7 +1330,18 @@ export function useAdminEmailTemplates() {
 export function useUpsertEmailTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ key, ...body }: { key: string; subject: string; subjectAr?: string; bodyHtml: string; bodyHtmlAr?: string; bodyText?: string; variables?: string[] }) => {
+    mutationFn: async ({
+      key,
+      ...body
+    }: {
+      key: string;
+      subject: string;
+      subjectAr?: string;
+      bodyHtml: string;
+      bodyHtmlAr?: string;
+      bodyText?: string;
+      variables?: string[];
+    }) => {
       const { data } = await api.put(`/admin/email-templates/${key}`, body);
       return data.data;
     },
@@ -1229,11 +1378,19 @@ export function useSeedEmailTemplates() {
 }
 
 // ===== File Manager =====
-export function useAdminFiles(params: { page: number; limit: number; search?: string; type?: string }) {
+export function useAdminFiles(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  type?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.fileManager(params),
     queryFn: async () => {
-      const searchParams = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      const searchParams = new URLSearchParams({
+        page: String(params.page),
+        limit: String(params.limit),
+      });
       if (params.search) searchParams.set('search', params.search);
       if (params.type) searchParams.set('type', params.type);
       const { data } = await api.get(`/admin/files?${searchParams}`);
@@ -1290,7 +1447,10 @@ export function useAdminBulkEmails(params: { page: number; limit: number }) {
   return useQuery({
     queryKey: adminKeys.bulkEmail(params),
     queryFn: async () => {
-      const searchParams = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      const searchParams = new URLSearchParams({
+        page: String(params.page),
+        limit: String(params.limit),
+      });
       const { data } = await api.get(`/admin/bulk-email?${searchParams}`);
       return data.data;
     },
@@ -1347,14 +1507,19 @@ export function useCancelBulkEmail() {
   });
 }
 
-export function useRecipientCount(params: { plan?: string; status?: string; emailVerified?: boolean }) {
+export function useRecipientCount(params: {
+  plan?: string;
+  status?: string;
+  emailVerified?: boolean;
+}) {
   return useQuery({
     queryKey: adminKeys.recipientCount(params),
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       if (params.plan) searchParams.set('plan', params.plan);
       if (params.status) searchParams.set('status', params.status);
-      if (params.emailVerified !== undefined) searchParams.set('emailVerified', String(params.emailVerified));
+      if (params.emailVerified !== undefined)
+        searchParams.set('emailVerified', String(params.emailVerified));
       const { data } = await api.get(`/admin/bulk-email/recipient-count?${searchParams}`);
       return data.data;
     },
@@ -1363,11 +1528,18 @@ export function useRecipientCount(params: { plan?: string; status?: string; emai
 }
 
 // ===== Admin Notifications =====
-export function useAdminNotifications(params: { page: number; limit: number; unreadOnly?: boolean }) {
+export function useAdminNotifications(params: {
+  page: number;
+  limit: number;
+  unreadOnly?: boolean;
+}) {
   return useQuery({
     queryKey: adminKeys.notifications(params),
     queryFn: async () => {
-      const searchParams = new URLSearchParams({ page: String(params.page), limit: String(params.limit) });
+      const searchParams = new URLSearchParams({
+        page: String(params.page),
+        limit: String(params.limit),
+      });
       if (params.unreadOnly) searchParams.set('unreadOnly', 'true');
       const { data } = await api.get(`/admin/notifications?${searchParams}`);
       return data.data;
@@ -1562,7 +1734,14 @@ export function useDiscardDLQJob() {
 }
 
 // ===== Admin Agents =====
-export function useAdminAgents(params: { page: number; limit: number; search?: string; orgId?: string; provider?: string; status?: string }) {
+export function useAdminAgents(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  orgId?: string;
+  provider?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.agents(params),
     queryFn: async () => {
@@ -1625,7 +1804,16 @@ export function useDeleteAdminAgent() {
 }
 
 // ===== Admin Conversations =====
-export function useAdminConversations(params: { page: number; limit: number; search?: string; orgId?: string; channelId?: string; status?: string; startDate?: string; endDate?: string }) {
+export function useAdminConversations(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  orgId?: string;
+  channelId?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.conversations(params),
     queryFn: async () => {
@@ -1666,8 +1854,17 @@ export function useAdminConversationStats() {
 export function useBulkUpdateConversationStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ conversationIds, status }: { conversationIds: string[]; status: string }) => {
-      const { data } = await api.post('/admin/conversations/bulk-status', { conversationIds, status });
+    mutationFn: async ({
+      conversationIds,
+      status,
+    }: {
+      conversationIds: string[];
+      status: string;
+    }) => {
+      const { data } = await api.post('/admin/conversations/bulk-status', {
+        conversationIds,
+        status,
+      });
       return data.data;
     },
     onSuccess: () => {
@@ -1679,7 +1876,13 @@ export function useBulkUpdateConversationStatus() {
 export function useUpdateAdminConversation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ conversationId, ...body }: { conversationId: string; [key: string]: unknown }) => {
+    mutationFn: async ({
+      conversationId,
+      ...body
+    }: {
+      conversationId: string;
+      [key: string]: unknown;
+    }) => {
       const { data } = await api.patch(`/admin/conversations/${conversationId}`, body);
       return data.data;
     },
@@ -1716,7 +1919,13 @@ export function useBulkDeleteConversations() {
 }
 
 // ===== Admin Leads =====
-export function useAdminLeads(params: { page: number; limit: number; search?: string; orgId?: string; status?: string }) {
+export function useAdminLeads(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  orgId?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.leads(params),
     queryFn: async () => {
@@ -1804,7 +2013,12 @@ export function useDeleteAdminLead() {
 }
 
 // ===== Admin Knowledge Bases =====
-export function useAdminKnowledgeBases(params: { page: number; limit: number; search?: string; orgId?: string }) {
+export function useAdminKnowledgeBases(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  orgId?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.knowledgeBases(params),
     queryFn: async () => {
@@ -1852,7 +2066,13 @@ export function useDeleteAdminKnowledgeBase() {
 }
 
 // ===== Admin API Keys =====
-export function useAdminApiKeys(params: { page: number; limit: number; search?: string; orgId?: string; status?: string }) {
+export function useAdminApiKeys(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  orgId?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.apiKeys(params),
     queryFn: async () => {
@@ -1903,7 +2123,14 @@ export function useDeleteAdminApiKey() {
 }
 
 // ===== Admin Invoices =====
-export function useAdminInvoices(params: { page: number; limit: number; orgId?: string; status?: string; startDate?: string; endDate?: string }) {
+export function useAdminInvoices(params: {
+  page: number;
+  limit: number;
+  orgId?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.invoices(params),
     queryFn: async () => {
@@ -1953,7 +2180,12 @@ export function useUpdateAdminInvoice() {
 }
 
 // ===== Admin Webhooks =====
-export function useAdminWebhooks(params: { page: number; limit: number; orgId?: string; status?: string }) {
+export function useAdminWebhooks(params: {
+  page: number;
+  limit: number;
+  orgId?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.webhooks(params),
     queryFn: async () => {
@@ -2042,7 +2274,13 @@ export function useUpdateAdminOrg() {
 }
 
 // ===== Admin Ratings / CSAT =====
-export function useAdminRatings(params: { page: number; limit: number; rating?: number; startDate?: string; endDate?: string }) {
+export function useAdminRatings(params: {
+  page: number;
+  limit: number;
+  rating?: number;
+  startDate?: string;
+  endDate?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.ratings(params),
     queryFn: async () => {
@@ -2067,7 +2305,12 @@ export function useAdminRatingStats() {
 }
 
 // ===== Admin Message Templates =====
-export function useAdminMessageTemplates(params: { page: number; limit: number; search?: string; category?: string }) {
+export function useAdminMessageTemplates(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  category?: string;
+}) {
   return useQuery({
     queryKey: adminKeys.messageTemplatesAdmin(params),
     queryFn: async () => {
@@ -2083,7 +2326,13 @@ export function useAdminMessageTemplates(params: { page: number; limit: number; 
 export function useCreateMessageTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { title: string; content: string; category?: string; shortcut?: string; orgId?: string }) => {
+    mutationFn: async (body: {
+      title: string;
+      content: string;
+      category?: string;
+      shortcut?: string;
+      orgId?: string;
+    }) => {
       const { data } = await api.post('/admin/message-templates-admin', body);
       return data.data;
     },
@@ -2096,7 +2345,17 @@ export function useCreateMessageTemplate() {
 export function useUpdateMessageTemplate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...body }: { id: string; title?: string; content?: string; category?: string; shortcut?: string; orgId?: string }) => {
+    mutationFn: async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      title?: string;
+      content?: string;
+      category?: string;
+      shortcut?: string;
+      orgId?: string;
+    }) => {
       const { data } = await api.patch(`/admin/message-templates-admin/${id}`, body);
       return data.data;
     },
@@ -2233,7 +2492,9 @@ export function useAdminRecentFailures(page = 1, limit = 10) {
   return useQuery({
     queryKey: adminKeys.recentFailures({ page, limit }),
     queryFn: async () => {
-      const { data } = await api.get(`/admin/security-audit/recent-failures?page=${page}&limit=${limit}`);
+      const { data } = await api.get(
+        `/admin/security-audit/recent-failures?page=${page}&limit=${limit}`,
+      );
       return data.data;
     },
   });
@@ -2254,7 +2515,9 @@ export function useAdminLowQualityConversations(page = 1, limit = 10) {
   return useQuery({
     queryKey: adminKeys.lowQualityConversations({ page, limit }),
     queryFn: async () => {
-      const { data } = await api.get(`/admin/conversation-quality/low-quality?page=${page}&limit=${limit}`);
+      const { data } = await api.get(
+        `/admin/conversation-quality/low-quality?page=${page}&limit=${limit}`,
+      );
       return data.data;
     },
   });
@@ -2471,7 +2734,12 @@ export function useAdminTokenSummary(params?: { startDate?: string; endDate?: st
   });
 }
 
-export function useAdminTokenByOrg(params?: { startDate?: string; endDate?: string; page?: number; limit?: number }) {
+export function useAdminTokenByOrg(params?: {
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}) {
   return useQuery({
     queryKey: adminKeys.tokenByOrg(params),
     queryFn: async () => {
@@ -2515,7 +2783,11 @@ export function useAdminTokenByDay(params?: { startDate?: string; endDate?: stri
   });
 }
 
-export function useAdminTopConsumers(params?: { startDate?: string; endDate?: string; limit?: number }) {
+export function useAdminTopConsumers(params?: {
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}) {
   return useQuery({
     queryKey: adminKeys.topConsumers(params),
     queryFn: async () => {

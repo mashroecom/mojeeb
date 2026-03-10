@@ -74,11 +74,12 @@ const TARGET_OPTIONS = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-
 function getActionColor(action: string): string {
   const lower = action.toLowerCase();
-  if (lower.includes('create')) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-  if (lower.includes('update')) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+  if (lower.includes('create'))
+    return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+  if (lower.includes('update'))
+    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
   if (lower.includes('delete') || lower.includes('suspend') || lower.includes('cancel'))
     return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
   return 'bg-muted text-muted-foreground';
@@ -110,12 +111,24 @@ function renderMetadata(metadata: Record<string, unknown> | undefined) {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-5 w-24 rounded-full bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-16 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-32 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-5 w-24 rounded-full bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-16 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-32 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -187,9 +200,7 @@ function AuditRow({ entry, t }: { entry: AuditLogEntry; t: ReturnType<typeof use
               {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
             </button>
           )}
-          {!hasMetadata && (
-            <span className="lg:hidden text-xs text-muted-foreground">-</span>
-          )}
+          {!hasMetadata && <span className="lg:hidden text-xs text-muted-foreground">-</span>}
         </td>
       </tr>
 
@@ -390,8 +401,7 @@ export default function AuditLogPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
+              {isLoading && Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
 
               {!isLoading && !isError && entries.length === 0 && (
                 <tr>
@@ -404,9 +414,7 @@ export default function AuditLogPage() {
 
               {!isLoading &&
                 !isError &&
-                entries.map((entry) => (
-                  <AuditRow key={entry.id} entry={entry} t={t} />
-                ))}
+                entries.map((entry) => <AuditRow key={entry.id} entry={entry} t={t} />)}
             </tbody>
           </table>
         </div>
@@ -414,7 +422,15 @@ export default function AuditLogPage() {
 
       {/* Pagination */}
       {!isLoading && (
-        <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          previousLabel={tc('previous')}
+          nextLabel={tc('next')}
+          pageLabel={tc('page')}
+          ofLabel={tc('of')}
+        />
       )}
     </div>
   );

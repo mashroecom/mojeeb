@@ -153,7 +153,7 @@ Which templates are most relevant for this conversation? Return top 3.`;
           totalTemplates: templates.length,
           suggestionsCount: suggestions.length,
         },
-        'Template suggestions generated'
+        'Template suggestions generated',
       );
 
       return suggestions;

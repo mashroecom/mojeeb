@@ -47,34 +47,37 @@ export default function TeamPerformancePage() {
       };
 
       // Transform agent metrics for CSV
-      const rows = agentMetrics.map((agent: {
-        agentId: string;
-        agentName: string;
-        conversationsHandled: number;
-        avgResponseTimeMs: number;
-        avgResolutionTimeMs: number;
-        avgCSAT: number;
-        handoffCount: number;
-        messageCount: number;
-      }) => ({
-        'Agent ID': agent.agentId,
-        'Agent Name': agent.agentName || 'Unknown Agent',
-        'Conversations Handled': agent.conversationsHandled ?? 0,
-        'Avg Response Time': formatTime(agent.avgResponseTimeMs ?? 0),
-        'Avg Resolution Time': formatTime(agent.avgResolutionTimeMs ?? 0),
-        'Avg CSAT': (agent.avgCSAT ?? 0).toFixed(2),
-        'Handoff Count': agent.handoffCount ?? 0,
-        'Message Count': agent.messageCount ?? 0,
-      }));
+      const rows = agentMetrics.map(
+        (agent: {
+          agentId: string;
+          agentName: string;
+          conversationsHandled: number;
+          avgResponseTimeMs: number;
+          avgResolutionTimeMs: number;
+          avgCSAT: number;
+          handoffCount: number;
+          messageCount: number;
+        }) => ({
+          'Agent ID': agent.agentId,
+          'Agent Name': agent.agentName || 'Unknown Agent',
+          'Conversations Handled': agent.conversationsHandled ?? 0,
+          'Avg Response Time': formatTime(agent.avgResponseTimeMs ?? 0),
+          'Avg Resolution Time': formatTime(agent.avgResolutionTimeMs ?? 0),
+          'Avg CSAT': (agent.avgCSAT ?? 0).toFixed(2),
+          'Handoff Count': agent.handoffCount ?? 0,
+          'Message Count': agent.messageCount ?? 0,
+        }),
+      );
 
       // Generate filename with date range
-      const dateRangeStr = startDate && endDate
-        ? `${startDate}_to_${endDate}`
-        : startDate
-        ? `from_${startDate}`
-        : endDate
-        ? `until_${endDate}`
-        : 'all_time';
+      const dateRangeStr =
+        startDate && endDate
+          ? `${startDate}_to_${endDate}`
+          : startDate
+            ? `from_${startDate}`
+            : endDate
+              ? `until_${endDate}`
+              : 'all_time';
 
       exportToCsv(`team_performance_${dateRangeStr}`, rows);
     } catch (error) {
@@ -127,7 +130,7 @@ export default function TeamPerformancePage() {
               'flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors',
               exportingCsv
                 ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-background hover:bg-muted/50'
+                : 'bg-background hover:bg-muted/50',
             )}
           >
             {exportingCsv ? (
@@ -144,7 +147,7 @@ export default function TeamPerformancePage() {
               'flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors',
               exportingPdf
                 ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-background hover:bg-muted/50'
+                : 'bg-background hover:bg-muted/50',
             )}
           >
             {exportingPdf ? (

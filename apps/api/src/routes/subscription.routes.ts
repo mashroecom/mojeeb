@@ -8,7 +8,10 @@ import { authenticate, orgContext, requireRole } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { PaymentGateway } from '@mojeeb/shared-types';
 
-interface OrgParams { orgId: string; [key: string]: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
@@ -54,7 +57,7 @@ router.post(
       const { plan, billingCycle, gateway } = req.body;
 
       // Auto-select gateway if not provided
-      const selectedGateway = gateway || await paymentGatewayService.selectGateway(orgId);
+      const selectedGateway = gateway || (await paymentGatewayService.selectGateway(orgId));
 
       // Call the appropriate checkout method based on gateway
       let result;
@@ -96,7 +99,8 @@ router.post(
   async (req, res, next) => {
     try {
       const { orgId } = req.params as OrgParams;
-      const { merchantOrderId, paymentStatus, transactionId, amount, currency, signature } = req.body;
+      const { merchantOrderId, paymentStatus, transactionId, amount, currency, signature } =
+        req.body;
       const subscription = await subscriptionService.confirmPayment(orgId, {
         merchantOrderId,
         paymentStatus,
@@ -131,21 +135,17 @@ const invoicesQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
-router.get(
-  '/invoices',
-  validate({ query: invoicesQuerySchema }),
-  async (req, res, next) => {
-    try {
-      const { orgId } = req.params as OrgParams;
-      // BUG FIX: validate middleware sets data on req.query, not validatedQuery
-      const { page, limit } = req.query as any;
-      const result = await subscriptionService.getInvoices(orgId, { page, limit });
-      res.json({ success: true, data: result });
-    } catch (err) {
-      next(err);
-    }
+router.get('/invoices', validate({ query: invoicesQuerySchema }), async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    // BUG FIX: validate middleware sets data on req.query, not validatedQuery
+    const { page, limit } = req.query as any;
+    const result = await subscriptionService.getInvoices(orgId, { page, limit });
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // GET /api/v1/organizations/:orgId/subscription/invoices/:invoiceId
 const invoiceParamsSchema = z.object({
@@ -165,7 +165,7 @@ router.get(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // GET /api/v1/organizations/:orgId/subscription/invoices/:invoiceId/pdf
@@ -175,18 +175,27 @@ router.get('/invoices/:invoiceId/pdf', async (req, res, next) => {
 
     const subscription = await prisma.subscription.findUnique({ where: { orgId } });
     // BUG FIX: add success:false for consistent error response format
-    if (!subscription) { res.status(404).json({ success: false, error: 'Subscription not found' }); return; }
+    if (!subscription) {
+      res.status(404).json({ success: false, error: 'Subscription not found' });
+      return;
+    }
 
     const invoice = await prisma.invoice.findFirst({
       where: { id: invoiceId, subscriptionId: subscription.id },
     });
-    if (!invoice) { res.status(404).json({ success: false, error: 'Invoice not found' }); return; }
+    if (!invoice) {
+      res.status(404).json({ success: false, error: 'Invoice not found' });
+      return;
+    }
 
     const org = await prisma.organization.findUnique({ where: { id: orgId } });
 
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.id.slice(-8)}.pdf`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=invoice-${invoice.id.slice(-8)}.pdf`,
+    );
     doc.pipe(res);
 
     const primaryColor = '#6366F1';
@@ -200,10 +209,24 @@ router.get('/invoices/:invoiceId/pdf', async (req, res, next) => {
     doc.fontSize(11).font('Helvetica').text('Mojeeb - AI Customer Support', 50, 80);
 
     // Invoice meta (right side)
-    doc.fontSize(10)
-      .text(`Invoice #${invoice.id.slice(-8).toUpperCase()}`, 350, 45, { align: 'right', width: pageWidth - 300 })
-      .text(`Date: ${new Date(invoice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 350, 62, { align: 'right', width: pageWidth - 300 })
-      .text(`Due: ${new Date(invoice.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 350, 79, { align: 'right', width: pageWidth - 300 });
+    doc
+      .fontSize(10)
+      .text(`Invoice #${invoice.id.slice(-8).toUpperCase()}`, 350, 45, {
+        align: 'right',
+        width: pageWidth - 300,
+      })
+      .text(
+        `Date: ${new Date(invoice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+        350,
+        62,
+        { align: 'right', width: pageWidth - 300 },
+      )
+      .text(
+        `Due: ${new Date(invoice.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+        350,
+        79,
+        { align: 'right', width: pageWidth - 300 },
+      );
 
     doc.fill(darkColor);
     let y = 150;
@@ -211,17 +234,34 @@ router.get('/invoices/:invoiceId/pdf', async (req, res, next) => {
     // Bill To
     doc.fontSize(10).font('Helvetica-Bold').fill(mutedColor).text('BILL TO', 50, y);
     y += 18;
-    doc.fontSize(12).font('Helvetica-Bold').fill(darkColor).text(org?.name ?? 'Organization', 50, y);
+    doc
+      .fontSize(12)
+      .font('Helvetica-Bold')
+      .fill(darkColor)
+      .text(org?.name ?? 'Organization', 50, y);
     y += 18;
     doc.fontSize(10).font('Helvetica').fill(mutedColor).text(`Plan: ${subscription.plan}`, 50, y);
     y += 15;
-    doc.text(`Period: ${new Date(subscription.currentPeriodStart).toLocaleDateString()} - ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`, 50, y);
+    doc.text(
+      `Period: ${new Date(subscription.currentPeriodStart).toLocaleDateString()} - ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`,
+      50,
+      y,
+    );
 
     // Status badge
-    const statusColors: Record<string, string> = { PAID: '#10B981', PENDING: '#F59E0B', FAILED: '#EF4444', REFUNDED: '#6B7280' };
+    const statusColors: Record<string, string> = {
+      PAID: '#10B981',
+      PENDING: '#F59E0B',
+      FAILED: '#EF4444',
+      REFUNDED: '#6B7280',
+    };
     const statusColor = statusColors[invoice.status] || mutedColor;
     doc.roundedRect(430, 150, 80, 24, 12).fill(statusColor);
-    doc.fill('#FFFFFF').fontSize(10).font('Helvetica-Bold').text(invoice.status, 430, 157, { width: 80, align: 'center' });
+    doc
+      .fill('#FFFFFF')
+      .fontSize(10)
+      .font('Helvetica-Bold')
+      .text(invoice.status, 430, 157, { width: 80, align: 'center' });
 
     y += 40;
 
@@ -233,28 +273,44 @@ router.get('/invoices/:invoiceId/pdf', async (req, res, next) => {
     y += 35;
 
     // Table row
-    const planLabel = subscription.plan === 'FREE'
-      ? 'Free Plan'
-      : `${subscription.plan.charAt(0) + subscription.plan.slice(1).toLowerCase()} Plan - Monthly`;
+    const planLabel =
+      subscription.plan === 'FREE'
+        ? 'Free Plan'
+        : `${subscription.plan.charAt(0) + subscription.plan.slice(1).toLowerCase()} Plan - Monthly`;
     doc.font('Helvetica').fontSize(10).fill(darkColor);
     doc.text(planLabel, 60, y + 12);
-    doc.text(`${invoice.currency} ${Number(invoice.amount).toFixed(2)}`, 400, y + 12, { width: 110, align: 'right' });
+    doc.text(`${invoice.currency} ${Number(invoice.amount).toFixed(2)}`, 400, y + 12, {
+      width: 110,
+      align: 'right',
+    });
     y += 40;
 
     // Divider
-    doc.moveTo(50, y).lineTo(50 + pageWidth, y).strokeColor('#E5E7EB').lineWidth(1).stroke();
+    doc
+      .moveTo(50, y)
+      .lineTo(50 + pageWidth, y)
+      .strokeColor('#E5E7EB')
+      .lineWidth(1)
+      .stroke();
     y += 15;
 
     // Total
     doc.font('Helvetica-Bold').fontSize(12).fill(darkColor);
     doc.text('Total', 60, y);
-    doc.text(`${invoice.currency} ${Number(invoice.amount).toFixed(2)}`, 400, y, { width: 110, align: 'right' });
+    doc.text(`${invoice.currency} ${Number(invoice.amount).toFixed(2)}`, 400, y, {
+      width: 110,
+      align: 'right',
+    });
     y += 30;
 
     // Payment info
     if (invoice.paidAt) {
       doc.font('Helvetica').fontSize(9).fill(mutedColor);
-      doc.text(`Paid on ${new Date(invoice.paidAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 60, y);
+      doc.text(
+        `Paid on ${new Date(invoice.paidAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+        60,
+        y,
+      );
       y += 15;
     }
     if (invoice.kashierPaymentId) {
@@ -265,10 +321,24 @@ router.get('/invoices/:invoiceId/pdf', async (req, res, next) => {
 
     // Footer — keep on single page by using fixed Y and lineBreak: false
     const footerY = 720;
-    doc.moveTo(50, footerY).lineTo(50 + pageWidth, footerY).strokeColor('#E5E7EB').lineWidth(0.5).stroke();
+    doc
+      .moveTo(50, footerY)
+      .lineTo(50 + pageWidth, footerY)
+      .strokeColor('#E5E7EB')
+      .lineWidth(0.5)
+      .stroke();
     doc.fontSize(8).font('Helvetica').fill(mutedColor);
-    doc.text('Mojeeb - AI Customer Support Platform', 50, footerY + 12, { align: 'center', width: pageWidth, lineBreak: false });
-    doc.text('This is a computer-generated invoice and does not require a signature.', 50, footerY + 24, { align: 'center', width: pageWidth, lineBreak: false });
+    doc.text('Mojeeb - AI Customer Support Platform', 50, footerY + 12, {
+      align: 'center',
+      width: pageWidth,
+      lineBreak: false,
+    });
+    doc.text(
+      'This is a computer-generated invoice and does not require a signature.',
+      50,
+      footerY + 24,
+      { align: 'center', width: pageWidth, lineBreak: false },
+    );
 
     doc.end();
   } catch (err) {

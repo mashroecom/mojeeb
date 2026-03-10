@@ -47,11 +47,13 @@ router.post('/', contactLimiter, async (req, res, next) => {
     });
 
     // Notify admins
-    adminNotificationService.create({
-      type: 'SUPPORT_MESSAGE',
-      title: 'New Contact Message',
-      body: `${name} (${email}) sent a message: "${subject}"`,
-    }).catch((err) => logger.debug({ err }, 'Admin notification failed'));
+    adminNotificationService
+      .create({
+        type: 'SUPPORT_MESSAGE',
+        title: 'New Contact Message',
+        body: `${name} (${email}) sent a message: "${subject}"`,
+      })
+      .catch((err) => logger.debug({ err }, 'Admin notification failed'));
 
     res.status(201).json({ success: true, data: { id: contact.id } });
   } catch (err) {

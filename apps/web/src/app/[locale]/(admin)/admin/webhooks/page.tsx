@@ -13,13 +13,7 @@ import {
 import { useToastStore } from '@/hooks/useToast';
 import { AdminConfirmDialog } from '@/components/admin/AdminConfirmDialog';
 import { AdminPagination } from '@/components/admin/AdminPagination';
-import {
-  Webhook,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Trash2,
-} from 'lucide-react';
+import { Webhook, CheckCircle, XCircle, AlertTriangle, Trash2 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -53,13 +47,27 @@ function StatSkeleton() {
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-40 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-16 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-12 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-7 w-20 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-40 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-24 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-16 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-12 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-7 w-20 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -243,8 +251,7 @@ export default function AdminWebhooksPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading &&
-                Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
+              {isLoading && Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)}
 
               {!isLoading && !isError && entries.length === 0 && (
                 <tr>

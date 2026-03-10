@@ -55,8 +55,8 @@ export interface TextContentPart {
 
 export interface ImageContentPart {
   type: 'image_url';
-  imageUrl: string;    // base64 data URL or HTTP URL
-  mimeType: string;    // e.g. 'image/jpeg'
+  imageUrl: string; // base64 data URL or HTTP URL
+  mimeType: string; // e.g. 'image/jpeg'
   detail?: 'low' | 'high' | 'auto';
 }
 

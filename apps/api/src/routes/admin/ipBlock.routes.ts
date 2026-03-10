@@ -58,7 +58,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // DELETE /:id - Unblock an IP

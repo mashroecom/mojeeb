@@ -11,15 +11,7 @@ import {
 } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
-import {
-  Mail,
-  Trash2,
-  X,
-  Loader2,
-  Pencil,
-  Sprout,
-  FileCode2,
-} from 'lucide-react';
+import { Mail, Trash2, X, Loader2, Pencil, Sprout, FileCode2 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -58,7 +50,6 @@ const emptyForm: FormData = {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
 
 // ---------------------------------------------------------------------------
 // Skeletons
@@ -175,9 +166,7 @@ export default function EmailTemplatesPage() {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t('subtitle')}
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
         </div>
         <button
           onClick={handleSeed}
@@ -266,7 +255,9 @@ export default function EmailTemplatesPage() {
             <div className="md:col-span-2">
               <label className="block text-sm font-medium mb-1">
                 {t('variables')}
-                <span className="text-muted-foreground font-normal ms-1">({t('commaSeparated')})</span>
+                <span className="text-muted-foreground font-normal ms-1">
+                  ({t('commaSeparated')})
+                </span>
               </label>
               <input
                 type="text"
@@ -326,9 +317,7 @@ export default function EmailTemplatesPage() {
         <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-16 text-center">
           <FileCode2 className="h-12 w-12 text-muted-foreground/40 mb-4" />
           <p className="text-sm text-muted-foreground">{t('noTemplates')}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {t('noTemplatesHint')}
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">{t('noTemplatesHint')}</p>
         </div>
       )}
 

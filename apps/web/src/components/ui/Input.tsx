@@ -16,10 +16,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label
-            htmlFor={inputId}
-            className="mb-1.5 block text-sm font-medium text-foreground"
-          >
+          <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-foreground">
             {label}
           </label>
         )}
@@ -38,7 +35,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               'disabled:cursor-not-allowed disabled:opacity-50',
               'placeholder:text-muted-foreground',
               icon && 'ps-9',
-              error && 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive',
+              error &&
+                'border-destructive focus-visible:border-destructive focus-visible:ring-destructive',
               className,
             )}
             aria-invalid={error ? true : undefined}

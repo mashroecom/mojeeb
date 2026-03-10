@@ -24,11 +24,26 @@ const storage = multer.diskStorage({
 });
 
 const ALLOWED_EXTENSIONS = new Set([
-  '.jpg', '.jpeg', '.png', '.gif', '.webp',
-  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-  '.txt', '.csv',
-  '.mp4', '.webm', '.mov',
-  '.mp3', '.ogg', '.wav',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.ppt',
+  '.pptx',
+  '.txt',
+  '.csv',
+  '.mp4',
+  '.webm',
+  '.mov',
+  '.mp3',
+  '.ogg',
+  '.wav',
 ]);
 
 const upload = multer({
@@ -36,14 +51,24 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (_req, file, cb) => {
     const allowedTypes = new Set([
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm', 'video/quicktime',
-      'audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/webm',
-      'application/pdf', 'application/msword',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'video/mp4',
+      'video/webm',
+      'video/quicktime',
+      'audio/mpeg',
+      'audio/ogg',
+      'audio/wav',
+      'audio/webm',
+      'application/pdf',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'application/vnd.ms-excel', 'application/vnd.ms-powerpoint',
+      'application/vnd.ms-excel',
+      'application/vnd.ms-powerpoint',
       'text/plain',
     ]);
     const ext = path.extname(file.originalname).toLowerCase();
@@ -125,15 +150,14 @@ router.use('/:channelId', validateChannel as any);
 router.get('/:channelId/config', async (req: Request, res: Response) => {
   try {
     const channel = (req as any).channel;
-    const credentials = channel.credentials as Record<string, any> || {};
+    const credentials = (channel.credentials as Record<string, any>) || {};
     const primaryAgent = channel.agents?.[0]?.agent;
 
     // Derive direction from agent language if not explicitly set
     const agentLang = primaryAgent?.language || 'ar';
     const defaultDirection = agentLang === 'ar' ? 'rtl' : 'ltr';
-    const defaultGreeting = agentLang === 'ar'
-      ? 'أهلاً! 😊 كيف أقدر أساعدك؟'
-      : 'Hi! How can I help you today? 😊';
+    const defaultGreeting =
+      agentLang === 'ar' ? 'أهلاً! 😊 كيف أقدر أساعدك؟' : 'Hi! How can I help you today? 😊';
 
     res.json({
       success: true,
@@ -170,7 +194,9 @@ router.post('/:channelId/conversations', async (req: Request, res: Response) => 
     }
 
     if (message.length > 4000) {
-      return res.status(400).json({ success: false, error: 'message exceeds maximum length of 4000 characters' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'message exceeds maximum length of 4000 characters' });
     }
 
     // Find or create conversation in a transaction to avoid race conditions
@@ -294,7 +320,8 @@ router.get(
 
       const hasMore = filtered.length > limit;
       const results = hasMore ? filtered.slice(0, limit) : filtered;
-      const nextCursor = hasMore && results.length > 0 ? results[results.length - 1]!.createdAt.toISOString() : null;
+      const nextCursor =
+        hasMore && results.length > 0 ? results[results.length - 1]!.createdAt.toISOString() : null;
 
       res.json({
         success: true,
@@ -310,7 +337,7 @@ router.get(
       logger.error({ err }, 'Error fetching webchat messages');
       res.status(500).json({ success: false, error: 'Internal server error' });
     }
-  }
+  },
 );
 
 // ──────────────────────────────────────────────────────────
@@ -353,9 +380,8 @@ router.get(
         const lastMsg = conv.messages?.[0];
         let preview = conv.summary || '';
         if (!preview && lastMsg) {
-          preview = lastMsg.content.length > 60
-            ? lastMsg.content.slice(0, 60) + '...'
-            : lastMsg.content;
+          preview =
+            lastMsg.content.length > 60 ? lastMsg.content.slice(0, 60) + '...' : lastMsg.content;
         }
         return {
           id: conv.id,
@@ -375,7 +401,7 @@ router.get(
       logger.error({ err }, 'Error fetching visitor conversation list');
       res.status(500).json({ success: false, error: 'Internal server error' });
     }
-  }
+  },
 );
 
 // ──────────────────────────────────────────────────────────
@@ -417,50 +443,53 @@ router.get(
       logger.error({ err }, 'Error fetching visitor conversation');
       res.status(500).json({ success: false, error: 'Internal server error' });
     }
-  }
+  },
 );
 
 // ──────────────────────────────────────────────────────────
 // POST /api/v1/webchat/:channelId/conversations/:conversationId/rate
 // Submit a CSAT rating for a conversation
 // ──────────────────────────────────────────────────────────
-router.post('/:channelId/conversations/:conversationId/rate', async (req: Request, res: Response) => {
-  try {
-    const channel = (req as any).channel;
-    const conversationId = req.params.conversationId as string;
-    const { rating, feedback, customerId } = req.body;
+router.post(
+  '/:channelId/conversations/:conversationId/rate',
+  async (req: Request, res: Response) => {
+    try {
+      const channel = (req as any).channel;
+      const conversationId = req.params.conversationId as string;
+      const { rating, feedback, customerId } = req.body;
 
-    if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ success: false, error: 'rating must be between 1 and 5' });
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ success: false, error: 'rating must be between 1 and 5' });
+      }
+
+      if (!customerId) {
+        return res.status(400).json({ success: false, error: 'customerId is required' });
+      }
+
+      // Verify conversation belongs to this channel
+      const conversation = await prisma.conversation.findFirst({
+        where: { id: conversationId, channelId: channel.id },
+        select: { id: true },
+      });
+      if (!conversation) {
+        return res.status(404).json({ success: false, error: 'Conversation not found' });
+      }
+
+      const result = await prisma.conversationRating.upsert({
+        where: {
+          conversationId_customerId: { conversationId, customerId },
+        },
+        create: { conversationId, rating, feedback, customerId },
+        update: { rating, feedback },
+      });
+
+      res.json({ success: true, data: { id: result.id } });
+    } catch (err) {
+      logger.error({ err }, 'Error saving rating');
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
-
-    if (!customerId) {
-      return res.status(400).json({ success: false, error: 'customerId is required' });
-    }
-
-    // Verify conversation belongs to this channel
-    const conversation = await prisma.conversation.findFirst({
-      where: { id: conversationId, channelId: channel.id },
-      select: { id: true },
-    });
-    if (!conversation) {
-      return res.status(404).json({ success: false, error: 'Conversation not found' });
-    }
-
-    const result = await prisma.conversationRating.upsert({
-      where: {
-        conversationId_customerId: { conversationId, customerId },
-      },
-      create: { conversationId, rating, feedback, customerId },
-      update: { rating, feedback },
-    });
-
-    res.json({ success: true, data: { id: result.id } });
-  } catch (err) {
-    logger.error({ err }, 'Error saving rating');
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
+  },
+);
 
 // ──────────────────────────────────────────────────────────
 // POST /api/v1/webchat/:channelId/upload
@@ -491,31 +520,34 @@ router.post('/:channelId/upload', upload.single('file'), async (req: Request, re
     const signedFileUrl = generateSignedFileUrl(file.filename, visitorId);
 
     // Find or create conversation (wrapped in transaction to prevent race condition duplicates)
-    const conversation = await prisma.$transaction(async (tx) => {
-      let conv = await tx.conversation.findFirst({
-        where: {
-          channelId: channel.id,
-          customerId: visitorId,
-          status: { in: ['ACTIVE', 'WAITING', 'HANDED_OFF'] },
-        },
-      });
-
-      if (!conv) {
-        const primaryAgentId = channel.agents?.[0]?.agentId || null;
-        conv = await tx.conversation.create({
-          data: {
-            orgId: channel.orgId,
+    const conversation = await prisma.$transaction(
+      async (tx) => {
+        let conv = await tx.conversation.findFirst({
+          where: {
             channelId: channel.id,
             customerId: visitorId,
-            customerName: visitorName || null,
-            agentId: primaryAgentId,
-            status: 'ACTIVE',
+            status: { in: ['ACTIVE', 'WAITING', 'HANDED_OFF'] },
           },
         });
-      }
 
-      return conv;
-    }, { isolationLevel: 'ReadCommitted' });
+        if (!conv) {
+          const primaryAgentId = channel.agents?.[0]?.agentId || null;
+          conv = await tx.conversation.create({
+            data: {
+              orgId: channel.orgId,
+              channelId: channel.id,
+              customerId: visitorId,
+              customerName: visitorName || null,
+              agentId: primaryAgentId,
+              status: 'ACTIVE',
+            },
+          });
+        }
+
+        return conv;
+      },
+      { isolationLevel: 'ReadCommitted' },
+    );
 
     // Queue the file message for processing (pass conversationId to avoid duplicate creation in worker)
     await inboundQueue.add('process-message', {

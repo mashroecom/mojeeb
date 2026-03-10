@@ -33,8 +33,12 @@ export default function QuickReplyTestPage() {
         <div className="rounded-lg border bg-card p-4">
           <h2 className="font-semibold mb-2">Conversation Details</h2>
           <div className="space-y-1 text-sm">
-            <p><span className="text-muted-foreground">Customer:</span> John Doe</p>
-            <p><span className="text-muted-foreground">Conversation ID:</span> test-conv-123</p>
+            <p>
+              <span className="text-muted-foreground">Customer:</span> John Doe
+            </p>
+            <p>
+              <span className="text-muted-foreground">Conversation ID:</span> test-conv-123
+            </p>
           </div>
         </div>
 
@@ -42,9 +46,7 @@ export default function QuickReplyTestPage() {
         {lastMessage && (
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-semibold mb-2 text-sm">Last Sent Message:</h3>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {lastMessage}
-            </p>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{lastMessage}</p>
           </div>
         )}
 

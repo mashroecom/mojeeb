@@ -22,15 +22,7 @@ import {
   EmbedCodeBlock,
   getChannelKey,
 } from '@/components/channels/ChannelForms';
-import {
-  Globe,
-  Plus,
-  Loader2,
-  Power,
-  PowerOff,
-  Trash2,
-  Settings,
-} from 'lucide-react';
+import { Globe, Plus, Loader2, Power, PowerOff, Trash2, Settings } from 'lucide-react';
 
 export function ChannelsSection({ agentId }: { agentId: string }) {
   const t = useTranslations('dashboard.agents');
@@ -50,11 +42,7 @@ export function ChannelsSection({ agentId }: { agentId: string }) {
   const [disconnectTarget, setDisconnectTarget] = useState<{ channelId: string } | null>(null);
   const [settingsChannelId, setSettingsChannelId] = useState<string | null>(null);
 
-  const handleConnect = (
-    type: ChannelType,
-    credentials: Record<string, string>,
-    name: string,
-  ) => {
+  const handleConnect = (type: ChannelType, credentials: Record<string, string>, name: string) => {
     connectChannel.mutate(
       { agentId, type, name, credentials },
       {
@@ -89,20 +77,17 @@ export function ChannelsSection({ agentId }: { agentId: string }) {
         toast.success(tCommon('toast.channelToggled'));
         // Directly update the agent detail cache so the icon flips immediately
         if (orgId) {
-          queryClient.setQueryData(
-            agentKeys.detail(orgId, agentId),
-            (old: any) => {
-              if (!old) return old;
-              return {
-                ...old,
-                channels: old.channels.map((ac: any) =>
-                  ac.channelId === channelId
-                    ? { ...ac, channel: { ...ac.channel, isActive: updatedChannel.isActive } }
-                    : ac,
-                ),
-              };
-            },
-          );
+          queryClient.setQueryData(agentKeys.detail(orgId, agentId), (old: any) => {
+            if (!old) return old;
+            return {
+              ...old,
+              channels: old.channels.map((ac: any) =>
+                ac.channelId === channelId
+                  ? { ...ac, channel: { ...ac.channel, isActive: updatedChannel.isActive } }
+                  : ac,
+              ),
+            };
+          });
         }
       },
       onError: () => toast.error(tCommon('toast.channelToggleFailed')),
@@ -113,10 +98,13 @@ export function ChannelsSection({ agentId }: { agentId: string }) {
     channelId: string,
     settings: { primaryColor?: string; greeting?: string; position?: string },
   ) => {
-    updateChannelSettings.mutate({ channelId, settings }, {
-      onSuccess: () => toast.success(tCommon('toast.settingsUpdated')),
-      onError: () => toast.error(tCommon('toast.settingsUpdateFailed')),
-    });
+    updateChannelSettings.mutate(
+      { channelId, settings },
+      {
+        onSuccess: () => toast.success(tCommon('toast.settingsUpdated')),
+        onError: () => toast.error(tCommon('toast.settingsUpdateFailed')),
+      },
+    );
   };
 
   // Build a set of channel types already connected to this agent
@@ -135,9 +123,7 @@ export function ChannelsSection({ agentId }: { agentId: string }) {
               <Globe className="h-5 w-5" />
               {t('channels')}
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t('channelsHint')}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{t('channelsHint')}</p>
           </div>
           {!allTypesConnected && (
             <button
@@ -175,9 +161,7 @@ export function ChannelsSection({ agentId }: { agentId: string }) {
                     }}
                     className={cn(
                       'flex items-center gap-2 rounded-lg border bg-background px-3 py-2.5 text-sm font-medium transition-colors',
-                      alreadyConnected
-                        ? 'cursor-not-allowed opacity-50'
-                        : 'hover:bg-muted',
+                      alreadyConnected ? 'cursor-not-allowed opacity-50' : 'hover:bg-muted',
                     )}
                     title={alreadyConnected ? tc('channelAlreadyConnected') : undefined}
                   >
@@ -211,10 +195,7 @@ export function ChannelsSection({ agentId }: { agentId: string }) {
               const showSettings = settingsChannelId === ac.channelId;
 
               return (
-                <div
-                  key={ac.channelId}
-                  className="rounded-lg border px-4 py-3"
-                >
+                <div key={ac.channelId} className="rounded-lg border px-4 py-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
@@ -226,9 +207,7 @@ export function ChannelsSection({ agentId }: { agentId: string }) {
                         <Icon className="h-4 w-4 text-white" />
                       </div>
                       <div>
-                        <span className="text-sm font-medium">
-                          {ac.channel.name}
-                        </span>
+                        <span className="text-sm font-medium">{ac.channel.name}</span>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs text-muted-foreground">
                             {tc(`${channelKey}.name`)}
@@ -271,9 +250,7 @@ export function ChannelsSection({ agentId }: { agentId: string }) {
                       {isWebchat && (
                         <button
                           type="button"
-                          onClick={() =>
-                            setSettingsChannelId(showSettings ? null : ac.channelId)
-                          }
+                          onClick={() => setSettingsChannelId(showSettings ? null : ac.channelId)}
                           className="inline-flex items-center justify-center rounded-lg border p-1.5 text-xs transition-colors hover:bg-muted"
                           title={tc('webchatSettings')}
                         >
@@ -335,9 +312,7 @@ export function ChannelsSection({ agentId }: { agentId: string }) {
             })}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            {t('noChannels')}
-          </p>
+          <p className="text-sm text-muted-foreground text-center py-4">{t('noChannels')}</p>
         )}
       </div>
 

@@ -8,7 +8,8 @@ export const templateKeys = {
   list: (params?: Record<string, unknown>) => [...templateKeys.lists(), params] as const,
   details: () => [...templateKeys.all, 'detail'] as const,
   detail: (id: string) => [...templateKeys.details(), id] as const,
-  suggestions: (conversationId: string) => [...templateKeys.all, 'suggestions', conversationId] as const,
+  suggestions: (conversationId: string) =>
+    [...templateKeys.all, 'suggestions', conversationId] as const,
 };
 
 // Template list type

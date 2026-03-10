@@ -114,7 +114,9 @@ interface WindowWithWidget extends Window {
     document.getElementById('mojeeb-chat-widget');
 
   if (!scriptTag) {
-    console.warn('[Mojeeb] Could not find the widget script tag. Ensure the script has id="mojeeb-chat-widget".');
+    console.warn(
+      '[Mojeeb] Could not find the widget script tag. Ensure the script has id="mojeeb-chat-widget".',
+    );
     return;
   }
 
@@ -166,8 +168,8 @@ interface WindowWithWidget extends Window {
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime);          // A5
-      osc.frequency.setValueAtTime(1047, ctx.currentTime + 0.08);  // C6
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+      osc.frequency.setValueAtTime(1047, ctx.currentTime + 0.08); // C6
       gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
       osc.start(ctx.currentTime);
@@ -260,8 +262,12 @@ interface WindowWithWidget extends Window {
           agentName: data.agentName || (inlineConfig.agentName as string) || 'Support',
           greeting: data.greeting || (inlineConfig.greeting as string) || '',
           primaryColor: data.primaryColor || (inlineConfig.primaryColor as string) || '#6366f1',
-          position: data.position || (inlineConfig.position as ResolvedConfig['position']) || 'bottom-right',
-          direction: data.direction || (inlineConfig.direction as ResolvedConfig['direction']) || 'ltr',
+          position:
+            data.position ||
+            (inlineConfig.position as ResolvedConfig['position']) ||
+            'bottom-right',
+          direction:
+            data.direction || (inlineConfig.direction as ResolvedConfig['direction']) || 'ltr',
           frontendUrl: data.frontendUrl || 'https://mojeeb.app',
         };
 
@@ -331,7 +337,11 @@ interface WindowWithWidget extends Window {
     currentNotification = null;
   }
 
-  function showNotification(messageContent: string, config: ResolvedConfig, autoDismiss = true): void {
+  function showNotification(
+    messageContent: string,
+    config: ResolvedConfig,
+    autoDismiss = true,
+  ): void {
     // Only show when chat is closed
     if (chatOpen) return;
 
@@ -412,9 +422,7 @@ interface WindowWithWidget extends Window {
       if (e.key === 'Escape') clearNotification();
     };
     document.addEventListener('keydown', dismissKeyHandler);
-    notificationListeners.push(
-      { target: document, event: 'keydown', handler: dismissKeyHandler },
-    );
+    notificationListeners.push({ target: document, event: 'keydown', handler: dismissKeyHandler });
     const dismissOverHandler = () => {
       dismissBtn.style.background = 'rgba(0, 0, 0, 1)';
     };
@@ -440,9 +448,11 @@ interface WindowWithWidget extends Window {
 
     // Click notification -> open chat
     notification.addEventListener('click', notificationClickHandler);
-    notificationListeners.push(
-      { target: notification, event: 'click', handler: notificationClickHandler },
-    );
+    notificationListeners.push({
+      target: notification,
+      event: 'click',
+      handler: notificationClickHandler,
+    });
 
     launcher.appendChild(notification);
     currentNotification = notification;
@@ -578,7 +588,10 @@ interface WindowWithWidget extends Window {
       const fabBtn = getElement(ELEMENT_IDS.BUTTON);
       if (fabBtn) {
         fabBtn.setAttribute('aria-expanded', 'true');
-        fabBtn.setAttribute('aria-label', config.direction === 'rtl' ? 'إغلاق المحادثة' : 'Close chat');
+        fabBtn.setAttribute(
+          'aria-label',
+          config.direction === 'rtl' ? 'إغلاق المحادثة' : 'Close chat',
+        );
       }
 
       // Update FAB icon to arrow-down (desktop only)
@@ -632,7 +645,10 @@ interface WindowWithWidget extends Window {
       const fabBtnClose = getElement(ELEMENT_IDS.BUTTON);
       if (fabBtnClose) {
         fabBtnClose.setAttribute('aria-expanded', 'false');
-        fabBtnClose.setAttribute('aria-label', resolvedConfig?.direction === 'rtl' ? 'فتح المحادثة' : 'Open chat');
+        fabBtnClose.setAttribute(
+          'aria-label',
+          resolvedConfig?.direction === 'rtl' ? 'فتح المحادثة' : 'Open chat',
+        );
       }
 
       // Update FAB icon back to chat
@@ -976,7 +992,10 @@ interface WindowWithWidget extends Window {
             (el as HTMLElement).style.cursor = 'pointer';
           });
 
-          if (DEBUG) console.log(`[Mojeeb] Attached to ${elements.length} element(s) matching "${selector}".`);
+          if (DEBUG)
+            console.log(
+              `[Mojeeb] Attached to ${elements.length} element(s) matching "${selector}".`,
+            );
         } catch (err) {
           console.error('[Mojeeb] Error attaching to selector:', selector, err);
         }
@@ -1017,7 +1036,8 @@ interface WindowWithWidget extends Window {
       _mode: 'headless',
     };
 
-    if (DEBUG) console.log('[Mojeeb] Headless mode ready. Use window.MojeebWidget to control the widget.');
+    if (DEBUG)
+      console.log('[Mojeeb] Headless mode ready. Use window.MojeebWidget to control the widget.');
   }
 
   // =========================================================================
@@ -1048,7 +1068,8 @@ interface WindowWithWidget extends Window {
   // Main initialization flow
   // =========================================================================
 
-  if (DEBUG) console.log(`[Mojeeb] Initializing widget in "${mode}" mode for channel "${channelId}".`);
+  if (DEBUG)
+    console.log(`[Mojeeb] Initializing widget in "${mode}" mode for channel "${channelId}".`);
 
   fetchConfig()
     .then((config) => {

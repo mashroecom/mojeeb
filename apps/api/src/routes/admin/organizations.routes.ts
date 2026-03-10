@@ -48,7 +48,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // POST /bulk-unsuspend - Bulk unsuspend organizations
@@ -71,7 +71,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // GET /:orgId - Organization detail
@@ -140,7 +140,7 @@ router.patch(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // PATCH /:orgId/suspend - Toggle organization suspension

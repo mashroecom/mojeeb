@@ -32,10 +32,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { firstName?: string; lastName?: string }) => {
-      const { data: res } = await api.patch<ApiResponse<UserProfile>>(
-        '/auth/me',
-        data,
-      );
+      const { data: res } = await api.patch<ApiResponse<UserProfile>>('/auth/me', data);
       return res.data;
     },
     onSuccess: () => {
@@ -46,13 +43,11 @@ export function useUpdateProfile() {
 
 export function useChangePassword() {
   return useMutation({
-    mutationFn: async (data: {
-      currentPassword: string;
-      newPassword: string;
-    }) => {
-      const { data: res } = await api.patch<
-        ApiResponse<{ message: string }>
-      >('/auth/me/password', data);
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      const { data: res } = await api.patch<ApiResponse<{ message: string }>>(
+        '/auth/me/password',
+        data,
+      );
       return res.data;
     },
   });

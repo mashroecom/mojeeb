@@ -45,8 +45,16 @@ import {
 // ---------------------------------------------------------------------------
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  Headphones, Briefcase, HelpCircle, Calendar, ShoppingCart,
-  Bot, Globe, MessageCircle, ClipboardList, GraduationCap,
+  Headphones,
+  Briefcase,
+  HelpCircle,
+  Calendar,
+  ShoppingCart,
+  Bot,
+  Globe,
+  MessageCircle,
+  ClipboardList,
+  GraduationCap,
 };
 
 const STEPS = ['company', 'agent', 'knowledge', 'channel', 'test', 'done'] as const;
@@ -62,8 +70,14 @@ const STEP_ICONS: Record<Step, React.ComponentType<{ className?: string }>> = {
 };
 
 const INDUSTRIES = [
-  'ecommerce', 'healthcare', 'education', 'restaurant',
-  'realEstate', 'services', 'technology', 'other',
+  'ecommerce',
+  'healthcare',
+  'education',
+  'restaurant',
+  'realEstate',
+  'services',
+  'technology',
+  'other',
 ] as const;
 
 const STORAGE_KEY = 'mojeeb_onboarding_step';
@@ -116,7 +130,11 @@ function Stepper({ currentStep }: { currentStep: Step }) {
               <span
                 className={cn(
                   'mt-1.5 text-[10px] sm:text-[11px] font-medium text-center leading-tight hidden sm:block',
-                  isActive ? 'text-primary' : isCompleted ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground',
+                  isActive
+                    ? 'text-primary'
+                    : isCompleted
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-muted-foreground',
                 )}
               >
                 {t(step)}
@@ -238,9 +256,7 @@ function CompanyStep({
         <div className="mb-4 inline-flex rounded-full bg-primary/10 p-4">
           <Sparkles className="h-10 w-10 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold">
-          {t('title', { name: user?.firstName || '' })}
-        </h1>
+        <h1 className="text-3xl font-bold">{t('title', { name: user?.firstName || '' })}</h1>
         <p className="mt-2 text-muted-foreground">{t('subtitle')}</p>
       </div>
 
@@ -263,7 +279,9 @@ function CompanyStep({
 
         {/* Industry */}
         <div>
-          <label htmlFor="company-industry" className="mb-1.5 block text-sm font-medium">{t('industryLabel')}</label>
+          <label htmlFor="company-industry" className="mb-1.5 block text-sm font-medium">
+            {t('industryLabel')}
+          </label>
           <select
             id="company-industry"
             value={formData.industry}
@@ -281,7 +299,9 @@ function CompanyStep({
 
         {/* Website URL */}
         <div>
-          <label htmlFor="company-website" className="mb-1.5 block text-sm font-medium">{t('websiteLabel')}</label>
+          <label htmlFor="company-website" className="mb-1.5 block text-sm font-medium">
+            {t('websiteLabel')}
+          </label>
           <input
             id="company-website"
             type="url"
@@ -479,7 +499,9 @@ function AgentStep({
             </div>
 
             <div>
-              <label htmlFor="agent-language" className="mb-1.5 block text-sm font-medium">{t('languageLabel')}</label>
+              <label htmlFor="agent-language" className="mb-1.5 block text-sm font-medium">
+                {t('languageLabel')}
+              </label>
               <select
                 id="agent-language"
                 value={language}
@@ -492,7 +514,9 @@ function AgentStep({
             </div>
 
             <div>
-              <label htmlFor="agent-instructions" className="mb-1.5 block text-sm font-medium">{t('instructionsLabel')}</label>
+              <label htmlFor="agent-instructions" className="mb-1.5 block text-sm font-medium">
+                {t('instructionsLabel')}
+              </label>
               <textarea
                 id="agent-instructions"
                 rows={3}
@@ -584,7 +608,9 @@ function KnowledgeStep({
     try {
       await api.post('/setup/knowledge-base', {
         agentId,
-        documents: [{ title: t('defaultDocTitle'), content: textContent.trim(), contentType: 'TEXT' }],
+        documents: [
+          { title: t('defaultDocTitle'), content: textContent.trim(), contentType: 'TEXT' },
+        ],
       });
       const newCount = addedCount + 1;
       setAddedCount(newCount);
@@ -714,7 +740,11 @@ function KnowledgeStep({
                   (saving || !textContent.trim()) && 'cursor-not-allowed opacity-50',
                 )}
               >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4" />
+                )}
                 {t('addButton')}
               </button>
             </div>
@@ -741,7 +771,11 @@ function KnowledgeStep({
                   (saving || !urlValue.trim()) && 'cursor-not-allowed opacity-50',
                 )}
               >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <LinkIcon className="h-4 w-4" />
+                )}
                 {t('importButton')}
               </button>
             </div>
@@ -855,7 +889,9 @@ function ChannelStep({
         {channelCreated && (
           <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
             <Check className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
-            <p className="text-sm text-green-700 dark:text-green-400 font-medium">{t('connected')}</p>
+            <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+              {t('connected')}
+            </p>
           </div>
         )}
 
@@ -875,7 +911,9 @@ function ChannelStep({
               <p className="mt-1 text-sm text-muted-foreground">{t('webchatDesc')}</p>
 
               <div className="mt-4">
-                <label htmlFor="channel-name" className="mb-1.5 block text-sm font-medium">{t('webchatNameLabel')}</label>
+                <label htmlFor="channel-name" className="mb-1.5 block text-sm font-medium">
+                  {t('webchatNameLabel')}
+                </label>
                 <input
                   id="channel-name"
                   type="text"
@@ -919,7 +957,9 @@ function ChannelStep({
 
         {/* Other channels */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-muted-foreground">{t('otherChannelsTitle')}</h4>
+          <h4 className="mb-3 text-sm font-medium text-muted-foreground">
+            {t('otherChannelsTitle')}
+          </h4>
           <p className="mb-3 text-xs text-muted-foreground">{t('otherChannelsDesc')}</p>
           <div className="flex flex-wrap gap-2">
             {otherChannels.map((ch) => {
@@ -929,7 +969,12 @@ function ChannelStep({
                   key={ch.name}
                   className="inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2.5 opacity-60"
                 >
-                  <div className={cn('flex h-7 w-7 items-center justify-center rounded-lg shrink-0', ch.color)}>
+                  <div
+                    className={cn(
+                      'flex h-7 w-7 items-center justify-center rounded-lg shrink-0',
+                      ch.color,
+                    )}
+                  >
                     <Icon className="h-3.5 w-3.5 text-white" />
                   </div>
                   <span className="text-sm font-medium">{ch.name}</span>
@@ -986,13 +1031,7 @@ function TestStep({
         </div>
       )}
 
-      <StepNav
-        onBack={onBack}
-        onNext={onNext}
-        showBack
-        showNext
-        nextLabel={t('continueButton')}
-      />
+      <StepNav onBack={onBack} onNext={onNext} showBack showNext nextLabel={t('continueButton')} />
     </div>
   );
 }
@@ -1046,16 +1085,12 @@ function CompleteStep({
     },
     {
       done: agentCreated,
-      label: agentCreated
-        ? t('agentReady', { name: agentName || '' })
-        : t('agentSkipped'),
+      label: agentCreated ? t('agentReady', { name: agentName || '' }) : t('agentSkipped'),
       icon: Bot,
     },
     {
       done: kbCount > 0,
-      label: kbCount > 0
-        ? t('kbReady', { count: kbCount })
-        : t('kbSkipped'),
+      label: kbCount > 0 ? t('kbReady', { count: kbCount }) : t('kbSkipped'),
       icon: BookOpen,
     },
     {
@@ -1091,15 +1126,18 @@ function CompleteStep({
               <div
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-full shrink-0',
-                  item.done
-                    ? 'bg-green-500 text-white'
-                    : 'bg-muted text-muted-foreground',
+                  item.done ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground',
                 )}
               >
                 {item.done ? <Check className="h-4 w-4" /> : <SkipForward className="h-4 w-4" />}
               </div>
               <div className="flex items-center gap-2 flex-1">
-                <Icon className={cn('h-4 w-4', item.done ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground')} />
+                <Icon
+                  className={cn(
+                    'h-4 w-4',
+                    item.done ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground',
+                  )}
+                />
                 <span
                   className={cn(
                     'text-sm font-medium',
@@ -1183,18 +1221,21 @@ export default function OnboardingPage() {
 
   // Load setup status on mount to resume progress
   useEffect(() => {
-    api.get('/setup/status').then((res) => {
-      const status = res.data?.data;
-      if (status?.agentId) {
-        setCreatedAgentId(status.agentId);
-        setAgentCreated(true);
-      }
-      if (status?.channel) setChannelCreated(true);
-      if (status?.knowledgeBase) setKbCount(1);
-      if (status?.company && org) {
-        setCompanyForm((prev) => ({ ...prev, name: org.name }));
-      }
-    }).catch(() => {});
+    api
+      .get('/setup/status')
+      .then((res) => {
+        const status = res.data?.data;
+        if (status?.agentId) {
+          setCreatedAgentId(status.agentId);
+          setAgentCreated(true);
+        }
+        if (status?.channel) setChannelCreated(true);
+        if (status?.knowledgeBase) setKbCount(1);
+        if (status?.company && org) {
+          setCompanyForm((prev) => ({ ...prev, name: org.name }));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Persist step
@@ -1202,19 +1243,22 @@ export default function OnboardingPage() {
     localStorage.setItem(STORAGE_KEY, step);
   }, [step]);
 
-  const goTo = useCallback((target: Step) => {
-    const currentIdx = STEPS.indexOf(step);
-    const targetIdx = STEPS.indexOf(target);
-    const dir = targetIdx > currentIdx ? 'forward' : 'backward';
-    setDirection(dir);
-    setAnimating(true);
-    // Small delay so CSS transition starts from the correct state
-    setTimeout(() => {
-      setStep(target);
-      // Reset animation after transition
-      setTimeout(() => setAnimating(false), 350);
-    }, 50);
-  }, [step]);
+  const goTo = useCallback(
+    (target: Step) => {
+      const currentIdx = STEPS.indexOf(step);
+      const targetIdx = STEPS.indexOf(target);
+      const dir = targetIdx > currentIdx ? 'forward' : 'backward';
+      setDirection(dir);
+      setAnimating(true);
+      // Small delay so CSS transition starts from the correct state
+      setTimeout(() => {
+        setStep(target);
+        // Reset animation after transition
+        setTimeout(() => setAnimating(false), 350);
+      }, 50);
+    },
+    [step],
+  );
 
   const skipAll = async () => {
     localStorage.removeItem(STORAGE_KEY);
@@ -1230,7 +1274,12 @@ export default function OnboardingPage() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      )
+        return;
       const idx = STEPS.indexOf(step);
       if (e.key === 'Escape' && idx > 0) {
         goTo(STEPS[idx - 1]);

@@ -91,10 +91,7 @@ export const useChatStore = create<ChatState>((set) => ({
     set((state) => {
       const updated = {
         ...state.messagesByConversation,
-        [conversationId]: [
-          ...(state.messagesByConversation[conversationId] || []),
-          message,
-        ],
+        [conversationId]: [...(state.messagesByConversation[conversationId] || []), message],
       };
 
       // Evict oldest conversations if over limit (MAX_CONVERSATIONS = 30)
@@ -103,7 +100,7 @@ export const useChatStore = create<ChatState>((set) => ({
       const keys = Object.keys(updated);
       if (keys.length > MAX_CONVERSATIONS) {
         const toRemove = keys.slice(0, keys.length - MAX_CONVERSATIONS);
-        toRemove.forEach(k => delete updated[k]);
+        toRemove.forEach((k) => delete updated[k]);
       }
 
       return { messagesByConversation: updated };

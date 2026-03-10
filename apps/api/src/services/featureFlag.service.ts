@@ -66,7 +66,10 @@ export class FeatureFlagService {
   /**
    * Update an existing feature flag
    */
-  async update(key: string, params: { enabled?: boolean; description?: string; metadata?: Record<string, unknown> }) {
+  async update(
+    key: string,
+    params: { enabled?: boolean; description?: string; metadata?: Record<string, unknown> },
+  ) {
     const data: Record<string, unknown> = {};
     if (params.enabled !== undefined) data.enabled = params.enabled;
     if (params.description !== undefined) data.description = params.description;

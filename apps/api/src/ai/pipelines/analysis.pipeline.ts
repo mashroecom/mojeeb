@@ -1,6 +1,12 @@
 import { getAIProvider } from '../index';
 import { buildAnalysisPrompt } from '../prompts/analysis';
-import type { EmotionResult, RoutingDecision, LeadResult, ConversationMessage, ExtractedCustomerData } from '@mojeeb/shared-types';
+import type {
+  EmotionResult,
+  RoutingDecision,
+  LeadResult,
+  ConversationMessage,
+  ExtractedCustomerData,
+} from '@mojeeb/shared-types';
 import { logger } from '../../config/logger';
 
 /**
@@ -169,23 +175,21 @@ export class AnalysisPipeline {
           options.agentName,
           options.dataCollectionFields,
         ),
-        messages: [
-          ...trimmedHistory,
-          { role: 'user', content: message },
-        ],
+        messages: [...trimmedHistory, { role: 'user', content: message }],
         temperature: 0.1,
         maxTokens: 500,
         model: 'gpt-4o-mini',
       });
 
       // Parse emotion
-      const emotion: EmotionResult | null = options.enableEmotion && result.emotion
-        ? {
-            emotion: (result.emotion.emotion || 'neutral') as EmotionResult['emotion'],
-            score: Math.min(1, Math.max(0, result.emotion.score || 0.5)),
-            reasoning: result.emotion.reasoning || '',
-          }
-        : null;
+      const emotion: EmotionResult | null =
+        options.enableEmotion && result.emotion
+          ? {
+              emotion: (result.emotion.emotion || 'neutral') as EmotionResult['emotion'],
+              score: Math.min(1, Math.max(0, result.emotion.score || 0.5)),
+              reasoning: result.emotion.reasoning || '',
+            }
+          : null;
 
       // Parse lead
       let lead: LeadResult | null = null;

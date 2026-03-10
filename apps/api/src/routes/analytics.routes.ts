@@ -4,7 +4,10 @@ import { analyticsService } from '../services/analytics.service';
 import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 
-interface OrgParams { orgId: string; [key: string]: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
@@ -25,24 +28,20 @@ const conversationMetricsSchema = z.object({
 
 // ─── GET /overview ───────────────────────────────────────────────
 
-router.get(
-  '/overview',
-  validate({ query: dateRangeSchema }),
-  async (req, res, next) => {
-    try {
-      const { orgId } = req.params as OrgParams;
-      const query = (req as any).validatedQuery ?? {};
+router.get('/overview', validate({ query: dateRangeSchema }), async (req, res, next) => {
+  try {
+    const { orgId } = req.params as OrgParams;
+    const query = (req as any).validatedQuery ?? {};
 
-      const startDate = query.startDate ? new Date(query.startDate) : undefined;
-      const endDate = query.endDate ? new Date(query.endDate) : undefined;
+    const startDate = query.startDate ? new Date(query.startDate) : undefined;
+    const endDate = query.endDate ? new Date(query.endDate) : undefined;
 
-      const overview = await analyticsService.getOverview(orgId, startDate, endDate);
-      res.json({ success: true, data: overview });
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+    const overview = await analyticsService.getOverview(orgId, startDate, endDate);
+    res.json({ success: true, data: overview });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // ─── GET /conversations-metrics ──────────────────────────────────
 

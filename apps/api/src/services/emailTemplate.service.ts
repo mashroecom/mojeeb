@@ -26,23 +26,15 @@ export class EmailTemplateService {
     return template;
   }
 
-  async renderTemplate(
-    key: string,
-    variables: Record<string, string>,
-    locale: 'en' | 'ar' = 'en',
-  ) {
+  async renderTemplate(key: string, variables: Record<string, string>, locale: 'en' | 'ar' = 'en') {
     const template = await this.getByKey(key);
     if (!template) {
       throw new Error(`Email template "${key}" not found`);
     }
 
-    const subject = locale === 'ar' && template.subjectAr
-      ? template.subjectAr
-      : template.subject;
+    const subject = locale === 'ar' && template.subjectAr ? template.subjectAr : template.subject;
 
-    const html = locale === 'ar' && template.bodyHtmlAr
-      ? template.bodyHtmlAr
-      : template.bodyHtml;
+    const html = locale === 'ar' && template.bodyHtmlAr ? template.bodyHtmlAr : template.bodyHtml;
 
     const text = template.bodyText || '';
 

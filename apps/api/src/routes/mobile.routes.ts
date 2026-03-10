@@ -115,9 +115,11 @@ router.get('/stats', async (req: Request, res: Response, next: NextFunction) => 
         where: whereFilter,
         _count: true,
       }),
-      orgId ? Promise.resolve(1) : prisma.organization.count({
-        where: { id: { in: orgIds } },
-      }),
+      orgId
+        ? Promise.resolve(1)
+        : prisma.organization.count({
+            where: { id: { in: orgIds } },
+          }),
     ]);
 
     res.json({
@@ -134,65 +136,68 @@ router.get('/stats', async (req: Request, res: Response, next: NextFunction) => 
 });
 
 // GET /conversations/:conversationId - Get conversation details
-router.get('/conversations/:conversationId', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const userId = req.user!.userId;
-    const { conversationId } = req.params as { conversationId: string };
-    const msgPage = parseInt(req.query.msgPage as string) || 1;
-    const msgLimit = Math.min(parseInt(req.query.msgLimit as string) || 50, 200);
+router.get(
+  '/conversations/:conversationId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.userId;
+      const { conversationId } = req.params as { conversationId: string };
+      const msgPage = parseInt(req.query.msgPage as string) || 1;
+      const msgLimit = Math.min(parseInt(req.query.msgLimit as string) || 50, 200);
 
-    // Get user's organizations
-    const memberships = await prisma.orgMembership.findMany({
-      where: { userId },
-      select: { orgId: true },
-    });
-    const orgIds = memberships.map((m) => m.orgId);
+      // Get user's organizations
+      const memberships = await prisma.orgMembership.findMany({
+        where: { userId },
+        select: { orgId: true },
+      });
+      const orgIds = memberships.map((m) => m.orgId);
 
-    const conversation = await prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        orgId: { in: orgIds },
-      },
-      include: {
-        org: { select: { id: true, name: true, logoUrl: true } },
-        channel: { select: { id: true, name: true, type: true } },
-        agent: { select: { id: true, name: true } },
-        ratings: true,
-        tags: { include: { tag: true } },
-        notes: {
-          orderBy: { createdAt: 'desc' as const },
+      const conversation = await prisma.conversation.findFirst({
+        where: {
+          id: conversationId,
+          orgId: { in: orgIds },
         },
-      },
-    });
+        include: {
+          org: { select: { id: true, name: true, logoUrl: true } },
+          channel: { select: { id: true, name: true, type: true } },
+          agent: { select: { id: true, name: true } },
+          ratings: true,
+          tags: { include: { tag: true } },
+          notes: {
+            orderBy: { createdAt: 'desc' as const },
+          },
+        },
+      });
 
-    if (!conversation) {
-      return res.status(404).json({ success: false, error: 'Conversation not found' });
+      if (!conversation) {
+        return res.status(404).json({ success: false, error: 'Conversation not found' });
+      }
+
+      const [messages, messageTotal] = await Promise.all([
+        prisma.message.findMany({
+          where: { conversationId },
+          orderBy: { createdAt: 'asc' },
+          skip: (msgPage - 1) * msgLimit,
+          take: msgLimit,
+        }),
+        prisma.message.count({ where: { conversationId } }),
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          ...conversation,
+          messages,
+          messageTotal,
+          messagePage: msgPage,
+          messageTotalPages: Math.ceil(messageTotal / msgLimit),
+        },
+      });
+    } catch (err) {
+      next(err);
     }
-
-    const [messages, messageTotal] = await Promise.all([
-      prisma.message.findMany({
-        where: { conversationId },
-        orderBy: { createdAt: 'asc' },
-        skip: (msgPage - 1) * msgLimit,
-        take: msgLimit,
-      }),
-      prisma.message.count({ where: { conversationId } }),
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        ...conversation,
-        messages,
-        messageTotal,
-        messagePage: msgPage,
-        messageTotalPages: Math.ceil(messageTotal / msgLimit),
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 const quickActionSchema = z.object({
   action: z.enum(['resolve', 'archive', 'activate', 'handoff', 'waiting']),
@@ -251,7 +256,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // GET /organizations - List user's organizations
@@ -297,10 +302,12 @@ const subscribeSchema = z.object({
       auth: z.string(),
     }),
   }),
-  deviceInfo: z.object({
-    userAgent: z.string().optional(),
-    platform: z.string().optional(),
-  }).optional(),
+  deviceInfo: z
+    .object({
+      userAgent: z.string().optional(),
+      platform: z.string().optional(),
+    })
+    .optional(),
 });
 
 // POST /push/subscribe - Subscribe to push notifications
@@ -340,7 +347,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 const unsubscribeSchema = z.object({
@@ -365,7 +372,7 @@ router.delete(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // GET /push/subscriptions - List user's push subscriptions
@@ -439,19 +446,39 @@ router.get('/analytics/dashboard', async (req: Request, res: Response, next: Nex
     };
 
     const [
-      currentConversations, previousConversations,
-      currentMessages, previousMessages,
+      currentConversations,
+      previousConversations,
+      currentMessages,
+      previousMessages,
       activeConversations,
       resolvedConversations,
       conversationsToday,
-      currentAvgMessageCount, previousAvgMessageCount,
+      currentAvgMessageCount,
+      previousAvgMessageCount,
     ] = await Promise.all([
-      prisma.conversation.count({ where: { orgId: orgFilter, createdAt: { gte: currentStart, lte: now } } }),
-      prisma.conversation.count({ where: { orgId: orgFilter, createdAt: { gte: previousStart, lte: currentStart } } }),
-      prisma.message.count({ where: { conversation: { orgId: orgFilter }, createdAt: { gte: currentStart, lte: now } } }),
-      prisma.message.count({ where: { conversation: { orgId: orgFilter }, createdAt: { gte: previousStart, lte: currentStart } } }),
+      prisma.conversation.count({
+        where: { orgId: orgFilter, createdAt: { gte: currentStart, lte: now } },
+      }),
+      prisma.conversation.count({
+        where: { orgId: orgFilter, createdAt: { gte: previousStart, lte: currentStart } },
+      }),
+      prisma.message.count({
+        where: { conversation: { orgId: orgFilter }, createdAt: { gte: currentStart, lte: now } },
+      }),
+      prisma.message.count({
+        where: {
+          conversation: { orgId: orgFilter },
+          createdAt: { gte: previousStart, lte: currentStart },
+        },
+      }),
       prisma.conversation.count({ where: { orgId: orgFilter, status: 'ACTIVE' } }),
-      prisma.conversation.count({ where: { orgId: orgFilter, status: 'RESOLVED', resolvedAt: { gte: currentStart, lte: now } } }),
+      prisma.conversation.count({
+        where: {
+          orgId: orgFilter,
+          status: 'RESOLVED',
+          resolvedAt: { gte: currentStart, lte: now },
+        },
+      }),
       prisma.conversation.count({ where: { orgId: orgFilter, createdAt: { gte: todayStart } } }),
       prisma.conversation.aggregate({
         where: { orgId: orgFilter, createdAt: { gte: currentStart, lte: now } },
@@ -467,12 +494,42 @@ router.get('/analytics/dashboard', async (req: Request, res: Response, next: Nex
     const avgMsgPrevious = previousAvgMessageCount._avg.messageCount || 0;
 
     const metrics = [
-      { label: 'totalConversations', value: currentConversations, previousValue: previousConversations, changePercent: changePercent(currentConversations, previousConversations) },
-      { label: 'totalMessages', value: currentMessages, previousValue: previousMessages, changePercent: changePercent(currentMessages, previousMessages) },
-      { label: 'activeConversations', value: activeConversations, previousValue: 0, changePercent: 0 },
-      { label: 'resolvedConversations', value: resolvedConversations, previousValue: 0, changePercent: 0 },
-      { label: 'avgMessagesPerConversation', value: avgMsgCurrent, previousValue: avgMsgPrevious, changePercent: changePercent(avgMsgCurrent, avgMsgPrevious) },
-      { label: 'conversationsToday', value: conversationsToday, previousValue: 0, changePercent: 0 },
+      {
+        label: 'totalConversations',
+        value: currentConversations,
+        previousValue: previousConversations,
+        changePercent: changePercent(currentConversations, previousConversations),
+      },
+      {
+        label: 'totalMessages',
+        value: currentMessages,
+        previousValue: previousMessages,
+        changePercent: changePercent(currentMessages, previousMessages),
+      },
+      {
+        label: 'activeConversations',
+        value: activeConversations,
+        previousValue: 0,
+        changePercent: 0,
+      },
+      {
+        label: 'resolvedConversations',
+        value: resolvedConversations,
+        previousValue: 0,
+        changePercent: 0,
+      },
+      {
+        label: 'avgMessagesPerConversation',
+        value: avgMsgCurrent,
+        previousValue: avgMsgPrevious,
+        changePercent: changePercent(avgMsgCurrent, avgMsgPrevious),
+      },
+      {
+        label: 'conversationsToday',
+        value: conversationsToday,
+        previousValue: 0,
+        changePercent: 0,
+      },
     ];
 
     res.json({ success: true, data: metrics });

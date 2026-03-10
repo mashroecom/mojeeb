@@ -50,8 +50,7 @@ export const notificationKeys = {
   all: (orgId: string) => ['organizations', orgId, 'notifications'] as const,
   unreadCount: (orgId: string) =>
     ['organizations', orgId, 'notifications', 'unread-count'] as const,
-  preferences: (orgId: string) =>
-    ['organizations', orgId, 'notifications', 'preferences'] as const,
+  preferences: (orgId: string) => ['organizations', orgId, 'notifications', 'preferences'] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -61,21 +60,12 @@ export const notificationKeys = {
 /**
  * List notifications for the current user in the current organization (paginated).
  */
-export function useNotifications(params?: {
-  page?: number;
-  limit?: number;
-  unreadOnly?: boolean;
-}) {
+export function useNotifications(params?: { page?: number; limit?: number; unreadOnly?: boolean }) {
   const { organization } = useAuthStore();
   const orgId = organization?.id;
 
   return useQuery({
-    queryKey: [
-      ...notificationKeys.all(orgId!),
-      params?.page,
-      params?.limit,
-      params?.unreadOnly,
-    ],
+    queryKey: [...notificationKeys.all(orgId!), params?.page, params?.limit, params?.unreadOnly],
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       if (params?.page) searchParams.set('page', String(params.page));
@@ -121,9 +111,7 @@ export function useMarkAsRead() {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      await api.patch(
-        `/organizations/${orgId}/notifications/${notificationId}/read`,
-      );
+      await api.patch(`/organizations/${orgId}/notifications/${notificationId}/read`);
     },
     onSuccess: () => {
       if (orgId) {
@@ -148,9 +136,7 @@ export function useMarkAllAsRead() {
 
   return useMutation({
     mutationFn: async () => {
-      await api.post(
-        `/organizations/${orgId}/notifications/mark-all-read`,
-      );
+      await api.post(`/organizations/${orgId}/notifications/mark-all-read`);
     },
     onSuccess: () => {
       if (orgId) {
@@ -175,9 +161,7 @@ export function useDeleteNotification() {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      await api.delete(
-        `/organizations/${orgId}/notifications/${notificationId}`,
-      );
+      await api.delete(`/organizations/${orgId}/notifications/${notificationId}`);
     },
     onSuccess: () => {
       if (orgId) {

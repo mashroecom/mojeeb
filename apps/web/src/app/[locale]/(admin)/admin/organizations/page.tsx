@@ -39,7 +39,13 @@ export default function AdminOrganizationsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [status, setStatus] = useState<StatusFilter>('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; variant?: 'danger' | 'default'; onConfirm: () => void }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant?: 'danger' | 'default';
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', variant: 'danger', onConfirm: () => {} });
 
   // Debounce search input (300ms)
   useEffect(() => {
@@ -104,7 +110,9 @@ export default function AdminOrganizationsPage() {
       title: isSuspended ? t('suspend') : t('activate'),
       message: isSuspended ? t('confirmSuspend') : t('confirmActivate'),
       variant: isSuspended ? 'danger' : 'default',
-      onConfirm: () => { toggleSuspension.mutate(orgId); },
+      onConfirm: () => {
+        toggleSuspension.mutate(orgId);
+      },
     });
   }
 
@@ -114,7 +122,9 @@ export default function AdminOrganizationsPage() {
       title: t('delete'),
       message: t('confirmDelete'),
       variant: 'danger',
-      onConfirm: () => { deleteOrg.mutate(orgId); },
+      onConfirm: () => {
+        deleteOrg.mutate(orgId);
+      },
     });
   }
 
@@ -127,7 +137,9 @@ export default function AdminOrganizationsPage() {
       variant: 'danger',
       onConfirm: () => {
         bulkSuspend.mutate(ids, {
-          onSuccess: () => { setSelectedIds(new Set()); },
+          onSuccess: () => {
+            setSelectedIds(new Set());
+          },
         });
       },
     });
@@ -198,7 +210,7 @@ export default function AdminOrganizationsPage() {
                 'px-4 py-2 text-sm font-medium transition-colors',
                 status === tab.value
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted',
               )}
             >
               {tab.label}
@@ -281,7 +293,7 @@ export default function AdminOrganizationsPage() {
                       key={org.id}
                       className={cn(
                         'hover:bg-muted/50 transition-colors',
-                        isSelected && 'bg-primary/5'
+                        isSelected && 'bg-primary/5',
                       )}
                     >
                       <td className="px-4 py-3">
@@ -300,20 +312,14 @@ export default function AdminOrganizationsPage() {
                           {org.name}
                         </button>
                       </td>
-                      <td className="px-4 py-3">
-                        {org._count?.members ?? 0}
-                      </td>
-                      <td className="px-4 py-3">
-                        {org._count?.conversations ?? 0}
-                      </td>
-                      <td className="px-4 py-3">
-                        {org._count?.agents ?? 0}
-                      </td>
+                      <td className="px-4 py-3">{org._count?.members ?? 0}</td>
+                      <td className="px-4 py-3">{org._count?.conversations ?? 0}</td>
+                      <td className="px-4 py-3">{org._count?.agents ?? 0}</td>
                       <td className="px-4 py-3">
                         <span
                           className={cn(
                             'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                            PLAN_COLORS[plan] ?? PLAN_COLORS.FREE
+                            PLAN_COLORS[plan] ?? PLAN_COLORS.FREE,
                           )}
                         >
                           {t(`plan_${plan}`)}
@@ -325,7 +331,7 @@ export default function AdminOrganizationsPage() {
                             'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
                             isSuspended
                               ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
                           )}
                         >
                           {isSuspended ? t('suspended') : t('active')}
@@ -337,15 +343,13 @@ export default function AdminOrganizationsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() =>
-                              handleToggleSuspension(org.id, !isSuspended)
-                            }
+                            onClick={() => handleToggleSuspension(org.id, !isSuspended)}
                             disabled={toggleSuspension.isPending}
                             className={cn(
                               'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                               isSuspended
                                 ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
-                                : 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50'
+                                : 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50',
                             )}
                           >
                             {isSuspended ? (
@@ -381,7 +385,15 @@ export default function AdminOrganizationsPage() {
         {/* Pagination */}
         {!isLoading && organizations.length > 0 && (
           <div className="border-t px-4 py-3">
-            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tCommon('previous')} nextLabel={tCommon('next')} pageLabel={tCommon('page')} ofLabel={tCommon('of')} />
+            <AdminPagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              previousLabel={tCommon('previous')}
+              nextLabel={tCommon('next')}
+              pageLabel={tCommon('page')}
+              ofLabel={tCommon('of')}
+            />
           </div>
         )}
       </div>
@@ -416,8 +428,11 @@ export default function AdminOrganizationsPage() {
         title={confirmDialog.title}
         message={confirmDialog.message}
         variant={confirmDialog.variant}
-        onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog(prev => ({ ...prev, open: false })); }}
-        onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+        }}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
       />
     </div>
   );

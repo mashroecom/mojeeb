@@ -106,7 +106,8 @@ router.get('/stats', async (_req: Request, res: Response, next: NextFunction) =>
     const webhookMap = Object.fromEntries(webhooks.map((w) => [w.id, w.url]));
 
     const totalFailures = totalDeliveries - successCount;
-    const successRate = totalDeliveries > 0 ? ((successCount / totalDeliveries) * 100).toFixed(1) : '0';
+    const successRate =
+      totalDeliveries > 0 ? ((successCount / totalDeliveries) * 100).toFixed(1) : '0';
     const avgDuration = Math.round(durationAgg._avg.duration ?? 0);
 
     res.json({

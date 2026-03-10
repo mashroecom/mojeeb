@@ -43,9 +43,7 @@ export function DangerZoneSection({
         title={t('dangerZone')}
         className="border-red-200 dark:border-red-900"
       >
-        <p className="text-sm text-muted-foreground mb-4">
-          {t('deleteOrgWarning')}
-        </p>
+        <p className="text-sm text-muted-foreground mb-4">{t('deleteOrgWarning')}</p>
         <button
           type="button"
           disabled={deleteLoading}
@@ -70,9 +68,7 @@ export function DangerZoneSection({
         title={t('deleteAccount')}
         className="border-red-200 dark:border-red-900"
       >
-        <p className="text-sm text-muted-foreground mb-4">
-          {t('deleteAccountDescription')}
-        </p>
+        <p className="text-sm text-muted-foreground mb-4">{t('deleteAccountDescription')}</p>
         <button
           type="button"
           onClick={() => setShowDeleteAccountModal(true)}
@@ -109,20 +105,13 @@ export function DangerZoneSection({
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
               </div>
-              <h3 className="text-lg font-semibold text-destructive">
-                {t('deleteAccount')}
-              </h3>
+              <h3 className="text-lg font-semibold text-destructive">{t('deleteAccount')}</h3>
             </div>
 
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('deleteAccountConfirm')}
-            </p>
+            <p className="text-sm text-muted-foreground mb-4">{t('deleteAccountConfirm')}</p>
 
             <div className="mb-4">
-              <label
-                htmlFor="deleteAccountConfirm"
-                className="block text-sm font-medium mb-1.5"
-              >
+              <label htmlFor="deleteAccountConfirm" className="block text-sm font-medium mb-1.5">
                 {t('typeDeleteToConfirm')}
               </label>
               <input
@@ -145,10 +134,7 @@ export function DangerZoneSection({
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                disabled={
-                  deleteAccountLoading ||
-                  deleteAccountConfirmText !== deleteKeyword
-                }
+                disabled={deleteAccountLoading || deleteAccountConfirmText !== deleteKeyword}
                 onClick={async () => {
                   setDeleteAccountLoading(true);
                   setDeleteAccountError('');
@@ -163,8 +149,7 @@ export function DangerZoneSection({
                 }}
                 className={cn(
                   'inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90',
-                  (deleteAccountLoading ||
-                    deleteAccountConfirmText !== deleteKeyword) &&
+                  (deleteAccountLoading || deleteAccountConfirmText !== deleteKeyword) &&
                     'cursor-not-allowed opacity-50',
                 )}
               >

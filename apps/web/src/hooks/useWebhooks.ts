@@ -41,7 +41,8 @@ export interface WebhookLog {
 
 const webhookKeys = {
   all: (orgId: string) => ['organizations', orgId, 'webhooks'] as const,
-  logs: (orgId: string, webhookId: string) => ['organizations', orgId, 'webhooks', webhookId, 'logs'] as const,
+  logs: (orgId: string, webhookId: string) =>
+    ['organizations', orgId, 'webhooks', webhookId, 'logs'] as const,
 };
 
 export function useWebhooks() {
@@ -50,9 +51,7 @@ export function useWebhooks() {
   return useQuery({
     queryKey: webhookKeys.all(orgId!),
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Webhook[]>>(
-        `/organizations/${orgId}/webhooks`,
-      );
+      const { data } = await api.get<ApiResponse<Webhook[]>>(`/organizations/${orgId}/webhooks`);
       return data.data;
     },
     enabled: !!orgId,

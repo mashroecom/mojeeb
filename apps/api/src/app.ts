@@ -34,8 +34,8 @@ app.get('/chat', cors(), (_req, res) => {
 
 // Widget test page (development only)
 if (process.env.NODE_ENV !== 'production') {
-app.get('/widget-test', cors(), (_req, res) => {
-  res.send(`<!DOCTYPE html>
+  app.get('/widget-test', cors(), (_req, res) => {
+    res.send(`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head><meta charset="UTF-8"><title>Widget Test</title></head>
 <body style="font-family:sans-serif;padding:40px">
@@ -50,7 +50,7 @@ app.get('/widget-test', cors(), (_req, res) => {
   </script>
 </body>
 </html>`);
-});
+  });
 }
 
 // ── Health check and readiness probe endpoints (before middleware to bypass rate limiting) ──
@@ -66,7 +66,11 @@ app.get('/health', async (_req: Request, res: Response, next: NextFunction) => {
       await prisma.$queryRaw`SELECT 1`;
       checks.database = { status: 'healthy', latencyMs: Date.now() - dbStart };
     } catch (err: any) {
-      checks.database = { status: 'unhealthy', latencyMs: Date.now() - dbStart, error: err.message };
+      checks.database = {
+        status: 'unhealthy',
+        latencyMs: Date.now() - dbStart,
+        error: err.message,
+      };
     }
 
     // Check Redis
@@ -75,7 +79,11 @@ app.get('/health', async (_req: Request, res: Response, next: NextFunction) => {
       await redis.ping();
       checks.redis = { status: 'healthy', latencyMs: Date.now() - redisStart };
     } catch (err: any) {
-      checks.redis = { status: 'unhealthy', latencyMs: Date.now() - redisStart, error: err.message };
+      checks.redis = {
+        status: 'unhealthy',
+        latencyMs: Date.now() - redisStart,
+        error: err.message,
+      };
     }
 
     const allHealthy = Object.values(checks).every((c) => c.status === 'healthy');
@@ -108,21 +116,23 @@ app.get('/ready', (_req: Request, res: Response) => {
 app.use(compression());
 
 // ── Security middleware ──
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "blob:"],
-      connectSrc: ["'self'"],
-      frameSrc: ["'self'"],
-      frameAncestors: ["'self'"],  // Widget routes are served before helmet, so they bypass CSP
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'blob:'],
+        connectSrc: ["'self'"],
+        frameSrc: ["'self'"],
+        frameAncestors: ["'self'"], // Widget routes are served before helmet, so they bypass CSP
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false,  // Needed for cross-origin resources
-  crossOriginResourcePolicy: { policy: 'cross-origin' },  // Allow serving static files cross-origin
-}));
+    crossOriginEmbedderPolicy: false, // Needed for cross-origin resources
+    crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow serving static files cross-origin
+  }),
+);
 
 app.use(cors(corsOptions));
 // CSRF: Not needed — all auth uses Authorization Bearer header, no cookie-based auth
@@ -131,15 +141,17 @@ app.use(cors(corsOptions));
 app.use('/api/v1/webchat', cors());
 
 // Body parsing
-app.use(express.json({
-  limit: '10mb',
-  verify: (req: any, _res, buf) => {
-    // Preserve raw body for webhook signature verification
-    if (req.originalUrl?.startsWith('/api/v1/webhooks')) {
-      req.rawBody = buf;
-    }
-  },
-}));
+app.use(
+  express.json({
+    limit: '10mb',
+    verify: (req: any, _res, buf) => {
+      // Preserve raw body for webhook signature verification
+      if (req.originalUrl?.startsWith('/api/v1/webhooks')) {
+        req.rawBody = buf;
+      }
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
 
 // Request ID tracing

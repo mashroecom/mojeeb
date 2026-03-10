@@ -60,7 +60,9 @@ export function NotificationsSection({
                 <span
                   className={cn(
                     'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform',
-                    isOn ? 'ltr:translate-x-5 rtl:-translate-x-5' : 'ltr:translate-x-0.5 rtl:-translate-x-0.5',
+                    isOn
+                      ? 'ltr:translate-x-5 rtl:-translate-x-5'
+                      : 'ltr:translate-x-0.5 rtl:-translate-x-0.5',
                     'mt-0.5',
                   )}
                 />

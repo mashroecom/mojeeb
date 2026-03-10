@@ -43,22 +43,26 @@ router.get('/:subscriptionId', async (req: Request, res: Response, next: NextFun
 });
 
 // PATCH /:subscriptionId - Update subscription limits
-router.patch('/:subscriptionId', validate({ body: updateSubscriptionSchema }), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { subscriptionId } = req.params as { subscriptionId: string };
-    const data = await adminService.updateSubscription(subscriptionId, req.body);
+router.patch(
+  '/:subscriptionId',
+  validate({ body: updateSubscriptionSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { subscriptionId } = req.params as { subscriptionId: string };
+      const data = await adminService.updateSubscription(subscriptionId, req.body);
 
-    await auditLogService.log({
-      userId: req.user!.userId,
-      action: 'SUBSCRIPTION_UPDATED',
-      targetType: 'Subscription',
-      targetId: subscriptionId,
-    });
+      await auditLogService.log({
+        userId: req.user!.userId,
+        action: 'SUBSCRIPTION_UPDATED',
+        targetType: 'Subscription',
+        targetId: subscriptionId,
+      });
 
-    res.json({ success: true, data });
-  } catch (err) {
-    next(err);
-  }
-});
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 export default router;

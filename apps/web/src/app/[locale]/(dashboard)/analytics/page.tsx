@@ -195,10 +195,7 @@ export default function AnalyticsPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-xl border bg-card p-5 shadow-sm"
-          >
+          <div key={stat.label} className="rounded-xl border bg-card p-5 shadow-sm">
             {isLoading ? (
               <div className="animate-pulse">
                 <div className="h-4 w-24 rounded bg-muted mb-3" />
@@ -297,9 +294,7 @@ export default function AnalyticsPage() {
               </table>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              {t('noAgents')}
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t('noAgents')}</p>
           )}
         </div>
 
@@ -344,9 +339,7 @@ export default function AnalyticsPage() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              {t('noChannels')}
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t('noChannels')}</p>
           )}
         </div>
       </div>
@@ -370,10 +363,7 @@ export default function AnalyticsPage() {
                 const color = funnelColors[index % funnelColors.length];
                 const label = funnelStageLabels[stage.stage.toUpperCase()] || stage.stage;
                 return (
-                  <div
-                    key={stage.stage}
-                    className="w-full flex flex-col items-center"
-                  >
+                  <div key={stage.stage} className="w-full flex flex-col items-center">
                     <div
                       className={`${color} rounded-lg py-3 px-4 text-white text-center transition-all relative`}
                       style={{ width: `${widthPercent}%` }}
@@ -390,9 +380,7 @@ export default function AnalyticsPage() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              {t('noFunnelData')}
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t('noFunnelData')}</p>
           )}
         </div>
 
@@ -410,9 +398,7 @@ export default function AnalyticsPage() {
               {leadStatuses.map((status) => {
                 const count = leadStats[status.key] || 0;
                 const percentage =
-                  leadStats.total > 0
-                    ? Math.round((count / leadStats.total) * 100)
-                    : 0;
+                  leadStats.total > 0 ? Math.round((count / leadStats.total) * 100) : 0;
                 return (
                   <div key={status.key}>
                     <div className="flex items-center justify-between text-sm mb-1.5">
@@ -432,9 +418,7 @@ export default function AnalyticsPage() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              {t('noData')}
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t('noData')}</p>
           )}
         </div>
       </div>
@@ -483,15 +467,19 @@ export default function AnalyticsPage() {
               </div>
               {/* Legend */}
               <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground pt-2">
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-500" /> 4-5</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-yellow-500" /> 3-4</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" /> 1-3</span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-green-500" /> 4-5
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-yellow-500" /> 3-4
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-red-500" /> 1-3
+                </span>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              {t('noData')}
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t('noData')}</p>
           )}
         </div>
 
@@ -504,7 +492,10 @@ export default function AnalyticsPage() {
             </div>
           ) : responseTimeTrends?.trends && responseTimeTrends.trends.length > 0 ? (
             (() => {
-              const maxMs = Math.max(...responseTimeTrends.trends.map((p) => p.avgResponseTimeMs), 1);
+              const maxMs = Math.max(
+                ...responseTimeTrends.trends.map((p) => p.avgResponseTimeMs),
+                1,
+              );
               return (
                 <div className="flex items-end gap-1.5 h-48 overflow-x-auto pb-2">
                   {responseTimeTrends.trends.map((point) => {
@@ -533,9 +524,7 @@ export default function AnalyticsPage() {
               );
             })()
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              {t('noData')}
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t('noData')}</p>
           )}
         </div>
       </div>

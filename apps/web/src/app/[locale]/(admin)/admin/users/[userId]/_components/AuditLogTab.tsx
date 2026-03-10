@@ -25,12 +25,7 @@ interface AuditLogTabProps {
   onPageChange: (page: number) => void;
 }
 
-export function AuditLogTab({
-  isLoading,
-  auditData,
-  currentPage,
-  onPageChange,
-}: AuditLogTabProps) {
+export function AuditLogTab({ isLoading, auditData, currentPage, onPageChange }: AuditLogTabProps) {
   const t = useTranslations('admin');
   const locale = useLocale();
 
@@ -53,20 +48,16 @@ export function AuditLogTab({
   return (
     <div className="space-y-3">
       {auditData.items.map((entry) => (
-        <div
-          key={entry.id}
-          className="flex items-center justify-between rounded-lg border p-3"
-        >
+        <div key={entry.id} className="flex items-center justify-between rounded-lg border p-3">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
               <History className="h-4 w-4 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-sm font-medium">
-                {entry.action?.replace(/_/g, ' ')}
-              </p>
+              <p className="text-sm font-medium">{entry.action?.replace(/_/g, ' ')}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {t('userDetail.by')} {entry.user?.firstName} {entry.user?.lastName} ({entry.user?.email})
+                {t('userDetail.by')} {entry.user?.firstName} {entry.user?.lastName} (
+                {entry.user?.email})
               </p>
             </div>
           </div>

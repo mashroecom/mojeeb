@@ -78,19 +78,21 @@ router.patch(
         data: req.body,
       });
 
-      auditLogService.log({
-        userId: req.user!.userId,
-        action: 'PLAN_CONFIG_UPDATED',
-        targetType: 'PlanConfig',
-        targetId: existing.id,
-        metadata: { plan: req.params.plan, changes: req.body },
-      }).catch(() => {});
+      auditLogService
+        .log({
+          userId: req.user!.userId,
+          action: 'PLAN_CONFIG_UPDATED',
+          targetType: 'PlanConfig',
+          targetId: existing.id,
+          metadata: { plan: req.params.plan, changes: req.body },
+        })
+        .catch(() => {});
 
       res.json({ success: true, data: updated });
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 export default router;

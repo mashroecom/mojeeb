@@ -87,61 +87,73 @@ interface SidebarGroup {
 
 const allItems: Record<string, SidebarItem> = {
   // Dashboard
-  overview:              { key: 'overview',              href: '/admin',                     icon: LayoutDashboard },
+  overview: { key: 'overview', href: '/admin', icon: LayoutDashboard },
   // Users & Orgs
-  users:                 { key: 'users',                 href: '/admin/users',               icon: Users },
-  organizations:         { key: 'organizations',         href: '/admin/organizations',       icon: Building2 },
-  subscriptions:         { key: 'subscriptions',         href: '/admin/subscriptions',       icon: CreditCard },
+  users: { key: 'users', href: '/admin/users', icon: Users },
+  organizations: { key: 'organizations', href: '/admin/organizations', icon: Building2 },
+  subscriptions: { key: 'subscriptions', href: '/admin/subscriptions', icon: CreditCard },
   // Platform Data
-  adminAgents:           { key: 'adminAgents',           href: '/admin/agents',              icon: Bot },
-  adminConversations:    { key: 'adminConversations',    href: '/admin/conversations',       icon: MessageSquare },
-  adminLeads:            { key: 'adminLeads',            href: '/admin/leads',               icon: UserPlus },
-  adminKnowledgeBases:   { key: 'adminKnowledgeBases',   href: '/admin/knowledge-bases',     icon: BookOpen },
-  adminApiKeys:          { key: 'adminApiKeys',          href: '/admin/api-keys',            icon: Key },
-  adminInvoices:         { key: 'adminInvoices',         href: '/admin/invoices',            icon: Receipt },
-  adminWebhooks:         { key: 'adminWebhooks',         href: '/admin/webhooks',            icon: Webhook },
-  adminTags:             { key: 'adminTags',             href: '/admin/tags',                icon: Tag },
+  adminAgents: { key: 'adminAgents', href: '/admin/agents', icon: Bot },
+  adminConversations: {
+    key: 'adminConversations',
+    href: '/admin/conversations',
+    icon: MessageSquare,
+  },
+  adminLeads: { key: 'adminLeads', href: '/admin/leads', icon: UserPlus },
+  adminKnowledgeBases: {
+    key: 'adminKnowledgeBases',
+    href: '/admin/knowledge-bases',
+    icon: BookOpen,
+  },
+  adminApiKeys: { key: 'adminApiKeys', href: '/admin/api-keys', icon: Key },
+  adminInvoices: { key: 'adminInvoices', href: '/admin/invoices', icon: Receipt },
+  adminWebhooks: { key: 'adminWebhooks', href: '/admin/webhooks', icon: Webhook },
+  adminTags: { key: 'adminTags', href: '/admin/tags', icon: Tag },
   // Analytics & Insights
-  analytics:             { key: 'analytics',             href: '/admin/analytics',           icon: BarChart3 },
-  tokenUsage:            { key: 'tokenUsage',            href: '/admin/token-usage',         icon: Zap },
-  csatAnalytics:         { key: 'csatAnalytics',         href: '/admin/csat-analytics',      icon: Star },
-  sentimentAnalysis:     { key: 'sentimentAnalysis',     href: '/admin/sentiment-analysis',  icon: Heart },
-  conversationQuality:   { key: 'conversationQuality',   href: '/admin/conversation-quality', icon: Star },
-  messageAnalytics:      { key: 'messageAnalytics',      href: '/admin/message-analytics',   icon: BarChart3 },
-  leadInsights:          { key: 'leadInsights',          href: '/admin/lead-insights',       icon: TrendingUp },
-  apiUsage:              { key: 'apiUsage',              href: '/admin/api-usage',           icon: Key },
-  reports:               { key: 'reports',               href: '/admin/reports',             icon: FileText },
+  analytics: { key: 'analytics', href: '/admin/analytics', icon: BarChart3 },
+  tokenUsage: { key: 'tokenUsage', href: '/admin/token-usage', icon: Zap },
+  csatAnalytics: { key: 'csatAnalytics', href: '/admin/csat-analytics', icon: Star },
+  sentimentAnalysis: { key: 'sentimentAnalysis', href: '/admin/sentiment-analysis', icon: Heart },
+  conversationQuality: {
+    key: 'conversationQuality',
+    href: '/admin/conversation-quality',
+    icon: Star,
+  },
+  messageAnalytics: { key: 'messageAnalytics', href: '/admin/message-analytics', icon: BarChart3 },
+  leadInsights: { key: 'leadInsights', href: '/admin/lead-insights', icon: TrendingUp },
+  apiUsage: { key: 'apiUsage', href: '/admin/api-usage', icon: Key },
+  reports: { key: 'reports', href: '/admin/reports', icon: FileText },
   // Content & Communications
-  announcements:         { key: 'announcements',         href: '/admin/announcements',       icon: Megaphone },
-  faq:                   { key: 'faq',                   href: '/admin/faq',                 icon: HelpCircle },
-  testimonials:          { key: 'testimonials',          href: '/admin/testimonials',        icon: Quote },
-  landingPageCms:        { key: 'landingPageCms',        href: '/admin/landing-page',        icon: Globe },
-  legal:                 { key: 'legal',                 href: '/admin/legal',               icon: Scale },
-  emailTemplates:        { key: 'emailTemplates',        href: '/admin/email-templates',     icon: MailOpen },
-  bulkEmail:             { key: 'bulkEmail',             href: '/admin/bulk-email',          icon: Send },
-  demoRequests:          { key: 'demoRequests',          href: '/admin/demo-requests',       icon: ClipboardList },
-  contactMessages:       { key: 'contactMessages',       href: '/admin/contact-messages',    icon: Mail },
-  notifications:         { key: 'notifications',         href: '/admin/notifications',       icon: Bell },
+  announcements: { key: 'announcements', href: '/admin/announcements', icon: Megaphone },
+  faq: { key: 'faq', href: '/admin/faq', icon: HelpCircle },
+  testimonials: { key: 'testimonials', href: '/admin/testimonials', icon: Quote },
+  landingPageCms: { key: 'landingPageCms', href: '/admin/landing-page', icon: Globe },
+  legal: { key: 'legal', href: '/admin/legal', icon: Scale },
+  emailTemplates: { key: 'emailTemplates', href: '/admin/email-templates', icon: MailOpen },
+  bulkEmail: { key: 'bulkEmail', href: '/admin/bulk-email', icon: Send },
+  demoRequests: { key: 'demoRequests', href: '/admin/demo-requests', icon: ClipboardList },
+  contactMessages: { key: 'contactMessages', href: '/admin/contact-messages', icon: Mail },
+  notifications: { key: 'notifications', href: '/admin/notifications', icon: Bell },
   // Monitoring & Logs
-  system:                { key: 'system',                href: '/admin/system',              icon: Server },
-  activityMonitor:       { key: 'activityMonitor',       href: '/admin/activity-monitor',    icon: Radio },
-  errorLogs:             { key: 'errorLogs',             href: '/admin/error-logs',          icon: Bug },
-  webhookLogs:           { key: 'webhookLogs',           href: '/admin/webhook-logs',        icon: Webhook },
-  auditLog:              { key: 'auditLog',              href: '/admin/audit-log',           icon: ScrollText },
-  loginActivity:         { key: 'loginActivity',         href: '/admin/login-activity',      icon: Activity },
-  dlq:                   { key: 'dlq',                   href: '/admin/dlq',                 icon: ArchiveX },
+  system: { key: 'system', href: '/admin/system', icon: Server },
+  activityMonitor: { key: 'activityMonitor', href: '/admin/activity-monitor', icon: Radio },
+  errorLogs: { key: 'errorLogs', href: '/admin/error-logs', icon: Bug },
+  webhookLogs: { key: 'webhookLogs', href: '/admin/webhook-logs', icon: Webhook },
+  auditLog: { key: 'auditLog', href: '/admin/audit-log', icon: ScrollText },
+  loginActivity: { key: 'loginActivity', href: '/admin/login-activity', icon: Activity },
+  dlq: { key: 'dlq', href: '/admin/dlq', icon: ArchiveX },
   // Security & Access
-  blockedIPs:            { key: 'blockedIPs',            href: '/admin/blocked-ips',         icon: ShieldBan },
-  sessions:              { key: 'sessions',              href: '/admin/sessions',            icon: Monitor },
-  securityAudit:         { key: 'securityAudit',         href: '/admin/security-audit',      icon: ShieldAlert },
-  featureFlags:          { key: 'featureFlags',          href: '/admin/feature-flags',       icon: ToggleLeft },
+  blockedIPs: { key: 'blockedIPs', href: '/admin/blocked-ips', icon: ShieldBan },
+  sessions: { key: 'sessions', href: '/admin/sessions', icon: Monitor },
+  securityAudit: { key: 'securityAudit', href: '/admin/security-audit', icon: ShieldAlert },
+  featureFlags: { key: 'featureFlags', href: '/admin/feature-flags', icon: ToggleLeft },
   // Settings
-  adminSettings:         { key: 'adminSettings',         href: '/admin/settings',            icon: Settings },
-  plans:                 { key: 'plans',                 href: '/admin/plans',               icon: Tags },
-  config:                { key: 'config',                href: '/admin/config',              icon: Wrench },
-  aiModels:              { key: 'aiModels',              href: '/admin/ai-models',           icon: Cpu },
-  files:                 { key: 'files',                 href: '/admin/files',               icon: FolderOpen },
-  systemBackup:          { key: 'systemBackup',          href: '/admin/system-backup',       icon: Database },
+  adminSettings: { key: 'adminSettings', href: '/admin/settings', icon: Settings },
+  plans: { key: 'plans', href: '/admin/plans', icon: Tags },
+  config: { key: 'config', href: '/admin/config', icon: Wrench },
+  aiModels: { key: 'aiModels', href: '/admin/ai-models', icon: Cpu },
+  files: { key: 'files', href: '/admin/files', icon: FolderOpen },
+  systemBackup: { key: 'systemBackup', href: '/admin/system-backup', icon: Database },
 };
 
 // ---------------------------------------------------------------------------
@@ -297,22 +309,17 @@ export function AdminSidebar() {
   }, [pathname, close]);
 
   // Toggle a collapsible group and persist the new state.
-  const toggleGroup = useCallback(
-    (groupKey: string) => {
-      setExpanded((prev) => {
-        const next = { ...prev, [groupKey]: !prev[groupKey] };
-        writeExpandedState(next);
-        return next;
-      });
-    },
-    [],
-  );
+  const toggleGroup = useCallback((groupKey: string) => {
+    setExpanded((prev) => {
+      const next = { ...prev, [groupKey]: !prev[groupKey] };
+      writeExpandedState(next);
+      return next;
+    });
+  }, []);
 
   // ---- user display ----
   const displayName = user ? `${user.firstName} ${user.lastName}` : t('admin');
-  const initials = user
-    ? `${user.firstName[0] || ''}${user.lastName[0] || ''}`
-    : 'A';
+  const initials = user ? `${user.firstName[0] || ''}${user.lastName[0] || ''}` : 'A';
 
   // ---- logout ----
   const handleLogout = async () => {
@@ -343,9 +350,7 @@ export function AdminSidebar() {
       <aside
         className={cn(
           'fixed inset-y-0 start-0 z-50 flex w-64 flex-col border-e bg-card transition-transform duration-300 md:static md:translate-x-0 md:rtl:translate-x-0',
-          isOpen
-            ? 'translate-x-0'
-            : '-translate-x-full rtl:translate-x-full',
+          isOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
         )}
       >
         {/* Logo + Admin Badge */}
@@ -386,9 +391,7 @@ export function AdminSidebar() {
           <div className="space-y-1">
             {sidebarGroups.map((group) => {
               const GroupIcon = group.icon;
-              const isExpanded = group.collapsible
-                ? !!expanded[group.key]
-                : true;
+              const isExpanded = group.collapsible ? !!expanded[group.key] : true;
 
               return (
                 <div key={group.key}>
@@ -400,18 +403,14 @@ export function AdminSidebar() {
                       className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
                     >
                       <GroupIcon className="h-3.5 w-3.5 shrink-0" />
-                      <span className="flex-1 text-start">
-                        {t('groups.' + group.key)}
-                      </span>
+                      <span className="flex-1 text-start">{t('groups.' + group.key)}</span>
                       {isExpanded ? (
                         <ChevronDown className="h-3.5 w-3.5 shrink-0" />
                       ) : (
                         <ChevronRight className="h-3.5 w-3.5 shrink-0" />
                       )}
                     </button>
-                  ) : (
-                    null
-                  )}
+                  ) : null}
 
                   {/* Group items */}
                   {isExpanded && (

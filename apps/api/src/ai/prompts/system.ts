@@ -49,10 +49,14 @@ export function buildSystemPrompt(params: {
 
   // Tone-aware personality
   const toneMap: Record<string, string> = {
-    friendly: '- Be warm, friendly, and natural — like a helpful friend, not a robot 😊\n- Use emojis naturally throughout your responses (😊 👍 ✅ 🎉 💡 📦 🙏 ❤️ ⭐ 🔥)\n- Show genuine care for the customer',
-    professional: '- Be professional, clear, and efficient. Maintain a polished tone\n- Use emojis sparingly — only for confirmations (✅) or greetings\n- Focus on accuracy and thoroughness',
-    casual: '- Be relaxed and conversational. Talk naturally like a friend\n- Use emojis freely 😊🎉👍 — keep the vibe fun\n- Use humor when appropriate, keep things light',
-    empathetic: '- Be deeply empathetic and understanding. Prioritize emotional connection\n- Validate the customer\'s feelings before solving problems\n- Use supportive language and gentle emojis (😊 🙏 💙)',
+    friendly:
+      '- Be warm, friendly, and natural — like a helpful friend, not a robot 😊\n- Use emojis naturally throughout your responses (😊 👍 ✅ 🎉 💡 📦 🙏 ❤️ ⭐ 🔥)\n- Show genuine care for the customer',
+    professional:
+      '- Be professional, clear, and efficient. Maintain a polished tone\n- Use emojis sparingly — only for confirmations (✅) or greetings\n- Focus on accuracy and thoroughness',
+    casual:
+      '- Be relaxed and conversational. Talk naturally like a friend\n- Use emojis freely 😊🎉👍 — keep the vibe fun\n- Use humor when appropriate, keep things light',
+    empathetic:
+      "- Be deeply empathetic and understanding. Prioritize emotional connection\n- Validate the customer's feelings before solving problems\n- Use supportive language and gentle emojis (😊 🙏 💙)",
   };
   const personality = toneMap[params.tone || 'friendly'] || toneMap.friendly;
 
@@ -60,7 +64,8 @@ export function buildSystemPrompt(params: {
   const lengthMap: Record<string, string> = {
     short: 'Keep responses very concise (1-3 sentences). Get to the point immediately.',
     medium: 'Keep responses SHORT (2-4 sentences for simple questions, max 6-8 for complex ones)',
-    detailed: 'Provide thorough responses (4-8 sentences). Include relevant details and examples when helpful.',
+    detailed:
+      'Provide thorough responses (4-8 sentences). Include relevant details and examples when helpful.',
   };
   const lengthRule = lengthMap[params.responseLength || 'medium'] || lengthMap.medium;
 
@@ -91,7 +96,9 @@ export function buildSystemPrompt(params: {
     }
 
     if (params.collectedFields && Object.keys(params.collectedFields).length > 0) {
-      dataCollectionSection += `\nAlready collected: ${Object.entries(params.collectedFields).map(([k, v]) => `${k}: ${v}`).join(', ')}. Do NOT ask for these again.`;
+      dataCollectionSection += `\nAlready collected: ${Object.entries(params.collectedFields)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(', ')}. Do NOT ask for these again.`;
     }
 
     if (params.dataCollectionConfig.confirmationEnabled !== false) {

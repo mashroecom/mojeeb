@@ -19,7 +19,12 @@ export const adminSubscriptionKeys = {
 // Hooks
 // ---------------------------------------------------------------------------
 
-export function useAdminSubscriptions(params: { page: number; limit: number; plan?: string; status?: string }) {
+export function useAdminSubscriptions(params: {
+  page: number;
+  limit: number;
+  plan?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: adminSubscriptionKeys.list(params),
     queryFn: async () => {
@@ -49,7 +54,16 @@ export function useAdminSubscriptionDetail(id: string) {
 export function useUpdateSubscription() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...body }: { id: string; plan?: string; messagesLimit?: number; agentsLimit?: number; integrationsLimit?: number }) => {
+    mutationFn: async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      plan?: string;
+      messagesLimit?: number;
+      agentsLimit?: number;
+      integrationsLimit?: number;
+    }) => {
       const { data } = await api.patch(`/admin/subscriptions/${id}`, body);
       return data.data;
     },

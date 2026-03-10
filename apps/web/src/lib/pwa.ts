@@ -33,11 +33,7 @@ export function isPushNotificationSupported(): boolean {
     return false;
   }
 
-  return (
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window
-  );
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
 /**
@@ -110,9 +106,7 @@ function urlBase64ToUint8Array(base64String: string): BufferSource {
 /**
  * Convert PushSubscription to the format expected by the backend
  */
-function convertSubscriptionToData(
-  subscription: PushSubscription
-): PushSubscriptionData {
+function convertSubscriptionToData(subscription: PushSubscription): PushSubscriptionData {
   const subscriptionJson = subscription.toJSON();
 
   if (!subscriptionJson.endpoint || !subscriptionJson.keys) {
@@ -135,7 +129,7 @@ function convertSubscriptionToData(
  * @returns SubscriptionResult with the subscription data or error
  */
 export async function subscribeToPushNotifications(
-  vapidPublicKey?: string
+  vapidPublicKey?: string,
 ): Promise<SubscriptionResult> {
   try {
     // Check browser support
@@ -147,8 +141,7 @@ export async function subscribeToPushNotifications(
     }
 
     // Get VAPID public key from environment or parameter
-    const publicKey =
-      vapidPublicKey || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const publicKey = vapidPublicKey || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
     if (!publicKey) {
       return {
@@ -195,10 +188,7 @@ export async function subscribeToPushNotifications(
     console.error('Error subscribing to push notifications:', error);
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to subscribe to push notifications',
+      error: error instanceof Error ? error.message : 'Failed to subscribe to push notifications',
     };
   }
 }
@@ -282,8 +272,6 @@ export async function isSubscribedToPushNotifications(): Promise<boolean> {
  * @param vapidPublicKey - Optional VAPID public key (uses env var if not provided)
  * @returns SubscriptionResult with the subscription data or error
  */
-export async function setupPushNotifications(
-  vapidPublicKey?: string
-): Promise<SubscriptionResult> {
+export async function setupPushNotifications(vapidPublicKey?: string): Promise<SubscriptionResult> {
   return subscribeToPushNotifications(vapidPublicKey);
 }

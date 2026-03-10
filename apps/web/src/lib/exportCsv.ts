@@ -17,8 +17,8 @@ export function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
           let str = val === null || val === undefined ? '' : String(val);
 
           // Check if the string starts with a formula injection character
-          const startsWithDangerousChar = FORMULA_INJECTION_CHARS.some(char =>
-            str.startsWith(char)
+          const startsWithDangerousChar = FORMULA_INJECTION_CHARS.some((char) =>
+            str.startsWith(char),
           );
 
           // If it starts with a dangerous character, prefix with single quote to neutralize
@@ -31,7 +31,7 @@ export function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
             ? `"${str.replace(/"/g, '""')}"`
             : str;
         })
-        .join(',')
+        .join(','),
     ),
   ].join('\n');
 

@@ -31,7 +31,7 @@ export const analyticsWorker = new Worker(
   {
     connection: redis,
     concurrency: 20,
-  }
+  },
 );
 
 analyticsWorker.on('failed', (job, err) => {

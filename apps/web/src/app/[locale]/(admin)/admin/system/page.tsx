@@ -218,10 +218,7 @@ export default function SystemPage() {
                 const isHealthy = svc.status === 'healthy';
                 const labelKey = key as 'database' | 'redis' | 'queues';
                 return (
-                  <div
-                    key={svc.name}
-                    className="rounded-xl border bg-card p-5 shadow-sm"
-                  >
+                  <div key={svc.name} className="rounded-xl border bg-card p-5 shadow-sm">
                     <div className="flex items-center gap-3 mb-3">
                       <div
                         className={cn(
@@ -349,7 +346,9 @@ export default function SystemPage() {
                     {segments.map((seg) => (
                       <span key={seg.key} className="inline-flex items-center gap-1.5">
                         <span className={cn('h-2 w-2 rounded-full', queueBarColors[seg.key])} />
-                        {t(seg.key as 'waiting' | 'active' | 'completed' | 'failed' | 'delayed')}: {formatNumber(seg.count, locale)}
+                        {t(
+                          seg.key as 'waiting' | 'active' | 'completed' | 'failed' | 'delayed',
+                        )}: {formatNumber(seg.count, locale)}
                       </span>
                     ))}
                   </div>
@@ -398,11 +397,7 @@ export default function SystemPage() {
               className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
             >
               {t('rowCount')}
-              {sortAsc ? (
-                <ArrowUpAZ className="h-3 w-3" />
-              ) : (
-                <ArrowDownAZ className="h-3 w-3" />
-              )}
+              {sortAsc ? <ArrowUpAZ className="h-3 w-3" /> : <ArrowDownAZ className="h-3 w-3" />}
             </button>
           </div>
 

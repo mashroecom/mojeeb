@@ -48,12 +48,8 @@ export function EscalationSection({
             <AlertTriangle className="h-4 w-4 text-amber-500" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold">
-              {t('sentimentEscalation')}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {t('sentimentEscalationHint')}
-            </p>
+            <h2 className="text-sm font-semibold">{t('sentimentEscalation')}</h2>
+            <p className="text-xs text-muted-foreground">{t('sentimentEscalationHint')}</p>
           </div>
         </div>
 
@@ -61,9 +57,7 @@ export function EscalationSection({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">{t('enableSentiment')}</p>
-              <p className="text-xs text-muted-foreground">
-                {t('enableSentimentHint')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('enableSentimentHint')}</p>
             </div>
             <button
               type="button"
@@ -78,9 +72,7 @@ export function EscalationSection({
               <span
                 className={cn(
                   'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
-                  sentimentEscalation
-                    ? 'ltr:translate-x-5 rtl:-translate-x-5'
-                    : 'translate-x-0',
+                  sentimentEscalation ? 'ltr:translate-x-5 rtl:-translate-x-5' : 'translate-x-0',
                 )}
               />
             </button>
@@ -96,9 +88,7 @@ export function EscalationSection({
           </div>
           <div>
             <h2 className="text-sm font-semibold">{t('messageThreshold')}</h2>
-            <p className="text-xs text-muted-foreground">
-              {t('messageThresholdHint')}
-            </p>
+            <p className="text-xs text-muted-foreground">{t('messageThresholdHint')}</p>
           </div>
         </div>
 
@@ -109,18 +99,12 @@ export function EscalationSection({
               min="1"
               max="50"
               value={escalationMessageCount}
-              onChange={(e) =>
-                setEscalationMessageCount(parseInt(e.target.value) || 5)
-              }
+              onChange={(e) => setEscalationMessageCount(parseInt(e.target.value) || 5)}
               className={cn(inputClass, 'w-24')}
             />
-            <span className="text-sm text-muted-foreground">
-              {t('messages')}
-            </span>
+            <span className="text-sm text-muted-foreground">{t('messages')}</span>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t('messageThresholdDescription')}
-          </p>
+          <p className="mt-2 text-xs text-muted-foreground">{t('messageThresholdDescription')}</p>
         </div>
       </div>
 
@@ -132,9 +116,7 @@ export function EscalationSection({
           </div>
           <div>
             <h2 className="text-sm font-semibold">{t('escalationKeywords')}</h2>
-            <p className="text-xs text-muted-foreground">
-              {t('escalationKeywordsHint')}
-            </p>
+            <p className="text-xs text-muted-foreground">{t('escalationKeywordsHint')}</p>
           </div>
         </div>
 
@@ -183,9 +165,7 @@ export function EscalationSection({
           )}
 
           {escalationKeywords.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-4">
-              {t('noKeywords')}
-            </p>
+            <p className="text-center text-sm text-muted-foreground py-4">{t('noKeywords')}</p>
           )}
         </div>
       </div>

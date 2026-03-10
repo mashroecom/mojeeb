@@ -21,7 +21,7 @@ export async function ipBlockGuard(req: Request, res: Response, next: NextFuncti
 
   try {
     const ip = req.ip;
-    if (ip && await ipBlockService.isBlocked(ip)) {
+    if (ip && (await ipBlockService.isBlocked(ip))) {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
   } catch (err) {

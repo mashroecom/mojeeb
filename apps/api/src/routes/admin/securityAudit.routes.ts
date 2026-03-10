@@ -24,9 +24,8 @@ router.get('/stats', async (_req: Request, res: Response, next: NextFunction) =>
     });
 
     // Success rate
-    const successRate = totalLogins > 0
-      ? Number((((totalLogins - failedLogins) / totalLogins) * 100).toFixed(1))
-      : 0;
+    const successRate =
+      totalLogins > 0 ? Number((((totalLogins - failedLogins) / totalLogins) * 100).toFixed(1)) : 0;
 
     // Unique IPs last 30 days
     const uniqueIPsResult = await prisma.loginActivity.findMany({

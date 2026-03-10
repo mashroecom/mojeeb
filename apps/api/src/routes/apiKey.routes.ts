@@ -4,7 +4,10 @@ import { apiKeyService } from '../services/apiKey.service';
 import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 
-interface OrgParams { orgId: string; [key: string]: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 

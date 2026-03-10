@@ -8,14 +8,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
-import {
-  User,
-  MessageSquare,
-  Hash,
-  ShoppingCart,
-  Info,
-  Globe
-} from 'lucide-react';
+import { User, MessageSquare, Hash, ShoppingCart, Info, Globe } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -206,7 +199,8 @@ export function TemplateEditor({
           })}
         </div>
         <p className="text-xs text-muted-foreground">
-          Click a button to insert a variable at the cursor position. Variables will be replaced with actual values when the template is used.
+          Click a button to insert a variable at the cursor position. Variables will be replaced
+          with actual values when the template is used.
         </p>
       </div>
 
@@ -279,20 +273,10 @@ export function TemplateEditor({
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 pt-4 border-t">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onCancel}
-          disabled={loading}
-        >
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
           {tc('cancel')}
         </Button>
-        <Button
-          type="submit"
-          variant="primary"
-          loading={loading}
-          disabled={!isValid || loading}
-        >
+        <Button type="submit" variant="primary" loading={loading} disabled={!isValid || loading}>
           {tc('save')}
         </Button>
       </div>

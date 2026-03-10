@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  useQuery,
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -33,12 +28,7 @@ export interface Conversation {
   id: string;
   customerId: string;
   customerName: string | null;
-  status:
-    | 'ACTIVE'
-    | 'HANDED_OFF'
-    | 'WAITING'
-    | 'RESOLVED'
-    | 'ARCHIVED';
+  status: 'ACTIVE' | 'HANDED_OFF' | 'WAITING' | 'RESOLVED' | 'ARCHIVED';
   lastEmotion: string | null;
   emotionScore: number | null;
   category: string | null;
@@ -61,7 +51,13 @@ export interface Message {
   role: 'CUSTOMER' | 'AI_AGENT' | 'HUMAN_AGENT' | 'SYSTEM';
   content: string;
   contentType: 'TEXT' | 'IMAGE' | 'AUDIO' | 'VIDEO' | 'DOCUMENT' | 'LOCATION';
-  metadata?: { fileUrl?: string; fileName?: string; action?: string; visibility?: string; reason?: string } | null;
+  metadata?: {
+    fileUrl?: string;
+    fileName?: string;
+    action?: string;
+    visibility?: string;
+    reason?: string;
+  } | null;
   createdAt: string;
 }
 
@@ -224,13 +220,7 @@ export function useUploadFile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      conversationId,
-      file,
-    }: {
-      conversationId: string;
-      file: File;
-    }) => {
+    mutationFn: async ({ conversationId, file }: { conversationId: string; file: File }) => {
       const formData = new FormData();
       formData.append('file', file);
       const { data } = await api.post<ApiResponse<Message>>(
@@ -537,16 +527,8 @@ export function useDeleteNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      conversationId,
-      noteId,
-    }: {
-      conversationId: string;
-      noteId: string;
-    }) => {
-      await api.delete(
-        `/organizations/${orgId}/conversations/${conversationId}/notes/${noteId}`,
-      );
+    mutationFn: async ({ conversationId, noteId }: { conversationId: string; noteId: string }) => {
+      await api.delete(`/organizations/${orgId}/conversations/${conversationId}/notes/${noteId}`);
     },
     onSuccess: (_data, variables) => {
       if (orgId) {

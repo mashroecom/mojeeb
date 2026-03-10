@@ -116,9 +116,7 @@ export function MojeebLineChart({
 
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data}>
-          {showGrid && (
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          )}
+          {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />}
           <XAxis
             dataKey={actualXKey}
             className="text-xs text-muted-foreground"
@@ -143,7 +141,8 @@ export function MojeebLineChart({
           {showLegend && <Legend />}
           {lines.map((line, index) => {
             const dataKey = line.dataKey || line.key || `line-${index}`;
-            const stroke = line.stroke || line.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length];
+            const stroke =
+              line.stroke || line.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length];
             return (
               <Line
                 key={dataKey}

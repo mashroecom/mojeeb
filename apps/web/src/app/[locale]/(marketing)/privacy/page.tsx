@@ -56,13 +56,9 @@ export default function PrivacyPage() {
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <Shield className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            {t('title')}
-          </h1>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{t('title')}</h1>
           <p className="mt-4 text-muted-foreground">
-            {lastUpdated
-              ? `${t('lastUpdatedLabel')}: ${lastUpdated}`
-              : t('lastUpdated')}
+            {lastUpdated ? `${t('lastUpdatedLabel')}: ${lastUpdated}` : t('lastUpdated')}
           </p>
         </div>
 
@@ -88,12 +84,8 @@ export default function PrivacyPage() {
           <div className="space-y-10">
             {sections.map((section) => (
               <section key={section} className="rounded-xl border bg-card p-6 sm:p-8">
-                <h2 className="mb-4 text-xl font-semibold sm:text-2xl">
-                  {t(`${section}.title`)}
-                </h2>
-                <p className="leading-relaxed text-muted-foreground">
-                  {t(`${section}.content`)}
-                </p>
+                <h2 className="mb-4 text-xl font-semibold sm:text-2xl">{t(`${section}.title`)}</h2>
+                <p className="leading-relaxed text-muted-foreground">{t(`${section}.content`)}</p>
                 {sectionsWithItems.includes(section) && (
                   <ul className="mt-4 list-disc space-y-2 ps-6 text-muted-foreground">
                     {(t.raw(`${section}.items`) as string[]).map((item, index) => (
@@ -114,24 +106,29 @@ export default function PrivacyPage() {
 
 /** Simple markdown to HTML renderer for legal content */
 function renderMarkdown(md: string): string {
-  return md
-    // Headers
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    // Bold and italic
-    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Links
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-    // Unordered lists
-    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-    // Paragraphs (double newline)
-    .replace(/\n\n/g, '</p><p>')
-    // Single newlines within paragraphs
-    .replace(/\n/g, '<br>')
-    // Wrap in paragraph
-    .replace(/^(.+)/, '<p>$1</p>');
+  return (
+    md
+      // Headers
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      // Bold and italic
+      .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      // Links
+      .replace(
+        /\[([^\]]+)\]\(([^)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+      )
+      // Unordered lists
+      .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+      // Paragraphs (double newline)
+      .replace(/\n\n/g, '</p><p>')
+      // Single newlines within paragraphs
+      .replace(/\n/g, '<br>')
+      // Wrap in paragraph
+      .replace(/^(.+)/, '<p>$1</p>')
+  );
 }

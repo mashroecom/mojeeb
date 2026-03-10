@@ -4,8 +4,17 @@ import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { z } from 'zod';
 
-interface CrawlParams { orgId: string; kbId: string; [key: string]: string; }
-interface JobParams { orgId: string; kbId: string; jobId: string; [key: string]: string; }
+interface CrawlParams {
+  orgId: string;
+  kbId: string;
+  [key: string]: string;
+}
+interface JobParams {
+  orgId: string;
+  kbId: string;
+  jobId: string;
+  [key: string]: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
@@ -32,7 +41,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // GET /api/v1/organizations/:orgId/knowledge-bases/:kbId/crawl
@@ -107,7 +116,7 @@ router.post(
     } catch (err) {
       next(err);
     }
-  }
+  },
 );
 
 // GET /api/v1/organizations/:orgId/knowledge-bases/:kbId/crawl/schedule

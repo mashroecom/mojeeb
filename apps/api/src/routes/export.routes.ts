@@ -5,7 +5,10 @@ import { analyticsService } from '../services/analytics.service';
 import { authenticate, orgContext } from '../middleware/auth';
 import { csvSanitize } from '../utils/csvSanitize';
 
-interface OrgParams { orgId: string; [key: string]: string; }
+interface OrgParams {
+  orgId: string;
+  [key: string]: string;
+}
 
 const router: Router = Router({ mergeParams: true });
 
@@ -23,7 +26,7 @@ router.use(authenticate, orgContext);
 async function streamCsv(
   headers: string[],
   rows: AsyncGenerator<string[], void, unknown>,
-  res: Response
+  res: Response,
 ): Promise<void> {
   // Write headers first
   res.write(headers.join(',') + '\n');
@@ -97,15 +100,7 @@ router.get('/leads', async (req, res, next) => {
       take: 10000,
     });
 
-    const headers = [
-      'id',
-      'name',
-      'email',
-      'phone',
-      'status',
-      'source',
-      'createdAt',
-    ];
+    const headers = ['id', 'name', 'email', 'phone', 'status', 'source', 'createdAt'];
 
     // Async generator that yields rows one at a time
     async function* generateRows() {
@@ -139,10 +134,7 @@ router.get('/analytics', async (req, res, next) => {
 
     const overview = await analyticsService.getOverview(orgId);
 
-    const headers = [
-      'metric',
-      'value',
-    ];
+    const headers = ['metric', 'value'];
 
     // Async generator that yields rows one at a time
     async function* generateRows() {

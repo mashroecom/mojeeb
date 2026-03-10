@@ -113,10 +113,7 @@ function NotesSection({ conversationId }: { conversationId: string | null }) {
       ) : notes && notes.length > 0 ? (
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {notes.map((note) => (
-            <div
-              key={note.id}
-              className="group rounded-lg border bg-muted/30 px-2.5 py-2 text-xs"
-            >
+            <div key={note.id} className="group rounded-lg border bg-muted/30 px-2.5 py-2 text-xs">
               {editingId === note.id ? (
                 <div className="flex gap-1.5">
                   <input
@@ -178,11 +175,7 @@ function NotesSection({ conversationId }: { conversationId: string | null }) {
 // Tags Section
 // ---------------------------------------------------------------------------
 
-function TagsSection({
-  conversation,
-}: {
-  conversation: Conversation | undefined;
-}) {
+function TagsSection({ conversation }: { conversation: Conversation | undefined }) {
   const t = useTranslations('dashboard.conversations');
   const { data: tagsResponse, isLoading: tagsLoading } = useTags();
   const addTag = useAddTagToConversation();
@@ -193,9 +186,7 @@ function TagsSection({
 
   // Get tag IDs that are already assigned to this conversation
   const assignedTagIds = new Set(
-    conversationTags.map((ct) =>
-      typeof ct.tag === 'string' ? ct.tag : ct.tag?.id ?? ct.id,
-    ),
+    conversationTags.map((ct) => (typeof ct.tag === 'string' ? ct.tag : (ct.tag?.id ?? ct.id))),
   );
 
   // Filter available tags to show only those not assigned
@@ -224,16 +215,16 @@ function TagsSection({
       {conversationTags.length > 0 ? (
         <div className="mb-3 flex flex-wrap gap-1.5">
           {conversationTags.map((ct) => {
-            const tagId = typeof ct.tag === 'string' ? ct.tag : ct.tag?.id ?? ct.id;
+            const tagId = typeof ct.tag === 'string' ? ct.tag : (ct.tag?.id ?? ct.id);
             const tagData = availableTags.find((t) => t.id === tagId);
             const tagName =
               typeof ct.tag === 'object' && ct.tag?.name
                 ? ct.tag.name
-                : tagData?.name ?? 'Unknown';
+                : (tagData?.name ?? 'Unknown');
             const tagColor =
               typeof ct.tag === 'object' && ct.tag?.color
                 ? ct.tag.color
-                : tagData?.color ?? '#6b7280';
+                : (tagData?.color ?? '#6b7280');
 
             return (
               <button
@@ -289,9 +280,7 @@ function TagsSection({
         </div>
       ) : (
         assignedTagIds.size === 0 && (
-          <p className="text-xs text-muted-foreground italic">
-            {t('noAvailableTags')}
-          </p>
+          <p className="text-xs text-muted-foreground italic">{t('noAvailableTags')}</p>
         )
       )}
     </div>
@@ -337,9 +326,7 @@ function InsightsContent({
             )}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground italic">
-            {t('noEmotion')}
-          </p>
+          <p className="text-xs text-muted-foreground italic">{t('noEmotion')}</p>
         )}
       </div>
 
@@ -349,13 +336,9 @@ function InsightsContent({
           {t('summary')}
         </h4>
         {currentSummary ? (
-          <p className="text-sm leading-relaxed text-foreground/80">
-            {currentSummary}
-          </p>
+          <p className="text-sm leading-relaxed text-foreground/80">{currentSummary}</p>
         ) : (
-          <p className="text-xs text-muted-foreground italic">
-            {t('noSummary')}
-          </p>
+          <p className="text-xs text-muted-foreground italic">{t('noSummary')}</p>
         )}
       </div>
 
@@ -365,10 +348,7 @@ function InsightsContent({
           {t('lastUpdated')}
         </h4>
         <p className="text-xs text-muted-foreground">
-          {relativeTime(
-            conversation?.lastMessageAt ?? conversation?.createdAt ?? null,
-            t,
-          )}
+          {relativeTime(conversation?.lastMessageAt ?? conversation?.createdAt ?? null, t)}
         </p>
       </div>
 
@@ -406,11 +386,7 @@ interface MobileInsightsDrawerProps extends InsightsPanelProps {
   onClose: () => void;
 }
 
-export function MobileInsightsDrawer({
-  open,
-  onClose,
-  ...props
-}: MobileInsightsDrawerProps) {
+export function MobileInsightsDrawer({ open, onClose, ...props }: MobileInsightsDrawerProps) {
   const t = useTranslations('dashboard.conversations');
 
   if (!open) return null;
@@ -418,10 +394,7 @@ export function MobileInsightsDrawer({
   return (
     <div className="fixed inset-0 z-50 md:hidden">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       {/* Drawer from bottom */}
       <div className="absolute bottom-0 start-0 end-0 max-h-[70vh] rounded-t-2xl border-t bg-card shadow-lg overflow-y-auto animate-in slide-in-from-bottom duration-300">
         {/* Handle bar */}

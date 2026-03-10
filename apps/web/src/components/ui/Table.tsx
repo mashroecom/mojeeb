@@ -66,9 +66,7 @@ export function Table<T extends Record<string, unknown>>({
       if (aVal == null) return sortDir === 'asc' ? -1 : 1;
       if (bVal == null) return sortDir === 'asc' ? 1 : -1;
       if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return sortDir === 'asc'
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
+        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       }
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
@@ -131,41 +129,36 @@ export function Table<T extends Record<string, unknown>>({
           </tr>
         </thead>
         <tbody>
-          {loading
-            ? Array.from({ length: skeletonRows }).map((_, i) => (
-                <tr key={`skeleton-${i}`} className="border-b last:border-b-0">
-                  {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3">
-                      <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-                    </td>
-                  ))}
-                </tr>
-              ))
-            : sortedData.length === 0
-              ? (
-                  <tr>
-                    <td
-                      colSpan={columns.length}
-                      className="px-4 py-12 text-center text-muted-foreground"
-                    >
-                      {emptyMessage}
-                    </td>
-                  </tr>
-                )
-              : sortedData.map((row, index) => (
-                  <tr
-                    key={rowKey ? rowKey(row, index) : index}
-                    className="border-b last:border-b-0 transition-colors hover:bg-muted/50"
-                  >
-                    {columns.map((col) => (
-                      <td key={col.key} className={cn('px-4 py-3', col.className)}>
-                        {col.render
-                          ? col.render(row, index)
-                          : (row[col.key] as ReactNode) ?? ''}
-                      </td>
-                    ))}
-                  </tr>
+          {loading ? (
+            Array.from({ length: skeletonRows }).map((_, i) => (
+              <tr key={`skeleton-${i}`} className="border-b last:border-b-0">
+                {columns.map((col) => (
+                  <td key={col.key} className="px-4 py-3">
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                  </td>
                 ))}
+              </tr>
+            ))
+          ) : sortedData.length === 0 ? (
+            <tr>
+              <td colSpan={columns.length} className="px-4 py-12 text-center text-muted-foreground">
+                {emptyMessage}
+              </td>
+            </tr>
+          ) : (
+            sortedData.map((row, index) => (
+              <tr
+                key={rowKey ? rowKey(row, index) : index}
+                className="border-b last:border-b-0 transition-colors hover:bg-muted/50"
+              >
+                {columns.map((col) => (
+                  <td key={col.key} className={cn('px-4 py-3', col.className)}>
+                    {col.render ? col.render(row, index) : ((row[col.key] as ReactNode) ?? '')}
+                  </td>
+                ))}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

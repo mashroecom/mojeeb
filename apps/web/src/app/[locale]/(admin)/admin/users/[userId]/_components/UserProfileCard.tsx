@@ -72,11 +72,7 @@ export function UserProfileCard({ user, isSuspended }: UserProfileCardProps) {
                 : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
             )}
           >
-            {isSuspended ? (
-              <UserX className="h-3 w-3" />
-            ) : (
-              <UserCheck className="h-3 w-3" />
-            )}
+            {isSuspended ? <UserX className="h-3 w-3" /> : <UserCheck className="h-3 w-3" />}
             {isSuspended ? t('users.suspended') : t('users.active')}
           </span>
 
@@ -102,9 +98,7 @@ export function UserProfileCard({ user, isSuspended }: UserProfileCardProps) {
             ) : (
               <XCircle className="h-3 w-3" />
             )}
-            {user.emailVerified
-              ? t('userDetail.emailVerified')
-              : t('userDetail.emailNotVerified')}
+            {user.emailVerified ? t('userDetail.emailVerified') : t('userDetail.emailNotVerified')}
           </span>
         </div>
       </div>
@@ -123,7 +117,9 @@ export function UserProfileCard({ user, isSuspended }: UserProfileCardProps) {
             <Clock className="h-3.5 w-3.5" />
             {t('userDetail.lastLogin')}
           </span>
-          <span className="font-medium">{user.lastLoginAt ? fmtDateTime(user.lastLoginAt, locale) : '—'}</span>
+          <span className="font-medium">
+            {user.lastLoginAt ? fmtDateTime(user.lastLoginAt, locale) : '—'}
+          </span>
         </div>
         {isSuspended && (
           <div className="flex items-center justify-between">

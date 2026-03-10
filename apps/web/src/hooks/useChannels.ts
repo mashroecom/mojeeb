@@ -61,9 +61,7 @@ export function useChannels() {
   return useQuery({
     queryKey: channelKeys.all(orgId!),
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Channel[]>>(
-        `/organizations/${orgId}/channels`,
-      );
+      const { data } = await api.get<ApiResponse<Channel[]>>(`/organizations/${orgId}/channels`);
       return data.data;
     },
     enabled: !!orgId,
@@ -145,4 +143,3 @@ export function useUpdateChannelSettings() {
     },
   });
 }
-

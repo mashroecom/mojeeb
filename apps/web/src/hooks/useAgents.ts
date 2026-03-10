@@ -124,8 +124,7 @@ interface ApiResponse<T> {
 
 export const agentKeys = {
   all: (orgId: string) => ['organizations', orgId, 'agents'] as const,
-  detail: (orgId: string, agentId: string) =>
-    ['organizations', orgId, 'agents', agentId] as const,
+  detail: (orgId: string, agentId: string) => ['organizations', orgId, 'agents', agentId] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -142,9 +141,7 @@ export function useAgents() {
   return useQuery({
     queryKey: agentKeys.all(orgId!),
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Agent[]>>(
-        `/organizations/${orgId}/agents`,
-      );
+      const { data } = await api.get<ApiResponse<Agent[]>>(`/organizations/${orgId}/agents`);
       return data.data;
     },
     enabled: !!orgId,
@@ -182,10 +179,7 @@ export function useCreateAgent() {
   return useMutation({
     mutationFn: async (input: CreateAgentInput) => {
       if (!orgId) throw new Error('No organization selected');
-      const { data } = await api.post<ApiResponse<Agent>>(
-        `/organizations/${orgId}/agents`,
-        input,
-      );
+      const { data } = await api.post<ApiResponse<Agent>>(`/organizations/${orgId}/agents`, input);
       return data.data;
     },
     onSuccess: () => {
@@ -275,7 +269,13 @@ export function useLinkKnowledgeBase() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ agentId, knowledgeBaseId }: { agentId: string; knowledgeBaseId: string }) => {
+    mutationFn: async ({
+      agentId,
+      knowledgeBaseId,
+    }: {
+      agentId: string;
+      knowledgeBaseId: string;
+    }) => {
       if (!orgId) throw new Error('No organization selected');
       const { data } = await api.post<ApiResponse<AgentKnowledgeBaseLink>>(
         `/organizations/${orgId}/agents/${agentId}/knowledge-bases`,
@@ -301,7 +301,13 @@ export function useUnlinkKnowledgeBase() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ agentId, knowledgeBaseId }: { agentId: string; knowledgeBaseId: string }) => {
+    mutationFn: async ({
+      agentId,
+      knowledgeBaseId,
+    }: {
+      agentId: string;
+      knowledgeBaseId: string;
+    }) => {
       if (!orgId) throw new Error('No organization selected');
       await api.delete(
         `/organizations/${orgId}/agents/${agentId}/knowledge-bases/${knowledgeBaseId}`,
@@ -324,8 +330,22 @@ export function useConnectChannelForAgent() {
   const orgId = useAuthStore((s) => s.organization?.id);
 
   return useMutation({
-    mutationFn: async ({ agentId, type, name, credentials }: { agentId: string; type: string; name: string; credentials: Record<string, string> }) => {
-      const { data } = await api.post(`/organizations/${orgId}/agents/${agentId}/channels`, { type, name, credentials });
+    mutationFn: async ({
+      agentId,
+      type,
+      name,
+      credentials,
+    }: {
+      agentId: string;
+      type: string;
+      name: string;
+      credentials: Record<string, string>;
+    }) => {
+      const { data } = await api.post(`/organizations/${orgId}/agents/${agentId}/channels`, {
+        type,
+        name,
+        credentials,
+      });
       return data.data;
     },
     onSuccess: (_data, variables) => {

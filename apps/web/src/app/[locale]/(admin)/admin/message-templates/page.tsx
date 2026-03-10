@@ -14,7 +14,18 @@ import {
 import { useToastStore } from '@/hooks/useToast';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminConfirmDialog } from '@/components/admin/AdminConfirmDialog';
-import { FileText, Trash2, Search, Plus, Pencil, X, Loader2, BarChart3, Users, Share2 } from 'lucide-react';
+import {
+  FileText,
+  Trash2,
+  Search,
+  Plus,
+  Pencil,
+  X,
+  Loader2,
+  BarChart3,
+  Users,
+  Share2,
+} from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -129,10 +140,14 @@ export default function MessageTemplatesPage() {
 
     try {
       if (editingId) {
-        await updateMutation.mutateAsync({ id: editingId, ...payload } as Parameters<typeof updateMutation.mutateAsync>[0]);
+        await updateMutation.mutateAsync({ id: editingId, ...payload } as Parameters<
+          typeof updateMutation.mutateAsync
+        >[0]);
         addToast('success', t('toasts.updated'));
       } else {
-        await createMutation.mutateAsync(payload as Parameters<typeof createMutation.mutateAsync>[0]);
+        await createMutation.mutateAsync(
+          payload as Parameters<typeof createMutation.mutateAsync>[0],
+        );
         addToast('success', t('toasts.created'));
       }
       closeForm();
@@ -210,7 +225,9 @@ export default function MessageTemplatesPage() {
                     <BarChart3 className={cn('h-5 w-5 text-green-600 dark:text-green-400')} />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">{t('analytics.activeTemplates')}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('analytics.activeTemplates')}
+                    </p>
                     <p className="text-2xl font-bold mt-0.5">
                       {Number(analytics.activeTemplates ?? 0).toLocaleString()}
                     </p>
@@ -224,7 +241,9 @@ export default function MessageTemplatesPage() {
                     <Share2 className={cn('h-5 w-5 text-purple-600 dark:text-purple-400')} />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">{t('analytics.sharedTemplates')}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('analytics.sharedTemplates')}
+                    </p>
                     <p className="text-2xl font-bold mt-0.5">
                       {Number(analytics.sharedTemplates ?? 0).toLocaleString()}
                     </p>
@@ -244,10 +263,15 @@ export default function MessageTemplatesPage() {
                 {analytics.mostUsedTemplates && analytics.mostUsedTemplates.length > 0 ? (
                   <div className="space-y-3">
                     {analytics.mostUsedTemplates.slice(0, 5).map((tpl: any) => (
-                      <div key={tpl.id} className="flex items-center justify-between pb-3 border-b last:border-0">
+                      <div
+                        key={tpl.id}
+                        className="flex items-center justify-between pb-3 border-b last:border-0"
+                      >
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{tpl.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">{tpl.org?.name || '—'}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {tpl.org?.name || '—'}
+                          </p>
                         </div>
                         <div className="text-right ms-3">
                           <p className="font-semibold">{tpl.usageCount}</p>
@@ -270,7 +294,10 @@ export default function MessageTemplatesPage() {
                 {analytics.categoryStats && analytics.categoryStats.length > 0 ? (
                   <div className="space-y-3">
                     {analytics.categoryStats.map((cat: any) => (
-                      <div key={cat.category || 'uncategorized'} className="flex items-center justify-between pb-3 border-b last:border-0">
+                      <div
+                        key={cat.category || 'uncategorized'}
+                        className="flex items-center justify-between pb-3 border-b last:border-0"
+                      >
                         <p className="font-medium">{cat.category || t('uncategorized')}</p>
                         <p className="font-semibold">{cat._count}</p>
                       </div>
@@ -291,9 +318,7 @@ export default function MessageTemplatesPage() {
             className="mb-6 rounded-lg border bg-card p-5 shadow-sm space-y-4"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {editingId ? t('edit') : t('create')}
-              </h2>
+              <h2 className="text-lg font-semibold">{editingId ? t('edit') : t('create')}</h2>
               <button
                 type="button"
                 onClick={closeForm}
@@ -388,14 +413,20 @@ export default function MessageTemplatesPage() {
               type="text"
               placeholder={t('search')}
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="w-full rounded-lg border bg-background ps-9 pe-3 py-2 text-sm"
             />
           </div>
 
           <div className="flex gap-1">
             <button
-              onClick={() => { setCategory(''); setPage(1); }}
+              onClick={() => {
+                setCategory('');
+                setPage(1);
+              }}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                 !category
@@ -408,7 +439,10 @@ export default function MessageTemplatesPage() {
             {categories.map((cat) => (
               <button
                 key={cat}
-                onClick={() => { setCategory(cat); setPage(1); }}
+                onClick={() => {
+                  setCategory(cat);
+                  setPage(1);
+                }}
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   category === cat
@@ -477,7 +511,9 @@ export default function MessageTemplatesPage() {
                           <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
                             {t(`category_${tpl.category}`)}
                           </span>
-                        ) : '—'}
+                        ) : (
+                          '—'
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground font-mono">
                         {tpl.shortcut || '—'}
@@ -485,7 +521,10 @@ export default function MessageTemplatesPage() {
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {tpl.org?.name || '—'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+                      <td
+                        className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate"
+                        dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                      >
                         {locale === 'ar' && tpl.contentAr ? tpl.contentAr : tpl.contentEn}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
@@ -543,7 +582,10 @@ export default function MessageTemplatesPage() {
                       </button>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+                  <p
+                    className="text-sm text-muted-foreground line-clamp-2 mb-2"
+                    dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                  >
                     {tpl.content}
                   </p>
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">

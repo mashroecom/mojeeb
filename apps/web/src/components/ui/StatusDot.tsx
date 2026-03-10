@@ -30,11 +30,7 @@ export interface StatusDotProps {
   className?: string;
 }
 
-export function StatusDot({
-  status,
-  size = 'md',
-  className,
-}: StatusDotProps) {
+export function StatusDot({ status, size = 'md', className }: StatusDotProps) {
   return (
     <Tooltip content={statusLabels[status]}>
       <span

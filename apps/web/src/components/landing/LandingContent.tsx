@@ -15,9 +15,7 @@ export function LandingContent() {
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-            {heroTitle}
-          </h1>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">{heroTitle}</h1>
           <p className="mt-6 text-lg text-muted-foreground sm:text-xl max-w-2xl mx-auto">
             {heroSubtitle}
           </p>
@@ -43,9 +41,7 @@ export function LandingContent() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold sm:text-4xl">{t('features.title')}</h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              {t('features.subtitle')}
-            </p>
+            <p className="mt-4 text-lg text-muted-foreground">{t('features.subtitle')}</p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -113,9 +109,7 @@ function FeatureCard({
 }) {
   return (
     <div className="rounded-xl border bg-card p-6 shadow-sm">
-      <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3 text-primary">
-        {icon}
-      </div>
+      <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3 text-primary">{icon}</div>
       <h3 className="mb-2 text-xl font-semibold">{title}</h3>
       <p className="text-sm text-muted-foreground">{description}</p>
     </div>

@@ -13,12 +13,7 @@ interface EmailModalProps {
   userEmail: string;
 }
 
-export function EmailModal({
-  isOpen,
-  onClose,
-  userId,
-  userEmail,
-}: EmailModalProps) {
+export function EmailModal({ isOpen, onClose, userId, userEmail }: EmailModalProps) {
   const t = useTranslations('admin');
   const addToast = useToastStore((s) => s.addToast);
   const sendEmail = useSendUserEmail();
@@ -57,10 +52,7 @@ export function EmailModal({
           <h3 className="text-lg font-semibold">
             {t('userActions.sendEmailTo')} {userEmail}
           </h3>
-          <button
-            onClick={handleClose}
-            className="rounded-md p-1 hover:bg-muted transition-colors"
-          >
+          <button onClick={handleClose} className="rounded-md p-1 hover:bg-muted transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -80,9 +72,7 @@ export function EmailModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              {t('userActions.emailBody')}
-            </label>
+            <label className="block text-sm font-medium mb-1">{t('userActions.emailBody')}</label>
             <textarea
               value={emailBody}
               onChange={(e) => setEmailBody(e.target.value)}

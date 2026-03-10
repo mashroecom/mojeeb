@@ -43,7 +43,7 @@ export function MobileNav() {
     // Setup listeners for online/offline events
     const cleanup = setupOnlineListeners(
       () => setIsOffline(false),
-      () => setIsOffline(true)
+      () => setIsOffline(true),
     );
 
     return cleanup;
@@ -59,10 +59,7 @@ export function MobileNav() {
       { id: primaryAgent.id, isActive: newStatus },
       {
         onSuccess: () => {
-          addToast(
-            'success',
-            newStatus ? t('agentActivated') : t('agentDeactivated'),
-          );
+          addToast('success', newStatus ? t('agentActivated') : t('agentDeactivated'));
           setIsToggling(false);
         },
         onError: () => {
@@ -83,9 +80,7 @@ export function MobileNav() {
             <p className="text-xs font-medium text-orange-900 dark:text-orange-100">
               {t('offline')}
             </p>
-            <p className="text-xs text-orange-700 dark:text-orange-300">
-              {t('offlineMessage')}
-            </p>
+            <p className="text-xs text-orange-700 dark:text-orange-300">{t('offlineMessage')}</p>
           </div>
         </div>
       )}
@@ -97,14 +92,10 @@ export function MobileNav() {
             <Circle
               className={cn(
                 'h-2.5 w-2.5 fill-current',
-                primaryAgent.isActive
-                  ? 'text-green-500'
-                  : 'text-muted-foreground',
+                primaryAgent.isActive ? 'text-green-500' : 'text-muted-foreground',
               )}
             />
-            <span className="text-xs font-medium">
-              {primaryAgent.name}
-            </span>
+            <span className="text-xs font-medium">{primaryAgent.name}</span>
           </div>
           <button
             onClick={handleToggleStatus}
@@ -116,11 +107,7 @@ export function MobileNav() {
                 : 'bg-muted text-muted-foreground',
             )}
           >
-            {isToggling
-              ? t('updating')
-              : primaryAgent.isActive
-                ? t('active')
-                : t('inactive')}
+            {isToggling ? t('updating') : primaryAgent.isActive ? t('active') : t('inactive')}
           </button>
         </div>
       )}
@@ -130,9 +117,7 @@ export function MobileNav() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
-            item.href === '/mobile'
-              ? pathname === '/mobile'
-              : pathname.startsWith(item.href);
+            item.href === '/mobile' ? pathname === '/mobile' : pathname.startsWith(item.href);
 
           return (
             <Link
@@ -140,17 +125,10 @@ export function MobileNav() {
               href={item.href}
               className={cn(
                 'flex flex-col items-center justify-center gap-1 rounded-lg px-4 py-2 min-w-[70px] transition-colors',
-                isActive
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground',
+                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <Icon
-                className={cn(
-                  'h-5 w-5 transition-transform',
-                  isActive && 'scale-110',
-                )}
-              />
+              <Icon className={cn('h-5 w-5 transition-transform', isActive && 'scale-110')} />
               <span className="text-xs font-medium">{t(item.key)}</span>
             </Link>
           );

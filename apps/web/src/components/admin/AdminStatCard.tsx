@@ -10,7 +10,13 @@ interface AdminStatCardProps {
   loading?: boolean;
 }
 
-export function AdminStatCard({ icon: Icon, label, value, iconColor = 'text-primary', loading }: AdminStatCardProps) {
+export function AdminStatCard({
+  icon: Icon,
+  label,
+  value,
+  iconColor = 'text-primary',
+  loading,
+}: AdminStatCardProps) {
   if (loading) {
     return (
       <div className="rounded-xl border bg-card p-4 shadow-sm animate-pulse">

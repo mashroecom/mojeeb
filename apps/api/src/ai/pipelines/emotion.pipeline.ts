@@ -6,17 +6,14 @@ import { logger } from '../../config/logger';
 export class EmotionPipeline {
   async detect(
     message: string,
-    conversationHistory: ConversationMessage[]
+    conversationHistory: ConversationMessage[],
   ): Promise<EmotionResult> {
     try {
       const provider = getAIProvider('OPENAI');
 
       const result = await provider.generateJSON<EmotionResult>({
         systemPrompt: EMOTION_DETECTION_PROMPT,
-        messages: [
-          ...conversationHistory.slice(-3),
-          { role: 'user', content: message },
-        ],
+        messages: [...conversationHistory.slice(-3), { role: 'user', content: message }],
         temperature: 0.1,
         maxTokens: 150,
       });

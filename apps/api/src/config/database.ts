@@ -40,8 +40,7 @@ function createReadReplicaClient(): PrismaClient {
   });
 }
 
-export const prismaReadReplica =
-  globalForPrisma.prismaReadReplica ?? createReadReplicaClient();
+export const prismaReadReplica = globalForPrisma.prismaReadReplica ?? createReadReplicaClient();
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prismaReadReplica = prismaReadReplica;

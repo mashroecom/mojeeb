@@ -115,7 +115,9 @@ function ReportCard({ report }: { report: ReportConfig }) {
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">{t('startDate')}</label>
+          <label className="block text-xs font-medium text-muted-foreground mb-1">
+            {t('startDate')}
+          </label>
           <input
             type="date"
             value={startDate}
@@ -124,7 +126,9 @@ function ReportCard({ report }: { report: ReportConfig }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">{t('endDate')}</label>
+          <label className="block text-xs font-medium text-muted-foreground mb-1">
+            {t('endDate')}
+          </label>
           <input
             type="date"
             value={endDate}

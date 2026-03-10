@@ -2,11 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import {
-  useAgent,
-  useLinkKnowledgeBase,
-  useUnlinkKnowledgeBase,
-} from '@/hooks/useAgents';
+import { useAgent, useLinkKnowledgeBase, useUnlinkKnowledgeBase } from '@/hooks/useAgents';
 import { useKnowledgeBases } from '@/hooks/useKnowledgeBase';
 import { toast } from '@/hooks/useToast';
 import { Link } from '@/i18n/navigation';
@@ -21,29 +17,33 @@ export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
   const unlinkKb = useUnlinkKnowledgeBase();
   const [showSelector, setShowSelector] = useState(false);
 
-  const linkedKbIds = new Set(
-    agent?.knowledgeBases?.map((akb) => akb.knowledgeBaseId) ?? [],
-  );
+  const linkedKbIds = new Set(agent?.knowledgeBases?.map((akb) => akb.knowledgeBaseId) ?? []);
 
   const availableKbs = (allKbs ?? []).filter((kb) => !linkedKbIds.has(kb.id));
 
   const handleLink = (knowledgeBaseId: string) => {
-    linkKb.mutate({ agentId, knowledgeBaseId }, {
-      onSuccess: () => {
-        toast.success(tc('toast.kbLinked'));
-        setShowSelector(false);
+    linkKb.mutate(
+      { agentId, knowledgeBaseId },
+      {
+        onSuccess: () => {
+          toast.success(tc('toast.kbLinked'));
+          setShowSelector(false);
+        },
+        onError: () => {
+          toast.error(tc('toast.kbLinkFailed'));
+        },
       },
-      onError: () => {
-        toast.error(tc('toast.kbLinkFailed'));
-      },
-    });
+    );
   };
 
   const handleUnlink = (knowledgeBaseId: string) => {
-    unlinkKb.mutate({ agentId, knowledgeBaseId }, {
-      onSuccess: () => toast.success(tc('toast.kbUnlinked')),
-      onError: () => toast.error(tc('toast.kbUnlinkFailed')),
-    });
+    unlinkKb.mutate(
+      { agentId, knowledgeBaseId },
+      {
+        onSuccess: () => toast.success(tc('toast.kbUnlinked')),
+        onError: () => toast.error(tc('toast.kbUnlinkFailed')),
+      },
+    );
   };
 
   return (
@@ -55,9 +55,7 @@ export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
               <BookOpen className="h-5 w-5" />
               {t('knowledgeBases')}
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t('knowledgeBasesHint')}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{t('knowledgeBasesHint')}</p>
           </div>
           {availableKbs.length > 0 && (
             <button
@@ -87,9 +85,7 @@ export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
                 >
                   <BookOpen className="h-4 w-4 text-primary shrink-0" />
                   <span>{kb.name}</span>
-                  {linkKb.isPending && (
-                    <Loader2 className="h-3 w-3 animate-spin ms-auto" />
-                  )}
+                  {linkKb.isPending && <Loader2 className="h-3 w-3 animate-spin ms-auto" />}
                 </button>
               ))}
             </div>
@@ -108,9 +104,7 @@ export function KnowledgeBaseSection({ agentId }: { agentId: string }) {
                   <div className="rounded-lg bg-primary/10 p-1.5">
                     <BookOpen className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="text-sm font-medium">
-                    {akb.knowledgeBase.name}
-                  </span>
+                  <span className="text-sm font-medium">{akb.knowledgeBase.name}</span>
                 </div>
                 <button
                   type="button"

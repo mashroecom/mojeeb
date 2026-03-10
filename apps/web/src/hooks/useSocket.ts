@@ -6,7 +6,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useChatStore } from '@/stores/chatStore';
 import { conversationKeys } from '@/hooks/useConversations';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:4000';
+const SOCKET_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:4000';
 
 export function useSocket() {
   const socketRef = useRef<Socket | null>(null);

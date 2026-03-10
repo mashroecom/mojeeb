@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -68,8 +64,7 @@ export const leadKeys = {
   all: (orgId: string) => ['organizations', orgId, 'leads'] as const,
   list: (orgId: string, params?: LeadsParams) =>
     [...leadKeys.all(orgId), 'list', params ?? {}] as const,
-  stats: (orgId: string) =>
-    [...leadKeys.all(orgId), 'stats'] as const,
+  stats: (orgId: string) => [...leadKeys.all(orgId), 'stats'] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -82,10 +77,9 @@ export function useLeads(params?: LeadsParams) {
   return useQuery({
     queryKey: leadKeys.list(orgId!, params),
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Lead[]>>(
-        `/organizations/${orgId}/leads`,
-        { params },
-      );
+      const { data } = await api.get<ApiResponse<Lead[]>>(`/organizations/${orgId}/leads`, {
+        params,
+      });
       return data;
     },
     enabled: !!orgId,
@@ -102,9 +96,7 @@ export function useLeadStats() {
   return useQuery({
     queryKey: leadKeys.stats(orgId!),
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<LeadStats>>(
-        `/organizations/${orgId}/leads/stats`,
-      );
+      const { data } = await api.get<ApiResponse<LeadStats>>(`/organizations/${orgId}/leads/stats`);
       return data.data;
     },
     enabled: !!orgId,
@@ -131,10 +123,7 @@ export function useCreateLead() {
 
   return useMutation({
     mutationFn: async (input: CreateLeadInput) => {
-      const { data } = await api.post<ApiResponse<Lead>>(
-        `/organizations/${orgId}/leads`,
-        input,
-      );
+      const { data } = await api.post<ApiResponse<Lead>>(`/organizations/${orgId}/leads`, input);
       return data.data;
     },
     onSuccess: () => {
@@ -154,10 +143,7 @@ export function useUpdateLead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      leadId,
-      ...input
-    }: CreateLeadInput & { leadId: string }) => {
+    mutationFn: async ({ leadId, ...input }: CreateLeadInput & { leadId: string }) => {
       const { data } = await api.patch<ApiResponse<Lead>>(
         `/organizations/${orgId}/leads/${leadId}`,
         input,
@@ -181,13 +167,7 @@ export function useUpdateLeadStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      leadId,
-      status,
-    }: {
-      leadId: string;
-      status: Lead['status'];
-    }) => {
+    mutationFn: async ({ leadId, status }: { leadId: string; status: Lead['status'] }) => {
       const { data } = await api.patch<ApiResponse<Lead>>(
         `/organizations/${orgId}/leads/${leadId}/status`,
         { status },

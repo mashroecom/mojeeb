@@ -30,16 +30,12 @@ function stripLocale(pathname: string): string {
 
 function isProtectedPath(pathname: string): boolean {
   const stripped = stripLocale(pathname);
-  return PROTECTED_PATHS.some(
-    (p) => stripped === p || stripped.startsWith(p + '/'),
-  );
+  return PROTECTED_PATHS.some((p) => stripped === p || stripped.startsWith(p + '/'));
 }
 
 function isOnboardingAllowed(pathname: string): boolean {
   const stripped = stripLocale(pathname);
-  return ONBOARDING_ALLOWED.some(
-    (p) => stripped === p || stripped.startsWith(p + '/'),
-  );
+  return ONBOARDING_ALLOWED.some((p) => stripped === p || stripped.startsWith(p + '/'));
 }
 
 export default function middleware(request: NextRequest) {
@@ -48,8 +44,7 @@ export default function middleware(request: NextRequest) {
   if (isProtectedPath(pathname)) {
     const token = request.cookies.get('accessToken')?.value;
     if (!token) {
-      const locale =
-        pathname.match(/^\/(ar|en)/)?.[1] || routing.defaultLocale;
+      const locale = pathname.match(/^\/(ar|en)/)?.[1] || routing.defaultLocale;
       const loginUrl = new URL(`/${locale}/login`, request.url);
       return NextResponse.redirect(loginUrl);
     }
@@ -57,8 +52,7 @@ export default function middleware(request: NextRequest) {
     // Check onboarding cookie — redirect non-onboarded users to /onboarding
     const onboardingDone = request.cookies.get('onboardingCompleted')?.value;
     if (onboardingDone === '0' && !isOnboardingAllowed(pathname)) {
-      const locale =
-        pathname.match(/^\/(ar|en)/)?.[1] || routing.defaultLocale;
+      const locale = pathname.match(/^\/(ar|en)/)?.[1] || routing.defaultLocale;
       const onboardingUrl = new URL(`/${locale}/onboarding`, request.url);
       return NextResponse.redirect(onboardingUrl);
     }

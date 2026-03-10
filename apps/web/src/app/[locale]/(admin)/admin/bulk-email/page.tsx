@@ -13,16 +13,7 @@ import {
 import { useToastStore } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import { AdminPagination } from '@/components/admin/AdminPagination';
-import {
-  Send,
-  Loader2,
-  Users,
-  XCircle,
-  Eye,
-  Mail,
-  PenLine,
-  List,
-} from 'lucide-react';
+import { Send, Loader2, Users, XCircle, Eye, Mail, PenLine, List } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,7 +33,6 @@ interface Campaign {
 // Helpers
 // ---------------------------------------------------------------------------
 
-
 const statusBadge: Record<string, string> = {
   DRAFT: 'bg-muted text-muted-foreground',
   SENDING: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -60,12 +50,24 @@ const statusOptions = ['', 'ACTIVE', 'INACTIVE', 'SUSPENDED'] as const;
 function RowSkeleton() {
   return (
     <tr className="animate-pulse border-b last:border-b-0">
-      <td className="px-4 py-3"><div className="h-3 w-40 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-5 w-20 rounded-full bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-12 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-32 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 rounded bg-muted" /></td>
-      <td className="px-4 py-3"><div className="h-7 w-20 rounded bg-muted" /></td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-40 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-5 w-20 rounded-full bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-12 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-32 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-3 w-28 rounded bg-muted" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="h-7 w-20 rounded bg-muted" />
+      </td>
     </tr>
   );
 }
@@ -95,7 +97,12 @@ export default function BulkEmailPage() {
   const [sendConfirmId, setSendConfirmId] = useState<string | null>(null);
   const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
 
-  const { data: campaignsData, isLoading, isError, refetch } = useAdminBulkEmails({ page, limit: 20 });
+  const {
+    data: campaignsData,
+    isLoading,
+    isError,
+    refetch,
+  } = useAdminBulkEmails({ page, limit: 20 });
   const createCampaign = useCreateBulkEmail();
   const sendCampaign = useSendBulkEmail();
   const cancelCampaign = useCancelBulkEmail();
@@ -183,9 +190,7 @@ export default function BulkEmailPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {t('subtitle')}
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
       {/* Tabs */}
@@ -247,7 +252,9 @@ export default function BulkEmailPage() {
             <h3 className="text-sm font-medium mb-3">{t('compose.targetFilters')}</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('compose.plan')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  {t('compose.plan')}
+                </label>
                 <select
                   value={filterPlan}
                   onChange={(e) => setFilterPlan(e.target.value)}
@@ -261,7 +268,9 @@ export default function BulkEmailPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">{t('compose.status')}</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  {t('compose.status')}
+                </label>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
@@ -334,7 +343,9 @@ export default function BulkEmailPage() {
           {/* Error State */}
           {isError && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center dark:border-red-800 dark:bg-red-950 mb-4">
-              <p className="text-sm text-red-600 dark:text-red-400 mb-2">{t('toasts.failedLoadCampaigns')}</p>
+              <p className="text-sm text-red-600 dark:text-red-400 mb-2">
+                {t('toasts.failedLoadCampaigns')}
+              </p>
               <button
                 onClick={() => refetch()}
                 className="text-sm font-medium text-red-600 underline hover:text-red-700 dark:text-red-400"
@@ -359,7 +370,12 @@ export default function BulkEmailPage() {
               </div>
               {(() => {
                 const campaign = campaigns.find((c) => c.id === detailId);
-                if (!campaign) return <p className="text-sm text-muted-foreground">{t('campaigns.campaignNotFound')}</p>;
+                if (!campaign)
+                  return (
+                    <p className="text-sm text-muted-foreground">
+                      {t('campaigns.campaignNotFound')}
+                    </p>
+                  );
                 return (
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
@@ -368,12 +384,19 @@ export default function BulkEmailPage() {
                     </div>
                     <div>
                       <span className="text-muted-foreground">{t('campaigns.status')}:</span>{' '}
-                      <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', statusBadge[campaign.status])}>
+                      <span
+                        className={cn(
+                          'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                          statusBadge[campaign.status],
+                        )}
+                      >
                         {t(`campaigns.status_${campaign.status}`)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{t('campaigns.totalRecipients')}:</span>{' '}
+                      <span className="text-muted-foreground">
+                        {t('campaigns.totalRecipients')}:
+                      </span>{' '}
                       <span className="font-medium">{campaign.totalRecipients}</span>
                     </div>
                     <div>
@@ -421,14 +444,15 @@ export default function BulkEmailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {isLoading &&
-                    Array.from({ length: 5 }).map((_, i) => <RowSkeleton key={i} />)}
+                  {isLoading && Array.from({ length: 5 }).map((_, i) => <RowSkeleton key={i} />)}
 
                   {!isLoading && !isError && campaigns.length === 0 && (
                     <tr>
                       <td colSpan={6} className="py-16 text-center">
                         <Mail className="mx-auto h-12 w-12 text-muted-foreground/40 mb-4" />
-                        <p className="text-sm text-muted-foreground">{t('campaigns.noCampaigns')}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {t('campaigns.noCampaigns')}
+                        </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {t('campaigns.switchToCompose')}
                         </p>
@@ -441,7 +465,10 @@ export default function BulkEmailPage() {
                     campaigns.map((campaign) => {
                       const progress = getProgress(campaign);
                       return (
-                        <tr key={campaign.id} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+                        <tr
+                          key={campaign.id}
+                          className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                        >
                           <td className="px-4 py-3">
                             <span className="text-sm font-medium truncate block max-w-[250px]">
                               {campaign.subject}
@@ -485,7 +512,9 @@ export default function BulkEmailPage() {
                             <div className="flex items-center gap-1">
                               {/* View Detail */}
                               <button
-                                onClick={() => setDetailId(detailId === campaign.id ? null : campaign.id)}
+                                onClick={() =>
+                                  setDetailId(detailId === campaign.id ? null : campaign.id)
+                                }
                                 className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                                 title={t('campaigns.viewDetail')}
                               >
@@ -502,7 +531,9 @@ export default function BulkEmailPage() {
                                         disabled={sendCampaign.isPending}
                                         className="inline-flex items-center gap-1 rounded-lg bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
                                       >
-                                        {sendCampaign.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+                                        {sendCampaign.isPending && (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        )}
                                         {t('campaigns.confirm')}
                                       </button>
                                       <button
@@ -534,7 +565,9 @@ export default function BulkEmailPage() {
                                         disabled={cancelCampaign.isPending}
                                         className="inline-flex items-center gap-1 rounded-lg bg-destructive px-2 py-1 text-[10px] font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
                                       >
-                                        {cancelCampaign.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+                                        {cancelCampaign.isPending && (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        )}
                                         {t('campaigns.confirm')}
                                       </button>
                                       <button
@@ -567,7 +600,15 @@ export default function BulkEmailPage() {
 
           {/* Pagination */}
           {!isLoading && (
-            <AdminPagination page={page} totalPages={totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+            <AdminPagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              previousLabel={tc('previous')}
+              nextLabel={tc('next')}
+              pageLabel={tc('page')}
+              ofLabel={tc('of')}
+            />
           )}
         </>
       )}

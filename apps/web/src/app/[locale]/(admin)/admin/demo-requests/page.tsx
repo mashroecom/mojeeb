@@ -3,23 +3,12 @@
 import { Fragment, useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDate } from '@/lib/dateFormat';
-import {
-  useAdminDemoRequests,
-  useUpdateDemoRequest,
-  useDeleteDemoRequest,
-} from '@/hooks/useAdmin';
+import { useAdminDemoRequests, useUpdateDemoRequest, useDeleteDemoRequest } from '@/hooks/useAdmin';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { cn } from '@/lib/utils';
 import { exportToCsv } from '@/lib/exportCsv';
 import { AdminPagination } from '@/components/admin/AdminPagination';
-import {
-  Presentation,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  Download,
-  Search,
-} from 'lucide-react';
+import { Presentation, Trash2, ChevronDown, ChevronUp, Download, Search } from 'lucide-react';
 
 type StatusFilter = '' | 'NEW' | 'CONTACTED' | 'SCHEDULED' | 'COMPLETED' | 'REJECTED';
 
@@ -63,7 +52,9 @@ export default function DemoRequestsPage() {
   const { confirmProps, confirm } = useConfirmDialog();
 
   const requests = data?.items ?? [];
-  const pagination = data ? { page: data.page, totalPages: data.totalPages, total: data.total } : undefined;
+  const pagination = data
+    ? { page: data.page, totalPages: data.totalPages, total: data.total }
+    : undefined;
 
   function handleExport() {
     if (!requests.length) return;
@@ -239,9 +230,7 @@ export default function DemoRequestsPage() {
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium">
-                          {req.name || '—'}
-                        </td>
+                        <td className="px-4 py-3 text-sm font-medium">{req.name || '—'}</td>
                         <td className="px-4 py-3 text-sm text-muted-foreground" dir="ltr">
                           {req.email || '—'}
                         </td>
@@ -287,9 +276,7 @@ export default function DemoRequestsPage() {
                               <p className="text-xs font-medium text-muted-foreground mb-1">
                                 {t('message')}
                               </p>
-                              <p className="text-sm whitespace-pre-wrap">
-                                {req.message || '—'}
-                              </p>
+                              <p className="text-sm whitespace-pre-wrap">{req.message || '—'}</p>
                             </div>
                           </td>
                         </tr>
@@ -304,18 +291,19 @@ export default function DemoRequestsPage() {
             <div className="md:hidden space-y-3">
               {requests.map((req: any) => (
                 <div key={req.id} className="rounded-xl border bg-card shadow-sm overflow-hidden">
-                  <div
-                    className="p-4 cursor-pointer"
-                    onClick={() => toggleExpand(req.id)}
-                  >
+                  <div className="p-4 cursor-pointer" onClick={() => toggleExpand(req.id)}>
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="font-medium">{req.name || '—'}</p>
                         {req.email && (
-                          <p className="text-sm text-muted-foreground" dir="ltr">{req.email}</p>
+                          <p className="text-sm text-muted-foreground" dir="ltr">
+                            {req.email}
+                          </p>
                         )}
                         {req.phone && (
-                          <p className="text-sm text-muted-foreground" dir="ltr">{req.phone}</p>
+                          <p className="text-sm text-muted-foreground" dir="ltr">
+                            {req.phone}
+                          </p>
                         )}
                       </div>
                       <span
@@ -369,7 +357,15 @@ export default function DemoRequestsPage() {
 
             {/* Pagination */}
             {pagination && (
-              <AdminPagination page={page} totalPages={pagination.totalPages} onPageChange={setPage} previousLabel={tc('previous')} nextLabel={tc('next')} pageLabel={tc('page')} ofLabel={tc('of')} />
+              <AdminPagination
+                page={page}
+                totalPages={pagination.totalPages}
+                onPageChange={setPage}
+                previousLabel={tc('previous')}
+                nextLabel={tc('next')}
+                pageLabel={tc('page')}
+                ofLabel={tc('of')}
+              />
             )}
           </>
         )}

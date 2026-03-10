@@ -9,24 +9,20 @@ export class AdminService {
   // ========================
 
   async getPlatformOverview() {
-    const [
-      totalUsers,
-      totalOrgs,
-      totalConversations,
-      totalMessages,
-      activeSubscriptions,
-      revenue,
-    ] = await Promise.all([
-      prismaReadReplica.user.count(),
-      prismaReadReplica.organization.count(),
-      prismaReadReplica.conversation.count(),
-      prismaReadReplica.message.count(),
-      prismaReadReplica.subscription.count({ where: { status: 'ACTIVE', plan: { not: 'FREE' } } }),
-      prismaReadReplica.invoice.aggregate({
-        where: { status: 'PAID' },
-        _sum: { amount: true },
-      }),
-    ]);
+    const [totalUsers, totalOrgs, totalConversations, totalMessages, activeSubscriptions, revenue] =
+      await Promise.all([
+        prismaReadReplica.user.count(),
+        prismaReadReplica.organization.count(),
+        prismaReadReplica.conversation.count(),
+        prismaReadReplica.message.count(),
+        prismaReadReplica.subscription.count({
+          where: { status: 'ACTIVE', plan: { not: 'FREE' } },
+        }),
+        prismaReadReplica.invoice.aggregate({
+          where: { status: 'PAID' },
+          _sum: { amount: true },
+        }),
+      ]);
 
     return {
       totalUsers,
@@ -80,7 +76,10 @@ export class AdminService {
       return iso;
     }
 
-    const bucketMap = new Map<string, { users: number; organizations: number; conversations: number }>();
+    const bucketMap = new Map<
+      string,
+      { users: number; organizations: number; conversations: number }
+    >();
 
     const addToBucket = (date: Date, key: 'users' | 'organizations' | 'conversations') => {
       const bk = bucketKey(date);
@@ -104,12 +103,7 @@ export class AdminService {
   // USERS MANAGEMENT
   // ========================
 
-  async listUsers(params: {
-    page: number;
-    limit: number;
-    search?: string;
-    status?: string;
-  }) {
+  async listUsers(params: { page: number; limit: number; search?: string; status?: string }) {
     const { page, limit, search, status } = params;
     const where: any = {};
 
@@ -377,12 +371,7 @@ export class AdminService {
   // SUBSCRIPTIONS MANAGEMENT
   // ========================
 
-  async listSubscriptions(params: {
-    page: number;
-    limit: number;
-    plan?: string;
-    status?: string;
-  }) {
+  async listSubscriptions(params: { page: number; limit: number; plan?: string; status?: string }) {
     const { page, limit, plan, status } = params;
     const where: any = {};
 
@@ -428,14 +417,17 @@ export class AdminService {
     return subscription;
   }
 
-  async updateSubscription(subscriptionId: string, data: {
-    plan?: string;
-    status?: string;
-    messagesLimit?: number;
-    agentsLimit?: number;
-    integrationsLimit?: number;
-    cancelAtPeriodEnd?: boolean;
-  }) {
+  async updateSubscription(
+    subscriptionId: string,
+    data: {
+      plan?: string;
+      status?: string;
+      messagesLimit?: number;
+      agentsLimit?: number;
+      integrationsLimit?: number;
+      cancelAtPeriodEnd?: boolean;
+    },
+  ) {
     const sub = await prisma.subscription.findUnique({ where: { id: subscriptionId } });
     if (!sub) throw new NotFoundError('Subscription not found');
 
@@ -524,9 +516,7 @@ export class AdminService {
 
     // Get message counts per org using a single JOIN query
     const orgIds = orgs.map((o) => o.id);
-    const messageCountsRaw = await prismaReadReplica.$queryRaw<
-      { orgId: string; count: bigint }[]
-    >`
+    const messageCountsRaw = await prismaReadReplica.$queryRaw<{ orgId: string; count: bigint }[]>`
       SELECT c."orgId", COUNT(*)::bigint AS "count"
         FROM "messages" m
         JOIN "conversations" c ON c."id" = m."conversationId"
@@ -534,9 +524,7 @@ export class AdminService {
        GROUP BY c."orgId"
     `;
 
-    const orgMessageCounts = new Map(
-      messageCountsRaw.map((row) => [row.orgId, Number(row.count)])
-    );
+    const orgMessageCounts = new Map(messageCountsRaw.map((row) => [row.orgId, Number(row.count)]));
 
     return orgs.map((org) => ({
       id: org.id,

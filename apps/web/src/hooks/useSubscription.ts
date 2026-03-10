@@ -120,9 +120,7 @@ export function usePlans() {
   return useQuery({
     queryKey: ['public', 'plans'],
     queryFn: async () => {
-      const { data } = await axios.get<ApiResponse<PlanData[]>>(
-        `${API_BASE}/public/plans`,
-      );
+      const { data } = await axios.get<ApiResponse<PlanData[]>>(`${API_BASE}/public/plans`);
       return data.data;
     },
     staleTime: 5 * 60 * 1000,

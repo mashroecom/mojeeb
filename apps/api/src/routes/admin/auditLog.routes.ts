@@ -32,7 +32,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         id: log.id,
         userId: log.userId,
         userEmail: log.user?.email,
-        userName: log.user ? `${log.user.firstName ?? ''} ${log.user.lastName ?? ''}`.trim() : undefined,
+        userName: log.user
+          ? `${log.user.firstName ?? ''} ${log.user.lastName ?? ''}`.trim()
+          : undefined,
         action: log.action,
         targetType: log.targetType,
         targetId: log.targetId,
