@@ -17,6 +17,9 @@ import type { WebhookWithSecret } from '@/hooks/useWebhooks';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
+import { SkeletonCard } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import {
   Webhook,
   Plus,
@@ -450,42 +453,28 @@ export default function WebhooksPage() {
 
       {/* Webhook list */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="space-y-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       ) : isError ? (
-        <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-            <AlertTriangle className="h-6 w-6 text-destructive" />
-          </div>
-          <p className="font-medium">{ct('somethingWentWrong')}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{ct('errorDescription')}</p>
-          <button
-            onClick={() => refetchWebhooks()}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            {ct('tryAgain')}
-          </button>
-        </div>
+        <ErrorState
+          title={ct('somethingWentWrong')}
+          description={ct('errorDescription')}
+          retryLabel={ct('tryAgain')}
+          onRetry={() => refetchWebhooks()}
+        />
       ) : !webhooks?.length ? (
-        /* Empty state */
-        <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-            <Webhook className="h-8 w-8 text-primary" />
-          </div>
-          <h3 className="mt-4 text-lg font-semibold">{t('noWebhooksTitle')}</h3>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-            {t('noWebhooksHint')}
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowCreate(true)}
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            {t('createFirst')}
-          </button>
-        </div>
+        <EmptyState
+          icon={Webhook}
+          title={t('noWebhooksTitle')}
+          description={t('noWebhooksHint')}
+          action={{
+            label: t('createFirst'),
+            onClick: () => setShowCreate(true),
+          }}
+        />
       ) : (
         <div className="space-y-4">
           {webhooks.map((webhook) => {
