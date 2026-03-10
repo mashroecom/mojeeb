@@ -13,6 +13,12 @@ import {
   type ConversationNote,
 } from '@/hooks/useConversations';
 import {
+  useTags,
+  useAddTagToConversation,
+  useRemoveTagFromConversation,
+  type Tag as TagType,
+} from '@/hooks/useTags';
+import {
   relativeTime,
   getEmotionEmoji,
   emotionBadgeClass,
@@ -169,6 +175,130 @@ function NotesSection({ conversationId }: { conversationId: string | null }) {
 }
 
 // ---------------------------------------------------------------------------
+// Tags Section
+// ---------------------------------------------------------------------------
+
+function TagsSection({
+  conversation,
+}: {
+  conversation: Conversation | undefined;
+}) {
+  const t = useTranslations('dashboard.conversations');
+  const { data: tagsResponse, isLoading: tagsLoading } = useTags();
+  const addTag = useAddTagToConversation();
+  const removeTag = useRemoveTagFromConversation();
+
+  const availableTags = tagsResponse?.data ?? [];
+  const conversationTags = conversation?.tags ?? [];
+
+  // Get tag IDs that are already assigned to this conversation
+  const assignedTagIds = new Set(
+    conversationTags.map((ct) =>
+      typeof ct.tag === 'string' ? ct.tag : ct.tag?.id ?? ct.id,
+    ),
+  );
+
+  // Filter available tags to show only those not assigned
+  const unassignedTags = availableTags.filter((tag) => !assignedTagIds.has(tag.id));
+
+  function handleAddTag(tagId: string) {
+    if (!conversation?.id) return;
+    addTag.mutate({ tagId, conversationId: conversation.id });
+  }
+
+  function handleRemoveTag(tagId: string) {
+    if (!conversation?.id) return;
+    removeTag.mutate({ tagId, conversationId: conversation.id });
+  }
+
+  if (!conversation?.id) return null;
+
+  return (
+    <div className="mt-5 border-t pt-5">
+      <h4 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+        <Tag className="h-3 w-3" />
+        {t('tags')}
+      </h4>
+
+      {/* Assigned tags */}
+      {conversationTags.length > 0 ? (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {conversationTags.map((ct) => {
+            const tagId = typeof ct.tag === 'string' ? ct.tag : ct.tag?.id ?? ct.id;
+            const tagData = availableTags.find((t) => t.id === tagId);
+            const tagName =
+              typeof ct.tag === 'object' && ct.tag?.name
+                ? ct.tag.name
+                : tagData?.name ?? 'Unknown';
+            const tagColor =
+              typeof ct.tag === 'object' && ct.tag?.color
+                ? ct.tag.color
+                : tagData?.color ?? '#6b7280';
+
+            return (
+              <button
+                key={ct.id}
+                onClick={() => handleRemoveTag(tagId)}
+                disabled={removeTag.isPending}
+                className="group inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border hover:opacity-80 transition-opacity disabled:opacity-50"
+                style={{
+                  backgroundColor: `${tagColor}15`,
+                  borderColor: tagColor,
+                  color: tagColor,
+                }}
+                title={t('removeTag')}
+              >
+                <span>{tagName}</span>
+                <X className="h-3 w-3 opacity-60 group-hover:opacity-100" />
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="mb-3 text-xs text-muted-foreground italic">{t('noTags')}</p>
+      )}
+
+      {/* Available tags to add */}
+      {tagsLoading ? (
+        <div className="flex justify-center py-3">
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        </div>
+      ) : unassignedTags.length > 0 ? (
+        <div>
+          <p className="mb-2 text-[10px] text-muted-foreground uppercase tracking-wider">
+            {t('addTag')}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {unassignedTags.map((tag) => (
+              <button
+                key={tag.id}
+                onClick={() => handleAddTag(tag.id)}
+                disabled={addTag.isPending}
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border hover:opacity-80 transition-opacity disabled:opacity-50"
+                style={{
+                  backgroundColor: `${tag.color}10`,
+                  borderColor: tag.color,
+                  color: tag.color,
+                }}
+              >
+                <Plus className="h-3 w-3" />
+                <span>{tag.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        assignedTagIds.size === 0 && (
+          <p className="text-xs text-muted-foreground italic">
+            {t('noAvailableTags')}
+          </p>
+        )
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Insights Content
 // ---------------------------------------------------------------------------
 
@@ -244,6 +374,9 @@ function InsightsContent({
 
       {/* Notes */}
       <NotesSection conversationId={conversation?.id ?? null} />
+
+      {/* Tags */}
+      <TagsSection conversation={conversation} />
     </>
   );
 }
