@@ -79,7 +79,7 @@ export function CrawlProgressView({ jobId, kbId }: CrawlProgressViewProps) {
     },
     CANCELLED: {
       icon: <XCircle className="h-3 w-3" />,
-      label: 'Cancelled',
+      label: t('cancelled'),
       color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
     },
   };
@@ -99,7 +99,7 @@ export function CrawlProgressView({ jobId, kbId }: CrawlProgressViewProps) {
       <div className="rounded-lg border bg-card p-6 shadow-sm">
         <div className="flex items-center gap-2 text-muted-foreground">
           <AlertCircle className="h-5 w-5" />
-          <span className="text-sm">Crawl job not found</span>
+          <span className="text-sm">{t('crawlJobNotFound')}</span>
         </div>
       </div>
     );
@@ -134,7 +134,7 @@ export function CrawlProgressView({ jobId, kbId }: CrawlProgressViewProps) {
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <Globe className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm mb-1">Crawl Progress</h3>
+            <h3 className="font-medium text-sm mb-1">{t('crawlProgress')}</h3>
             <p className="text-xs text-muted-foreground truncate" dir="ltr">
               {job.startUrl}
             </p>
@@ -156,7 +156,7 @@ export function CrawlProgressView({ jobId, kbId }: CrawlProgressViewProps) {
         <div>
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
             <span>
-              {job.pagesCrawled} / {job.pagesTotal} pages
+              {job.pagesCrawled} / {job.pagesTotal} {t('pages')}
             </span>
             <span>{Math.round(progress)}%</span>
           </div>
@@ -173,11 +173,11 @@ export function CrawlProgressView({ jobId, kbId }: CrawlProgressViewProps) {
       {(job.status === 'COMPLETED' || job.status === 'FAILED' || job.status === 'CANCELLED') && (
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <div>
-            <span className="font-medium">{job.pagesCrawled}</span> pages crawled
+            <span className="font-medium">{job.pagesCrawled}</span> {t('pagesCrawled')}
           </div>
           {job.pagesTotal > 0 && job.pagesTotal !== job.pagesCrawled && (
             <div>
-              <span className="font-medium">{job.pagesTotal}</span> pages discovered
+              <span className="font-medium">{job.pagesTotal}</span> {t('pagesDiscovered')}
             </div>
           )}
         </div>
@@ -189,7 +189,7 @@ export function CrawlProgressView({ jobId, kbId }: CrawlProgressViewProps) {
           <div className="flex items-start gap-2">
             <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-destructive mb-1">Error</p>
+              <p className="text-xs font-medium text-destructive mb-1">{t('error')}</p>
               <p className="text-xs text-destructive/90 break-words">{job.errorMessage}</p>
             </div>
           </div>
@@ -200,19 +200,19 @@ export function CrawlProgressView({ jobId, kbId }: CrawlProgressViewProps) {
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground border-t pt-3">
         {job.startedAt && (
           <div>
-            <span className="font-medium">Started:</span>{' '}
+            <span className="font-medium">{t('started')}</span>{' '}
             {fmtDate(job.startedAt, locale)}
           </div>
         )}
         {job.completedAt && (
           <div>
-            <span className="font-medium">Completed:</span>{' '}
+            <span className="font-medium">{tc('common.completed')}:</span>{' '}
             {fmtDate(job.completedAt, locale)}
           </div>
         )}
         {estimatedCompletion && job.status === 'RUNNING' && (
           <div>
-            <span className="font-medium">Est. completion:</span>{' '}
+            <span className="font-medium">{t('estCompletion')}</span>{' '}
             {fmtDate(estimatedCompletion.toISOString(), locale)}
           </div>
         )}

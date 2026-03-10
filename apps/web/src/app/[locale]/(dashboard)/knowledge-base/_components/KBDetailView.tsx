@@ -190,11 +190,11 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
       },
       {
         onSuccess: () => {
-          toast.success(enabled ? 'Auto-sync enabled' : 'Auto-sync disabled');
+          toast.success(enabled ? t('autoSyncEnabled') : t('autoSyncDisabled'));
         },
         onError: (error: any) => {
           setScheduleEnabled(!enabled); // Revert on error
-          toast.error(error.response?.data?.message || 'Failed to update schedule');
+          toast.error(error.response?.data?.message || t('scheduleUpdateFailed'));
         },
       },
     );
@@ -211,10 +211,10 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
         },
         {
           onSuccess: () => {
-            toast.success('Schedule frequency updated');
+            toast.success(t('frequencyUpdated'));
           },
           onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to update frequency');
+            toast.error(error.response?.data?.message || t('frequencyUpdateFailed'));
           },
         },
       );
@@ -344,7 +344,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-lg font-semibold">Auto-Sync Schedule</h2>
+            <h2 className="text-lg font-semibold">{t('autoSyncSchedule')}</h2>
           </div>
           {scheduleLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -373,7 +373,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
             <div>
               <label className="block text-sm font-medium mb-2">
                 <Calendar className="inline-block h-4 w-4 mr-1.5 rtl:mr-0 rtl:ml-1.5 -mt-0.5" />
-                Crawl Frequency
+                {t('crawlFrequency')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {(['DAILY', 'WEEKLY', 'MONTHLY'] as const).map((freq) => (
@@ -389,7 +389,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
                         : 'bg-background text-muted-foreground hover:bg-muted border-border',
                     )}
                   >
-                    {freq.charAt(0) + freq.slice(1).toLowerCase()}
+                    {t(freq.toLowerCase() as 'daily' | 'weekly' | 'monthly')}
                   </button>
                 ))}
               </div>
@@ -400,20 +400,20 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
                 {schedule.lastCrawledAt && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Last Crawled</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">{t('lastCrawled')}</p>
                     <p className="text-sm">{fmtDate(schedule.lastCrawledAt, locale)}</p>
                   </div>
                 )}
                 {schedule.nextCrawlAt && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Next Scheduled Crawl</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">{t('nextScheduledCrawl')}</p>
                     <p className="text-sm">{fmtDate(schedule.nextCrawlAt, locale)}</p>
                   </div>
                 )}
                 {!schedule.lastCrawledAt && !schedule.nextCrawlAt && (
                   <div className="col-span-2">
                     <p className="text-sm text-muted-foreground">
-                      Schedule is enabled. The first crawl will start shortly.
+                      {t('scheduleEnabledFirstCrawl')}
                     </p>
                   </div>
                 )}
@@ -424,7 +424,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
 
         {!scheduleEnabled && (
           <p className="text-sm text-muted-foreground">
-            Enable auto-sync to automatically re-crawl your website content and keep your knowledge base up to date.
+            {t('enableAutoSyncHint')}
           </p>
         )}
       </div>

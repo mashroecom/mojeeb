@@ -30,7 +30,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
     e.preventDefault();
 
     if (!startUrl.trim()) {
-      toast.error('Please enter a valid URL');
+      toast.error(t('urlValidation'));
       return;
     }
 
@@ -38,7 +38,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
     try {
       new URL(startUrl);
     } catch {
-      toast.error('Please enter a valid URL');
+      toast.error(t('urlValidation'));
       return;
     }
 
@@ -65,7 +65,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
         }
 
         await api.post(`/organizations/${orgId}/knowledge-bases/${kbId}/crawl`, payload);
-        toast.success('Crawl job started successfully');
+        toast.success(t('crawlJobStarted'));
       }
 
       // Reset form
@@ -80,7 +80,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
       }
     } catch (error: any) {
       console.error('Crawl config error:', error);
-      toast.error(error.response?.data?.message || 'Failed to start crawl');
+      toast.error(error.response?.data?.message || t('crawlStartFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -110,7 +110,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
       {/* Crawl Type */}
       <div>
         <label className="block text-sm font-medium mb-1.5">
-          Crawl Type
+          {t('crawlType')}
         </label>
         <div className="flex gap-3">
           <label className="flex items-center gap-2 cursor-pointer">
@@ -122,7 +122,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
               className="h-4 w-4"
               disabled={isSubmitting}
             />
-            <span className="text-sm">Single Page</span>
+            <span className="text-sm">{t('singlePage')}</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -133,13 +133,13 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
               className="h-4 w-4"
               disabled={isSubmitting}
             />
-            <span className="text-sm">Multi-Page Crawl</span>
+            <span className="text-sm">{t('multiPageCrawl')}</span>
           </label>
         </div>
         <p className="text-xs text-muted-foreground mt-1.5">
           {crawlType === 'single'
-            ? 'Extract content from a single page only'
-            : 'Crawl multiple pages starting from this URL'}
+            ? t('singlePageDescription')
+            : t('multiPageDescription')}
         </p>
       </div>
 
@@ -153,7 +153,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
           >
             <span className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
-              Advanced Options
+              {t('advancedOptions')}
             </span>
             <ChevronDown
               className={cn(
@@ -168,7 +168,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
               {/* Max Depth */}
               <div>
                 <label htmlFor="maxDepth" className="block text-sm font-medium mb-1.5">
-                  Max Depth
+                  {t('maxDepth')}
                 </label>
                 <input
                   id="maxDepth"
@@ -181,14 +181,14 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
                   disabled={isSubmitting}
                 />
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  How many levels deep to crawl (1-5)
+                  {t('maxDepthHint')}
                 </p>
               </div>
 
               {/* URL Pattern Filter */}
               <div>
                 <label htmlFor="urlPatterns" className="block text-sm font-medium mb-1.5">
-                  URL Pattern Filter
+                  {t('urlPatternFilter')}
                 </label>
                 <input
                   id="urlPatterns"
@@ -200,7 +200,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
                   disabled={isSubmitting}
                 />
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  Only crawl URLs matching these patterns (comma-separated)
+                  {t('urlPatternHint')}
                 </p>
               </div>
             </div>
@@ -226,7 +226,7 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
           className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          {isSubmitting ? 'Starting...' : crawlType === 'single' ? 'Add Page' : 'Start Crawl'}
+          {isSubmitting ? t('starting') : crawlType === 'single' ? t('addPage') : t('startCrawl')}
         </button>
       </div>
     </form>
