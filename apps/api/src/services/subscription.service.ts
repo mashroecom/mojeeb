@@ -357,62 +357,21 @@ export class SubscriptionService {
       throw new BadRequestError('Plan price not configured.');
     }
 
-    // Get dynamic Kashier config (falls back to static config)
-    const kashier = await getKashierConfig();
-
-    // If Kashier credentials are not configured, payment is not available
-    if (!kashier.apiKey || !kashier.merchantId) {
-      throw new BadRequestError(
-        'Payment gateway is not configured. Please set KASHIER_API_KEY and KASHIER_MERCHANT_ID in your environment.',
-      );
-    }
-
-    const merchantOrderId = `mojeeb_${orgId}_${Date.now()}`;
     const currency = 'USD';
-
-    // Generate Kashier payment hash
-    // Path format: /?payment=mid.orderId.amount.currency
-    // Hash = HMAC-SHA256(path, apiKey)
-    const hashPath = `/?payment=${kashier.merchantId}.${merchantOrderId}.${amount}.${currency}`;
-    const hash = crypto.createHmac('sha256', kashier.apiKey).update(hashPath).digest('hex');
-
     const redirectUrl = `${config.frontendUrl}/billing?status=success`;
     const failureRedirectUrl = `${config.frontendUrl}/billing?status=failed`;
 
-    // Build Kashier hosted checkout URL
-    const checkoutParams = new URLSearchParams({
-      merchantId: kashier.merchantId,
-      orderId: merchantOrderId,
-      amount: String(amount),
+    // Delegate to KashierProvider
+    const provider = getPaymentProvider(PaymentGateway.KASHIER);
+    return await provider.createCheckout({
+      orgId,
+      plan,
+      billingCycle,
+      amount,
       currency,
-      hash,
-      mode: config.nodeEnv === 'production' ? 'live' : 'test',
-      merchantRedirect: redirectUrl,
-      failureRedirect: failureRedirectUrl,
-      display: 'en',
-      brandColor: '#6366F1',
+      redirectUrl,
+      failureRedirectUrl,
     });
-
-    const checkoutUrl = `https://checkout.kashier.io/?${checkoutParams.toString()}`;
-
-    // Store the pending invoice
-    await prisma.invoice.create({
-      data: {
-        subscriptionId: subscription.id,
-        amount,
-        currency,
-        status: 'PENDING',
-        kashierOrderId: merchantOrderId,
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h from now
-      },
-    });
-
-    logger.info({ orgId, plan, merchantOrderId }, 'Kashier checkout session created');
-
-    return {
-      checkoutUrl,
-      orderId: merchantOrderId,
-    };
   }
 
   /**
@@ -531,7 +490,7 @@ export class SubscriptionService {
   /**
    * Create a Stripe checkout session for upgrading to a paid plan.
    */
-  async createStripeCheckout(orgId: string, plan: string) {
+  async createStripeCheckout(orgId: string, plan: string, billingCycle: 'monthly' | 'yearly' = 'monthly') {
     // Validate the target plan
     if (plan !== 'STARTER' && plan !== 'PROFESSIONAL') {
       throw new BadRequestError('Invalid plan. Must be STARTER or PROFESSIONAL.');
@@ -544,80 +503,30 @@ export class SubscriptionService {
       throw new BadRequestError('You are already on this plan.');
     }
 
-    const amount = await planConfigService.getPrice(plan);
+    const amount = await planConfigService.getPrice(plan, billingCycle);
     if (!amount) {
       throw new BadRequestError('Plan price not configured.');
     }
 
-    const stripe = await getStripeClient();
-    const currency = 'usd';
+    const currency = 'USD';
+    const redirectUrl = `${config.frontendUrl}/billing?status=success&session_id={CHECKOUT_SESSION_ID}`;
+    const failureRedirectUrl = `${config.frontendUrl}/billing?status=canceled`;
 
-    // Get or create Stripe customer
-    let customerId = subscription.stripeCustomerId;
-    if (!customerId) {
-      const org = await prisma.organization.findUnique({ where: { id: orgId } });
-      if (!org) throw new NotFoundError('Organization not found');
-
-      const customer = await stripe.customers.create({
-        metadata: {
-          orgId,
-          plan,
-        },
-      });
-      customerId = customer.id;
-
-      await prisma.subscription.update({
-        where: { orgId },
-        data: { stripeCustomerId: customerId },
-      });
-      await cache.del(`subscription:${orgId}`);
-    }
-
-    // Create checkout session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      mode: 'payment',
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency,
-            unit_amount: Math.round(amount * 100), // Convert to cents
-            product_data: {
-              name: `Mojeeb ${plan} Plan`,
-              description: `Monthly subscription to Mojeeb ${plan} plan`,
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      success_url: `${config.frontendUrl}/billing?status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${config.frontendUrl}/billing?status=canceled`,
-      metadata: {
-        orgId,
-        plan,
-        subscriptionId: subscription.id,
-      },
+    // Delegate to StripeProvider
+    const provider = getPaymentProvider(PaymentGateway.STRIPE);
+    const result = await provider.createCheckout({
+      orgId,
+      plan,
+      billingCycle,
+      amount,
+      currency,
+      redirectUrl,
+      failureRedirectUrl,
     });
-
-    // Store the pending invoice
-    await prisma.invoice.create({
-      data: {
-        subscriptionId: subscription.id,
-        amount,
-        currency: currency.toUpperCase(),
-        status: 'PENDING',
-        paymentGateway: 'STRIPE',
-        stripeInvoiceId: session.id,
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h from now
-      },
-    });
-
-    logger.info({ orgId, plan, sessionId: session.id }, 'Stripe checkout session created');
 
     return {
-      checkoutUrl: session.url,
-      sessionId: session.id,
+      checkoutUrl: result.checkoutUrl,
+      sessionId: result.orderId,
     };
   }
 
@@ -715,7 +624,7 @@ export class SubscriptionService {
   /**
    * Create a PayPal checkout session for upgrading to a paid plan.
    */
-  async createPayPalCheckout(orgId: string, plan: string) {
+  async createPayPalCheckout(orgId: string, plan: string, billingCycle: 'monthly' | 'yearly' = 'monthly') {
     // Validate the target plan
     if (plan !== 'STARTER' && plan !== 'PROFESSIONAL') {
       throw new BadRequestError('Invalid plan. Must be STARTER or PROFESSIONAL.');
@@ -728,66 +637,26 @@ export class SubscriptionService {
       throw new BadRequestError('You are already on this plan.');
     }
 
-    const amount = await planConfigService.getPrice(plan);
+    const amount = await planConfigService.getPrice(plan, billingCycle);
     if (!amount) {
       throw new BadRequestError('Plan price not configured.');
     }
 
-    const paypalClientInstance = await getPayPalClient();
     const currency = 'USD';
+    const redirectUrl = `${config.frontendUrl}/billing?status=success&gateway=paypal`;
+    const failureRedirectUrl = `${config.frontendUrl}/billing?status=canceled`;
 
-    // Create PayPal order
-    const request = new paypal.orders.OrdersCreateRequest();
-    request.prefer('return=representation');
-    request.requestBody({
-      intent: 'CAPTURE',
-      purchase_units: [
-        {
-          reference_id: `mojeeb_${orgId}_${Date.now()}`,
-          amount: {
-            currency_code: currency,
-            value: amount.toFixed(2),
-          },
-          description: `Mojeeb ${plan} Plan - Monthly Subscription`,
-        },
-      ],
-      application_context: {
-        brand_name: 'Mojeeb',
-        landing_page: 'BILLING',
-        user_action: 'PAY_NOW',
-        return_url: `${config.frontendUrl}/billing?status=success&gateway=paypal`,
-        cancel_url: `${config.frontendUrl}/billing?status=canceled`,
-      },
+    // Delegate to PayPalProvider
+    const provider = getPaymentProvider(PaymentGateway.PAYPAL);
+    return await provider.createCheckout({
+      orgId,
+      plan,
+      billingCycle,
+      amount,
+      currency,
+      redirectUrl,
+      failureRedirectUrl,
     });
-
-    const response = await paypalClientInstance.execute(request);
-    const order = response.result as PayPalOrderResponse;
-
-    // Find the approval URL
-    const approvalUrl = order.links?.find((link) => link.rel === 'approve')?.href;
-    if (!approvalUrl) {
-      throw new BadRequestError('Failed to create PayPal checkout session.');
-    }
-
-    // Store the pending invoice
-    await prisma.invoice.create({
-      data: {
-        subscriptionId: subscription.id,
-        amount,
-        currency,
-        status: 'PENDING',
-        paymentGateway: 'PAYPAL',
-        paypalOrderId: order.id,
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h from now
-      },
-    });
-
-    logger.info({ orgId, plan, orderId: order.id }, 'PayPal checkout session created');
-
-    return {
-      checkoutUrl: approvalUrl,
-      orderId: order.id,
-    };
   }
 
   /**
