@@ -5,6 +5,7 @@ import { teamPerformanceService } from '../../services/teamPerformance.service';
 import { pdfReportService } from '../../services/pdfReport.service';
 import { validate } from '../../middleware/validate';
 import { BadRequestError } from '../../utils/errors';
+import { csvSanitize } from '../../utils/csvSanitize';
 
 const dateRangeQuerySchema = z.object({
   orgId: z.string().min(1),
@@ -25,27 +26,13 @@ const realTimeQuerySchema = z.object({
 
 const router: Router = Router();
 
-// Helper function to convert data to CSV format
-function convertToCsv(rows: Record<string, unknown>[]): string {
-  if (!rows.length) return '';
-
-  const headers = Object.keys(rows[0]!);
-  const csvContent = [
-    headers.join(','),
-    ...rows.map((row) =>
-      headers
-        .map((h) => {
-          const val = row[h];
-          const str = val === null || val === undefined ? '' : String(val);
-          return str.includes(',') || str.includes('"') || str.includes('\n')
-            ? `"${str.replace(/"/g, '""')}"`
-            : str;
-        })
-        .join(',')
-    ),
-  ].join('\n');
-
-  return csvContent;
+// ─── Helper: build CSV string from headers + rows ──────────────────
+function buildCsv(headers: string[], rows: string[][]): string {
+  const lines = [headers.join(',')];
+  for (const row of rows) {
+    lines.push(row.map(csvSanitize).join(','));
+  }
+  return lines.join('\n');
 }
 
 // GET /real-time - Real-time metrics (active conversations, queue depth, wait times, agent availability)
@@ -130,7 +117,24 @@ router.get('/export/csv', validate({ query: dateRangeQuerySchema }), async (req:
     const data = await teamPerformanceService.getHistoricalMetrics(orgId, dateRange);
 
     // Convert agentMetrics array to CSV format (not the entire data object)
-    const csvContent = convertToCsv(data.agentMetrics as unknown as Record<string, unknown>[]);
+    const agentMetrics = data.agentMetrics as unknown as Record<string, unknown>[];
+
+    if (!agentMetrics.length) {
+      res.setHeader('Content-Type', 'text/csv;charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="team-performance.csv"');
+      res.send('');
+      return;
+    }
+
+    const headers = Object.keys(agentMetrics[0]!);
+    const rows = agentMetrics.map((metric) =>
+      headers.map((h) => {
+        const val = metric[h];
+        return val === null || val === undefined ? '' : String(val);
+      })
+    );
+
+    const csvContent = buildCsv(headers, rows);
 
     // Set headers for CSV download
     res.setHeader('Content-Type', 'text/csv;charset=utf-8');
