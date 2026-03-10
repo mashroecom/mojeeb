@@ -389,100 +389,20 @@ export class SubscriptionService {
       signature?: string;
     },
   ) {
-    const { merchantOrderId, paymentStatus, transactionId, amount } = params;
+    const { merchantOrderId, paymentStatus, transactionId, amount, currency } = params;
 
-    logger.info(
-      { orgId, merchantOrderId, paymentStatus, amount: params.amount },
-      'Confirming payment from redirect',
-    );
-
-    if (paymentStatus !== 'SUCCESS') {
-      throw new BadRequestError('Payment was not successful.');
-    }
-
-    // Find the invoice by Kashier order ID
-    const invoice = await prisma.invoice.findUnique({
-      where: { kashierOrderId: merchantOrderId },
-      include: { subscription: true },
-    });
-
-    if (!invoice) {
-      throw new NotFoundError('Invoice not found for this payment.');
-    }
-
-    // Ensure invoice belongs to this organization
-    if (invoice.subscription.orgId !== orgId) {
-      throw new BadRequestError('Invoice does not belong to this organization.');
-    }
-
-    // Already processed
-    if (invoice.status === 'PAID') {
-      return this.getByOrgId(orgId);
-    }
-
-    // Verify amount matches (use parseFloat + String to handle Prisma Decimal safely)
-    const paidAmountNum = parseFloat(amount);
-    const invoiceAmountNum = parseFloat(String(invoice.amount));
-    logger.info(
-      {
-        paidAmountNum,
-        invoiceAmountNum,
-        rawAmount: amount,
-        rawInvoiceAmount: String(invoice.amount),
-      },
-      'Comparing payment amounts',
-    );
-    if (paidAmountNum !== invoiceAmountNum) {
-      throw new BadRequestError(
-        `Payment amount (${paidAmountNum}) does not match invoice amount (${invoiceAmountNum}).`,
-      );
-    }
-
-    // Determine the new plan from the payment amount
-    const paidAmount = Number(amount);
-    const result = await planConfigService.getPlanByPrice(paidAmount);
-    if (!result) {
-      throw new BadRequestError('Unknown payment amount — cannot determine plan.');
-    }
-
-    const { plan: newPlan, billingCycle } = result;
-    const limits = await planConfigService.getLimits(newPlan);
-    const now = new Date();
-    const periodEnd = new Date(now);
-    periodEnd.setMonth(periodEnd.getMonth() + (billingCycle === 'yearly' ? 12 : 1));
-
-    // Update subscription with new plan
-    await prisma.subscription.update({
-      where: { id: invoice.subscriptionId },
-      data: {
-        plan: newPlan,
-        status: 'ACTIVE',
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        cancelAtPeriodEnd: false,
-        messagesUsed: 0,
-        messagesLimit: safeLimit(limits.messagesPerMonth),
-        agentsLimit: safeLimit(limits.maxAgents),
-        integrationsLimit: safeLimit(limits.maxChannels),
+    // Delegate to KashierProvider
+    const provider = getPaymentProvider(PaymentGateway.KASHIER);
+    await provider.confirmPayment({
+      orgId,
+      paymentId: merchantOrderId,
+      additionalParams: {
+        paymentStatus,
+        transactionId,
+        amount,
+        currency,
       },
     });
-
-    // Mark the invoice as paid
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        status: 'PAID',
-        kashierPaymentId: transactionId ?? null,
-        paidAt: now,
-      },
-    });
-
-    await cache.del(`subscription:${orgId}`);
-
-    logger.info(
-      { orgId, newPlan, merchantOrderId },
-      'Payment confirmed via redirect, subscription upgraded',
-    );
 
     return this.getByOrgId(orgId);
   }
@@ -534,89 +454,12 @@ export class SubscriptionService {
    * Confirm a Stripe payment from checkout session.
    */
   async confirmStripePayment(orgId: string, sessionId: string) {
-    const stripe = await getStripeClient();
-
-    logger.info({ orgId, sessionId }, 'Confirming Stripe payment from checkout');
-
-    // Retrieve the checkout session
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-    if (session.payment_status !== 'paid') {
-      throw new BadRequestError('Payment was not successful.');
-    }
-
-    // Find the invoice by Stripe session ID
-    const invoice = await prisma.invoice.findUnique({
-      where: { stripeInvoiceId: sessionId },
-      include: { subscription: true },
+    // Delegate to StripeProvider
+    const provider = getPaymentProvider(PaymentGateway.STRIPE);
+    await provider.confirmPayment({
+      orgId,
+      paymentId: sessionId,
     });
-
-    if (!invoice) {
-      throw new NotFoundError('Invoice not found for this payment.');
-    }
-
-    // Ensure invoice belongs to this organization
-    if (invoice.subscription.orgId !== orgId) {
-      throw new BadRequestError('Invoice does not belong to this organization.');
-    }
-
-    // Already processed
-    if (invoice.status === 'PAID') {
-      return this.getByOrgId(orgId);
-    }
-
-    // Verify amount matches
-    const paidAmountNum = (session.amount_total || 0) / 100; // Convert from cents
-    const invoiceAmountNum = parseFloat(String(invoice.amount));
-    logger.info({ paidAmountNum, invoiceAmountNum }, 'Comparing payment amounts');
-    if (Math.abs(paidAmountNum - invoiceAmountNum) > 0.01) {
-      throw new BadRequestError(
-        `Payment amount (${paidAmountNum}) does not match invoice amount (${invoiceAmountNum}).`,
-      );
-    }
-
-    // Determine the new plan from the payment amount
-    const planResult = await planConfigService.getPlanByPrice(invoiceAmountNum);
-    if (!planResult) {
-      throw new BadRequestError('Unknown payment amount — cannot determine plan.');
-    }
-
-    const { plan: newPlan } = planResult;
-    const limits = await planConfigService.getLimits(newPlan);
-    const now = new Date();
-    const periodEnd = new Date(now);
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
-
-    // Update subscription with new plan
-    await prisma.subscription.update({
-      where: { id: invoice.subscriptionId },
-      data: {
-        plan: newPlan,
-        status: 'ACTIVE',
-        paymentGateway: 'STRIPE',
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        cancelAtPeriodEnd: false,
-        messagesUsed: 0,
-        messagesLimit: safeLimit(limits.messagesPerMonth),
-        agentsLimit: safeLimit(limits.maxAgents),
-        integrationsLimit: safeLimit(limits.maxChannels),
-      },
-    });
-
-    // Mark the invoice as paid
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        status: 'PAID',
-        stripePaymentIntentId: session.payment_intent as string,
-        paidAt: now,
-      },
-    });
-
-    await cache.del(`subscription:${orgId}`);
-
-    logger.info({ orgId, newPlan, sessionId }, 'Stripe payment confirmed, subscription upgraded');
 
     return this.getByOrgId(orgId);
   }
@@ -663,101 +506,12 @@ export class SubscriptionService {
    * Confirm a PayPal payment from order ID.
    */
   async confirmPayPalPayment(orgId: string, orderId: string) {
-    const paypalClientInstance = await getPayPalClient();
-
-    logger.info({ orgId, orderId }, 'Confirming PayPal payment from checkout');
-
-    // Get the order details
-    const getOrderRequest = new paypal.orders.OrdersGetRequest(orderId);
-    const getOrderResponse = await paypalClientInstance.execute(getOrderRequest);
-    const order = getOrderResponse.result as PayPalOrderResponse;
-
-    if (order.status !== 'APPROVED' && order.status !== 'COMPLETED') {
-      throw new BadRequestError('Payment was not approved or completed.');
-    }
-
-    // Find the invoice by PayPal order ID
-    const invoice = await prisma.invoice.findUnique({
-      where: { paypalOrderId: orderId },
-      include: { subscription: true },
+    // Delegate to PayPalProvider
+    const provider = getPaymentProvider(PaymentGateway.PAYPAL);
+    await provider.confirmPayment({
+      orgId,
+      paymentId: orderId,
     });
-
-    if (!invoice) {
-      throw new NotFoundError('Invoice not found for this payment.');
-    }
-
-    // Ensure invoice belongs to this organization
-    if (invoice.subscription.orgId !== orgId) {
-      throw new BadRequestError('Invoice does not belong to this organization.');
-    }
-
-    // Already processed
-    if (invoice.status === 'PAID') {
-      return this.getByOrgId(orgId);
-    }
-
-    // Capture the payment if not already captured
-    let captureId: string | undefined;
-    if (order.status === 'APPROVED') {
-      const captureRequest = new paypal.orders.OrdersCaptureRequest(orderId);
-      captureRequest.requestBody({});
-      const captureResponse = await paypalClientInstance.execute(captureRequest);
-      const capturedOrder = captureResponse.result as PayPalOrderResponse;
-      captureId = capturedOrder.purchase_units?.[0]?.payments?.captures?.[0]?.id;
-    }
-
-    // Verify amount matches
-    const paidAmountNum = parseFloat(order.purchase_units?.[0]?.amount?.value || '0');
-    const invoiceAmountNum = parseFloat(String(invoice.amount));
-    logger.info({ paidAmountNum, invoiceAmountNum }, 'Comparing payment amounts');
-    if (Math.abs(paidAmountNum - invoiceAmountNum) > 0.01) {
-      throw new BadRequestError(
-        `Payment amount (${paidAmountNum}) does not match invoice amount (${invoiceAmountNum}).`,
-      );
-    }
-
-    // Determine the new plan from the payment amount
-    const planResult2 = await planConfigService.getPlanByPrice(invoiceAmountNum);
-    if (!planResult2) {
-      throw new BadRequestError('Unknown payment amount — cannot determine plan.');
-    }
-
-    const { plan: newPlan } = planResult2;
-    const limits = await planConfigService.getLimits(newPlan);
-    const now = new Date();
-    const periodEnd = new Date(now);
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
-
-    // Update subscription with new plan
-    await prisma.subscription.update({
-      where: { id: invoice.subscriptionId },
-      data: {
-        plan: newPlan,
-        status: 'ACTIVE',
-        paymentGateway: 'PAYPAL',
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        cancelAtPeriodEnd: false,
-        messagesUsed: 0,
-        messagesLimit: safeLimit(limits.messagesPerMonth),
-        agentsLimit: safeLimit(limits.maxAgents),
-        integrationsLimit: safeLimit(limits.maxChannels),
-      },
-    });
-
-    // Mark the invoice as paid
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        status: 'PAID',
-        paypalCaptureId: captureId ?? null,
-        paidAt: now,
-      },
-    });
-
-    await cache.del(`subscription:${orgId}`);
-
-    logger.info({ orgId, newPlan, orderId }, 'PayPal payment confirmed, subscription upgraded');
 
     return this.getByOrgId(orgId);
   }
