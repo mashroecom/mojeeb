@@ -3817,6 +3817,14 @@
       "inbox": "Inbox",
       "analytics": "Analytics",
       "profile": "Profile"
+    },
+    "inbox": {
+      "title": "Inbox",
+      "searchPlaceholder": "Search conversations...",
+      "filters": "Filters",
+      "noConversations": "No conversations found",
+      "noConversationsHint": "Try adjusting your filters",
+      "endOfList": "You've reached the end"
     }
   }
 }

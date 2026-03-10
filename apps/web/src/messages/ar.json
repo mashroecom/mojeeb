@@ -3817,6 +3817,14 @@
       "inbox": "صندوق الوارد",
       "analytics": "التحليلات",
       "profile": "الملف الشخصي"
+    },
+    "inbox": {
+      "title": "صندوق الوارد",
+      "searchPlaceholder": "البحث في المحادثات...",
+      "filters": "التصفية",
+      "noConversations": "لا توجد محادثات",
+      "noConversationsHint": "حاول تعديل خيارات التصفية",
+      "endOfList": "لقد وصلت إلى النهاية"
     }
   }
 }
