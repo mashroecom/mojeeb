@@ -1,0 +1,39 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(D:\\mojeeb\\.auto-claude\\worktrees\\tasks\\002-replace-custom-delete-account-modal-with-accessibl/**)",
+      "Write(D:\\mojeeb\\.auto-claude\\worktrees\\tasks\\002-replace-custom-delete-account-modal-with-accessibl/**)",
+      "Edit(D:\\mojeeb\\.auto-claude\\worktrees\\tasks\\002-replace-custom-delete-account-modal-with-accessibl/**)",
+      "Glob(D:\\mojeeb\\.auto-claude\\worktrees\\tasks\\002-replace-custom-delete-account-modal-with-accessibl/**)",
+      "Grep(D:\\mojeeb\\.auto-claude\\worktrees\\tasks\\002-replace-custom-delete-account-modal-with-accessibl/**)",
+      "Read(D:\\mojeeb\\.auto-claude\\worktrees\\tasks\\002-replace-custom-delete-account-modal-with-accessibl\\.auto-claude\\specs\\002-replace-custom-delete-account-modal-with-accessibl/**)",
+      "Write(D:\\mojeeb\\.auto-claude\\worktrees\\tasks\\002-replace-custom-delete-account-modal-with-accessibl\\.auto-claude\\specs\\002-replace-custom-delete-account-modal-with-accessibl/**)",
+      "Edit(D:\\mojeeb\\.auto-claude\\worktrees\\tasks\\002-replace-custom-delete-account-modal-with-accessibl\\.auto-claude\\specs\\002-replace-custom-delete-account-modal-with-accessibl/**)",
+      "Read(D:\\mojeeb\\.auto-claude/**)",
+      "Write(D:\\mojeeb\\.auto-claude/**)",
+      "Edit(D:\\mojeeb\\.auto-claude/**)",
+      "Glob(D:\\mojeeb\\.auto-claude/**)",
+      "Grep(D:\\mojeeb\\.auto-claude/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__query-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}
