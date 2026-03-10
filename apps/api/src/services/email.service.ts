@@ -436,6 +436,87 @@ export class EmailService {
       `,
     });
   }
+
+  async sendUsageAlertEmail(
+    to: string,
+    title: string,
+    body: string,
+    severity: 'warning' | 'danger',
+    locale: string = 'en',
+  ) {
+    const resend = await getResendClient();
+    if (!resend) {
+      logger.debug({ to, title }, 'Usage alert email skipped (no email provider configured)');
+      return;
+    }
+
+    const branding = await this.getBranding();
+    const fromAddress = await getFromAddress();
+
+    // Determine alert color based on severity
+    const alertColor = severity === 'danger' ? '#ef4444' : '#f59e0b';
+    const alertBgColor = severity === 'danger' ? '#fef2f2' : '#fffbeb';
+    const iconEmoji = severity === 'danger' ? '🚨' : '⚠️';
+
+    await resend.emails.send({
+      from: fromAddress,
+      to,
+      subject: locale === 'ar'
+        ? `${branding.siteName} - ${title}`
+        : `${title} - ${branding.siteName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            ${branding.logoUrl ? `<img src="${branding.logoUrl}" alt="${branding.siteName}" style="max-height: 48px; margin-bottom: 8px;" />` : ''}
+            <h1 style="color: ${branding.primaryColor}; font-size: 28px; margin: 0;">${branding.siteName}</h1>
+          </div>
+
+          <!-- English -->
+          <div style="margin-bottom: 32px;">
+            <div style="background: ${alertBgColor}; border-left: 4px solid ${alertColor}; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 24px;">${iconEmoji}</span>
+                <h2 style="color: ${alertColor}; font-size: 18px; margin: 0;">${escapeHtml(title)}</h2>
+              </div>
+            </div>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+              ${escapeHtml(body)}
+            </p>
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="${config.frontendUrl}/en/billing" style="display: inline-block; background: ${branding.primaryColor}; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+                View Billing Dashboard
+              </a>
+            </div>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+
+          <!-- Arabic -->
+          <div dir="rtl" style="text-align: right;">
+            <div style="background: ${alertBgColor}; border-right: 4px solid ${alertColor}; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-direction: row-reverse;">
+                <span style="font-size: 24px;">${iconEmoji}</span>
+                <h2 style="color: ${alertColor}; font-size: 18px; margin: 0;">${escapeHtml(title)}</h2>
+              </div>
+            </div>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.8;">
+              ${escapeHtml(body)}
+            </p>
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="${config.frontendUrl}/ar/billing" style="display: inline-block; background: ${branding.primaryColor}; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+                عرض لوحة الفواتير
+              </a>
+            </div>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+          <p style="color: #9ca3af; font-size: 11px; text-align: center;">
+            ${branding.siteName} AI Customer Support Platform
+          </p>
+        </div>
+      `,
+    });
+  }
 }
 
 export const emailService = new EmailService();
