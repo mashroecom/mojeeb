@@ -13,6 +13,22 @@ import { useAuthStore } from '@/stores/authStore';
 // Types
 // ---------------------------------------------------------------------------
 
+export interface Tag {
+  id: string;
+  orgId: string;
+  name: string;
+  color: string;
+  createdAt: string;
+}
+
+export interface ConversationTag {
+  id: string;
+  conversationId: string;
+  tagId: string;
+  tag: Tag;
+  createdAt: string;
+}
+
 export interface Conversation {
   id: string;
   customerId: string;
@@ -35,6 +51,7 @@ export interface Conversation {
   } | null;
   messages?: { content: string; role: string; createdAt: string }[];
   ratings?: { rating: number }[];
+  tags?: ConversationTag[];
   lastMessageAt: string | null;
   createdAt: string;
 }
