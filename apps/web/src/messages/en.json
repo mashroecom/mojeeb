@@ -3848,6 +3848,12 @@
         "escalation": "Escalation",
         "feedback": "Feedback"
       }
+    },
+    "push": {
+      "subscribed": "Push notifications enabled successfully",
+      "subscribeFailed": "Failed to enable push notifications",
+      "notSupported": "Push notifications are not supported in this browser",
+      "permissionDenied": "Notification permission was denied"
     }
   }
 }
