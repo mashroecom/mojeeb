@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { AlertTriangle, X } from 'lucide-react';
@@ -31,6 +32,24 @@ export function AdminConfirmDialog({
   const resolvedConfirmLabel = confirmLabel ?? t('confirm');
   const resolvedCancelLabel = cancelLabel ?? t('cancel');
   const isDanger = variant === 'danger';
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Generate unique IDs for ARIA attributes
+  const titleId = useRef(`admin-confirm-dialog-title-${Math.random().toString(36).substr(2, 9)}`);
+  const descriptionId = useRef(
+    `admin-confirm-dialog-description-${Math.random().toString(36).substr(2, 9)}`,
+  );
+
+  // Auto-focus the appropriate button when dialog opens
+  useEffect(() => {
+    if (open) {
+      // For danger dialogs, focus the cancel button to prevent accidental confirmation
+      // For default dialogs, focus the confirm button
+      const targetRef = variant === 'danger' ? cancelButtonRef : confirmButtonRef;
+      targetRef.current?.focus();
+    }
+  }, [open, variant]);
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
@@ -43,6 +62,9 @@ export function AdminConfirmDialog({
           )}
         />
         <DialogPrimitive.Content
+          aria-modal="true"
+          aria-labelledby={titleId.current}
+          aria-describedby={descriptionId.current}
           className={cn(
             'fixed inset-x-4 top-[50%] z-[100] mx-auto w-full max-w-md translate-y-[-50%] rounded-xl border bg-card p-6 shadow-xl',
             'focus:outline-none',
@@ -68,10 +90,13 @@ export function AdminConfirmDialog({
               </div>
             )}
             <div>
-              <DialogPrimitive.Title className="text-lg font-semibold">
+              <DialogPrimitive.Title id={titleId.current} className="text-lg font-semibold">
                 {title}
               </DialogPrimitive.Title>
-              <DialogPrimitive.Description className="text-sm text-muted-foreground mt-1">
+              <DialogPrimitive.Description
+                id={descriptionId.current}
+                className="text-sm text-muted-foreground mt-1"
+              >
                 {message}
               </DialogPrimitive.Description>
             </div>
@@ -79,20 +104,26 @@ export function AdminConfirmDialog({
 
           <div className="flex justify-end gap-2">
             <button
+              ref={cancelButtonRef}
               type="button"
               onClick={onCancel}
               disabled={loading}
-              className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+              className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50"
             >
               {resolvedCancelLabel}
             </button>
             <button
+              ref={confirmButtonRef}
               type="button"
               onClick={onConfirm}
               disabled={loading}
               className={cn(
-                'rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50',
-                isDanger ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+                'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                'disabled:opacity-50',
+                isDanger
+                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90',
               )}
             >
               {loading ? t('processing') : resolvedConfirmLabel}
