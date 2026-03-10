@@ -16,24 +16,11 @@ async function getSiteSettings() {
     const settings = await prisma.siteSettings.findUnique({
       where: { id: 'singleton' },
     });
-    cachedSettings = settings;
+    cachedSettings = settings || {};
     cacheTimestamp = now;
     return cachedSettings;
   } catch {
-    return null;
-  }
-}
-
-// Middleware to attach site settings to request object
-export async function settingsMiddleware(req: Request, res: Response, next: NextFunction) {
-  try {
-    // Attach settings to request object for use in routes
-    (req as any).siteSettings = await getSiteSettings();
-    next();
-  } catch (error) {
-    // Don't block requests if settings fetch fails
-    (req as any).siteSettings = null;
-    next();
+    return {};
   }
 }
 
@@ -41,4 +28,16 @@ export async function settingsMiddleware(req: Request, res: Response, next: Next
 export function clearSettingsCache() {
   cachedSettings = null;
   cacheTimestamp = 0;
+}
+
+// Middleware to attach site settings to request object
+export async function settingsMiddleware(req: Request, res: Response, next: NextFunction) {
+  try {
+    (req as any).siteSettings = await getSiteSettings();
+    next();
+  } catch (error) {
+    // Don't block requests if settings fetch fails
+    (req as any).siteSettings = {};
+    next();
+  }
 }
