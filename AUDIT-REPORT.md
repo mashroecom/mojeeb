@@ -2,6 +2,7 @@
 
 **Date:** 2026-02-11
 **Status:** Most critical and high-severity issues FIXED
+**Last Updated:** 2026-03-10
 
 ---
 
@@ -9,7 +10,7 @@
 
 | Severity | Found | Fixed |
 |----------|-------|-------|
-| Critical | 6 | 6 |
+| Critical | 7 | 7 |
 | High | 10 | 9 |
 | Medium | ~15 | 3 |
 | Low | ~15 | 0 |
@@ -54,41 +55,48 @@
 - **Impact:** Duplicate conversations, split messages
 - **Fix:** Wrapped in `$transaction` with `ReadCommitted` isolation, pass `conversationId` to queue
 
+### 7. Live production credentials in .env file (FIXED)
+- **File:** `.env`
+- **Date Fixed:** 2026-03-10
+- **Bug:** Root `.env` contained live production API keys for OpenAI (`sk-proj-...`), Anthropic (`sk-ant-...`), Kashier payment credentials (merchant ID, API key, webhook secret), Google OAuth client ID/secret, weak JWT secret (`your-jwt-secret-change-in-production`), and example encryption key (`0123456789abcdef...`)
+- **Impact:** Exposed credentials grant direct access to paid AI services, payment processing, OAuth impersonation, and ability to forge authentication tokens or decrypt all encrypted data at rest. Could be exposed through backups, CI/CD logs, developer workstation compromise, or accidental commit.
+- **Fix:** Rotated all live API keys with service providers. Replaced with placeholder values in `.env` file. Generated cryptographically secure random values for `JWT_SECRET` and `ENCRYPTION_KEY`. Documented proper credential management process using environment-specific configuration and secret management systems.
+
 ---
 
 ## HIGH — FIXED
 
-### 7. apiKeyAuth crashes process (FIXED)
+### 8. apiKeyAuth crashes process (FIXED)
 - **File:** `apps/api/src/middleware/apiKeyAuth.ts:13,66`
 - **Bug:** Sync `throw` outside error chain
 - **Fix:** Changed to `return next(new UnauthorizedError(...))`
 
-### 8. Rate limiter bypass (FIXED)
+### 9. Rate limiter bypass (FIXED)
 - **File:** `apps/api/src/middleware/rateLimiter.ts:27,41`
 - **Bug:** `Math.random()` fallback defeats rate limiting when req.ip is undefined
 - **Fix:** Changed to `'anon-unknown'` — all unidentified clients share one bucket
 
-### 9. SVG upload stored XSS (FIXED)
+### 10. SVG upload stored XSS (FIXED)
 - **File:** `apps/api/src/routes/webhooks/webchat.routes.ts:37`
 - **Bug:** `image/svg+xml` allowed — SVG can contain embedded JavaScript
 - **Fix:** Removed `image/svg+xml` from allowed MIME types
 
-### 10. Suspended users can login (FIXED)
+### 11. Suspended users can login (FIXED)
 - **File:** `apps/api/src/services/auth.service.ts:237,495`
 - **Bug:** No `suspendedAt` check in login or Google sign-in
 - **Fix:** Added suspension check before issuing tokens in both flows
 
-### 11. AI provider no timeouts (FIXED)
+### 12. AI provider no timeouts (FIXED)
 - **Files:** `apps/api/src/ai/providers/openai.provider.ts:30`, `anthropic.provider.ts:32`
 - **Bug:** No timeout on API calls — workers can hang indefinitely
 - **Fix:** Added `timeout: 60_000` (60s) to both provider clients
 
-### 12. Channel agent assignment no org check (FIXED)
+### 13. Channel agent assignment no org check (FIXED)
 - **File:** `apps/api/src/routes/channel.routes.ts:130,147`
 - **Bug:** No verification that channel belongs to requesting user's org
 - **Fix:** Added `channelService.getById(orgId, channelId)` guard
 
-### 13. Tags cross-org (FIXED)
+### 14. Tags cross-org (FIXED)
 - **File:** `apps/api/src/routes/tags.routes.ts:60-88`
 - **Bug:** Can apply tags to conversations in other organizations
 - **Fix:** Added org ownership verification for both tag and conversation
@@ -97,15 +105,15 @@
 
 ## MEDIUM — PARTIALLY FIXED
 
-### 14. /uploads served before Helmet (FIXED)
+### 15. /uploads served before Helmet (FIXED)
 - **File:** `apps/api/src/app.ts:52`
 - **Fix:** Moved `/uploads` static serving after Helmet middleware
 
-### 15. Widget test page in production (FIXED)
+### 16. Widget test page in production (FIXED)
 - **File:** `apps/api/src/app.ts:33`
 - **Fix:** Gated behind `NODE_ENV !== 'production'`
 
-### 16. Conversation delete not atomic (FIXED)
+### 17. Conversation delete not atomic (FIXED)
 - **File:** `apps/api/src/services/conversation.service.ts:184`
 - **Fix:** Wrapped in `$transaction`, added ConversationTag and ConversationRating cleanup
 
