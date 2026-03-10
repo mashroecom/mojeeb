@@ -13,6 +13,7 @@ import { performance } from 'perf_hooks';
 
 const API_BASE = process.env.API_URL || 'http://localhost:3000';
 const ORG_ID = process.env.ORG_ID || 'test-org-10k';
+const AUTH_TOKEN = process.env.TEST_TOKEN || '';
 
 interface TestResult {
   success: boolean;
@@ -26,7 +27,11 @@ function makeRequest(path: string): Promise<{ data: string; duration: number }> 
   return new Promise((resolve, reject) => {
     const startTime = performance.now();
 
-    const req = http.get(`${API_BASE}${path}`, (res) => {
+    const options = {
+      headers: AUTH_TOKEN ? { 'Authorization': `Bearer ${AUTH_TOKEN}` } : {}
+    };
+
+    const req = http.get(`${API_BASE}${path}`, options, (res) => {
       let data = '';
       let chunks = 0;
 

@@ -15,7 +15,7 @@ async function seed() {
       data: {
         id: 'test-org-10k',
         name: 'Test Organization for 10K Export',
-        plan: 'ENTERPRISE',
+        slug: 'test-org-10k',
         createdAt: new Date(),
         updatedAt: new Date(),
       },
