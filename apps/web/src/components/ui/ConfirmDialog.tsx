@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { AlertTriangle } from 'lucide-react';
@@ -28,6 +28,24 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const ct = useTranslations('common');
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Generate unique IDs for ARIA attributes
+  const titleId = useRef(`confirm-dialog-title-${Math.random().toString(36).substr(2, 9)}`);
+  const descriptionId = useRef(
+    `confirm-dialog-description-${Math.random().toString(36).substr(2, 9)}`,
+  );
+
+  // Auto-focus the appropriate button when dialog opens
+  useEffect(() => {
+    if (open) {
+      // For danger dialogs, focus the cancel button to prevent accidental confirmation
+      // For default dialogs, focus the confirm button
+      const targetRef = variant === 'danger' ? cancelButtonRef : confirmButtonRef;
+      targetRef.current?.focus();
+    }
+  }, [open, variant]);
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
@@ -40,6 +58,9 @@ export function ConfirmDialog({
           )}
         />
         <DialogPrimitive.Content
+          aria-modal="true"
+          aria-labelledby={titleId.current}
+          aria-describedby={descriptionId.current}
           className={cn(
             'fixed inset-x-4 top-[50%] z-50 mx-auto w-full max-w-md translate-y-[-50%] rounded-xl border bg-card p-6 shadow-lg',
             'focus:outline-none',
@@ -54,10 +75,13 @@ export function ConfirmDialog({
               </div>
             )}
             <div className="flex-1">
-              <DialogPrimitive.Title className="text-base font-semibold">
+              <DialogPrimitive.Title id={titleId.current} className="text-base font-semibold">
                 {title}
               </DialogPrimitive.Title>
-              <DialogPrimitive.Description className="mt-1.5 text-sm text-muted-foreground">
+              <DialogPrimitive.Description
+                id={descriptionId.current}
+                className="mt-1.5 text-sm text-muted-foreground"
+              >
                 {message}
               </DialogPrimitive.Description>
             </div>
@@ -65,12 +89,14 @@ export function ConfirmDialog({
 
           <div className="mt-5 flex justify-end gap-3">
             <button
+              ref={cancelButtonRef}
               onClick={onCancel}
               className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               {cancelLabel || ct('cancel')}
             </button>
             <button
+              ref={confirmButtonRef}
               onClick={onConfirm}
               className={cn(
                 'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
