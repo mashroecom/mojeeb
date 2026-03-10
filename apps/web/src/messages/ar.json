@@ -1046,7 +1046,12 @@
       "last14Days": "آخر 14 يوم",
       "last8Weeks": "آخر 8 أسابيع",
       "last6Months": "آخر 6 أشهر",
-      "total": "المجموع"
+      "total": "المجموع",
+      "usageAlerts": "تنبيهات الاستخدام",
+      "usageAlertsSubtitle": "إشعارات هامة حول استخدامك للموارد",
+      "usageAlertWarning": "لقد استخدمت {used} من {limit} ({percentage}%). فكر في ترقية خطتك.",
+      "usageAlertAtLimit": "لقد وصلت إلى الحد الأقصى ({used} من {limit}). قم بالترقية لمواصلة استخدام هذه الميزة.",
+      "usageAlertsOverageNote": "ملاحظة: بمجرد الوصول إلى 100٪، ستُطبق رسوم إضافية على محادثات الذكاء الاصطناعي."
     },
     "customers": {
       "title": "العملاء",

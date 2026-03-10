@@ -1097,7 +1097,12 @@
       "last14Days": "Last 14 days",
       "last8Weeks": "Last 8 weeks",
       "last6Months": "Last 6 months",
-      "total": "Total"
+      "total": "Total",
+      "usageAlerts": "Usage Alerts",
+      "usageAlertsSubtitle": "Important notifications about your resource usage",
+      "usageAlertWarning": "You've used {used} of {limit} ({percentage}%). Consider upgrading your plan.",
+      "usageAlertAtLimit": "You've reached your limit ({used} of {limit}). Upgrade to continue using this feature.",
+      "usageAlertsOverageNote": "Note: Once you reach 100%, overage charges will apply to AI conversations."
     },
     "team": {
       "title": "Team Management",

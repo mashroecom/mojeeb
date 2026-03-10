@@ -12,6 +12,7 @@ import { fmtDate } from '@/lib/dateFormat';
 import { api } from '@/lib/api';
 import { SpendingCapSection } from './_components/SpendingCapSection';
 import { UsageTrendsChart } from './_components/UsageTrendsChart';
+import { UsageAlertsSection } from './_components/UsageAlertsSection';
 import {
   MessageSquare,
   Bot,
@@ -353,6 +354,9 @@ export default function BillingPage() {
         </div>
       ) : (
         <>
+          {/* Usage Alerts */}
+          <UsageAlertsSection subscription={subscription} />
+
           {/* Payment Gateway Selector */}
           {paymentGateways && paymentGateways.length > 0 && (
             <div className="rounded-xl border bg-card p-6 shadow-sm mb-6">
