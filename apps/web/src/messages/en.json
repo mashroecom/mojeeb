@@ -114,7 +114,8 @@
       "badge": "AI-Powered Support",
       "noCreditCard": "No credit card required",
       "demoChatMessage": "Hi, I want to ask about pricing",
-      "demoChatAIResponse": "Welcome! Happy to help. We have three plans starting from free. Would you like to know the details?"
+      "demoChatAIResponse": "Welcome! Happy to help. We have three plans starting from free. Would you like to know the details?",
+      "login": "Log In"
     },
     "features": {
       "title": "Superpowers for Your Support Team",
@@ -142,6 +143,26 @@
       "availability": {
         "title": "24/7 Availability",
         "description": "Always-on AI support with near-zero response time."
+      },
+      "ai": {
+        "title": "AI-Powered Responses",
+        "description": "Smart AI that understands context and responds naturally in Arabic and English."
+      },
+      "channels": {
+        "title": "Multi-Channel Support",
+        "description": "Connect WhatsApp, Messenger, and Instagram in one unified inbox."
+      },
+      "automation": {
+        "title": "Smart Automation",
+        "description": "Automate repetitive tasks and route conversations intelligently."
+      },
+      "security": {
+        "title": "Enterprise Security",
+        "description": "Bank-grade encryption and compliance with data protection standards."
+      },
+      "multilingual": {
+        "title": "Multilingual Support",
+        "description": "Native Arabic and English support with automatic language detection."
       }
     },
     "pricing": {
@@ -1137,7 +1158,6 @@
       "usageTrendsSubtitle": "Track your AI conversation usage over time",
       "daily": "Daily",
       "weekly": "Weekly",
-      "monthly": "Monthly",
       "last14Days": "Last 14 days",
       "last8Weeks": "Last 8 weeks",
       "last6Months": "Last 6 months",
@@ -2871,11 +2891,11 @@
         "actions": "Actions",
         "viewDetail": "View detail",
         "send": "Send",
-      "offline": "Offline",
-      "queueMessage": "Queue Message",
-      "queued": "Message queued",
-      "queuedForSync": "Message queued for sync",
-      "willSyncWhenOnline": "Will be sent automatically when you're back online",
+        "offline": "Offline",
+        "queueMessage": "Queue Message",
+        "queued": "Message queued",
+        "queuedForSync": "Message queued for sync",
+        "willSyncWhenOnline": "Will be sent automatically when you're back online",
         "confirm": "Confirm",
         "cancel": "Cancel",
         "no": "No",

@@ -280,8 +280,14 @@ export function useZodForm<T extends z.ZodTypeAny>({
    * Check if form is valid (no errors and all required fields have values)
    */
   const isValid = useMemo(() => {
-    return Object.keys(errors).length === 0 && validateForm();
-  }, [errors, validateForm]);
+    if (Object.keys(errors).length > 0) return false;
+    try {
+      schema.parse(values);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [errors, schema, values]);
 
   // ---------------------------------------------------------------------------
   // Return
