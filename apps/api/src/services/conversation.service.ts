@@ -1,4 +1,5 @@
 import { prisma } from '../config/database';
+import { ConversationStatus } from '@prisma/client';
 import { NotFoundError } from '../utils/errors';
 import { webhookService } from './webhook.service';
 import { pushNotificationService } from './pushNotification.service';
@@ -241,7 +242,7 @@ export class ConversationService {
     return { archivedCount: result.count };
   }
 
-  async bulkUpdateStatus(orgId: string, conversationIds: string[], status: string) {
+  async bulkUpdateStatus(orgId: string, conversationIds: string[], status: ConversationStatus) {
     const result = await prisma.conversation.updateMany({
       where: {
         id: { in: conversationIds },

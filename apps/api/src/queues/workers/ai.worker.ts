@@ -10,7 +10,6 @@ import { emitToOrg, emitToConversation } from '../../websocket/index';
 import { tokenUsageService } from '../../services/tokenUsage.service';
 import { notificationService } from '../../services/notification.service';
 import { webhookService } from '../../services/webhook.service';
-import { aiConversationTrackingService } from '../../services/aiConversationTracking.service';
 import { pushNotificationService } from '../../services/pushNotification.service';
 
 interface AIJobData {
@@ -436,8 +435,6 @@ export const aiWorker = new Worker(
       });
 
       if (previousAiMessages === 0) {
-        // This is the first AI response, increment AI conversation counter
-        await aiConversationTrackingService.incrementAiConversation(data.orgId);
         logger.info({ orgId: data.orgId, conversationId: data.conversationId }, 'AI conversation tracked');
       }
     } catch (trackingErr) {

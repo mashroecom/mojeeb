@@ -89,8 +89,6 @@ router.get('/plans', async (_req: Request, res: Response, next: NextFunction) =>
         isPopular: true,
         features: true,
         featuresAr: true,
-        aiConversationsPerMonth: true,
-        overagePricePerConversation: true,
       },
     });
 

@@ -277,7 +277,7 @@ router.get('/invoices/:invoiceId/pdf', async (req, res, next) => {
 });
 
 // POST /api/v1/organizations/:orgId/subscription/spending-cap
-// Sets or updates the spending cap for overage charges
+// Spending cap feature has been removed; return a no-op success for backward compatibility
 router.post(
   '/spending-cap',
   requireRole('OWNER', 'ADMIN'),
@@ -287,28 +287,15 @@ router.post(
       amount: z.number().positive().optional(),
     }),
   }),
-  async (req, res, next) => {
-    try {
-      const { orgId } = req.params as OrgParams;
-      const { enabled, amount } = req.body;
-      const subscription = await subscriptionService.setSpendingCap(orgId, enabled, amount);
-      res.json({ success: true, data: subscription });
-    } catch (err) {
-      next(err);
-    }
+  async (_req, res) => {
+    res.json({ success: true, message: 'Spending cap feature is no longer available.' });
   },
 );
 
 // DELETE /api/v1/organizations/:orgId/subscription/spending-cap
-// Removes the spending cap (disables it)
-router.delete('/spending-cap', requireRole('OWNER', 'ADMIN'), async (req, res, next) => {
-  try {
-    const { orgId } = req.params as OrgParams;
-    const subscription = await subscriptionService.removeSpendingCap(orgId);
-    res.json({ success: true, data: subscription });
-  } catch (err) {
-    next(err);
-  }
+// Spending cap feature has been removed; return a no-op success for backward compatibility
+router.delete('/spending-cap', requireRole('OWNER', 'ADMIN'), async (_req, res) => {
+  res.json({ success: true, message: 'Spending cap feature is no longer available.' });
 });
 
 // GET /api/v1/organizations/:orgId/subscription/overage-charges
@@ -320,8 +307,8 @@ router.get('/overage-charges', async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        overageChargesAccrued: subscription.overageChargesAccrued || 0,
-        currency: subscription.currency || 'USD',
+        overageChargesAccrued: 0,
+        currency: 'USD',
       },
     });
   } catch (err) {

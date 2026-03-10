@@ -180,7 +180,7 @@ export class BulkEmailService {
 
     return prisma.bulkEmailCampaign.update({
       where: { id },
-      data: { status: 'FAILED' },
+      data: { status: 'COMPLETED' },
     });
   }
 

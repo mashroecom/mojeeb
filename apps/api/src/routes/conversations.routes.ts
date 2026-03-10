@@ -2,6 +2,7 @@ import path from 'path';
 import { Router } from 'express';
 import multer from 'multer';
 import jwt from 'jsonwebtoken';
+import { ConversationStatus } from '@prisma/client';
 import { conversationService } from '../services/conversation.service';
 import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -134,7 +135,7 @@ router.post('/bulk-status', async (req, res, next) => {
       });
     }
 
-    const result = await conversationService.bulkUpdateStatus(orgId, conversationIds, status);
+    const result = await conversationService.bulkUpdateStatus(orgId, conversationIds, status as ConversationStatus);
     emitToOrg(orgId, 'conversations:bulk-updated', {
       conversationIds,
       status,

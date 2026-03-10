@@ -14,7 +14,6 @@ interface PlanLimits {
   maxKnowledgeBases: number;
   maxTeamMembers: number;
   apiAccess: boolean;
-  aiConversationsPerMonth: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -61,7 +60,6 @@ export class PlanConfigService {
             maxKnowledgeBases: row.maxKnowledgeBases,
             maxTeamMembers: row.maxTeamMembers,
             apiAccess: row.apiAccess,
-            aiConversationsPerMonth: row.aiConversationsPerMonth,
           };
         }
       } catch (err) {
@@ -94,47 +92,6 @@ export class PlanConfigService {
     });
   }
 
-  /**
-   * Get the AI conversation limit for a plan.
-   * Cached for 5 minutes. Falls back to PLAN_LIMITS constant if DB record not found.
-   */
-  async getAiConversationLimit(plan: string): Promise<number> {
-    return cache.getOrSet(`${CACHE_PREFIX}:aiLimit:${plan}`, CACHE_TTL, async () => {
-      try {
-        const row = await prisma.planConfig.findUnique({
-          where: { plan: plan as SubscriptionPlan },
-          select: { aiConversationsPerMonth: true },
-        });
-
-        if (row) return row.aiConversationsPerMonth;
-      } catch (err) {
-        logger.warn({ err, plan }, 'Failed to load AI conversation limit from DB, using fallback');
-      }
-
-      return (PLAN_LIMITS[plan as SubscriptionPlan] as any)?.aiConversationsPerMonth ?? 100;
-    });
-  }
-
-  /**
-   * Get the overage price per conversation for a plan.
-   * Cached for 5 minutes. Returns 0 if not found.
-   */
-  async getOveragePrice(plan: string): Promise<number> {
-    return cache.getOrSet(`${CACHE_PREFIX}:overage:${plan}`, CACHE_TTL, async () => {
-      try {
-        const row = await prisma.planConfig.findUnique({
-          where: { plan: plan as SubscriptionPlan },
-          select: { overagePricePerConversation: true },
-        });
-
-        if (row) return row.overagePricePerConversation;
-      } catch (err) {
-        logger.warn({ err, plan }, 'Failed to load overage price from DB, using fallback');
-      }
-
-      return 0;
-    });
-  }
 
   /**
    * Given a payment amount, return the matching SubscriptionPlan and billing cycle.
@@ -176,8 +133,6 @@ export class PlanConfigService {
     if (plan) {
       await cache.del(cacheKey(plan));
       await cache.del(`${CACHE_PREFIX}:price:${plan}`);
-      await cache.del(`${CACHE_PREFIX}:aiLimit:${plan}`);
-      await cache.del(`${CACHE_PREFIX}:overage:${plan}`);
     } else {
       await cache.delPattern(`${CACHE_PREFIX}:*`);
     }

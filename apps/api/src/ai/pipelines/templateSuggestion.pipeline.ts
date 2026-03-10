@@ -130,7 +130,7 @@ Which templates are most relevant for this conversation? Return top 3.`;
         .slice(0, 3);
 
       // 6. Map back to full template data
-      const suggestions: TemplateSuggestion[] = relevantTemplates
+      const suggestions = relevantTemplates
         .map((ranking) => {
           const template = templates.find((t) => t.id === ranking.templateId);
           if (!template) return null;
@@ -143,7 +143,7 @@ Which templates are most relevant for this conversation? Return top 3.`;
             category: template.category,
             relevanceScore: ranking.relevance,
             reasoning: ranking.reasoning,
-          };
+          } as TemplateSuggestion;
         })
         .filter((s): s is TemplateSuggestion => s !== null);
 
