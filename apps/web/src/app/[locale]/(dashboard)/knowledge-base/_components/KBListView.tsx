@@ -13,19 +13,15 @@ import {
 import { CreateKBForm } from './CreateKBForm';
 
 interface KBListViewProps {
-  knowledgeBases: KnowledgeBase[] | undefined;
-  isLoading: boolean;
+  knowledgeBases: KnowledgeBase[];
   onSelect: (id: string) => void;
-  onShowCreate: () => void;
   showCreateForm: boolean;
   onHideCreate: () => void;
 }
 
 export function KBListView({
   knowledgeBases,
-  isLoading,
   onSelect,
-  onShowCreate,
   showCreateForm,
   onHideCreate,
 }: KBListViewProps) {
@@ -95,20 +91,6 @@ export function KBListView({
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
-        {!showCreateForm && (
-          <button
-            onClick={onShowCreate}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            {t('createKb')}
-          </button>
-        )}
-      </div>
-
       {/* Create form */}
       {showCreateForm && (
         <CreateKBForm
@@ -126,25 +108,9 @@ export function KBListView({
         />
       )}
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && (!knowledgeBases || knowledgeBases.length === 0) && (
-        <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
-          <BookOpen className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-          <p className="text-muted-foreground">{t('noKb')}</p>
-        </div>
-      )}
-
       {/* KB Grid */}
-      {!isLoading && knowledgeBases && knowledgeBases.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {knowledgeBases.map((kb) => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {knowledgeBases.map((kb) => (
             <div
               key={kb.id}
               className="group relative rounded-xl border bg-card p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
@@ -281,8 +247,7 @@ export function KBListView({
               )}
             </div>
           ))}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
