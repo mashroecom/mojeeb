@@ -5,6 +5,7 @@ import { getAIProvider } from '../ai/index';
 import { logger } from '../config/logger';
 import pdfParse from 'pdf-parse';
 import { crawlerService } from './crawler.service';
+import { crawlerQueue } from '../queues/index';
 
 export class KnowledgeBaseService {
   async create(orgId: string, data: { name: string; description?: string }) {
@@ -194,6 +195,98 @@ export class KnowledgeBaseService {
     });
 
     return crawlJob;
+  }
+
+  async startCrawlJob(
+    kbId: string,
+    data: {
+      startUrl: string;
+      maxDepth?: number;
+      urlPattern?: string;
+      configId?: string;
+    }
+  ) {
+    // Validate knowledge base exists
+    const kb = await prisma.knowledgeBase.findUnique({
+      where: { id: kbId },
+      select: { id: true, orgId: true },
+    });
+    if (!kb) throw new NotFoundError('Knowledge base not found');
+
+    // Validate URL
+    try {
+      new URL(data.startUrl);
+    } catch (err) {
+      throw new BadRequestError('Invalid URL format');
+    }
+
+    // Parse URL patterns if provided
+    let urlPatterns: string[] = [];
+    if (data.urlPattern) {
+      urlPatterns = data.urlPattern.split(',').map((p) => p.trim()).filter(Boolean);
+    }
+
+    // Create crawl job in database
+    const crawlJob = await prisma.crawlJob.create({
+      data: {
+        knowledgeBaseId: kbId,
+        startUrl: data.startUrl,
+        configId: data.configId,
+        status: 'PENDING',
+        pagesTotal: 0,
+        pagesCrawled: 0,
+      },
+      include: {
+        config: true,
+      },
+    });
+
+    // Get URL patterns from config if not provided directly
+    let configUrlPatterns = urlPatterns;
+    if (configUrlPatterns.length === 0 && crawlJob.config?.urlPattern) {
+      configUrlPatterns = crawlJob.config.urlPattern
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean);
+    }
+
+    // Enqueue crawl job to BullMQ
+    await crawlerQueue.add('crawl', {
+      jobId: crawlJob.id,
+      kbId: kb.id,
+      orgId: kb.orgId,
+      startUrl: data.startUrl,
+      config: {
+        maxDepth: data.maxDepth || crawlJob.config?.maxDepth || 1,
+        urlPatterns: configUrlPatterns,
+      },
+    });
+
+    logger.info({ jobId: crawlJob.id, kbId, startUrl: data.startUrl }, 'Crawl job enqueued');
+
+    return crawlJob;
+  }
+
+  async getCrawlJobStatus(jobId: string) {
+    const job = await prisma.crawlJob.findUnique({
+      where: { id: jobId },
+      select: {
+        id: true,
+        status: true,
+        startUrl: true,
+        pagesCrawled: true,
+        pagesTotal: true,
+        errorMessage: true,
+        startedAt: true,
+        completedAt: true,
+        createdAt: true,
+        knowledgeBase: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+    if (!job) throw new NotFoundError('Crawl job not found');
+    return job;
   }
 
   async getCrawlJob(jobId: string) {
