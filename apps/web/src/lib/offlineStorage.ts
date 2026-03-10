@@ -914,3 +914,153 @@ export async function getStorageStats(): Promise<
     };
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Online/Offline Detection and Sync
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Check if the browser is currently online
+ */
+export function isOnline(): boolean {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+
+  return navigator.onLine;
+}
+
+/**
+ * Sync handler function type
+ * Returns true if sync was successful, false otherwise
+ */
+export type SyncHandler = (action: QueuedAction) => Promise<boolean>;
+
+/**
+ * Process queued actions when coming back online
+ *
+ * @param syncHandler - Function that handles syncing each action
+ * @param maxRetries - Maximum number of retries per action (default: 3)
+ * @returns Result with count of successful and failed syncs
+ */
+export async function syncQueuedActions(
+  syncHandler: SyncHandler,
+  maxRetries: number = 3
+): Promise<
+  OfflineStorageResult<{
+    total: number;
+    synced: number;
+    failed: number;
+    remaining: number;
+  }>
+> {
+  try {
+    // Get all queued actions
+    const actionsResult = await getQueuedActions();
+
+    if (!actionsResult.success || !actionsResult.data) {
+      return {
+        success: false,
+        error: actionsResult.error ?? 'Failed to get queued actions',
+      };
+    }
+
+    const actions = actionsResult.data;
+    let synced = 0;
+    let failed = 0;
+
+    // Process each action
+    for (const action of actions) {
+      try {
+        // Call the sync handler
+        const success = await syncHandler(action);
+
+        if (success) {
+          // Remove from queue on success
+          await removeQueuedAction(action.id);
+          synced++;
+        } else {
+          // Increment retry count on failure
+          const newRetryCount = action.retryCount + 1;
+
+          if (newRetryCount >= maxRetries) {
+            // Remove action if max retries reached
+            await removeQueuedAction(action.id);
+            failed++;
+          } else {
+            // Update retry count
+            await updateQueuedAction(action.id, {
+              retryCount: newRetryCount,
+              lastError: 'Sync failed, will retry',
+            });
+          }
+        }
+      } catch (error) {
+        // Increment retry count on error
+        const newRetryCount = action.retryCount + 1;
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+
+        if (newRetryCount >= maxRetries) {
+          // Remove action if max retries reached
+          await removeQueuedAction(action.id);
+          failed++;
+        } else {
+          // Update retry count and error
+          await updateQueuedAction(action.id, {
+            retryCount: newRetryCount,
+            lastError: errorMessage,
+          });
+        }
+      }
+    }
+
+    // Get remaining actions
+    const remainingResult = await getQueuedActions();
+    const remaining = remainingResult.success
+      ? remainingResult.data?.length ?? 0
+      : 0;
+
+    return {
+      success: true,
+      data: {
+        total: actions.length,
+        synced,
+        failed,
+        remaining,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to sync queued actions',
+    };
+  }
+}
+
+/**
+ * Setup online/offline event listeners
+ *
+ * @param onOnline - Callback when browser comes online
+ * @param onOffline - Callback when browser goes offline
+ * @returns Cleanup function to remove listeners
+ */
+export function setupOnlineListeners(
+  onOnline: () => void,
+  onOffline: () => void
+): () => void {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+
+  window.addEventListener('online', onOnline);
+  window.addEventListener('offline', onOffline);
+
+  return () => {
+    window.removeEventListener('online', onOnline);
+    window.removeEventListener('offline', onOffline);
+  };
+}

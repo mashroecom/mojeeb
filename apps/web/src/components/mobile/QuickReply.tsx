@@ -1,11 +1,18 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { X, Search, Send, Zap, FileText } from 'lucide-react';
+import { X, Search, Send, Zap, FileText, WifiOff, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMessageTemplates, type MessageTemplate } from '@/hooks/useMessageTemplates';
+import {
+  isOnline,
+  queueAction,
+  syncQueuedActions,
+  setupOnlineListeners,
+  type SyncHandler,
+} from '@/lib/offlineStorage';
 
 /* ── Constants ─────────────────────────────────────────────── */
 const CATEGORIES = [
@@ -44,12 +51,51 @@ export function QuickReply({
   const [category, setCategory] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [isOffline, setIsOffline] = useState(!isOnline());
+  const [queuedMessage, setQueuedMessage] = useState<string | null>(null);
 
   /* ── Data hooks ─────────────────────────────────────────── */
   const { data: templates = [], isLoading } = useMessageTemplates({
     category: category || undefined,
     search: search || undefined,
   });
+
+  /* ── Online/Offline status monitoring ───────────────────── */
+  useEffect(() => {
+    // Set initial state
+    setIsOffline(!isOnline());
+
+    // Create sync handler for queued messages
+    const handleSync: SyncHandler = async (action) => {
+      if (action.type !== 'send_message') {
+        return true;
+      }
+
+      try {
+        await onSend(action.payload.message);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    };
+
+    // Setup listeners for online/offline events
+    const cleanup = setupOnlineListeners(
+      async () => {
+        setIsOffline(false);
+        // Attempt to sync queued actions when coming back online
+        const result = await syncQueuedActions(handleSync);
+        if (result.success && result.data && result.data.synced > 0) {
+          setQueuedMessage(null);
+        }
+      },
+      () => {
+        setIsOffline(true);
+      }
+    );
+
+    return cleanup;
+  }, [onSend]);
 
   /* ── Filtered templates ─────────────────────────────────── */
   const filteredTemplates = useMemo(() => {
@@ -87,16 +133,57 @@ export function QuickReply({
 
   /* ── Handlers ───────────────────────────────────────────── */
   async function handleSend() {
-    if (!selectedTemplate) return;
+    if (!selectedTemplate || !conversationId) return;
 
     setIsSending(true);
+    setQueuedMessage(null);
+
     try {
       const content = getTemplateContent(selectedTemplate);
       const interpolatedContent = interpolateVariables(content);
-      await onSend(interpolatedContent);
-      handleClose();
-    } catch (error) {
-      console.error('Failed to send quick reply:', error);
+
+      // Check if offline before attempting to send
+      if (isOffline) {
+        // Queue the message for later sync
+        const result = await queueAction({
+          type: 'send_message',
+          conversationId,
+          payload: {
+            message: interpolatedContent,
+          },
+        });
+
+        if (result.success) {
+          setQueuedMessage(interpolatedContent);
+          // Close after a brief delay to show the queued message feedback
+          setTimeout(() => {
+            handleClose();
+          }, 1500);
+        }
+      } else {
+        // Attempt to send immediately
+        try {
+          await onSend(interpolatedContent);
+          handleClose();
+        } catch (error) {
+          // If send fails, queue it for later
+          const result = await queueAction({
+            type: 'send_message',
+            conversationId,
+            payload: {
+              message: interpolatedContent,
+            },
+          });
+
+          if (result.success) {
+            setQueuedMessage(interpolatedContent);
+            // Close after a brief delay to show the queued message feedback
+            setTimeout(() => {
+              handleClose();
+            }, 1500);
+          }
+        }
+      }
     } finally {
       setIsSending(false);
     }
@@ -106,6 +193,7 @@ export function QuickReply({
     setSearch('');
     setCategory('');
     setSelectedTemplate(null);
+    setQueuedMessage(null);
     onClose();
   }
 
@@ -184,6 +272,14 @@ export function QuickReply({
                 <DialogPrimitive.Title className="text-lg font-semibold">
                   {t('title')}
                 </DialogPrimitive.Title>
+                {isOffline && (
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30">
+                    <WifiOff className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
+                    <span className="text-xs font-medium text-orange-600 dark:text-orange-400">
+                      {t('offline')}
+                    </span>
+                  </div>
+                )}
               </div>
               <DialogPrimitive.Close
                 className={cn(
@@ -266,9 +362,24 @@ export function QuickReply({
           {/* Footer with send button */}
           {selectedTemplate && (
             <div className="shrink-0 border-t p-4 bg-muted/30">
+              {/* Queued message feedback */}
+              {queuedMessage && (
+                <div className="mb-3 p-3 rounded-lg bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
+                  <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    <p className="text-sm font-medium">
+                      {isOffline ? t('queuedForSync') : t('queued')}
+                    </p>
+                  </div>
+                  <p className="text-xs text-green-600 dark:text-green-500 mt-1 ms-6">
+                    {t('willSyncWhenOnline')}
+                  </p>
+                </div>
+              )}
+
               <button
                 onClick={handleSend}
-                disabled={isSending}
+                disabled={isSending || !!queuedMessage}
                 className={cn(
                   'w-full flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors',
                   'bg-primary text-primary-foreground hover:bg-primary/90',
@@ -276,7 +387,7 @@ export function QuickReply({
                 )}
               >
                 <Send className="h-4 w-4" />
-                {isSending ? t('sending') : t('send')}
+                {isSending ? t('sending') : isOffline ? t('queueMessage') : t('send')}
               </button>
             </div>
           )}
