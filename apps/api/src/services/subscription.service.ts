@@ -143,180 +143,6 @@ function getPaymentProvider(gateway: PaymentGateway): PaymentProvider {
   return providerInstances[gateway]!;
 }
 
-/**
- * Get Kashier configuration dynamically from configService.
- * Falls back to static config if configService fails.
- */
-async function getKashierConfig(): Promise<{
-  merchantId: string;
-  apiKey: string;
-  webhookSecret: string;
-}> {
-  let merchantId: string;
-  let apiKey: string;
-  let webhookSecret: string;
-
-  try {
-    merchantId = await configService.get('KASHIER_MERCHANT_ID');
-  } catch {
-    merchantId = '';
-  }
-  if (!merchantId) {
-    merchantId = config.kashier.merchantId;
-  }
-
-  try {
-    apiKey = await configService.get('KASHIER_API_KEY');
-  } catch {
-    apiKey = '';
-  }
-  if (!apiKey) {
-    apiKey = config.kashier.apiKey;
-  }
-
-  try {
-    webhookSecret = await configService.get('KASHIER_WEBHOOK_SECRET');
-  } catch {
-    webhookSecret = '';
-  }
-  if (!webhookSecret) {
-    webhookSecret = config.kashier.webhookSecret;
-  }
-
-  return { merchantId, apiKey, webhookSecret };
-}
-
-/**
- * Get Stripe configuration dynamically from configService.
- * Falls back to static config if configService fails.
- */
-async function getStripeConfig(): Promise<{
-  secretKey: string;
-  webhookSecret: string;
-}> {
-  let secretKey: string;
-  let webhookSecret: string;
-
-  try {
-    secretKey = await configService.get('STRIPE_SECRET_KEY');
-  } catch {
-    secretKey = '';
-  }
-  if (!secretKey) {
-    secretKey = config.stripe.secretKey;
-  }
-
-  try {
-    webhookSecret = await configService.get('STRIPE_WEBHOOK_SECRET');
-  } catch {
-    webhookSecret = '';
-  }
-  if (!webhookSecret) {
-    webhookSecret = config.stripe.webhookSecret;
-  }
-
-  return { secretKey, webhookSecret };
-}
-
-/**
- * Get or create Stripe client instance.
- */
-let stripeClient: Stripe | null = null;
-let currentStripeSecretKey: string | null = null;
-async function getStripeClient(): Promise<Stripe> {
-  const stripeConfig = await getStripeConfig();
-  if (!stripeConfig.secretKey) {
-    throw new BadRequestError(
-      'Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment.',
-    );
-  }
-  if (!stripeClient || currentStripeSecretKey !== stripeConfig.secretKey) {
-    stripeClient = new Stripe(stripeConfig.secretKey, {
-      apiVersion: '2025-02-24.acacia',
-    });
-    currentStripeSecretKey = stripeConfig.secretKey;
-  }
-  return stripeClient;
-}
-
-/**
- * Get PayPal configuration dynamically from configService.
- * Falls back to static config if configService fails.
- */
-async function getPayPalConfig(): Promise<{
-  clientId: string;
-  clientSecret: string;
-  mode: string;
-  webhookId: string;
-}> {
-  let clientId: string;
-  let clientSecret: string;
-  let mode: string;
-  let webhookId: string;
-
-  try {
-    clientId = await configService.get('PAYPAL_CLIENT_ID');
-  } catch {
-    clientId = '';
-  }
-  if (!clientId) {
-    clientId = config.paypal.clientId;
-  }
-
-  try {
-    clientSecret = await configService.get('PAYPAL_CLIENT_SECRET');
-  } catch {
-    clientSecret = '';
-  }
-  if (!clientSecret) {
-    clientSecret = config.paypal.clientSecret;
-  }
-
-  try {
-    mode = await configService.get('PAYPAL_MODE');
-  } catch {
-    mode = '';
-  }
-  if (!mode) {
-    mode = config.paypal.mode;
-  }
-
-  try {
-    webhookId = await configService.get('PAYPAL_WEBHOOK_ID');
-  } catch {
-    webhookId = '';
-  }
-  if (!webhookId) {
-    webhookId = config.paypal.webhookId;
-  }
-
-  return { clientId, clientSecret, mode, webhookId };
-}
-
-/**
- * Get or create PayPal client instance.
- */
-let paypalClient: paypal.core.PayPalHttpClient | null = null;
-async function getPayPalClient(): Promise<paypal.core.PayPalHttpClient> {
-  const paypalConfig = await getPayPalConfig();
-  if (!paypalConfig.clientId || !paypalConfig.clientSecret) {
-    throw new BadRequestError(
-      'PayPal is not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in your environment.',
-    );
-  }
-
-  if (!paypalClient) {
-    const environment =
-      paypalConfig.mode === 'live'
-        ? new paypal.core.LiveEnvironment(paypalConfig.clientId, paypalConfig.clientSecret)
-        : new paypal.core.SandboxEnvironment(paypalConfig.clientId, paypalConfig.clientSecret);
-
-    paypalClient = new paypal.core.PayPalHttpClient(environment);
-  }
-
-  return paypalClient;
-}
-
 export class SubscriptionService {
   /**
    * Get subscription by organization ID (cached for 5 minutes).
@@ -562,11 +388,40 @@ export class SubscriptionService {
     // Stripe's verification requires constructing the event, so we need to do it again
     // to return it. This is a limitation of Stripe's SDK where verification and event
     // construction are tied together.
-    const stripe = await getStripeClient();
-    const stripeConfig = await getStripeConfig();
+    // Get Stripe config directly (helper functions removed)
+    let secretKey: string;
+    let webhookSecret: string;
 
     try {
-      return stripe.webhooks.constructEvent(rawBody, signature, stripeConfig.webhookSecret);
+      secretKey = await configService.get('STRIPE_SECRET_KEY');
+    } catch {
+      secretKey = '';
+    }
+    if (!secretKey) {
+      secretKey = config.stripe.secretKey;
+    }
+
+    try {
+      webhookSecret = await configService.get('STRIPE_WEBHOOK_SECRET');
+    } catch {
+      webhookSecret = '';
+    }
+    if (!webhookSecret) {
+      webhookSecret = config.stripe.webhookSecret;
+    }
+
+    if (!secretKey) {
+      throw new BadRequestError(
+        'Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment.',
+      );
+    }
+
+    const stripe = new Stripe(secretKey, {
+      apiVersion: '2025-02-24.acacia',
+    });
+
+    try {
+      return stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
     } catch (error) {
       logger.error({ error }, 'Stripe webhook signature verification failed');
       throw new BadRequestError('Invalid Stripe webhook signature.');
