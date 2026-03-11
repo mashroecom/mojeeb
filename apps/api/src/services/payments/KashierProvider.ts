@@ -122,8 +122,7 @@ export class KashierProvider extends PaymentProvider {
    * Create a Kashier checkout session for upgrading to a paid plan.
    */
   async createCheckout(params: CheckoutParams): Promise<CheckoutResponse> {
-    const { orgId, plan, billingCycle, amount, currency, redirectUrl, failureRedirectUrl } =
-      params;
+    const { orgId, plan, billingCycle, amount, currency, redirectUrl, failureRedirectUrl } = params;
 
     // Get dynamic Kashier config (falls back to static config)
     const kashier = await this.getKashierConfig();

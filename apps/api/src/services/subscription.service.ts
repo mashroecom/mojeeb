@@ -7,12 +7,7 @@ import { configService } from './config.service';
 import { NotFoundError, BadRequestError, UsageLimitError } from '../utils/errors';
 import { SubscriptionPlan, PaymentGateway } from '@mojeeb/shared-types';
 import { planConfigService } from './planConfig.service';
-import {
-  PaymentProvider,
-  KashierProvider,
-  StripeProvider,
-  PayPalProvider,
-} from './payments';
+import { PaymentProvider, KashierProvider, StripeProvider, PayPalProvider } from './payments';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -275,7 +270,11 @@ export class SubscriptionService {
    * @returns Checkout response with URL and session ID
    * @throws {BadRequestError} If plan is invalid, already on plan, or price not configured
    */
-  async createStripeCheckout(orgId: string, plan: string, billingCycle: 'monthly' | 'yearly' = 'monthly') {
+  async createStripeCheckout(
+    orgId: string,
+    plan: string,
+    billingCycle: 'monthly' | 'yearly' = 'monthly',
+  ) {
     // Validate the target plan
     if (plan !== 'STARTER' && plan !== 'PROFESSIONAL') {
       throw new BadRequestError('Invalid plan. Must be STARTER or PROFESSIONAL.');
@@ -348,7 +347,11 @@ export class SubscriptionService {
    * @returns Checkout response with URL and order ID
    * @throws {BadRequestError} If plan is invalid, already on plan, or price not configured
    */
-  async createPayPalCheckout(orgId: string, plan: string, billingCycle: 'monthly' | 'yearly' = 'monthly') {
+  async createPayPalCheckout(
+    orgId: string,
+    plan: string,
+    billingCycle: 'monthly' | 'yearly' = 'monthly',
+  ) {
     // Validate the target plan
     if (plan !== 'STARTER' && plan !== 'PROFESSIONAL') {
       throw new BadRequestError('Invalid plan. Must be STARTER or PROFESSIONAL.');

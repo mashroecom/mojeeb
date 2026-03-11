@@ -124,8 +124,7 @@ export class StripeProvider extends PaymentProvider {
    * Create a Stripe checkout session for upgrading to a paid plan.
    */
   async createCheckout(params: CheckoutParams): Promise<CheckoutResponse> {
-    const { orgId, plan, billingCycle, amount, currency, redirectUrl, failureRedirectUrl } =
-      params;
+    const { orgId, plan, billingCycle, amount, currency, redirectUrl, failureRedirectUrl } = params;
 
     const stripe = await this.getClient();
 
