@@ -589,7 +589,7 @@ export default function LandingPageCmsPage() {
               setHeroImage(null);
               markChanged();
             }}
-            onNoCreditCardToggle={() => {
+            onToggleNoCreditCard={() => {
               setShowNoCreditCard(!showNoCreditCard);
               markChanged();
             }}
