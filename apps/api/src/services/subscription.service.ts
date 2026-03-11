@@ -1,6 +1,4 @@
-import crypto from 'crypto';
 import Stripe from 'stripe';
-import * as paypal from '@paypal/checkout-server-sdk';
 import { prisma } from '../config/database';
 import { config } from '../config';
 import { logger } from '../config/logger';
@@ -20,13 +18,7 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-interface KashierOrderResponse {
-  response: {
-    orderId: string;
-    checkoutUrl: string;
-  };
-}
-
+// Re-export webhook payload types from providers for public API
 export interface KashierWebhookPayload {
   event: string;
   data: {
@@ -39,45 +31,6 @@ export interface KashierWebhookPayload {
     customerReference: string;
     paymentMethod: string;
   };
-}
-
-export interface StripeCheckoutSession {
-  id: string;
-  url: string | null;
-}
-
-export type StripeWebhookEvent = Stripe.Event & {
-  type: string;
-  data: {
-    object: Stripe.Invoice | Stripe.Subscription | Stripe.PaymentIntent | Record<string, unknown>;
-  };
-};
-
-export interface PayPalOrderResponse {
-  id: string;
-  status: string;
-  purchase_units: Array<{
-    reference_id?: string;
-    amount: {
-      currency_code: string;
-      value: string;
-    };
-    payments?: {
-      captures?: Array<{
-        id: string;
-        status: string;
-        amount: {
-          currency_code: string;
-          value: string;
-        };
-      }>;
-    };
-  }>;
-  links?: Array<{
-    href: string;
-    rel: string;
-    method: string;
-  }>;
 }
 
 export interface PayPalWebhookPayload {
@@ -385,10 +338,9 @@ export class SubscriptionService {
       throw new BadRequestError('Invalid Stripe webhook signature.');
     }
 
-    // Stripe's verification requires constructing the event, so we need to do it again
+    // Stripe's verification requires constructing the event, so we need to construct it
     // to return it. This is a limitation of Stripe's SDK where verification and event
     // construction are tied together.
-    // Get Stripe config directly (helper functions removed)
     let secretKey: string;
     let webhookSecret: string;
 
@@ -438,145 +390,6 @@ export class SubscriptionService {
   }
 
   /**
-   * Handle checkout.session.completed event.
-   */
-  private async handleStripeCheckoutCompleted(event: Stripe.Event) {
-    const session = event.data.object as Stripe.Checkout.Session;
-
-    logger.info({ sessionId: session.id }, 'Stripe checkout session completed');
-
-    if (session.payment_status !== 'paid') {
-      logger.info(
-        { sessionId: session.id, status: session.payment_status },
-        'Payment not completed yet',
-      );
-      return;
-    }
-
-    // Find the invoice by Stripe session ID
-    const invoice = await prisma.invoice.findUnique({
-      where: { stripeInvoiceId: session.id },
-      include: { subscription: true },
-    });
-
-    if (!invoice) {
-      logger.warn({ sessionId: session.id }, 'Invoice not found for Stripe checkout session');
-      return;
-    }
-
-    // Already processed
-    if (invoice.status === 'PAID') {
-      logger.info({ sessionId: session.id }, 'Invoice already marked as paid');
-      return;
-    }
-
-    // Determine the new plan from the payment amount
-    const amount = parseFloat(String(invoice.amount));
-    const stripePlanResult = await planConfigService.getPlanByPrice(amount);
-    if (!stripePlanResult) {
-      logger.error({ amount }, 'Unknown payment amount - cannot determine plan');
-      return;
-    }
-
-    const { plan: newPlan } = stripePlanResult;
-    const limits = await planConfigService.getLimits(newPlan);
-    const now = new Date();
-    const periodEnd = new Date(now);
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
-
-    // Update subscription with new plan and reset usage counters
-    await prisma.subscription.update({
-      where: { id: invoice.subscriptionId },
-      data: {
-        plan: newPlan,
-        status: 'ACTIVE',
-        paymentGateway: 'STRIPE',
-        stripeCustomerId: session.customer as string,
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        cancelAtPeriodEnd: false,
-        messagesUsed: 0,
-        messagesLimit: safeLimit(limits.messagesPerMonth),
-        agentsLimit: safeLimit(limits.maxAgents),
-        integrationsLimit: safeLimit(limits.maxChannels),
-      },
-    });
-
-    // Mark the invoice as paid
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        status: 'PAID',
-        stripePaymentIntentId: session.payment_intent as string,
-        paidAt: now,
-      },
-    });
-
-    await cache.del(`subscription:${invoice.subscription.orgId}`);
-
-    logger.info(
-      { orgId: invoice.subscription.orgId, newPlan },
-      'Subscription upgraded successfully via Stripe',
-    );
-  }
-
-  /**
-   * Handle payment_intent.succeeded event.
-   */
-  private async handleStripePaymentSucceeded(event: Stripe.Event) {
-    const paymentIntent = event.data.object as Stripe.PaymentIntent;
-
-    logger.info({ paymentIntentId: paymentIntent.id }, 'Stripe payment intent succeeded');
-
-    // This is typically handled by checkout.session.completed
-    // but we log it for completeness
-  }
-
-  /**
-   * Handle payment_intent.payment_failed event.
-   */
-  private async handleStripePaymentFailed(event: Stripe.Event) {
-    const paymentIntent = event.data.object as Stripe.PaymentIntent;
-
-    logger.warn({ paymentIntentId: paymentIntent.id }, 'Stripe payment intent failed');
-
-    // Find invoice by payment intent ID
-    const invoice = await prisma.invoice.findFirst({
-      where: { stripePaymentIntentId: paymentIntent.id },
-    });
-
-    if (invoice && invoice.status !== 'FAILED') {
-      await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: { status: 'FAILED' },
-      });
-
-      logger.info({ invoiceId: invoice.id }, 'Invoice marked as failed');
-    }
-  }
-
-  /**
-   * Handle invoice.paid event.
-   */
-  private async handleStripeInvoicePaid(event: Stripe.Event) {
-    const stripeInvoice = event.data.object as Stripe.Invoice;
-
-    logger.info({ invoiceId: stripeInvoice.id }, 'Stripe invoice paid');
-
-    // This is typically handled by checkout.session.completed
-    // but we log it for completeness
-  }
-
-  /**
-   * Handle invoice.payment_failed event.
-   */
-  private async handleStripeInvoicePaymentFailed(event: Stripe.Event) {
-    const stripeInvoice = event.data.object as Stripe.Invoice;
-
-    logger.warn({ invoiceId: stripeInvoice.id }, 'Stripe invoice payment failed');
-  }
-
-  /**
    * Verify a PayPal webhook signature.
    */
   async verifyPayPalWebhookSignature(
@@ -602,121 +415,6 @@ export class SubscriptionService {
     // Delegate to PayPalProvider
     const provider = getPaymentProvider(PaymentGateway.PAYPAL);
     await provider.handleWebhook(payload as any);
-  }
-
-  /**
-   * Handle PAYMENT.CAPTURE.COMPLETED event.
-   */
-  private async handlePayPalCaptureCompleted(payload: PayPalWebhookPayload) {
-    const resource = payload.resource;
-    const orderId = resource.id;
-
-    logger.info({ orderId }, 'PayPal payment capture completed');
-
-    // Find the invoice by PayPal order ID
-    const invoice = await prisma.invoice.findFirst({
-      where: {
-        paypalOrderId: orderId,
-      },
-      include: { subscription: true },
-    });
-
-    if (!invoice) {
-      logger.warn({ orderId }, 'Invoice not found for PayPal webhook');
-      return;
-    }
-
-    // Already processed
-    if (invoice.status === 'PAID') {
-      logger.info({ orderId }, 'Invoice already marked as paid');
-      return;
-    }
-
-    // Determine the new plan from the payment amount
-    const amount = parseFloat(String(invoice.amount));
-    const paypalPlanResult = await planConfigService.getPlanByPrice(amount);
-    if (!paypalPlanResult) {
-      logger.error({ amount }, 'Unknown payment amount - cannot determine plan');
-      return;
-    }
-
-    const { plan: newPlan } = paypalPlanResult;
-    const limits = await planConfigService.getLimits(newPlan);
-    const now = new Date();
-    const periodEnd = new Date(now);
-    periodEnd.setMonth(periodEnd.getMonth() + 1);
-
-    // Update subscription with new plan and reset usage counters
-    await prisma.subscription.update({
-      where: { id: invoice.subscriptionId },
-      data: {
-        plan: newPlan,
-        status: 'ACTIVE',
-        paymentGateway: 'PAYPAL',
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        cancelAtPeriodEnd: false,
-        messagesUsed: 0,
-        messagesLimit: safeLimit(limits.messagesPerMonth),
-        agentsLimit: safeLimit(limits.maxAgents),
-        integrationsLimit: safeLimit(limits.maxChannels),
-      },
-    });
-
-    // Mark the invoice as paid
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        status: 'PAID',
-        paypalCaptureId: resource.purchase_units?.[0]?.payments?.captures?.[0]?.id ?? null,
-        paidAt: now,
-      },
-    });
-
-    await cache.del(`subscription:${invoice.subscription.orgId}`);
-
-    logger.info(
-      { orgId: invoice.subscription.orgId, newPlan },
-      'Subscription upgraded successfully via PayPal',
-    );
-  }
-
-  /**
-   * Handle PAYMENT.CAPTURE.DENIED/DECLINED events.
-   */
-  private async handlePayPalCaptureFailed(payload: PayPalWebhookPayload) {
-    const resource = payload.resource;
-    const orderId = resource.id;
-
-    logger.warn({ orderId }, 'PayPal payment capture failed');
-
-    // Find invoice by PayPal order ID
-    const invoice = await prisma.invoice.findFirst({
-      where: {
-        paypalOrderId: orderId,
-      },
-    });
-
-    if (invoice && invoice.status !== 'FAILED') {
-      await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: { status: 'FAILED' },
-      });
-
-      logger.info({ invoiceId: invoice.id }, 'Invoice marked as failed');
-    }
-  }
-
-  /**
-   * Handle CHECKOUT.ORDER.APPROVED event.
-   */
-  private async handlePayPalOrderApproved(payload: PayPalWebhookPayload) {
-    const resource = payload.resource;
-    const orderId = resource.id;
-
-    logger.info({ orderId }, 'PayPal order approved (awaiting capture)');
-
-    // We don't update the subscription yet, waiting for capture confirmation
   }
 
   /**
