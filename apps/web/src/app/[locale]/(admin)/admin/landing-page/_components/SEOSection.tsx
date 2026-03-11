@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Upload, X } from 'lucide-react';
+import { SectionHeader, LangTabs } from './shared';
+import { inputCls, textareaCls } from './styles';
 
 // ---------------------------------------------------------------------------
-// Types
+// Props
 // ---------------------------------------------------------------------------
 
 interface SEOSectionProps {
@@ -40,66 +42,6 @@ interface SEOSectionProps {
 
   // Translations
   t: (key: string) => string;
-
-  // Classes
-  inputCls: string;
-  textareaCls: string;
-}
-
-// ---------------------------------------------------------------------------
-// Section Header
-// ---------------------------------------------------------------------------
-
-function SectionHeader({
-  title,
-  description,
-  showToggle = true,
-}: {
-  title: string;
-  description: string;
-  showToggle?: boolean;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 pb-4 border-b mb-6">
-      <div>
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Language Tabs
-// ---------------------------------------------------------------------------
-
-function LangTabs({ lang, setLang }: { lang: 'en' | 'ar'; setLang: (l: 'en' | 'ar') => void }) {
-  return (
-    <div className="flex gap-1 rounded-lg border bg-muted/50 p-0.5 w-fit mb-4">
-      <button
-        onClick={() => setLang('en')}
-        className={cn(
-          'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-          lang === 'en'
-            ? 'bg-background shadow-sm text-foreground'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-      >
-        English
-      </button>
-      <button
-        onClick={() => setLang('ar')}
-        className={cn(
-          'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-          lang === 'ar'
-            ? 'bg-background shadow-sm text-foreground'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-      >
-        العربية
-      </button>
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -128,8 +70,6 @@ export function SEOSection({
   markChanged,
   handleImageUpload,
   t,
-  inputCls,
-  textareaCls,
 }: SEOSectionProps) {
   const [seoLang, setSeoLang] = useState<'en' | 'ar'>('en');
 

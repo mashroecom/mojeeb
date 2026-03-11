@@ -2,9 +2,11 @@
 
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
+import { SectionHeader, LangTabs } from './shared';
+import { inputCls } from './styles';
 
 // ---------------------------------------------------------------------------
-// Types
+// Props
 // ---------------------------------------------------------------------------
 
 interface TestimonialsSectionProps {
@@ -22,20 +24,7 @@ interface TestimonialsSectionProps {
   onMaxDisplayChange: (value: number) => void;
   onMarkChanged: () => void;
   t: (key: string) => string;
-  SectionHeader: React.ComponentType<{
-    title: string;
-    description: string;
-    enabled: boolean;
-    onToggle: () => void;
-  }>;
-  LangTabs: React.ComponentType<{
-    lang: 'en' | 'ar';
-    setLang: (l: 'en' | 'ar') => void;
-  }>;
 }
-
-const inputCls =
-  'mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
 
 // ---------------------------------------------------------------------------
 // TestimonialsSection Component
@@ -56,8 +45,6 @@ export function TestimonialsSection({
   onMaxDisplayChange,
   onMarkChanged,
   t,
-  SectionHeader,
-  LangTabs,
 }: TestimonialsSectionProps) {
   const [lang, setLang] = React.useState<'en' | 'ar'>('en');
 

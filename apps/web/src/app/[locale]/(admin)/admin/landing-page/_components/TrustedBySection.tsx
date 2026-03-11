@@ -1,15 +1,13 @@
 'use client';
 
 import { Plus, X, Upload } from 'lucide-react';
+import { SectionHeader } from './shared';
+import { inputCls } from './styles';
+import type { TrustedByLogo } from './types';
 
 // ---------------------------------------------------------------------------
-// Types
+// Props
 // ---------------------------------------------------------------------------
-
-interface TrustedByLogo {
-  image: string;
-  name: string;
-}
 
 interface TrustedBySectionProps {
   enabled: boolean;
@@ -26,16 +24,7 @@ interface TrustedBySectionProps {
   };
   addToast: (type: 'error' | 'success', message: string) => void;
   t: (key: string) => string;
-  SectionHeader: React.ComponentType<{
-    title: string;
-    description: string;
-    enabled: boolean;
-    onToggle: () => void;
-  }>;
 }
-
-const inputCls =
-  'mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
 
 // ---------------------------------------------------------------------------
 // TrustedBySection Component
@@ -54,7 +43,6 @@ export function TrustedBySection({
   uploadImage,
   addToast,
   t,
-  SectionHeader,
 }: TrustedBySectionProps) {
   // Helper functions
   function addLogo() {

@@ -14,23 +14,14 @@ import {
   MessageSquareQuote,
   DollarSign,
   FileText,
-  Plus,
-  Trash2,
   HelpCircle,
   Megaphone,
   Shield,
   Search,
-  GripVertical,
-  Upload,
-  X,
-  ChevronUp,
-  ChevronDown,
-  AlertTriangle,
   Settings,
   Image as ImageIcon,
   BarChart3,
 } from 'lucide-react';
-import { IconPicker } from '@/components/admin/IconPicker';
 
 // Section Components
 import { HeroSection } from './_components/HeroSection';
@@ -46,135 +37,8 @@ import { SEOSection } from './_components/SEOSection';
 import { MaintenanceSection } from './_components/MaintenanceSection';
 import { SectionOrderConfig } from './_components/SectionOrderConfig';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface FeatureItem {
-  icon: string;
-  title: string;
-  titleAr: string;
-  description: string;
-  descriptionAr: string;
-}
-
-interface FooterLink {
-  label: { en: string; ar: string };
-  url: string;
-}
-
-interface TrustedByLogo {
-  image: string;
-  name: string;
-}
-
-// ---------------------------------------------------------------------------
-// Toggle Switch
-// ---------------------------------------------------------------------------
-
-function ToggleSwitch({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: boolean;
-  onChange: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onChange}
-      disabled={disabled}
-      className={cn(
-        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed',
-        value ? 'bg-primary' : 'bg-muted-foreground/30',
-      )}
-    >
-      <span
-        className={cn(
-          'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-          value
-            ? 'ltr:translate-x-5 rtl:-translate-x-5'
-            : 'ltr:translate-x-0.5 rtl:-translate-x-0.5',
-        )}
-      />
-    </button>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Section Header with toggle
-// ---------------------------------------------------------------------------
-
-function SectionHeader({
-  title,
-  description,
-  enabled,
-  onToggle,
-  showToggle = true,
-}: {
-  title: string;
-  description: string;
-  enabled?: boolean;
-  onToggle?: () => void;
-  showToggle?: boolean;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 pb-4 border-b mb-6">
-      <div>
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
-      </div>
-      {showToggle && onToggle && (
-        <div className="flex items-center gap-2 shrink-0">
-          <span
-            className={cn(
-              'text-xs font-medium',
-              enabled ? 'text-green-600' : 'text-muted-foreground',
-            )}
-          >
-            {enabled ? 'ON' : 'OFF'}
-          </span>
-          <ToggleSwitch value={!!enabled} onChange={onToggle} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Language Tabs
-// ---------------------------------------------------------------------------
-
-function LangTabs({ lang, setLang }: { lang: 'en' | 'ar'; setLang: (l: 'en' | 'ar') => void }) {
-  return (
-    <div className="flex gap-1 rounded-lg border bg-muted/50 p-0.5 w-fit mb-4">
-      <button
-        onClick={() => setLang('en')}
-        className={cn(
-          'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-          lang === 'en'
-            ? 'bg-background shadow-sm text-foreground'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-      >
-        English
-      </button>
-      <button
-        onClick={() => setLang('ar')}
-        className={cn(
-          'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-          lang === 'ar'
-            ? 'bg-background shadow-sm text-foreground'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-      >
-        العربية
-      </button>
-    </div>
-  );
-}
+// Shared Utilities and Types
+import type { FeatureItem, FooterLink, TrustedByLogo } from './_components/types';
 
 // ---------------------------------------------------------------------------
 // Tabs definition
@@ -222,17 +86,6 @@ const DEFAULT_SECTION_ORDER = [
   'faq',
   'bottomCta',
 ];
-
-const SECTION_LABELS: Record<string, { en: string; ar: string }> = {
-  hero: { en: 'Hero', ar: 'الرئيسي' },
-  trustedBy: { en: 'Trusted By', ar: 'موثوق من' },
-  features: { en: 'Features', ar: 'المميزات' },
-  stats: { en: 'Stats', ar: 'الإحصائيات' },
-  pricing: { en: 'Pricing', ar: 'الأسعار' },
-  testimonials: { en: 'Testimonials', ar: 'آراء العملاء' },
-  faq: { en: 'FAQ', ar: 'الأسئلة الشائعة' },
-  bottomCta: { en: 'Bottom CTA', ar: 'دعوة للعمل' },
-};
 
 // ---------------------------------------------------------------------------
 // Page
@@ -588,33 +441,6 @@ export default function LandingPageCmsPage() {
     }
   }
 
-  // Feature helpers
-  function addFeature() {
-    setFeatures((p) => [
-      ...p,
-      { icon: '', title: '', titleAr: '', description: '', descriptionAr: '' },
-    ]);
-    markChanged();
-  }
-  function removeFeature(i: number) {
-    setFeatures((p) => p.filter((_, idx) => idx !== i));
-    markChanged();
-  }
-  function updateFeature(i: number, field: keyof FeatureItem, value: string) {
-    setFeatures((p) => p.map((item, idx) => (idx === i ? { ...item, [field]: value } : item)));
-    markChanged();
-  }
-  function moveFeature(i: number, dir: 'up' | 'down') {
-    setFeatures((p) => {
-      const a = [...p];
-      const t = dir === 'up' ? i - 1 : i + 1;
-      if (t < 0 || t >= a.length) return p;
-      [a[i], a[t]] = [a[t], a[i]];
-      return a;
-    });
-    markChanged();
-  }
-
   // Footer link helpers
   function addFooterLink() {
     setFooterLinks((p) => [...p, { label: { en: '', ar: '' }, url: '' }]);
@@ -637,27 +463,6 @@ export default function LandingPageCmsPage() {
     markChanged();
   }
 
-  // Trusted By logo helpers
-  function addLogo() {
-    setTrustedByLogos((p) => [...p, { image: '', name: '' }]);
-    markChanged();
-  }
-  function removeLogo(i: number) {
-    setTrustedByLogos((p) => p.filter((_, idx) => idx !== i));
-    markChanged();
-  }
-  async function uploadLogo(i: number, file: File) {
-    try {
-      const result = await uploadImage.mutateAsync(file);
-      setTrustedByLogos((p) =>
-        p.map((item, idx) => (idx === i ? { ...item, image: result.url } : item)),
-      );
-      markChanged();
-    } catch {
-      addToast('error', 'Upload failed');
-    }
-  }
-
   // Section order helpers
   function moveSectionOrder(i: number, dir: 'up' | 'down') {
     setSectionOrder((p) => {
@@ -677,10 +482,6 @@ export default function LandingPageCmsPage() {
       </div>
     );
   }
-
-  const inputCls =
-    'mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
-  const textareaCls = `${inputCls} resize-none`;
 
   return (
     <div className="pb-24">
@@ -819,7 +620,6 @@ export default function LandingPageCmsPage() {
             uploadImage={uploadImage}
             addToast={addToast}
             t={t}
-            SectionHeader={SectionHeader}
           />
         )}
 
@@ -841,10 +641,6 @@ export default function LandingPageCmsPage() {
             featuresLang={featuresLang}
             setFeaturesLang={setFeaturesLang}
             markChanged={markChanged}
-            inputCls={inputCls}
-            textareaCls={textareaCls}
-            SectionHeader={SectionHeader}
-            LangTabs={LangTabs}
           />
         )}
 
@@ -937,8 +733,6 @@ export default function LandingPageCmsPage() {
             onMaxDisplayChange={setTestimonialsMaxDisplay}
             onMarkChanged={markChanged}
             t={t}
-            SectionHeader={SectionHeader}
-            LangTabs={LangTabs}
           />
         )}
 
@@ -1049,8 +843,6 @@ export default function LandingPageCmsPage() {
             markChanged={markChanged}
             handleImageUpload={handleImageUpload}
             t={t}
-            inputCls={inputCls}
-            textareaCls={textareaCls}
           />
         )}
 
@@ -1069,8 +861,6 @@ export default function LandingPageCmsPage() {
             setMaintenanceMessageAr={setMaintenanceMessageAr}
             markChanged={markChanged}
             t={t}
-            inputCls={inputCls}
-            textareaCls={textareaCls}
           />
         )}
 

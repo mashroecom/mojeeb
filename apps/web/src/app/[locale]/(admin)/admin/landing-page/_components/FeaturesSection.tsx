@@ -3,18 +3,9 @@
 import { useTranslations } from 'next-intl';
 import { Plus, Trash2, ChevronUp, ChevronDown, LayoutGrid } from 'lucide-react';
 import { IconPicker } from '@/components/admin/IconPicker';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface FeatureItem {
-  icon: string;
-  title: string;
-  titleAr: string;
-  description: string;
-  descriptionAr: string;
-}
+import { SectionHeader, LangTabs } from './shared';
+import { inputCls, textareaCls } from './styles';
+import type { FeatureItem } from './types';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -36,19 +27,6 @@ interface FeaturesSectionProps {
   featuresLang: 'en' | 'ar';
   setFeaturesLang: (value: 'en' | 'ar') => void;
   markChanged: () => void;
-  inputCls: string;
-  textareaCls: string;
-  SectionHeader: React.ComponentType<{
-    title: string;
-    description: string;
-    enabled?: boolean;
-    onToggle?: () => void;
-    showToggle?: boolean;
-  }>;
-  LangTabs: React.ComponentType<{
-    lang: 'en' | 'ar';
-    setLang: (l: 'en' | 'ar') => void;
-  }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -71,10 +49,6 @@ export function FeaturesSection({
   featuresLang,
   setFeaturesLang,
   markChanged,
-  inputCls,
-  textareaCls,
-  SectionHeader,
-  LangTabs,
 }: FeaturesSectionProps) {
   const t = useTranslations('admin.landingPage');
 
