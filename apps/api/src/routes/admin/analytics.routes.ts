@@ -43,6 +43,28 @@ const signupsSchema = z.object({
     .optional(),
 });
 
+// ─── helpers ──────────────────────────────────────────────────────
+
+/**
+ * Generate safe SQL expression for date_trunc with timezone support.
+ * Sanitizes timezone input to prevent SQL injection.
+ */
+function dateTruncExpr(
+  groupBy: 'day' | 'week' | 'month',
+  columnName: string = 'createdAt',
+  timezone: string = 'UTC',
+): string {
+  const safeTz = timezone.replace(/[^a-zA-Z0-9/_+-]/g, '');
+  switch (groupBy) {
+    case 'day':
+      return `date_trunc('day', "${columnName}" AT TIME ZONE '${safeTz}')`;
+    case 'week':
+      return `date_trunc('week', "${columnName}" AT TIME ZONE '${safeTz}')`;
+    case 'month':
+      return `date_trunc('month', "${columnName}" AT TIME ZONE '${safeTz}')`;
+  }
+}
+
 const router: Router = Router();
 
 // GET /overview - Platform overview
