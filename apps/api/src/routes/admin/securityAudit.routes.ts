@@ -4,81 +4,87 @@ import { prisma } from '../../config/database';
 
 const router: Router = Router();
 
+async function getSecurityStats() {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const twentyFourHoursAgo = new Date();
+  twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+  const totalLogins = await prisma.loginActivity.count({
+    where: { createdAt: { gte: thirtyDaysAgo } },
+  });
+
+  const failedLogins = await prisma.loginActivity.count({
+    where: { createdAt: { gte: thirtyDaysAgo }, success: false },
+  });
+
+  const successRate =
+    totalLogins > 0 ? Number((((totalLogins - failedLogins) / totalLogins) * 100).toFixed(1)) : 0;
+
+  const uniqueIPsResult = await prisma.loginActivity.findMany({
+    where: { createdAt: { gte: thirtyDaysAgo }, ipAddress: { not: null } },
+    distinct: ['ipAddress'],
+    select: { ipAddress: true },
+  });
+  const uniqueIPs = uniqueIPsResult.length;
+
+  const recentFailures = await prisma.loginActivity.groupBy({
+    by: ['ipAddress'],
+    where: {
+      createdAt: { gte: twentyFourHoursAgo },
+      success: false,
+      ipAddress: { not: null },
+    },
+    _count: { id: true },
+    having: { id: { _count: { gt: 5 } } },
+  });
+
+  const suspiciousIPs = recentFailures.map((r) => ({
+    ip: r.ipAddress,
+    failedCount: r._count.id,
+  }));
+
+  const topFailedIPs = await prisma.loginActivity.groupBy({
+    by: ['ipAddress'],
+    where: {
+      createdAt: { gte: thirtyDaysAgo },
+      success: false,
+      ipAddress: { not: null },
+    },
+    _count: { id: true },
+    orderBy: { _count: { id: 'desc' } },
+    take: 10,
+  });
+
+  return {
+    totalLogins,
+    failedLogins,
+    successRate,
+    uniqueIPs,
+    suspiciousIPs,
+    topFailedIPs: topFailedIPs.map((r) => ({
+      ip: r.ipAddress,
+      failedCount: r._count.id,
+    })),
+  };
+}
+
+// GET / - Alias for /stats
+router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await getSecurityStats();
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /stats - Security audit statistics (last 30 days)
 router.get('/stats', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-
-    // Total logins last 30 days
-    const totalLogins = await prisma.loginActivity.count({
-      where: { createdAt: { gte: thirtyDaysAgo } },
-    });
-
-    // Failed logins last 30 days
-    const failedLogins = await prisma.loginActivity.count({
-      where: { createdAt: { gte: thirtyDaysAgo }, success: false },
-    });
-
-    // Success rate
-    const successRate =
-      totalLogins > 0 ? Number((((totalLogins - failedLogins) / totalLogins) * 100).toFixed(1)) : 0;
-
-    // Unique IPs last 30 days
-    const uniqueIPsResult = await prisma.loginActivity.findMany({
-      where: { createdAt: { gte: thirtyDaysAgo }, ipAddress: { not: null } },
-      distinct: ['ipAddress'],
-      select: { ipAddress: true },
-    });
-    const uniqueIPs = uniqueIPsResult.length;
-
-    // Suspicious IPs: IPs with > 5 failed logins in 24h
-    const recentFailures = await prisma.loginActivity.groupBy({
-      by: ['ipAddress'],
-      where: {
-        createdAt: { gte: twentyFourHoursAgo },
-        success: false,
-        ipAddress: { not: null },
-      },
-      _count: { id: true },
-      having: { id: { _count: { gt: 5 } } },
-    });
-
-    const suspiciousIPs = recentFailures.map((r) => ({
-      ip: r.ipAddress,
-      failedCount: r._count.id,
-    }));
-
-    // Top 10 failed IPs (all time last 30 days)
-    const topFailedIPs = await prisma.loginActivity.groupBy({
-      by: ['ipAddress'],
-      where: {
-        createdAt: { gte: thirtyDaysAgo },
-        success: false,
-        ipAddress: { not: null },
-      },
-      _count: { id: true },
-      orderBy: { _count: { id: 'desc' } },
-      take: 10,
-    });
-
-    res.json({
-      success: true,
-      data: {
-        totalLogins,
-        failedLogins,
-        successRate,
-        uniqueIPs,
-        suspiciousIPs,
-        topFailedIPs: topFailedIPs.map((r) => ({
-          ip: r.ipAddress,
-          failedCount: r._count.id,
-        })),
-      },
-    });
+    const data = await getSecurityStats();
+    res.json({ success: true, data });
   } catch (err) {
     next(err);
   }

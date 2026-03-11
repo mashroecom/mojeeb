@@ -1,19 +1,21 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { useAuthStore } from '@/stores/authStore';
+import { routing } from '@/i18n/routing';
 
 export function AuthRedirect({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  const locale = useLocale();
   const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    // If user is already authenticated, redirect to dashboard
+    // If user is already authenticated, hard redirect to dashboard
     if (isAuthenticated) {
-      router.push('/dashboard');
+      const path = locale === routing.defaultLocale ? '/dashboard' : `/${locale}/dashboard`;
+      window.location.href = path;
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, locale]);
 
   // Don't render children if already authenticated
   if (isAuthenticated) {

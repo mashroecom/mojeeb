@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
@@ -21,14 +21,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { setAuth, clearAuth } = useAuthStore();
   const [ready, setReady] = useState(false);
   const redirectingRef = useRef(false);
+  const checkedRef = useRef(false);
 
   const isOnboardingPage = pathname === '/onboarding';
 
-  useEffect(() => {
-    let cancelled = false;
-    redirectingRef.current = false;
-    setReady(false);
-
+  const checkAuth = useCallback(() => {
     const token = localStorage.getItem('accessToken');
     if (!token) {
       clearAuth();
@@ -39,7 +36,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     api
       .get('/auth/me')
       .then((res) => {
-        if (cancelled) return;
+        if (redirectingRef.current) return;
         const profile = res.data?.data;
         if (!profile?.id) {
           clearAuth();
@@ -74,7 +71,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         const needsOnboarding = profile.onboardingCompleted !== true;
         setOnboardingCookie(!needsOnboarding);
 
-        if (cancelled || redirectingRef.current) return;
+        if (redirectingRef.current) return;
 
         if (needsOnboarding && !isOnboardingPage) {
           redirectingRef.current = true;
@@ -88,18 +85,31 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           return;
         }
 
+        checkedRef.current = true;
         setReady(true);
       })
       .catch(() => {
-        if (cancelled) return;
+        if (redirectingRef.current) return;
         clearAuth();
         router.replace('/login');
       });
+  }, [isOnboardingPage, setAuth, clearAuth, router]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname]);
+  useEffect(() => {
+    redirectingRef.current = false;
+
+    // If already checked and just navigating between dashboard pages, stay ready
+    if (checkedRef.current) {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        setReady(true);
+        return;
+      }
+    }
+
+    setReady(false);
+    checkAuth();
+  }, [pathname, checkAuth]);
 
   if (!ready) {
     return (

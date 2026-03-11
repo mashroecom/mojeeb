@@ -67,6 +67,16 @@ function dateTruncExpr(
 
 const router: Router = Router();
 
+// GET / - Alias for /overview
+router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await adminService.getPlatformOverview();
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /overview - Platform overview
 router.get('/overview', async (_req: Request, res: Response, next: NextFunction) => {
   try {

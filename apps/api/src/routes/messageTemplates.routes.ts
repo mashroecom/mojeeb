@@ -35,7 +35,13 @@ const createSchema = z.object({
   title: z.string().min(1).max(200).trim(),
   contentEn: z.string().min(1).max(5000).trim(),
   contentAr: z.string().max(5000).trim().optional().default(''),
-  shortcut: z.string().max(50).trim().optional().nullable(),
+  shortcut: z
+    .string()
+    .max(50)
+    .trim()
+    .regex(/^[a-zA-Z0-9_\- ]*$/, 'Shortcut can only contain letters, numbers, underscores, hyphens, and spaces')
+    .optional()
+    .nullable(),
   category: z.enum(CATEGORIES).default('general'),
   variables: z.array(variableSchema).optional().default([]),
   agentId: z.string().optional().nullable(),
@@ -47,7 +53,13 @@ const updateSchema = z.object({
   title: z.string().min(1).max(200).trim().optional(),
   contentEn: z.string().min(1).max(5000).trim().optional(),
   contentAr: z.string().max(5000).trim().optional(),
-  shortcut: z.string().max(50).trim().optional().nullable(),
+  shortcut: z
+    .string()
+    .max(50)
+    .trim()
+    .regex(/^[a-zA-Z0-9_\- ]*$/, 'Shortcut can only contain letters, numbers, underscores, hyphens, and spaces')
+    .optional()
+    .nullable(),
   category: z.enum(CATEGORIES).optional(),
   variables: z.array(variableSchema).optional(),
   agentId: z.string().optional().nullable(),

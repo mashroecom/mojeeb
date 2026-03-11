@@ -681,7 +681,7 @@ export class AuthService {
       },
     });
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, expiresIn: config.jwt.accessExpiry };
   }
 }
 

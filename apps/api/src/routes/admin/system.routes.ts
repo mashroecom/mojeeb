@@ -4,47 +4,59 @@ import { redis } from '../../config/redis';
 
 const router: Router = Router();
 
+async function getSystemHealth() {
+  const services: Record<string, { status: 'healthy' | 'unhealthy'; latency?: number }> = {};
+
+  const dbStart = Date.now();
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    services.database = { status: 'healthy', latency: Date.now() - dbStart };
+  } catch {
+    services.database = { status: 'unhealthy', latency: Date.now() - dbStart };
+  }
+
+  const redisStart = Date.now();
+  try {
+    await redis.ping();
+    services.redis = { status: 'healthy', latency: Date.now() - redisStart };
+  } catch {
+    services.redis = { status: 'unhealthy', latency: Date.now() - redisStart };
+  }
+
+  const queueStart = Date.now();
+  try {
+    const queueModule = await import('../../queues');
+    const anyQueue = Object.values(queueModule).find(
+      (v) => v && typeof (v as any).getJobCounts === 'function',
+    );
+    if (anyQueue) {
+      await (anyQueue as any).getJobCounts('waiting');
+      services.queues = { status: 'healthy', latency: Date.now() - queueStart };
+    } else {
+      services.queues = { status: 'healthy', latency: Date.now() - queueStart };
+    }
+  } catch {
+    services.queues = { status: 'unhealthy', latency: Date.now() - queueStart };
+  }
+
+  return services;
+}
+
+// GET / - Alias for /health
+router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await getSystemHealth();
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /health - System health check
 router.get('/health', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const services: Record<string, { status: 'healthy' | 'unhealthy'; latency?: number }> = {};
-
-    // Check database
-    const dbStart = Date.now();
-    try {
-      await prisma.$queryRaw`SELECT 1`;
-      services.database = { status: 'healthy', latency: Date.now() - dbStart };
-    } catch {
-      services.database = { status: 'unhealthy', latency: Date.now() - dbStart };
-    }
-
-    // Check Redis
-    const redisStart = Date.now();
-    try {
-      await redis.ping();
-      services.redis = { status: 'healthy', latency: Date.now() - redisStart };
-    } catch {
-      services.redis = { status: 'unhealthy', latency: Date.now() - redisStart };
-    }
-
-    // Check BullMQ queues (via Redis – if Redis is up, queues work)
-    const queueStart = Date.now();
-    try {
-      const queueModule = await import('../../queues');
-      const anyQueue = Object.values(queueModule).find(
-        (v) => v && typeof (v as any).getJobCounts === 'function',
-      );
-      if (anyQueue) {
-        await (anyQueue as any).getJobCounts('waiting');
-        services.queues = { status: 'healthy', latency: Date.now() - queueStart };
-      } else {
-        services.queues = { status: 'healthy', latency: Date.now() - queueStart };
-      }
-    } catch {
-      services.queues = { status: 'unhealthy', latency: Date.now() - queueStart };
-    }
-
-    res.json({ success: true, data: services });
+    const data = await getSystemHealth();
+    res.json({ success: true, data });
   } catch (err) {
     next(err);
   }

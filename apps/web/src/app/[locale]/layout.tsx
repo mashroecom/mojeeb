@@ -148,11 +148,9 @@ export async function generateMetadata({
       index: true,
       follow: true,
     },
-    ...(faviconUrl && {
-      icons: {
-        icon: faviconUrl,
-      },
-    }),
+    icons: {
+      icon: faviconUrl || '/icons/icon-192.png',
+    },
   };
 }
 

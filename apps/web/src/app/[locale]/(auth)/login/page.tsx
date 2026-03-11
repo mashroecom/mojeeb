@@ -1,19 +1,24 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useState } from 'react';
 import { api } from '@/lib/api';
-import { useRouter } from '@/i18n/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { setAuthCookie, setOnboardingCookie } from '@/lib/auth-cookies';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { useZodForm } from '@/hooks/useZodForm';
 import { loginSchema } from '@mojeeb/shared-utils';
+import { routing } from '@/i18n/routing';
+
+/** Build a locale-aware absolute path for hard navigation */
+function localePath(path: string, locale: string) {
+  return locale === routing.defaultLocale ? path : `/${locale}${path}`;
+}
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
-  const router = useRouter();
+  const locale = useLocale();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,10 +56,11 @@ export default function LoginPage() {
         setAuth(user, organization, organizations);
       }
 
+      // Hard redirect to bypass React router race conditions with AuthGuard
       if (user?.onboardingCompleted === true) {
-        router.push('/dashboard');
+        window.location.href = localePath('/dashboard', locale);
       } else {
-        router.push('/onboarding');
+        window.location.href = localePath('/onboarding', locale);
       }
     } catch (err: any) {
       const msg = err.response?.data?.error || '';
