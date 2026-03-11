@@ -30,7 +30,11 @@
       "Bash(redis-server --version)",
       "Bash(redis-cli --version)",
       "Bash(docker --version)",
-      "Bash(git fetch --all)"
+      "Bash(git fetch --all)",
+      "WebSearch",
+      "mcp__TestSprite__testsprite_check_account_info",
+      "mcp__TestSprite__testsprite_bootstrap",
+      "Bash(pnpm run:*)"
     ]
   },
   "inputs": [
@@ -49,6 +53,16 @@
       ],
       "env": {
         "API_TOKEN": "5RfnuSIgEUHxys8vVnWeuB7zRFXV9OaoPlKYM2CU4de86541"
+      }
+    },
+    "TestSprite": {
+      "type": "stdio",
+      "command": "testsprite-mcp-plugin",
+      "args": [
+        "server"
+      ],
+      "env": {
+        "API_KEY": "sk-user-f3a1jpU4kohyK38gOVC1FNLiWoIoApUUH95XA1WFJR_tDt4V2RLiYI7PhYx4IbaldTVpPZK6Wn0d0yGcNOgkj4Y4VEMXF3uUMamgXO1gYJ7d0XIhzzC-hvrgNLVN5fFF6G4--"
       }
     }
   }
