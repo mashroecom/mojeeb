@@ -40,6 +40,10 @@ RUN pnpm --filter @mojeeb/shared-utils build
 
 # Build the Next.js web app (DOCKER=true enables standalone output)
 ENV DOCKER=true
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
 RUN pnpm --filter @mojeeb/web build
 
 # ============================================
