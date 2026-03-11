@@ -18,35 +18,65 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-// Re-export webhook payload types from providers for public API
+/**
+ * Kashier webhook payload structure.
+ * Re-exported from KashierProvider for public API usage.
+ */
 export interface KashierWebhookPayload {
+  /** Event type (e.g., 'payment.success') */
   event: string;
+  /** Event data containing payment details */
   data: {
+    /** Kashier's order ID */
     orderId: string;
+    /** Merchant's order reference ID */
     merchantOrderId: string;
+    /** Unique transaction ID */
     transactionId: string;
+    /** Payment amount in smallest currency unit */
     amount: number;
+    /** Currency code (e.g., 'USD') */
     currency: string;
+    /** Payment status */
     status: 'SUCCESS' | 'FAILED' | 'PENDING';
+    /** Customer reference from checkout */
     customerReference: string;
+    /** Payment method used (e.g., 'card', 'wallet') */
     paymentMethod: string;
   };
 }
 
+/**
+ * PayPal webhook payload structure.
+ * Re-exported from PayPalProvider for public API usage.
+ */
 export interface PayPalWebhookPayload {
+  /** PayPal event type (e.g., 'CHECKOUT.ORDER.APPROVED') */
   event_type: string;
+  /** Event resource containing order details */
   resource: {
+    /** PayPal order/resource ID */
     id: string;
+    /** Order status */
     status: string;
+    /** Purchase units (items being purchased) */
     purchase_units?: Array<{
+      /** Merchant's reference ID */
       reference_id: string;
+      /** Payment amount details */
       amount: {
+        /** Amount value as string */
         value: string;
+        /** Currency code */
         currency_code: string;
       };
+      /** Payment capture details */
       payments?: {
+        /** Captured payments */
         captures?: Array<{
+          /** Capture ID */
           id: string;
+          /** Capture status */
           status: string;
         }>;
       };
@@ -60,25 +90,37 @@ export interface PayPalWebhookPayload {
 
 /**
  * Convert Infinity to a large integer safe for Prisma/PostgreSQL.
+ *
+ * PostgreSQL integers have a maximum value, so we convert Infinity
+ * (used in plan configs for unlimited) to a large but finite number.
+ *
+ * @param value - The value to convert
+ * @returns The original value if finite, otherwise 999999
  */
 function safeLimit(value: number): number {
   return Number.isFinite(value) ? value : 999999;
 }
 
 /**
- * Provider instances (singleton pattern).
+ * Provider instances cache for singleton pattern.
+ * Ensures only one instance of each payment provider exists.
  */
 const providerInstances: Partial<Record<PaymentGateway, PaymentProvider>> = {};
 
 /**
  * Get or create a payment provider instance for the specified gateway.
- * Uses singleton pattern to ensure only one instance per provider type.
  *
- * @param gateway - The payment gateway type
- * @returns Payment provider instance
+ * Uses the singleton pattern to ensure only one instance per provider type
+ * exists in memory. This improves performance and maintains consistent state.
+ *
+ * @param gateway - The payment gateway type (KASHIER, STRIPE, or PAYPAL)
+ * @returns Payment provider instance implementing PaymentProvider interface
+ * @throws {BadRequestError} If the gateway type is not supported
  */
 function getPaymentProvider(gateway: PaymentGateway): PaymentProvider {
+  // Return existing instance if already created
   if (!providerInstances[gateway]) {
+    // Create new instance based on gateway type
     switch (gateway) {
       case PaymentGateway.KASHIER:
         providerInstances[gateway] = new KashierProvider();
@@ -96,9 +138,28 @@ function getPaymentProvider(gateway: PaymentGateway): PaymentProvider {
   return providerInstances[gateway]!;
 }
 
+/**
+ * Subscription service for managing organization subscriptions and billing.
+ *
+ * Handles subscription lifecycle including:
+ * - Creating checkout sessions for plan upgrades
+ * - Processing payment confirmations
+ * - Managing webhook events from payment providers
+ * - Enforcing usage limits
+ * - Tracking invoices
+ *
+ * Uses the Strategy Pattern via PaymentProvider implementations to support
+ * multiple payment gateways (Kashier, Stripe, PayPal) with consistent logic.
+ */
 export class SubscriptionService {
   /**
-   * Get subscription by organization ID (cached for 5 minutes).
+   * Get subscription by organization ID.
+   *
+   * Results are cached for 5 minutes to improve performance.
+   *
+   * @param orgId - Organization ID
+   * @returns Subscription record
+   * @throws {NotFoundError} If subscription not found
    */
   async getByOrgId(orgId: string) {
     return cache.getOrSet(`subscription:${orgId}`, 300, async () => {
@@ -112,7 +173,16 @@ export class SubscriptionService {
 
   /**
    * Create a Kashier checkout session for upgrading to a paid plan.
-   * In development without Kashier credentials, upgrades directly (demo mode).
+   *
+   * Validates the plan, retrieves pricing, and delegates to KashierProvider
+   * to create the checkout session. Returns a URL where the user should be
+   * redirected to complete payment.
+   *
+   * @param orgId - Organization ID
+   * @param plan - Target plan (STARTER or PROFESSIONAL)
+   * @param billingCycle - Billing frequency (default: monthly)
+   * @returns Checkout response with URL and order ID
+   * @throws {BadRequestError} If plan is invalid, already on plan, or price not configured
    */
   async createCheckout(
     orgId: string,
@@ -154,8 +224,15 @@ export class SubscriptionService {
   }
 
   /**
-   * Confirm a payment from Kashier redirect parameters.
-   * This is used when the webhook can't reach the server (e.g., localhost).
+   * Confirm a Kashier payment from redirect parameters.
+   *
+   * Used as a fallback when webhooks can't reach the server (e.g., localhost).
+   * Validates payment status and delegates to KashierProvider for processing.
+   *
+   * @param orgId - Organization ID
+   * @param params - Payment parameters from Kashier redirect
+   * @returns Updated subscription record
+   * @throws {BadRequestError} If payment failed or amount doesn't match
    */
   async confirmPayment(
     orgId: string,
@@ -188,6 +265,15 @@ export class SubscriptionService {
 
   /**
    * Create a Stripe checkout session for upgrading to a paid plan.
+   *
+   * Validates the plan, retrieves pricing, and delegates to StripeProvider
+   * to create the checkout session.
+   *
+   * @param orgId - Organization ID
+   * @param plan - Target plan (STARTER or PROFESSIONAL)
+   * @param billingCycle - Billing frequency (default: monthly)
+   * @returns Checkout response with URL and session ID
+   * @throws {BadRequestError} If plan is invalid, already on plan, or price not configured
    */
   async createStripeCheckout(orgId: string, plan: string, billingCycle: 'monthly' | 'yearly' = 'monthly') {
     // Validate the target plan
@@ -231,6 +317,13 @@ export class SubscriptionService {
 
   /**
    * Confirm a Stripe payment from checkout session.
+   *
+   * Verifies the payment was successful and processes the subscription upgrade.
+   *
+   * @param orgId - Organization ID
+   * @param sessionId - Stripe checkout session ID
+   * @returns Updated subscription record
+   * @throws {BadRequestError} If payment failed or session not found
    */
   async confirmStripePayment(orgId: string, sessionId: string) {
     // Delegate to StripeProvider
@@ -245,6 +338,15 @@ export class SubscriptionService {
 
   /**
    * Create a PayPal checkout session for upgrading to a paid plan.
+   *
+   * Validates the plan, retrieves pricing, and delegates to PayPalProvider
+   * to create the checkout session.
+   *
+   * @param orgId - Organization ID
+   * @param plan - Target plan (STARTER or PROFESSIONAL)
+   * @param billingCycle - Billing frequency (default: monthly)
+   * @returns Checkout response with URL and order ID
+   * @throws {BadRequestError} If plan is invalid, already on plan, or price not configured
    */
   async createPayPalCheckout(orgId: string, plan: string, billingCycle: 'monthly' | 'yearly' = 'monthly') {
     // Validate the target plan
@@ -283,6 +385,13 @@ export class SubscriptionService {
 
   /**
    * Confirm a PayPal payment from order ID.
+   *
+   * Verifies the payment was successful and processes the subscription upgrade.
+   *
+   * @param orgId - Organization ID
+   * @param orderId - PayPal order ID
+   * @returns Updated subscription record
+   * @throws {BadRequestError} If payment failed or order not found
    */
   async confirmPayPalPayment(orgId: string, orderId: string) {
     // Delegate to PayPalProvider
@@ -297,6 +406,13 @@ export class SubscriptionService {
 
   /**
    * Verify a Kashier webhook signature.
+   *
+   * Validates the authenticity of a webhook request from Kashier by verifying
+   * the cryptographic signature. Prevents unauthorized webhook events.
+   *
+   * @param rawBody - Raw webhook request body
+   * @param signature - Signature from X-Kashier-Signature header
+   * @returns True if signature is valid, false otherwise
    */
   async verifyWebhookSignature(rawBody: string, signature: string): Promise<boolean> {
     // Delegate to KashierProvider
@@ -313,6 +429,11 @@ export class SubscriptionService {
 
   /**
    * Handle a Kashier payment webhook event.
+   *
+   * Processes asynchronous payment notifications from Kashier.
+   * Delegates to KashierProvider for event processing.
+   *
+   * @param payload - Kashier webhook payload
    */
   async handlePaymentWebhook(payload: KashierWebhookPayload) {
     // Delegate to KashierProvider
@@ -321,7 +442,18 @@ export class SubscriptionService {
   }
 
   /**
-   * Verify a Stripe webhook signature.
+   * Verify a Stripe webhook signature and construct event.
+   *
+   * Validates the authenticity of a webhook request from Stripe by verifying
+   * the cryptographic signature. Constructs and returns the Stripe event object.
+   *
+   * Note: Stripe's SDK requires constructing the event during verification,
+   * so this method returns the event instead of just a boolean.
+   *
+   * @param rawBody - Raw webhook request body
+   * @param signature - Signature from Stripe-Signature header
+   * @returns Constructed Stripe event object
+   * @throws {BadRequestError} If signature is invalid or Stripe not configured
    */
   async verifyStripeWebhookSignature(rawBody: string, signature: string): Promise<Stripe.Event> {
     // Delegate verification to StripeProvider
@@ -382,6 +514,11 @@ export class SubscriptionService {
 
   /**
    * Handle a Stripe webhook event.
+   *
+   * Processes asynchronous payment notifications from Stripe.
+   * Delegates to StripeProvider for event processing.
+   *
+   * @param event - Stripe event object (from verifyStripeWebhookSignature)
    */
   async handleStripeWebhook(event: Stripe.Event) {
     // Delegate to StripeProvider
@@ -391,6 +528,13 @@ export class SubscriptionService {
 
   /**
    * Verify a PayPal webhook signature.
+   *
+   * Validates the authenticity of a webhook request from PayPal by verifying
+   * the cryptographic signature in the request headers.
+   *
+   * @param rawBody - Raw webhook request body
+   * @param headers - Request headers containing PayPal signature
+   * @returns True if signature is valid, false otherwise
    */
   async verifyPayPalWebhookSignature(
     rawBody: string,
@@ -410,6 +554,11 @@ export class SubscriptionService {
 
   /**
    * Handle a PayPal webhook event.
+   *
+   * Processes asynchronous payment notifications from PayPal.
+   * Delegates to PayPalProvider for event processing.
+   *
+   * @param payload - PayPal webhook payload
    */
   async handlePayPalWebhook(payload: PayPalWebhookPayload) {
     // Delegate to PayPalProvider
@@ -418,8 +567,16 @@ export class SubscriptionService {
   }
 
   /**
-   * Cancel subscription. If immediate=true, downgrade to FREE now.
-   * If immediate=false, mark for cancellation at period end.
+   * Cancel a subscription.
+   *
+   * Two cancellation modes:
+   * - Immediate (immediate=true): Downgrade to FREE plan immediately
+   * - Scheduled (immediate=false): Mark for cancellation at period end
+   *
+   * @param orgId - Organization ID
+   * @param immediate - If true, downgrade immediately; if false, cancel at period end
+   * @returns Updated subscription record
+   * @throws {BadRequestError} If already on FREE plan
    */
   async cancelSubscription(orgId: string, immediate = false) {
     const subscription = await this.getByOrgId(orgId);
@@ -477,7 +634,13 @@ export class SubscriptionService {
 
   /**
    * Check if the organization is within its usage limits.
-   * Returns true if usage is allowed, false if at/over limit.
+   *
+   * Verifies whether the organization can perform an action based on
+   * their current plan's limits and usage.
+   *
+   * @param orgId - Organization ID
+   * @param type - Usage type to check (messages or agents)
+   * @returns True if usage is allowed (under limit), false if at/over limit
    */
   async checkUsage(orgId: string, type: 'messages' | 'agents'): Promise<boolean> {
     const subscription = await this.getByOrgId(orgId);
@@ -493,7 +656,13 @@ export class SubscriptionService {
   }
 
   /**
-   * Increment a usage counter. Throws UsageLimitError if the limit is reached.
+   * Increment a usage counter.
+   *
+   * Checks if usage is allowed, increments the counter, and clears cache.
+   *
+   * @param orgId - Organization ID
+   * @param type - Usage type to increment (messages or agents)
+   * @throws {UsageLimitError} If the usage limit has been reached
    */
   async incrementUsage(orgId: string, type: 'messages' | 'agents') {
     const allowed = await this.checkUsage(orgId, type);
@@ -519,7 +688,13 @@ export class SubscriptionService {
   }
 
   /**
-   * Decrement a usage counter (e.g. when deleting an agent).
+   * Decrement a usage counter.
+   *
+   * Used when removing resources (e.g., deleting an agent).
+   * Clears cache to ensure fresh data on next read.
+   *
+   * @param orgId - Organization ID
+   * @param type - Usage type to decrement (currently only 'agents')
    */
   async decrementUsage(orgId: string, type: 'agents') {
     const fieldMap = {
@@ -537,7 +712,12 @@ export class SubscriptionService {
   }
 
   /**
-   * Sync agentsUsed with actual agent count in the database.
+   * Sync agentsUsed counter with actual agent count in database.
+   *
+   * Useful for fixing any drift between the counter and actual data,
+   * such as after data imports or migrations.
+   *
+   * @param orgId - Organization ID
    */
   async syncAgentCount(orgId: string) {
     const count = await prisma.agent.count({ where: { orgId } });
@@ -549,6 +729,13 @@ export class SubscriptionService {
 
   /**
    * Get paginated invoices for an organization.
+   *
+   * Returns invoices sorted by creation date (newest first) with pagination.
+   *
+   * @param orgId - Organization ID
+   * @param options - Pagination options (page and limit)
+   * @returns Invoices array and pagination metadata
+   * @throws {NotFoundError} If subscription not found
    */
   async getInvoices(
     orgId: string,
@@ -587,6 +774,14 @@ export class SubscriptionService {
 
   /**
    * Get a single invoice by ID for an organization.
+   *
+   * Verifies the invoice belongs to the specified organization
+   * before returning it.
+   *
+   * @param orgId - Organization ID
+   * @param invoiceId - Invoice ID
+   * @returns Invoice record
+   * @throws {NotFoundError} If subscription or invoice not found
    */
   async getInvoiceById(orgId: string, invoiceId: string) {
     const subscription = await prisma.subscription.findUnique({
