@@ -67,13 +67,13 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
 RUN chmod +x ./scripts/docker-entrypoint.sh
 
-# Create uploads directory
-RUN mkdir -p ./apps/api/uploads
+# Create uploads and public directories
+RUN mkdir -p ./apps/api/uploads ./apps/api/public/uploads/landing
 
 # Create non-root user for security and grant ownership
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 appuser && \
-    chown -R appuser:nodejs ./apps/api/uploads
+    chown -R appuser:nodejs ./apps/api/uploads ./apps/api/public/uploads
 USER appuser
 
 EXPOSE 4000

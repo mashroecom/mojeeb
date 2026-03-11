@@ -63,13 +63,13 @@ COPY --from=builder /app/apps/api ./apps/api
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/prisma ./prisma
 
-# Create uploads directory
-RUN mkdir -p ./apps/api/uploads
+# Create uploads and public directories
+RUN mkdir -p ./apps/api/uploads ./apps/api/public/uploads/landing
 
 # Create non-root user for security and grant ownership
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 appuser && \
-    chown -R appuser:nodejs ./apps/api/uploads
+    chown -R appuser:nodejs ./apps/api/uploads ./apps/api/public/uploads
 USER appuser
 
 CMD ["node", "apps/api/dist/worker.js"]
