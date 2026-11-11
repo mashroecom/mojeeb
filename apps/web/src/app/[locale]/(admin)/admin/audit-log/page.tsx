@@ -165,12 +165,17 @@ function AuditRow({ entry, t }: { entry: AuditLogEntry; t: ReturnType<typeof use
               getActionColor(entry.action),
             )}
           >
-            {t(`action_${entry.action}`)}
+            {/* Fall back to the raw value for actions that have no label yet */}
+            {t.has(`action_${entry.action}`) ? t(`action_${entry.action}`) : entry.action}
           </span>
         </td>
 
         {/* Target Type */}
-        <td className="px-4 py-3 text-sm">{t(`target_${entry.targetType}`)}</td>
+        <td className="px-4 py-3 text-sm">
+          {entry.targetType && t.has(`target_${entry.targetType}`)
+            ? t(`target_${entry.targetType}`)
+            : (entry.targetType ?? '—')}
+        </td>
 
         {/* Target ID */}
         <td className="px-4 py-3">

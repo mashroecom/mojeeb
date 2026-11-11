@@ -2388,7 +2388,14 @@
       "action_LEGAL_CONTENT_UPDATED": "Legal Content Updated",
       "target_FAQ": "FAQ",
       "target_Testimonial": "Testimonial",
-      "target_LegalContent": "Legal Content"
+      "target_LegalContent": "Legal Content",
+      "action_MESSAGE_TEMPLATE_CREATED": "Message Template Created",
+      "action_MESSAGE_TEMPLATE_UPDATED": "Message Template Updated",
+      "action_SYSTEM_CONFIG_EXPORTED": "Configuration Exported",
+      "action_SYSTEM_CONFIG_IMPORTED": "Configuration Imported",
+      "target_SystemConfig": "System Configuration",
+      "target_SystemBackup": "Configuration Backup",
+      "target_BlockedIP": "Blocked IP"
     },
     "loginActivity": {
       "title": "Login Activity",
@@ -4261,6 +4268,14 @@
         "avgMessagesPerConversation": "Avg. messages per conversation",
         "conversationsToday": "Conversations today"
       }
+    },
+    "profile": {
+      "title": "Profile",
+      "organization": "Organization",
+      "language": "Language",
+      "switchLanguageTo": "العربية",
+      "allSettings": "All settings",
+      "logout": "Log out"
     }
   }
 }

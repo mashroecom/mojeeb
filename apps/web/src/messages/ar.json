@@ -2388,7 +2388,14 @@
       "action_LEGAL_CONTENT_UPDATED": "تحديث المحتوى القانوني",
       "target_FAQ": "سؤال شائع",
       "target_Testimonial": "رأي عميل",
-      "target_LegalContent": "محتوى قانوني"
+      "target_LegalContent": "محتوى قانوني",
+      "action_MESSAGE_TEMPLATE_CREATED": "إنشاء قالب رسالة",
+      "action_MESSAGE_TEMPLATE_UPDATED": "تحديث قالب رسالة",
+      "action_SYSTEM_CONFIG_EXPORTED": "تصدير الإعدادات",
+      "action_SYSTEM_CONFIG_IMPORTED": "استيراد الإعدادات",
+      "target_SystemConfig": "إعدادات النظام",
+      "target_SystemBackup": "نسخة احتياطية للإعدادات",
+      "target_BlockedIP": "عنوان IP محظور"
     },
     "loginActivity": {
       "title": "سجل الدخول",
@@ -4261,6 +4268,14 @@
         "avgMessagesPerConversation": "متوسط الرسائل لكل محادثة",
         "conversationsToday": "محادثات اليوم"
       }
+    },
+    "profile": {
+      "title": "الملف الشخصي",
+      "organization": "المؤسسة",
+      "language": "اللغة",
+      "switchLanguageTo": "English",
+      "allSettings": "كل الإعدادات",
+      "logout": "تسجيل الخروج"
     }
   }
 }

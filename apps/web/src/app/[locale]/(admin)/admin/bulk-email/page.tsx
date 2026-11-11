@@ -242,7 +242,9 @@ export default function BulkEmailPage() {
               rows={10}
               value={bodyHtml}
               onChange={(e) => setBodyHtml(e.target.value)}
-              placeholder={t('compose.bodyHtmlPlaceholder')}
+              // The placeholder is literal HTML — read it raw so next-intl does not
+              // try to parse <h1>/<p> as rich-text tags
+              placeholder={t.raw('compose.bodyHtmlPlaceholder') as string}
               className="w-full rounded-lg border bg-background px-3 py-2 text-sm font-mono outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-colors resize-none"
             />
           </div>
