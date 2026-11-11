@@ -2,6 +2,7 @@ import robotsParser from 'robots-parser';
 import { cache } from '../config/cache';
 import { logger } from '../config/logger';
 import { BadRequestError } from '../utils/errors';
+import { safeFetch } from '../utils/safeFetch';
 
 export class RobotsTxtService {
   private readonly CACHE_TTL = 86400; // 24 hours in seconds
@@ -20,7 +21,7 @@ export class RobotsTxtService {
       // Try to get from cache first
       return await cache.getOrSet(cacheKey, this.CACHE_TTL, async () => {
         try {
-          const response = await fetch(robotsUrl, {
+          const response = await safeFetch(robotsUrl, {
             headers: { 'User-Agent': this.USER_AGENT },
             signal: AbortSignal.timeout(10000),
           });

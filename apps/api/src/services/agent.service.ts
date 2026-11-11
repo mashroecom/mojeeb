@@ -242,30 +242,37 @@ export class AgentService {
     const queryKey = query.substring(0, 100);
     const cacheKey = `kb:context:${kbKey}:${queryKey}`;
 
-    return cache.getOrSet(cacheKey, 300, async () => {
-      try {
-        const queryEmbedding = await provider.generateEmbedding(query);
-        const embeddingStr = `[${queryEmbedding.join(',')}]`;
+    // Only successful, non-empty results are cached. Caching an empty context would
+    // keep answering "nothing found" for minutes after a document finishes embedding
+    // (or after a transient provider error), which is exactly when people re-test.
+    const cached = await cache.get<string>(cacheKey);
+    if (cached) return cached;
 
-        const chunks = await prisma.$queryRaw<Array<{ content: string; similarity: number }>>`
-          SELECT c.content,
-                 1 - (c.embedding <=> ${embeddingStr}::vector) as similarity
-          FROM kb_chunks c
-          JOIN kb_documents d ON c."documentId" = d.id
-          WHERE d."knowledgeBaseId" IN (${Prisma.join(kbIds)})
-            AND d."embeddingStatus" = 'COMPLETED'
-            AND c.embedding IS NOT NULL
-          ORDER BY c.embedding <=> ${embeddingStr}::vector
-          LIMIT 3
-        `;
+    try {
+      const queryEmbedding = await provider.generateEmbedding(query);
+      const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
-        if (chunks.length === 0) return '';
-        return chunks.map((c) => c.content).join('\n\n---\n\n');
-      } catch (err) {
-        logger.error({ err }, 'Failed to retrieve KB context');
-        return '';
-      }
-    });
+      const chunks = await prisma.$queryRaw<Array<{ content: string; similarity: number }>>`
+        SELECT c.content,
+               1 - (c.embedding <=> ${embeddingStr}::vector) as similarity
+        FROM kb_chunks c
+        JOIN kb_documents d ON c."documentId" = d.id
+        WHERE d."knowledgeBaseId" IN (${Prisma.join(kbIds)})
+          AND d."embeddingStatus" = 'COMPLETED'
+          AND c.embedding IS NOT NULL
+        ORDER BY c.embedding <=> ${embeddingStr}::vector
+        LIMIT 3
+      `;
+
+      if (chunks.length === 0) return '';
+
+      const context = chunks.map((c) => c.content).join('\n\n---\n\n');
+      cache.set(cacheKey, context, 300).catch(() => {});
+      return context;
+    } catch (err) {
+      logger.error({ err }, 'Failed to retrieve KB context');
+      return '';
+    }
   }
 }
 

@@ -4,6 +4,7 @@ import { redis } from '../../config/redis';
 import { prisma } from '../../config/database';
 import { logger } from '../../config/logger';
 import { moveToDeadLetterQueue } from '../dlq';
+import { safeFetch } from '../../utils/safeFetch';
 
 interface WebhookJobData {
   webhookId: string;
@@ -35,7 +36,8 @@ const worker = new Worker<WebhookJobData>(
     let responseText: string | undefined;
 
     try {
-      res = await fetch(webhook.url, {
+      // Customer-supplied URL: refuse internal targets (also on redirects)
+      res = await safeFetch(webhook.url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -45,7 +45,13 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
   // not server faults: they carry the HTTP status to answer with.
   const bodyError = err as Error & { type?: string; status?: number; statusCode?: number };
   const bodyStatus = bodyError.status ?? bodyError.statusCode;
-  if (typeof bodyError.type === 'string' && bodyStatus && bodyStatus >= 400 && bodyStatus < 500) {
+  // body-parser's own error types are dotted ("entity.parse.failed", "entity.too.large",
+  // "request.aborted", ...). Other errors also carry `type` + `status` (e.g. an upstream
+  // AI provider answering 401) and must not be mistaken for a bad request body.
+  const isBodyParserError =
+    typeof bodyError.type === 'string' &&
+    /^(entity|request|encoding|charset|parameters|stream)\./.test(bodyError.type);
+  if (isBodyParserError && bodyStatus && bodyStatus >= 400 && bodyStatus < 500) {
     const isTooLarge = bodyError.type === 'entity.too.large';
     return res.status(bodyStatus).json({
       success: false,

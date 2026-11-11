@@ -191,6 +191,19 @@ router.post(
   },
 );
 
+// POST /api/v1/organizations/:orgId/knowledge-bases/:kbId/documents/:docId/reprocess
+// Retry embedding for a document that failed or never finished processing
+router.post('/:kbId/documents/:docId/reprocess', async (req, res, next) => {
+  try {
+    const { orgId, kbId, docId } = req.params as DocParams;
+    await knowledgeBaseService.getById(orgId, kbId); // verifies the KB belongs to the org
+    const doc = await knowledgeBaseService.reprocessDocument(kbId, docId);
+    res.status(202).json({ success: true, data: doc });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // DELETE /api/v1/organizations/:orgId/knowledge-bases/:kbId/documents/:docId
 router.delete('/:kbId/documents/:docId', async (req, res, next) => {
   try {

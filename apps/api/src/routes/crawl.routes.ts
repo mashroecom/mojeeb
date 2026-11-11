@@ -36,7 +36,8 @@ router.post(
       const { orgId, kbId } = req.params as CrawlParams;
       // Verify KB belongs to org
       await knowledgeBaseService.getById(orgId, kbId);
-      const crawlJob = await knowledgeBaseService.createCrawlJob(kbId, req.body);
+      // startCrawlJob creates the job row AND enqueues it for the crawler worker
+      const crawlJob = await knowledgeBaseService.startCrawlJob(kbId, req.body);
       res.status(201).json({ success: true, data: crawlJob });
     } catch (err) {
       next(err);

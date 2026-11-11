@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import { logger } from '../config/logger';
 import { BadRequestError } from '../utils/errors';
 import { robotsTxtService } from './robotsTxt.service';
+import { assertPublicUrl, safeFetch } from '../utils/safeFetch';
 
 export interface CrawlConfig {
   maxDepth?: number;
@@ -35,8 +36,9 @@ export class CrawlerService {
    */
   async crawlUrl(url: string, config: CrawlConfig = {}): Promise<CrawlResult> {
     try {
-      // Validate URL
-      const parsedUrl = new URL(url);
+      // Validate URL. Customer-supplied, so it must not point into our own network
+      // (checked again for every redirect hop by safeFetch below).
+      await assertPublicUrl(url);
 
       // Check robots.txt if enabled
       if (config.respectRobotsTxt !== false) {
@@ -50,7 +52,7 @@ export class CrawlerService {
       }
 
       // Fetch the page
-      const response = await fetch(url, {
+      const response = await safeFetch(url, {
         headers: {
           'User-Agent': config.userAgent || this.USER_AGENT,
           Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -124,6 +126,14 @@ export class CrawlerService {
       $('[role="navigation"]').remove();
       $('[aria-label="advertisement"]').remove();
 
+      // .text() glues adjacent elements together ("TitleFirst paragraph"), so put
+      // line breaks at block boundaries and spaces between table cells first
+      $('br').replaceWith('\n');
+      $('td, th').append(' ');
+      $(
+        'p, div, section, article, h1, h2, h3, h4, h5, h6, li, tr, blockquote, pre, dt, dd, figcaption',
+      ).append('\n');
+
       // Get text from body or main content area
       let textContent = '';
 
@@ -153,6 +163,20 @@ export class CrawlerService {
     } catch (err) {
       logger.error({ err }, 'HTML content cleaning failed');
       throw new BadRequestError('Failed to parse HTML content');
+    }
+  }
+
+  /**
+   * Canonical form of a URL for de-duplication while crawling: no fragment and no
+   * trailing slash (the same form extractLinks returns).
+   */
+  normalizeUrl(url: string): string {
+    try {
+      const parsed = new URL(url);
+      parsed.hash = '';
+      return parsed.href.replace(/\/$/, '');
+    } catch {
+      return url;
     }
   }
 

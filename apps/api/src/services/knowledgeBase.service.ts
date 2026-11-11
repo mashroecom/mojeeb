@@ -356,7 +356,39 @@ export class KnowledgeBaseService {
     });
   }
 
-  private async processDocument(documentId: string) {
+  /**
+   * Re-run embedding for a document that is not searchable yet (failed, or left
+   * pending/processing by a crash or a provider outage). Runs in the background;
+   * poll the document's embeddingStatus.
+   */
+  async reprocessDocument(kbId: string, docId: string) {
+    const doc = await prisma.kBDocument.findFirst({
+      where: { id: docId, knowledgeBaseId: kbId },
+      select: { id: true, embeddingStatus: true },
+    });
+    if (!doc) throw new NotFoundError('Document not found');
+    if (doc.embeddingStatus === 'COMPLETED') {
+      throw new ConflictError('Document is already processed');
+    }
+
+    const updated = await prisma.kBDocument.update({
+      where: { id: docId },
+      data: { embeddingStatus: 'PENDING' },
+    });
+
+    this.processDocument(docId).catch((err) => {
+      logger.error({ err, documentId: docId }, 'Document reprocessing failed');
+    });
+
+    return updated;
+  }
+
+  /**
+   * Chunk a document, embed every chunk and store the vectors. Until this has
+   * completed the document is invisible to semantic search. Safe to call again:
+   * chunks from an earlier (partial) attempt are replaced.
+   */
+  async processDocument(documentId: string) {
     await prisma.kBDocument.update({
       where: { id: documentId },
       data: { embeddingStatus: 'PROCESSING' },
@@ -367,6 +399,9 @@ export class KnowledgeBaseService {
         where: { id: documentId },
       });
       if (!document) return;
+
+      // Drop chunks left behind by an earlier attempt so a retry never duplicates them
+      await prisma.kBChunk.deleteMany({ where: { documentId } });
 
       // Chunk the document
       const chunks = this.chunkText(document.content, 500, 50);

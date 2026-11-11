@@ -266,7 +266,7 @@ export const crawlerWorker = new Worker(
     const { kbId, startUrl, config, configId } = data;
 
     // BFS queue for crawling
-    const queue: QueuedUrl[] = [{ url: startUrl, depth: 0 }];
+    const queue: QueuedUrl[] = [{ url: crawlerService.normalizeUrl(startUrl), depth: 0 }];
     const visited = new Set<string>();
     const maxDepth = config?.maxDepth || 1;
     const urlPatterns = config?.urlPatterns || [];
@@ -342,17 +342,47 @@ export const crawlerWorker = new Worker(
             userAgent: 'MojeebBot/1.0',
           });
 
-          // Create KB document for this page
-          await prisma.kBDocument.create({
-            data: {
-              knowledgeBaseId: kbId,
-              crawlJobId: jobId,
-              title: result.metadata.title || url,
-              content: result.text,
-              contentType: 'URL',
-              sourceUrl: url,
-            },
+          // Store the page. A page this knowledge base already has (a scheduled
+          // re-crawl, or the same site crawled twice) is refreshed in place rather
+          // than added again as a duplicate.
+          const existing = await prisma.kBDocument.findFirst({
+            where: { knowledgeBaseId: kbId, contentType: 'URL', sourceUrl: url },
+            select: { id: true, content: true, embeddingStatus: true },
           });
+
+          let documentId: string | null = null;
+          if (!existing) {
+            const created = await prisma.kBDocument.create({
+              data: {
+                knowledgeBaseId: kbId,
+                crawlJobId: jobId,
+                title: result.metadata.title || url,
+                content: result.text,
+                contentType: 'URL',
+                sourceUrl: url,
+              },
+            });
+            documentId = created.id;
+          } else if (existing.content !== result.text || existing.embeddingStatus !== 'COMPLETED') {
+            await prisma.kBDocument.update({
+              where: { id: existing.id },
+              data: {
+                crawlJobId: jobId,
+                title: result.metadata.title || url,
+                content: result.text,
+              },
+            });
+            documentId = existing.id;
+          }
+
+          // Embed it, otherwise the page is stored but can never be found by the
+          // agent's semantic search. processDocument records its own failures on
+          // the document (embeddingStatus FAILED), so one bad page does not stop
+          // the crawl. Imported lazily: the service imports this worker module.
+          if (documentId) {
+            const { knowledgeBaseService } = await import('../../services/knowledgeBase.service');
+            await knowledgeBaseService.processDocument(documentId);
+          }
 
           pagesCrawled++;
 
