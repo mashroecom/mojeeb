@@ -137,5 +137,14 @@ database, ensures the pgvector extension exists and applies pending migrations. 
 `pnpm db:seed` once with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` set to create the
 first super admin.
 
+Uploaded files are kept in two named volumes shared by the API and the worker:
+`api_uploads` (conversation attachments and branding assets, served through
+`/api/v1/files`) and `api_public_uploads` (landing-page images, served at `/uploads`).
+Include both in backups.
+
+Public pages cache CMS content (landing page, plans, FAQ, testimonials, site settings)
+for five minutes. Saving any of it in the admin panel clears that cache through
+`POST /web-api/revalidate`, so edits are visible on the next page load.
+
 Health endpoints: `GET /health` (liveness), `GET /ready` and `GET /api/v1/health/ready`
 (database, Redis and queue connectivity).
