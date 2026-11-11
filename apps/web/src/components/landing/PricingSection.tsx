@@ -170,7 +170,11 @@ export function PricingSection({
                   <h3 className="text-lg font-semibold">{name}</h3>
                   <div className="mt-2 flex items-baseline gap-1">
                     <span className="text-4xl font-bold">
-                      {price === 0 ? t('freeLabel') : `$${price}`}
+                      {price === 0
+                        ? plan.plan === 'ENTERPRISE'
+                          ? t('customLabel')
+                          : t('freeLabel')
+                        : `$${price}`}
                     </span>
                     {price > 0 && (
                       <span className="text-sm text-muted-foreground">{t('perMonth')}</span>

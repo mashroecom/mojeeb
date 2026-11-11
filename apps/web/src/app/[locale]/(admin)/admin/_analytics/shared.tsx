@@ -145,6 +145,8 @@ export interface BarListItem {
   value: number;
   /** Tailwind background class for the bar and the legend dot. */
   color: string;
+  /** Render the label LTR (IP addresses, IDs) so RTL pages do not reorder it. */
+  ltr?: boolean;
 }
 
 export function BarList({
@@ -169,7 +171,9 @@ export function BarList({
             <div className="mb-1 flex items-center justify-between gap-3 text-sm">
               <span className="flex min-w-0 items-center gap-2">
                 <span className={cn('h-2.5 w-2.5 shrink-0 rounded-full', item.color)} />
-                <span className="truncate">{item.label}</span>
+                <span className="truncate" dir={item.ltr ? 'ltr' : undefined}>
+                  {item.label}
+                </span>
               </span>
               <span className="shrink-0 tabular-nums text-muted-foreground">
                 <span className="font-medium text-foreground">{formatValue(item.value)}</span>

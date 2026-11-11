@@ -133,7 +133,11 @@ export function resolveCmsImageUrl(raw: unknown): string | null {
   if (!value) return null;
   if (HTTP_URL.test(value)) return value;
   if (!isSitePath(value)) return null;
-  return value.startsWith('/uploads/') ? `${API_ORIGIN}${value}` : value;
+  // Files served by the API: landing uploads (/uploads/...) and branding assets
+  // stored through Site Settings (/api/v1/files/...)
+  return value.startsWith('/uploads/') || value.startsWith('/api/')
+    ? `${API_ORIGIN}${value}`
+    : value;
 }
 
 export type CmsLinkTarget =

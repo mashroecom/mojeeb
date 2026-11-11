@@ -176,7 +176,8 @@
       "yearly": "Yearly",
       "enterpriseCta": "Need a custom solution for your enterprise?",
       "noCreditCard": "No credit card required",
-      "savings": "Save ${amount}/year"
+      "savings": "Save ${amount}/year",
+      "customLabel": "Custom"
     },
     "cta": {
       "title": "Ready to Transform Your Customer Support?",

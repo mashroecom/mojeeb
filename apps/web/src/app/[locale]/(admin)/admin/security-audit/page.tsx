@@ -219,6 +219,7 @@ export default function AdminSecurityAuditPage() {
                       label: entry.ip ?? '—',
                       value: entry.failedCount,
                       color: 'bg-red-500',
+                      ltr: true,
                     }))}
                     total={stats?.failedLogins}
                     formatValue={fmt.num}

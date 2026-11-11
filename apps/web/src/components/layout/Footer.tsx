@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useLandingPageContent, parseJsonArray, type FooterLink } from '@/hooks/useLandingPage';
+import { resolveCmsImageUrl } from '@/components/landing/cms';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
@@ -26,7 +27,7 @@ export function Footer() {
   const { data: cms } = useLandingPageContent();
 
   const siteName = settings?.siteName || 'Mojeeb';
-  const logoUrl = settings?.logoUrl;
+  const logoUrl = resolveCmsImageUrl(settings?.logoUrl);
   const initial = siteName.charAt(0).toUpperCase();
 
   // CMS footer fields with fallbacks
@@ -166,7 +167,14 @@ export function Footer() {
 
         <div className="mt-8 border-t pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} {siteName}. {copyrightText || t('copyright')}
+            {/* A CMS text that is already a full notice ("© 2025 ...") is shown as is */}
+            {copyrightText && /^\s*(©|\(c\))/i.test(copyrightText) ? (
+              copyrightText
+            ) : (
+              <>
+                &copy; {new Date().getFullYear()} {siteName}. {copyrightText || t('copyright')}
+              </>
+            )}
           </p>
         </div>
       </div>

@@ -176,7 +176,8 @@
       "yearly": "سنوي",
       "enterpriseCta": "تحتاج حل مخصص لمؤسستك؟",
       "noCreditCard": "لا حاجة لبطاقة ائتمان",
-      "savings": "وفّر ${amount}$ سنوياً"
+      "savings": "وفّر ${amount}$ سنوياً",
+      "customLabel": "حسب الطلب"
     },
     "cta": {
       "title": "مستعد لتحويل دعم العملاء؟",

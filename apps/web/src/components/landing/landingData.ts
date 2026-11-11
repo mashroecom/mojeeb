@@ -45,6 +45,12 @@ function asArray<T>(value: T[] | null): T[] {
   return Array.isArray(value) ? value : [];
 }
 
+/** Just the landing-page CMS row (also carries the maintenance flag and texts). */
+export async function getLandingCms(): Promise<Partial<LandingPageContent> | null> {
+  const cms = await fetchPublic<Partial<LandingPageContent>>('/public/landing-page');
+  return cms && typeof cms === 'object' ? cms : null;
+}
+
 export async function getLandingPageData(): Promise<LandingPageData> {
   const [cms, testimonials, faqs, plans] = await Promise.all([
     fetchPublic<Partial<LandingPageContent>>('/public/landing-page'),

@@ -9,6 +9,7 @@ import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { resolveCmsImageUrl } from '@/components/landing/cms';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
@@ -33,7 +34,7 @@ export function Header() {
   });
 
   const siteName = settings?.siteName || 'Mojeeb';
-  const logoUrl = settings?.logoUrl;
+  const logoUrl = resolveCmsImageUrl(settings?.logoUrl);
   const initial = siteName.charAt(0).toUpperCase();
 
   const navItems = [
