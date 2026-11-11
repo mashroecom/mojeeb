@@ -11,6 +11,7 @@ import { tokenUsageService } from '../../services/tokenUsage.service';
 import { notificationService } from '../../services/notification.service';
 import { webhookService } from '../../services/webhook.service';
 import { pushNotificationService } from '../../services/pushNotification.service';
+import { mergeLead } from '../../utils/leadMerge';
 
 interface AIJobData {
   conversationId: string;
@@ -405,33 +406,57 @@ export const aiWorker = new Worker(
         }
       }
 
-      // Handle lead extraction
+      // Handle lead extraction. One lead per conversation: the analysis runs on every
+      // customer message, so later extractions refine the existing lead instead of
+      // adding a duplicate (and firing lead.created again).
       if (result.lead) {
         try {
-          const lead = await prisma.lead.create({
-            data: {
+          const existingLead = await prisma.lead.findFirst({
+            where: { orgId: data.orgId, conversationId: data.conversationId },
+            orderBy: { createdAt: 'asc' },
+          });
+
+          if (existingLead) {
+            const changes = mergeLead(existingLead, result.lead);
+            if (Object.keys(changes).length > 0) {
+              const updatedLead = await prisma.lead.update({
+                where: { id: existingLead.id },
+                data: changes,
+              });
+              await webhookService.dispatch(data.orgId, 'lead.updated', updatedLead);
+            }
+          } else {
+            const leadConversation = await prisma.conversation.findUnique({
+              where: { id: data.conversationId },
+              select: { customerName: true },
+            });
+            const lead = await prisma.lead.create({
+              data: {
+                orgId: data.orgId,
+                conversationId: data.conversationId,
+                // Fall back to the name the customer gave the channel (widget form,
+                // WhatsApp profile) when the model did not extract one
+                name: result.lead.name || leadConversation?.customerName || null,
+                email: result.lead.email,
+                phone: result.lead.phone,
+                company: result.lead.company,
+                interests: result.lead.interests,
+                budget: result.lead.budget,
+                timeline: result.lead.timeline,
+                notes: result.lead.notes,
+                confidence: result.lead.confidence,
+                source: data.channelType,
+              },
+            });
+
+            await webhookService.dispatch(data.orgId, 'lead.created', lead);
+
+            await analyticsQueue.add('track-event', {
               orgId: data.orgId,
-              conversationId: data.conversationId,
-              name: result.lead.name,
-              email: result.lead.email,
-              phone: result.lead.phone,
-              company: result.lead.company,
-              interests: result.lead.interests,
-              budget: result.lead.budget,
-              timeline: result.lead.timeline,
-              notes: result.lead.notes,
-              confidence: result.lead.confidence,
-              source: data.channelType,
-            },
-          });
-
-          await webhookService.dispatch(data.orgId, 'lead.created', lead);
-
-          await analyticsQueue.add('track-event', {
-            orgId: data.orgId,
-            eventType: 'LEAD_EXTRACTED',
-            data: { conversationId: data.conversationId },
-          });
+              eventType: 'LEAD_EXTRACTED',
+              data: { conversationId: data.conversationId },
+            });
+          }
         } catch (leadErr) {
           logger.warn(
             { err: leadErr, conversationId: data.conversationId },
