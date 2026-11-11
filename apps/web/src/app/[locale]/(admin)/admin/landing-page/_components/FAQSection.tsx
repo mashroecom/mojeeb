@@ -1,6 +1,7 @@
 'use client';
 
 import { ExternalLink } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -211,12 +212,12 @@ export function FAQSection({
       </div>
       <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/30 p-4">
         <p className="text-sm text-blue-700 dark:text-blue-300">{t('faqManageNote')}</p>
-        <a
+        <Link
           href="/admin/faq"
           className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 mt-2"
         >
           {t('manageFaq')} <ExternalLink className="h-3 w-3" />
-        </a>
+        </Link>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>

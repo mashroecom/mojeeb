@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { SectionHeader, LangTabs } from './shared';
 import { inputCls } from './styles';
 
@@ -95,12 +96,12 @@ export function TestimonialsSection({
         <p className="text-sm text-blue-700 dark:text-blue-300">
           {t('testimonialsManageNote')}
         </p>
-        <a
+        <Link
           href="/admin/testimonials"
           className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 mt-2"
         >
           {t('manageTestimonials')} <ExternalLink className="h-3 w-3" />
-        </a>
+        </Link>
       </div>
       <div>
         <label className="text-sm font-medium">{t('maxDisplay')}</label>

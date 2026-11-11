@@ -107,9 +107,10 @@ export function MojeebHeatmapChart({
     );
   }
 
-  // Extract unique x and y labels
-  const xLabels = Array.from(new Set(data.map((d) => d.x))).sort();
-  const yLabels = Array.from(new Set(data.map((d) => d.y))).sort();
+  // Extract unique x and y labels, keeping the order in which the caller supplied
+  // them (weekdays / hours have a natural order that an alphabetical sort would break)
+  const xLabels = Array.from(new Set(data.map((d) => d.x)));
+  const yLabels = Array.from(new Set(data.map((d) => d.y)));
 
   // Create a map for quick lookup
   const dataMap = new Map<string, number>();

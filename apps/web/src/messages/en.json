@@ -219,7 +219,8 @@
     },
     "testimonials": {
       "title": "What Our Customers Say",
-      "subtitle": "Trusted by businesses across the region"
+      "subtitle": "Trusted by businesses across the region",
+      "ratingLabel": "Rated {rating} out of {max}"
     },
     "faq": {
       "title": "Frequently Asked Questions",
@@ -235,6 +236,9 @@
     "maintenance": {
       "title": "We'll Be Back Soon",
       "message": "We are currently performing scheduled maintenance."
+    },
+    "trustedBy": {
+      "title": "Trusted by growing businesses"
     }
   },
   "faq": {
@@ -658,7 +662,8 @@
       "tagNamePlaceholder": "Tag name...",
       "tagColor": "Color",
       "noTags": "No tags yet",
-      "noAvailableTags": "No available tags"
+      "noAvailableTags": "No available tags",
+      "selectAll": "Select all"
     },
     "messageTemplates": {
       "title": "Message Templates",
@@ -1179,7 +1184,8 @@
       "usageAlertsSubtitle": "Important notifications about your resource usage",
       "usageAlertWarning": "You've used {used} of {limit} ({percentage}%). Consider upgrading your plan.",
       "usageAlertAtLimit": "You've reached your limit ({used} of {limit}). Upgrade to continue using this feature.",
-      "usageAlertsOverageNote": "Note: Once you reach 100%, overage charges will apply to AI conversations."
+      "usageAlertsOverageNote": "Note: Once you reach 100%, overage charges will apply to AI conversations.",
+      "noInvoicesDesc": "Invoices will appear here after your first payment."
     },
     "team": {
       "title": "Team Management",
@@ -1331,7 +1337,8 @@
       },
       "orgIdSection": "Your Organization ID",
       "orgIdDescription": "Use this ID in all API requests that require an organization context.",
-      "copyOrgId": "Copy"
+      "copyOrgId": "Copy",
+      "noKeysDesc": "Create an API key to connect your own systems to Mojeeb."
     },
     "breadcrumb": {
       "dashboard": "Dashboard",
@@ -1892,7 +1899,8 @@
         "monitoringAndLogs": "Monitoring & Logs",
         "securityAndAccess": "Security & Access",
         "settings": "Settings"
-      }
+      },
+      "teamPerformance": "Team Performance"
     },
     "dashboard": {
       "title": "Admin Dashboard",
@@ -2367,7 +2375,19 @@
       "target_MessageTemplate": "Message Template",
       "target_PlanConfig": "Plan Config",
       "target_Webhook": "Webhook",
-      "target_Tag": "Tag"
+      "target_Tag": "Tag",
+      "action_FAQ_CREATED": "FAQ Created",
+      "action_FAQ_UPDATED": "FAQ Updated",
+      "action_FAQ_DELETED": "FAQ Deleted",
+      "action_FAQ_REORDERED": "FAQs Reordered",
+      "action_TESTIMONIAL_CREATED": "Testimonial Created",
+      "action_TESTIMONIAL_UPDATED": "Testimonial Updated",
+      "action_TESTIMONIAL_DELETED": "Testimonial Deleted",
+      "action_TESTIMONIAL_REORDERED": "Testimonials Reordered",
+      "action_LEGAL_CONTENT_UPDATED": "Legal Content Updated",
+      "target_FAQ": "FAQ",
+      "target_Testimonial": "Testimonial",
+      "target_LegalContent": "Legal Content"
     },
     "loginActivity": {
       "title": "Login Activity",
@@ -2761,7 +2781,9 @@
       "testEmailSent": "Test email sent successfully",
       "testEmailFailed": "Failed to send test email",
       "saved": "Notification settings saved",
-      "saveAll": "Save All Settings"
+      "saveAll": "Save All Settings",
+      "adminAlertEmailHint": "Leave empty to disable admin alerts",
+      "testEmailNeedsAddress": "Save an admin alert email first to send a test"
     },
     "landingPage": {
       "title": "Landing Page Editor",
@@ -3287,7 +3309,8 @@
       "csvSource": "Source",
       "csvConfidence": "Confidence",
       "csvAssignedTo": "Assigned To",
-      "csvCreated": "Created"
+      "csvCreated": "Created",
+      "noLeadsDescription": "Leads captured from conversations across all organizations will appear here."
     },
     "knowledgeBases": {
       "title": "Knowledge Bases Management",
@@ -3505,7 +3528,14 @@
       "from": "From:",
       "to": "To:",
       "noData": "No token usage data",
-      "noConsumerData": "No consumer data available"
+      "noConsumerData": "No consumer data available",
+      "subtitle": "Track AI token consumption and cost across organizations",
+      "requests": "Requests",
+      "share": "Share",
+      "deletedOrg": "Deleted organization",
+      "ofTotal": "{percent} of total usage",
+      "rangeError": "Invalid date range. The start date must be before the end date and the range cannot exceed one year.",
+      "resetRange": "Last 30 days"
     },
     "aiModels": {
       "title": "AI Models",
@@ -3517,7 +3547,12 @@
       "avgTokens": "Avg Tokens",
       "totalTokens": "Total Tokens",
       "noData": "No AI model data available",
-      "currencySymbol": "$"
+      "currencySymbol": "$",
+      "subtitle": "Compare usage, latency and estimated cost across AI models",
+      "latencyValue": "{value} ms",
+      "usageTrend": "Daily AI messages by model (last 30 days)",
+      "noUsage": "No AI messages in the last 30 days",
+      "modelPerformance": "Model performance"
     },
     "settings": {
       "title": "Admin Settings",
@@ -3529,7 +3564,8 @@
         "ai": "AI & Tokens",
         "notifications": "Notifications",
         "supportChat": "Support Chat",
-        "contentSeo": "Content & SEO"
+        "contentSeo": "Content & SEO",
+        "orgDefaults": "Org Defaults"
       },
       "saved": "Settings saved successfully",
       "failedSave": "Failed to save settings",
@@ -3571,7 +3607,8 @@
         "welcomeEnPlaceholder": "Hello! How can we help you?",
         "welcomeAr": "Welcome Message (Arabic)",
         "welcomeArPlaceholder": "مرحبا! كيف يمكننا مساعدتك؟",
-        "invalidIntegrationId": "This Integration ID is not valid or not connected to any agent"
+        "invalidIntegrationId": "This Integration ID is not valid or not connected to any agent",
+        "welcomeTitle": "Welcome Messages"
       },
       "passwordPolicy": "Password Policy",
       "minPasswordLength": "Minimum Password Length",
@@ -3610,7 +3647,31 @@
       "maintenanceMessagePlaceholder": "We are currently performing maintenance. Please check back later.",
       "livePreview": "Live Preview",
       "primaryButton": "Primary Button",
-      "secondaryButton": "Secondary Button"
+      "secondaryButton": "Secondary Button",
+      "subtitle": "Manage site, branding, security, notification and organization default settings",
+      "colors": "Brand Colors",
+      "saving": "Saving...",
+      "discard": "Discard",
+      "unsavedChanges": "You have unsaved changes",
+      "fixErrors": "Please fix the highlighted fields",
+      "validation": {
+        "required": "This field is required",
+        "url": "Enter a valid URL starting with http:// or https://",
+        "email": "Enter a valid email address",
+        "color": "Enter a hex color like #6366F1",
+        "invalid": "This value is not valid",
+        "number": "Enter a whole number between {min} and {max}"
+      },
+      "upload": {
+        "uploaded": "Image uploaded",
+        "failed": "Upload failed",
+        "tooLarge": "The file is larger than 2MB",
+        "invalidType": "Unsupported file type",
+        "remove": "Remove",
+        "removed": "Image removed",
+        "empty": "No image uploaded yet",
+        "uploading": "Uploading..."
+      }
     },
     "faq": {
       "title": "FAQ Management",
@@ -3634,7 +3695,12 @@
       "deactivate": "Deactivate",
       "activate": "Activate",
       "on": "ON",
-      "off": "OFF"
+      "off": "OFF",
+      "subtitle": "Questions and answers shown on the public site. Use the arrows to change the order.",
+      "deleteTitle": "Delete FAQ",
+      "noArabic": "No Arabic translation",
+      "activeHint": "Inactive questions are hidden from the public site.",
+      "failedLoad": "Failed to load FAQs"
     },
     "testimonials": {
       "title": "Testimonials Management",
@@ -3656,7 +3722,21 @@
       "created": "Testimonial created successfully",
       "updated": "Testimonial updated successfully",
       "deleted": "Testimonial deleted successfully",
-      "rolePlaceholder": "CEO"
+      "rolePlaceholder": "CEO",
+      "subtitle": "Customer quotes shown on the public site. Use the arrows to change the order.",
+      "deleteTitle": "Delete Testimonial",
+      "noArabic": "No Arabic translation",
+      "activeHint": "Inactive testimonials are hidden from the public site.",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "edit": "Edit",
+      "delete": "Delete",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "ratingValue": "{count} out of 5",
+      "failedLoad": "Failed to load testimonials",
+      "photoUrlHelp": "Optional. A link to a square image, starting with https.",
+      "photoUrlInvalid": "The photo link must start with http or https."
     },
     "legal": {
       "title": "Legal Content",
@@ -3666,7 +3746,16 @@
       "contentArabic": "Content (Arabic)",
       "lastUpdated": "Last updated",
       "saved": "Legal content saved successfully",
-      "markdownHint": "Supports Markdown formatting: # Heading, ## Subheading, **bold**, *italic*, - list items, [link](url)"
+      "markdownHint": "Supports Markdown formatting: # Heading, ## Subheading, **bold**, *italic*, - list items, [link](url)",
+      "subtitle": "Edit the privacy policy and terms of service shown on the public site, in both languages.",
+      "unsavedChanges": "Unsaved changes",
+      "notSavedYet": "Not published yet — the public page shows the built-in default text.",
+      "emptyFallbackHint": "If a language is left empty, the public page shows the built-in default text for that language.",
+      "viewPublicPage": "View public page",
+      "discard": "Discard changes",
+      "failedSave": "Failed to save legal content",
+      "failedLoad": "Failed to load legal content",
+      "characters": "{count} characters"
     },
     "status_ACTIVE": "Active",
     "status_PAST_DUE": "Past Due",
@@ -3789,7 +3878,38 @@
       "confirm": "Confirm Import",
       "importing": "Importing...",
       "exportSuccess": "Configuration exported successfully",
-      "importSuccess": "Configuration imported successfully"
+      "importSuccess": "Configuration imported successfully",
+      "secretsNote": "Secret values such as API keys and tokens are never included in an export, and an import leaves them untouched.",
+      "mergeNote": "Import merges by key: matching entries are overwritten and new ones are added. Nothing is deleted.",
+      "includedSections": "Included in the backup",
+      "section_systemConfigs": "System configuration",
+      "section_planConfigs": "Plans & pricing",
+      "section_featureFlags": "Feature flags",
+      "section_siteSettings": "Site settings",
+      "section_emailTemplates": "Email templates",
+      "section_landingPageContent": "Landing page content",
+      "section_faqs": "FAQ",
+      "section_testimonials": "Testimonials",
+      "section_legalContents": "Legal content",
+      "entries": "{count, plural, =0 {No entries} one {# entry} other {# entries}}",
+      "notIncluded": "Not included",
+      "selectedFile": "Selected file",
+      "exportedAt": "Exported on {date}",
+      "removeFile": "Remove file",
+      "confirmTitle": "Import this configuration?",
+      "invalidJson": "The selected file is not valid JSON.",
+      "invalidFile": "The selected file is not a Mojeeb configuration backup.",
+      "fileTooLarge": "The selected file is too large (maximum 10 MB).",
+      "exportError": "Failed to export the configuration",
+      "importError": "Failed to import the configuration",
+      "checksumError": "The backup file is corrupted or was modified after export.",
+      "validationError": "The backup file contains invalid data and was rejected.",
+      "lastImport": "Import results",
+      "created": "Created",
+      "updated": "Updated",
+      "skipped": "Skipped",
+      "section": "Section",
+      "secretsSkipped": "{count, plural, one {# secret value was} other {# secret values were}} left untouched."
     },
     "apiUsage": {
       "title": "API Usage",
@@ -3803,7 +3923,21 @@
       "keyCount": "Key Count",
       "noTopOrgs": "No organization data available",
       "recentActivity": "Recent Activity",
-      "noActivity": "No recent API activity"
+      "noActivity": "No recent API activity",
+      "expiredKeys": "Expired Keys",
+      "neverUsedKeys": "Never Used",
+      "usedLast24h": "Used in Last 24 Hours",
+      "usedLast7d": "Used in Last 7 Days",
+      "activeHint": "Active: usable keys with at least one request in the last {days} days. Inactive: usable keys with none.",
+      "usageNote": "Usage is derived from each key's last-used timestamp. Per-request call counts are not recorded.",
+      "usableKeys": "Usable Keys",
+      "lastUsed": "Last Used",
+      "keyName": "Key",
+      "status": "Status",
+      "status_active": "Active",
+      "status_expired": "Expired",
+      "status_revoked": "Revoked",
+      "deletedOrg": "Deleted organization"
     },
     "conversationQuality": {
       "title": "Conversation Quality",
@@ -3820,7 +3954,23 @@
       "messageCount": "Messages",
       "rating": "Rating",
       "reason": "Reason",
-      "noData": "No conversation quality data available"
+      "noData": "No conversation quality data available",
+      "totalConversations": "Total Conversations",
+      "minutesValue": "{value} min",
+      "hoursValue": "{value} h",
+      "daysValue": "{value} d",
+      "ratingValue": "{value} / 5",
+      "ratedConversations": "Based on {count} rated conversations",
+      "highQualityHint": "Rated 4–5 stars",
+      "mediumQualityHint": "Rated 3 stars",
+      "lowQualityHint": "Rated 1–2 stars",
+      "lowQualityListHint": "Conversations rated 2 stars or lower, newest first",
+      "customer": "Customer",
+      "organization": "Organization",
+      "duration": "Duration",
+      "status": "Status",
+      "date": "Date",
+      "noLowQuality": "No low-rated conversations"
     },
     "leadInsights": {
       "title": "Lead Insights",
@@ -3844,7 +3994,28 @@
       "company": "Company",
       "confidence": "Confidence",
       "budget": "Budget",
-      "status": "Status"
+      "status": "Status",
+      "highValueHint": "Confidence of {percent} or higher",
+      "convertedOfTotal": "{converted} of {total} leads converted",
+      "leadsOverTime": "New Leads (Last 30 Days)",
+      "newLeadsLast30Days": "New in Last 30 Days",
+      "leads": "Leads",
+      "organization": "Organization",
+      "source": "Source",
+      "source_WHATSAPP": "WhatsApp",
+      "source_MESSENGER": "Messenger",
+      "source_INSTAGRAM": "Instagram",
+      "source_WEBCHAT": "Webchat",
+      "source_MANUAL": "Manual entry",
+      "other": "Other",
+      "notSpecified": "Not specified",
+      "activities": "Lead Activities",
+      "totalActivities": "Total Activities",
+      "leadsWithActivity": "Leads with Activity",
+      "topActions": "Most Common Actions",
+      "noActivities": "No lead activity recorded yet",
+      "noTopLeads": "No leads found",
+      "unnamedLead": "Unnamed lead"
     },
     "messageAnalytics": {
       "title": "Message Analytics",
@@ -3858,7 +4029,18 @@
       "deliveryStatus_pending": "Pending",
       "deliveryStatus_failed": "Failed",
       "totalMessages": "Total Messages",
-      "trend": "Trend"
+      "trend": "Trend",
+      "subtitle": "Message volume, response latency, token usage and delivery across the platform",
+      "latencyValue": "{value} ms",
+      "avgTokensPerMessage": "Avg Tokens / Message",
+      "avgTokens": "Avg Tokens",
+      "messagesPerDay": "Messages per day (last 30 days)",
+      "latencyPerDay": "Avg latency per day",
+      "tokensPerDay": "Tokens per day",
+      "noTrend": "No messages in the last 30 days",
+      "byProvider": "AI messages by provider",
+      "noProviderData": "No AI-generated messages yet",
+      "deliveryStatus_read": "Read"
     },
     "securityAudit": {
       "title": "Security Audit",
@@ -3873,7 +4055,19 @@
       "ip": "IP Address",
       "userAgent": "User Agent",
       "timestamp": "Time",
-      "noData": "No security audit data available"
+      "noData": "No security audit data available",
+      "suspiciousHint": "More than 5 failed login attempts from the same IP in the last 24 hours",
+      "attemptsCount": "{count} failed attempts",
+      "last30Days": "Last 30 days",
+      "uniqueIPs": "Unique IPs",
+      "topFailedIPs": "Top IPs by failed logins",
+      "topFailedIPsHint": "Share of all failed attempts in the last 30 days",
+      "noFailedIPs": "No failed logins in the last 30 days",
+      "location": "Location",
+      "reason": "Reason",
+      "reason_INVALID_CREDENTIALS": "Invalid credentials",
+      "reason_GOOGLE_AUTH_FAILED": "Google sign-in failed",
+      "noFailures": "No failed login attempts recorded"
     },
     "sentimentAnalysis": {
       "title": "Sentiment Analysis",
@@ -3894,7 +4088,10 @@
       "emotion": "Emotion",
       "message": "Message",
       "date": "Date",
-      "noData": "No sentiment data available"
+      "noData": "No sentiment data available",
+      "subtitle": "Customer emotions detected in messages, and conversations that need attention",
+      "emotion_urgent": "Urgent",
+      "noNegative": "No negative conversations — nothing needs attention"
     },
     "webhookHealth": {
       "totalSent": "Total Sent",
@@ -3927,7 +4124,75 @@
     "orgResources": {
       "resources": "Resources"
     },
-    "userId": "User ID"
+    "userId": "User ID",
+    "action_FAQ_CREATED": "FAQ Created",
+    "action_FAQ_UPDATED": "FAQ Updated",
+    "action_FAQ_DELETED": "FAQ Deleted",
+    "action_FAQ_REORDERED": "FAQs Reordered",
+    "action_TESTIMONIAL_CREATED": "Testimonial Created",
+    "action_TESTIMONIAL_UPDATED": "Testimonial Updated",
+    "action_TESTIMONIAL_DELETED": "Testimonial Deleted",
+    "action_TESTIMONIAL_REORDERED": "Testimonials Reordered",
+    "action_LEGAL_CONTENT_UPDATED": "Legal Content Updated",
+    "orgDefaults": {
+      "title": "Organization Defaults",
+      "subtitle": "Defaults applied to newly created organizations",
+      "planAndTrial": "Plan & Trial",
+      "defaultPlan": "Default Plan",
+      "trialPeriodDays": "Trial Period (Days)",
+      "defaultTimezone": "Default Timezone",
+      "limits": "Default Limits",
+      "defaultMessagesLimit": "Monthly Messages",
+      "defaultAgentsLimit": "AI Agents",
+      "defaultChannelsLimit": "Channels",
+      "defaultTeamMembersLimit": "Team Members",
+      "defaultKbLimit": "Knowledge Bases",
+      "onboarding": "New Organization Setup",
+      "autoCreateWebchatChannel": "Auto-create Web Chat channel",
+      "autoCreateWebchatChannelDesc": "Create a Web Chat channel automatically for every new organization",
+      "requireEmailVerification": "Require email verification",
+      "requireEmailVerificationDesc": "New users must verify their email address before using the platform",
+      "saved": "Organization defaults saved",
+      "saveAll": "Save All Settings"
+    },
+    "action_SYSTEM_CONFIG_EXPORTED": "System Config Exported",
+    "action_SYSTEM_CONFIG_IMPORTED": "System Config Imported",
+    "messageDelivery": {
+      "title": "Message Delivery",
+      "subtitle": "Outbound message delivery over the last {days} days",
+      "totalOutbound": "Outbound Messages",
+      "deliveryRate": "Delivery Rate",
+      "readRate": "Read Rate",
+      "failureRate": "Failure Rate",
+      "avgDeliveryTime": "Avg Delivery Time",
+      "secondsValue": "{value}s",
+      "byStatus": "By Status",
+      "status_QUEUED": "Queued",
+      "status_SENT": "Sent",
+      "status_DELIVERED": "Delivered",
+      "status_READ": "Read",
+      "status_FAILED": "Failed",
+      "byChannel": "By Channel",
+      "channel": "Channel",
+      "channel_WHATSAPP": "WhatsApp",
+      "channel_MESSENGER": "Messenger",
+      "channel_INSTAGRAM": "Instagram",
+      "channel_WEBCHAT": "Webchat",
+      "total": "Total",
+      "delivered": "Delivered",
+      "read": "Read",
+      "failed": "Failed",
+      "succeeded": "Succeeded",
+      "dailyTrend": "Daily Volume (Last {days} Days)",
+      "topFailureReasons": "Top Failure Reasons",
+      "noFailures": "No failed messages in this period",
+      "unknownReason": "No reason recorded",
+      "recentFailures": "Recent Failures",
+      "reason": "Reason",
+      "organization": "Organization",
+      "time": "Time",
+      "noData": "No outbound messages in this period"
+    }
   },
   "mobile": {
     "nav": {
@@ -3949,7 +4214,8 @@
       "filters": "Filters",
       "noConversations": "No conversations found",
       "noConversationsHint": "Try adjusting your filters",
-      "endOfList": "You've reached the end"
+      "endOfList": "You've reached the end",
+      "unknownCustomer": "Unknown customer"
     },
     "quickReply": {
       "title": "Quick Reply",
@@ -3978,6 +4244,22 @@
       "subscribeFailed": "Failed to enable push notifications",
       "notSupported": "Push notifications are not supported in this browser",
       "permissionDenied": "Notification permission was denied"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "period": "Last 30 days",
+      "refresh": "Refresh",
+      "vsPrevious": "{change} vs previous 30 days",
+      "byStatus": "Conversations by status",
+      "noConversations": "No conversations yet",
+      "metrics": {
+        "totalConversations": "New conversations",
+        "totalMessages": "Messages",
+        "activeConversations": "Active now",
+        "resolvedConversations": "Resolved",
+        "avgMessagesPerConversation": "Avg. messages per conversation",
+        "conversationsToday": "Conversations today"
+      }
     }
   }
 }

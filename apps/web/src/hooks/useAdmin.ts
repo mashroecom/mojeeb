@@ -85,6 +85,7 @@ export const adminKeys = {
   unreadCount: ['admin', 'unread-count'] as const,
   securitySettings: ['admin', 'security-settings'] as const,
   notificationSettings: ['admin', 'notification-settings'] as const,
+  orgDefaults: ['admin', 'org-defaults'] as const,
   landingPage: ['admin', 'landing-page'] as const,
   dlq: (params?: Record<string, unknown>) => ['admin', 'dlq', params] as const,
   // New admin entities
@@ -1657,6 +1658,30 @@ export function useTestNotificationEmail() {
   });
 }
 
+// ===== Organization Defaults =====
+export function useAdminOrgDefaults() {
+  return useQuery({
+    queryKey: adminKeys.orgDefaults,
+    queryFn: async () => {
+      const { data } = await api.get('/admin/org-defaults');
+      return data.data;
+    },
+  });
+}
+
+export function useUpdateOrgDefaults() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (settings: Record<string, string>) => {
+      const { data } = await api.patch('/admin/org-defaults', { settings });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.orgDefaults });
+    },
+  });
+}
+
 // ===== Landing Page CMS =====
 export function useAdminLandingPage() {
   return useQuery({
@@ -2382,7 +2407,7 @@ export function useAdminMessageTemplateAnalytics() {
   return useQuery({
     queryKey: adminKeys.messageTemplateAnalytics,
     queryFn: async () => {
-      const { data } = await api.get('/admin/message-templates/analytics');
+      const { data } = await api.get('/admin/message-templates-admin/analytics');
       return data.data;
     },
   });
@@ -2549,7 +2574,7 @@ export function useExportConfig() {
   return useMutation({
     mutationFn: async () => {
       const { data } = await api.get('/admin/system-backup/export');
-      return data;
+      return data.data;
     },
   });
 }
@@ -2728,7 +2753,7 @@ export function useAdminTokenSummary(params?: { startDate?: string; endDate?: st
       if (params?.startDate) sp.set('startDate', params.startDate);
       if (params?.endDate) sp.set('endDate', params.endDate);
       const query = sp.toString();
-      const { data } = await api.get(`/admin/analytics/token-summary${query ? `?${query}` : ''}`);
+      const { data } = await api.get(`/admin/token-usage/summary${query ? `?${query}` : ''}`);
       return data.data;
     },
   });
@@ -2749,7 +2774,7 @@ export function useAdminTokenByOrg(params?: {
       if (params?.page) sp.set('page', String(params.page));
       if (params?.limit) sp.set('limit', String(params.limit));
       const query = sp.toString();
-      const { data } = await api.get(`/admin/analytics/token-by-org${query ? `?${query}` : ''}`);
+      const { data } = await api.get(`/admin/token-usage/by-org${query ? `?${query}` : ''}`);
       return data.data;
     },
   });
@@ -2763,7 +2788,7 @@ export function useAdminTokenByModel(params?: { startDate?: string; endDate?: st
       if (params?.startDate) sp.set('startDate', params.startDate);
       if (params?.endDate) sp.set('endDate', params.endDate);
       const query = sp.toString();
-      const { data } = await api.get(`/admin/analytics/token-by-model${query ? `?${query}` : ''}`);
+      const { data } = await api.get(`/admin/token-usage/by-model${query ? `?${query}` : ''}`);
       return data.data;
     },
   });
@@ -2777,7 +2802,7 @@ export function useAdminTokenByDay(params?: { startDate?: string; endDate?: stri
       if (params?.startDate) sp.set('startDate', params.startDate);
       if (params?.endDate) sp.set('endDate', params.endDate);
       const query = sp.toString();
-      const { data } = await api.get(`/admin/analytics/token-by-day${query ? `?${query}` : ''}`);
+      const { data } = await api.get(`/admin/token-usage/by-day${query ? `?${query}` : ''}`);
       return data.data;
     },
   });
@@ -2796,7 +2821,7 @@ export function useAdminTopConsumers(params?: {
       if (params?.endDate) sp.set('endDate', params.endDate);
       if (params?.limit) sp.set('limit', String(params.limit));
       const query = sp.toString();
-      const { data } = await api.get(`/admin/analytics/top-consumers${query ? `?${query}` : ''}`);
+      const { data } = await api.get(`/admin/token-usage/top-consumers${query ? `?${query}` : ''}`);
       return data.data;
     },
   });

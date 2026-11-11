@@ -219,7 +219,8 @@
     },
     "testimonials": {
       "title": "ماذا يقول عملاؤنا",
-      "subtitle": "موثوق به من قبل الشركات في المنطقة"
+      "subtitle": "موثوق به من قبل الشركات في المنطقة",
+      "ratingLabel": "التقييم {rating} من {max}"
     },
     "faq": {
       "title": "الأسئلة الشائعة",
@@ -235,6 +236,9 @@
     "maintenance": {
       "title": "سنعود قريباً",
       "message": "نقوم حالياً بإجراء صيانة مجدولة."
+    },
+    "trustedBy": {
+      "title": "موثوق به من شركات متنامية"
     }
   },
   "faq": {
@@ -607,7 +611,8 @@
       "tagNamePlaceholder": "اسم العلامة...",
       "tagColor": "اللون",
       "noTags": "لا توجد علامات بعد",
-      "noAvailableTags": "لا توجد علامات متاحة"
+      "noAvailableTags": "لا توجد علامات متاحة",
+      "selectAll": "تحديد الكل"
     },
     "messageTemplates": {
       "title": "قوالب الرسائل",
@@ -970,7 +975,19 @@
       "export": "تصدير",
       "csatTrends": "اتجاهات رضا العملاء",
       "responseTimeTrends": "اتجاهات وقت الاستجابة",
-      "comingSoon": "قريباً"
+      "comingSoon": "قريباً",
+      "noAgentsDescription": "ستظهر مقاييس أداء الوكلاء هنا عندما يبدأ الوكلاء بمعالجة المحادثات.",
+      "noChannelsDescription": "سيظهر توزيع القنوات هنا عندما تبدأ المحادثات بالوصول.",
+      "noFunnelDataDescription": "ستظهر مقاييس مسار العملاء المحتملين هنا عندما تبدأ بالتقاط العملاء المحتملين.",
+      "noConversationMetricsDescription": "ستظهر اتجاهات المحادثات هنا عندما يتوفر لديك سجل محادثات.",
+      "noLeadDataDescription": "سيظهر توزيع حالات العملاء المحتملين هنا عندما تبدأ بالتقاط العملاء المحتملين.",
+      "noCsatDataDescription": "ستظهر اتجاهات رضا العملاء هنا عندما تجمع التقييمات.",
+      "noResponseTimeDataDescription": "ستظهر اتجاهات زمن الاستجابة هنا عندما تصبح المحادثات نشطة.",
+      "errorLoadingStats": "تعذّر تحميل الإحصائيات",
+      "errorLoadingStatsDescription": "لم نتمكن من تحميل إحصائيات التحليلات. يرجى المحاولة مرة أخرى.",
+      "errorLoadingData": "تعذّر تحميل البيانات",
+      "errorLoadingDataDescription": "لم نتمكن من تحميل هذه البيانات. يرجى المحاولة مرة أخرى.",
+      "retry": "حاول مرة أخرى"
     },
     "leads": {
       "title": "العملاء المحتملين",
@@ -1116,7 +1133,8 @@
       "usageAlertsSubtitle": "إشعارات هامة حول استخدامك للموارد",
       "usageAlertWarning": "لقد استخدمت {used} من {limit} ({percentage}%). فكر في ترقية خطتك.",
       "usageAlertAtLimit": "لقد وصلت إلى الحد الأقصى ({used} من {limit}). قم بالترقية لمواصلة استخدام هذه الميزة.",
-      "usageAlertsOverageNote": "ملاحظة: بمجرد الوصول إلى 100٪، ستُطبق رسوم إضافية على محادثات الذكاء الاصطناعي."
+      "usageAlertsOverageNote": "ملاحظة: بمجرد الوصول إلى 100٪، ستُطبق رسوم إضافية على محادثات الذكاء الاصطناعي.",
+      "noInvoicesDesc": "ستظهر الفواتير هنا بعد أول عملية دفع."
     },
     "customers": {
       "title": "العملاء",
@@ -1319,7 +1337,8 @@
       },
       "orgIdSection": "معرف منظمتك",
       "orgIdDescription": "استخدم هذا المعرف في جميع طلبات API التي تتطلب سياق منظمة.",
-      "copyOrgId": "نسخ"
+      "copyOrgId": "نسخ",
+      "noKeysDesc": "أنشئ مفتاح API لربط أنظمتك بمنصة مجيب."
     },
     "breadcrumb": {
       "dashboard": "لوحة التحكم",
@@ -1880,7 +1899,8 @@
         "monitoringAndLogs": "المراقبة والسجلات",
         "securityAndAccess": "الأمان والوصول",
         "settings": "الإعدادات"
-      }
+      },
+      "teamPerformance": "أداء الفريق"
     },
     "dashboard": {
       "title": "لوحة تحكم المدير",
@@ -2355,7 +2375,19 @@
       "target_MessageTemplate": "قالب رسالة",
       "target_PlanConfig": "إعدادات الخطة",
       "target_Webhook": "ويب هوك",
-      "target_Tag": "وسم"
+      "target_Tag": "وسم",
+      "action_FAQ_CREATED": "إنشاء سؤال شائع",
+      "action_FAQ_UPDATED": "تحديث سؤال شائع",
+      "action_FAQ_DELETED": "حذف سؤال شائع",
+      "action_FAQ_REORDERED": "إعادة ترتيب الأسئلة الشائعة",
+      "action_TESTIMONIAL_CREATED": "إنشاء رأي عميل",
+      "action_TESTIMONIAL_UPDATED": "تحديث رأي عميل",
+      "action_TESTIMONIAL_DELETED": "حذف رأي عميل",
+      "action_TESTIMONIAL_REORDERED": "إعادة ترتيب آراء العملاء",
+      "action_LEGAL_CONTENT_UPDATED": "تحديث المحتوى القانوني",
+      "target_FAQ": "سؤال شائع",
+      "target_Testimonial": "رأي عميل",
+      "target_LegalContent": "محتوى قانوني"
     },
     "loginActivity": {
       "title": "سجل الدخول",
@@ -2749,7 +2781,9 @@
       "testEmailSent": "تم إرسال البريد التجريبي بنجاح",
       "testEmailFailed": "فشل إرسال البريد التجريبي",
       "saved": "تم حفظ إعدادات الإشعارات",
-      "saveAll": "حفظ جميع الإعدادات"
+      "saveAll": "حفظ جميع الإعدادات",
+      "adminAlertEmailHint": "اتركه فارغًا لتعطيل تنبيهات المشرف",
+      "testEmailNeedsAddress": "احفظ بريد تنبيهات المشرف أولًا لإرسال بريد تجريبي"
     },
     "landingPage": {
       "title": "محرر الصفحة الرئيسية",
@@ -3193,7 +3227,10 @@
       "csvMessages": "الرسائل",
       "csvStatus": "الحالة",
       "csvEmotion": "المشاعر",
-      "csvLastMessage": "آخر رسالة"
+      "csvLastMessage": "آخر رسالة",
+      "noConversationsFiltered": "لا توجد محادثات تطابق عوامل التصفية. جرّب تعديل البحث أو معايير التصفية.",
+      "noConversationsYet": "لا توجد محادثات بعد. ستظهر المحادثات هنا عندما يبدأ العملاء بالمراسلة.",
+      "errorLoading": "تعذّر تحميل المحادثات. يرجى المحاولة مرة أخرى."
     },
     "agents": {
       "title": "إدارة الوكلاء",
@@ -3272,7 +3309,8 @@
       "csvSource": "المصدر",
       "csvConfidence": "الثقة",
       "csvAssignedTo": "مُسند إلى",
-      "csvCreated": "تاريخ الإنشاء"
+      "csvCreated": "تاريخ الإنشاء",
+      "noLeadsDescription": "سيظهر هنا العملاء المحتملون الذين تم التقاطهم من المحادثات في جميع المؤسسات."
     },
     "knowledgeBases": {
       "title": "إدارة قواعد المعرفة",
@@ -3490,7 +3528,14 @@
       "from": "من:",
       "to": "إلى:",
       "noData": "لا توجد بيانات استخدام",
-      "noConsumerData": "لا توجد بيانات مستهلكين"
+      "noConsumerData": "لا توجد بيانات مستهلكين",
+      "subtitle": "تتبّع استهلاك توكنات الذكاء الاصطناعي وتكلفتها عبر المنظمات",
+      "requests": "الطلبات",
+      "share": "الحصة",
+      "deletedOrg": "منظمة محذوفة",
+      "ofTotal": "{percent} من إجمالي الاستخدام",
+      "rangeError": "نطاق التاريخ غير صالح. يجب أن يسبق تاريخ البداية تاريخ النهاية وألا يتجاوز النطاق سنة واحدة.",
+      "resetRange": "آخر 30 يوماً"
     },
     "aiModels": {
       "title": "نماذج الذكاء الاصطناعي",
@@ -3502,7 +3547,12 @@
       "avgTokens": "متوسط التوكنات",
       "totalTokens": "إجمالي التوكنات",
       "noData": "لا توجد بيانات نماذج الذكاء الاصطناعي",
-      "currencySymbol": "$"
+      "currencySymbol": "$",
+      "subtitle": "قارن الاستخدام وزمن الاستجابة والتكلفة المقدّرة بين نماذج الذكاء الاصطناعي",
+      "latencyValue": "{value} مللي ثانية",
+      "usageTrend": "رسائل الذكاء الاصطناعي اليومية حسب النموذج (آخر 30 يومًا)",
+      "noUsage": "لا توجد رسائل ذكاء اصطناعي خلال آخر 30 يومًا",
+      "modelPerformance": "أداء النماذج"
     },
     "settings": {
       "title": "إعدادات الإدارة",
@@ -3514,7 +3564,8 @@
         "ai": "الذكاء الاصطناعي والتوكنات",
         "notifications": "الإشعارات",
         "supportChat": "دردشة الدعم",
-        "contentSeo": "المحتوى وSEO"
+        "contentSeo": "المحتوى وSEO",
+        "orgDefaults": "افتراضيات المؤسسات"
       },
       "saved": "تم حفظ الإعدادات بنجاح",
       "failedSave": "فشل في حفظ الإعدادات",
@@ -3556,7 +3607,8 @@
         "welcomeEnPlaceholder": "Hello! How can we help you?",
         "welcomeAr": "رسالة الترحيب (العربية)",
         "welcomeArPlaceholder": "مرحبا! كيف يمكننا مساعدتك؟",
-        "invalidIntegrationId": "معرّف التكامل غير صالح أو غير مرتبط بأي وكيل"
+        "invalidIntegrationId": "معرّف التكامل غير صالح أو غير مرتبط بأي وكيل",
+        "welcomeTitle": "رسائل الترحيب"
       },
       "passwordPolicy": "سياسة كلمة المرور",
       "minPasswordLength": "الحد الأدنى لطول كلمة المرور",
@@ -3595,7 +3647,31 @@
       "maintenanceMessagePlaceholder": "نقوم حالياً بأعمال صيانة. يرجى المحاولة لاحقاً.",
       "livePreview": "معاينة مباشرة",
       "primaryButton": "زر رئيسي",
-      "secondaryButton": "زر ثانوي"
+      "secondaryButton": "زر ثانوي",
+      "subtitle": "إدارة إعدادات الموقع والعلامة التجارية والأمان والإشعارات والقيم الافتراضية للمؤسسات",
+      "colors": "ألوان العلامة التجارية",
+      "saving": "جاري الحفظ...",
+      "discard": "تجاهل التغييرات",
+      "unsavedChanges": "لديك تغييرات غير محفوظة",
+      "fixErrors": "يرجى تصحيح الحقول المحددة",
+      "validation": {
+        "required": "هذا الحقل مطلوب",
+        "url": "أدخل رابطًا صحيحًا يبدأ بـ http:// أو https://",
+        "email": "أدخل بريدًا إلكترونيًا صحيحًا",
+        "color": "أدخل لونًا بصيغة سداسية عشرية مثل #6366F1",
+        "invalid": "هذه القيمة غير صالحة",
+        "number": "أدخل عددًا صحيحًا بين {min} و{max}"
+      },
+      "upload": {
+        "uploaded": "تم رفع الصورة",
+        "failed": "فشل رفع الصورة",
+        "tooLarge": "حجم الملف أكبر من 2 ميجابايت",
+        "invalidType": "نوع الملف غير مدعوم",
+        "remove": "إزالة",
+        "removed": "تمت إزالة الصورة",
+        "empty": "لم يتم رفع صورة بعد",
+        "uploading": "جاري الرفع..."
+      }
     },
     "faq": {
       "title": "إدارة الأسئلة الشائعة",
@@ -3619,7 +3695,12 @@
       "deactivate": "إلغاء التفعيل",
       "activate": "تفعيل",
       "on": "مفعّل",
-      "off": "معطّل"
+      "off": "معطّل",
+      "subtitle": "الأسئلة والأجوبة المعروضة في الموقع العام. استخدم الأسهم لتغيير الترتيب.",
+      "deleteTitle": "حذف السؤال",
+      "noArabic": "لا توجد ترجمة عربية",
+      "activeHint": "الأسئلة غير النشطة لا تظهر في الموقع العام.",
+      "failedLoad": "فشل في تحميل الأسئلة الشائعة"
     },
     "testimonials": {
       "title": "إدارة آراء العملاء",
@@ -3641,7 +3722,21 @@
       "created": "تم إنشاء رأي العميل بنجاح",
       "updated": "تم تحديث رأي العميل بنجاح",
       "deleted": "تم حذف رأي العميل بنجاح",
-      "rolePlaceholder": "المدير التنفيذي"
+      "rolePlaceholder": "المدير التنفيذي",
+      "subtitle": "آراء العملاء المعروضة في الموقع العام. استخدم الأسهم لتغيير الترتيب.",
+      "deleteTitle": "حذف الرأي",
+      "noArabic": "لا توجد ترجمة عربية",
+      "activeHint": "الآراء غير النشطة لا تظهر في الموقع العام.",
+      "moveUp": "نقل لأعلى",
+      "moveDown": "نقل لأسفل",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "activate": "تفعيل",
+      "deactivate": "إلغاء التفعيل",
+      "ratingValue": "{count} من 5",
+      "failedLoad": "فشل في تحميل آراء العملاء",
+      "photoUrlHelp": "اختياري. رابط لصورة مربعة يبدأ بـ https.",
+      "photoUrlInvalid": "يجب أن يبدأ رابط الصورة بـ http أو https."
     },
     "legal": {
       "title": "المحتوى القانوني",
@@ -3651,7 +3746,16 @@
       "contentArabic": "المحتوى (العربية)",
       "lastUpdated": "آخر تحديث",
       "saved": "تم حفظ المحتوى القانوني بنجاح",
-      "markdownHint": "يدعم تنسيق Markdown: # عنوان، ## عنوان فرعي، **غامق**، *مائل*، - عناصر قائمة، [رابط](url)"
+      "markdownHint": "يدعم تنسيق Markdown: # عنوان، ## عنوان فرعي، **غامق**، *مائل*، - عناصر قائمة، [رابط](url)",
+      "subtitle": "تعديل سياسة الخصوصية وشروط الاستخدام المعروضة في الموقع العام باللغتين.",
+      "unsavedChanges": "تغييرات غير محفوظة",
+      "notSavedYet": "لم يُنشر بعد — تعرض الصفحة العامة النص الافتراضي.",
+      "emptyFallbackHint": "إذا تُركت إحدى اللغتين فارغة، تعرض الصفحة العامة النص الافتراضي لتلك اللغة.",
+      "viewPublicPage": "عرض الصفحة العامة",
+      "discard": "تجاهل التغييرات",
+      "failedSave": "فشل في حفظ المحتوى القانوني",
+      "failedLoad": "فشل في تحميل المحتوى القانوني",
+      "characters": "{count} حرف"
     },
     "common": {
       "page": "صفحة",
@@ -3774,7 +3878,38 @@
       "confirm": "تأكيد الاستيراد",
       "importing": "جاري الاستيراد...",
       "exportSuccess": "تم تصدير الإعدادات بنجاح",
-      "importSuccess": "تم استيراد الإعدادات بنجاح"
+      "importSuccess": "تم استيراد الإعدادات بنجاح",
+      "secretsNote": "القيم السرية مثل مفاتيح API والرموز لا تُضمَّن أبداً في التصدير، ولا يغيّرها الاستيراد.",
+      "mergeNote": "الاستيراد يدمج حسب المفتاح: تُستبدل العناصر المطابقة وتُضاف العناصر الجديدة، ولا يُحذف أي شيء.",
+      "includedSections": "محتويات النسخة الاحتياطية",
+      "section_systemConfigs": "إعدادات النظام",
+      "section_planConfigs": "الخطط والأسعار",
+      "section_featureFlags": "أعلام المميزات",
+      "section_siteSettings": "إعدادات الموقع",
+      "section_emailTemplates": "قوالب البريد",
+      "section_landingPageContent": "محتوى الصفحة الرئيسية",
+      "section_faqs": "الأسئلة الشائعة",
+      "section_testimonials": "آراء العملاء",
+      "section_legalContents": "المحتوى القانوني",
+      "entries": "{count, plural, =0 {لا توجد عناصر} one {عنصر واحد} two {عنصران} few {# عناصر} many {# عنصراً} other {# عنصر}}",
+      "notIncluded": "غير مضمَّن",
+      "selectedFile": "الملف المحدد",
+      "exportedAt": "تم التصدير في {date}",
+      "removeFile": "إزالة الملف",
+      "confirmTitle": "استيراد هذه الإعدادات؟",
+      "invalidJson": "الملف المحدد ليس ملف JSON صالحاً.",
+      "invalidFile": "الملف المحدد ليس نسخة احتياطية لإعدادات مجيب.",
+      "fileTooLarge": "الملف المحدد كبير جداً (الحد الأقصى 10 ميجابايت).",
+      "exportError": "فشل تصدير الإعدادات",
+      "importError": "فشل استيراد الإعدادات",
+      "checksumError": "ملف النسخة الاحتياطية تالف أو تم تعديله بعد التصدير.",
+      "validationError": "ملف النسخة الاحتياطية يحتوي على بيانات غير صالحة وتم رفضه.",
+      "lastImport": "نتائج الاستيراد",
+      "created": "تم الإنشاء",
+      "updated": "تم التحديث",
+      "skipped": "تم التخطي",
+      "section": "القسم",
+      "secretsSkipped": "{count, plural, one {قيمة سرية واحدة لم تتغير} two {قيمتان سريتان لم تتغيرا} few {# قيم سرية لم تتغير} many {# قيمة سرية لم تتغير} other {# قيمة سرية لم تتغير}}."
     },
     "apiUsage": {
       "title": "استخدام API",
@@ -3788,7 +3923,21 @@
       "keyCount": "عدد المفاتيح",
       "noTopOrgs": "لا توجد بيانات مؤسسات",
       "recentActivity": "النشاط الأخير",
-      "noActivity": "لا يوجد نشاط حديث لـ API"
+      "noActivity": "لا يوجد نشاط حديث لـ API",
+      "expiredKeys": "المفاتيح المنتهية",
+      "neverUsedKeys": "لم تُستخدم قط",
+      "usedLast24h": "استُخدمت خلال آخر 24 ساعة",
+      "usedLast7d": "استُخدمت خلال آخر 7 أيام",
+      "activeHint": "النشطة: مفاتيح صالحة سُجّل لها طلب واحد على الأقل خلال آخر {days} يوماً. غير النشطة: مفاتيح صالحة بلا أي طلب في هذه الفترة.",
+      "usageNote": "يُحتسب الاستخدام من توقيت آخر استخدام لكل مفتاح، ولا يُسجَّل عدد الطلبات لكل مفتاح.",
+      "usableKeys": "المفاتيح الصالحة",
+      "lastUsed": "آخر استخدام",
+      "keyName": "المفتاح",
+      "status": "الحالة",
+      "status_active": "نشط",
+      "status_expired": "منتهي",
+      "status_revoked": "ملغى",
+      "deletedOrg": "مؤسسة محذوفة"
     },
     "conversationQuality": {
       "title": "جودة المحادثات",
@@ -3805,7 +3954,23 @@
       "messageCount": "الرسائل",
       "rating": "التقييم",
       "reason": "السبب",
-      "noData": "لا توجد بيانات جودة محادثات"
+      "noData": "لا توجد بيانات جودة محادثات",
+      "totalConversations": "إجمالي المحادثات",
+      "minutesValue": "{value} دقيقة",
+      "hoursValue": "{value} ساعة",
+      "daysValue": "{value} يوم",
+      "ratingValue": "{value} / 5",
+      "ratedConversations": "استنادًا إلى {count} محادثة مُقيَّمة",
+      "highQualityHint": "تقييم 4–5 نجوم",
+      "mediumQualityHint": "تقييم 3 نجوم",
+      "lowQualityHint": "تقييم نجمة أو نجمتين",
+      "lowQualityListHint": "المحادثات التي حصلت على نجمتين أو أقل، الأحدث أولًا",
+      "customer": "العميل",
+      "organization": "المؤسسة",
+      "duration": "المدة",
+      "status": "الحالة",
+      "date": "التاريخ",
+      "noLowQuality": "لا توجد محادثات بتقييم منخفض"
     },
     "leadInsights": {
       "title": "رؤى العملاء المحتملين",
@@ -3829,7 +3994,28 @@
       "company": "الشركة",
       "confidence": "الثقة",
       "budget": "الميزانية",
-      "status": "الحالة"
+      "status": "الحالة",
+      "highValueHint": "درجة ثقة {percent} أو أعلى",
+      "convertedOfTotal": "تم تحويل {converted} من أصل {total} عميل محتمل",
+      "leadsOverTime": "العملاء المحتملون الجدد (آخر 30 يوماً)",
+      "newLeadsLast30Days": "جدد خلال آخر 30 يوماً",
+      "leads": "العملاء المحتملون",
+      "organization": "المؤسسة",
+      "source": "المصدر",
+      "source_WHATSAPP": "واتساب",
+      "source_MESSENGER": "ماسنجر",
+      "source_INSTAGRAM": "انستجرام",
+      "source_WEBCHAT": "محادثة الويب",
+      "source_MANUAL": "إدخال يدوي",
+      "other": "أخرى",
+      "notSpecified": "غير محدد",
+      "activities": "أنشطة العملاء المحتملين",
+      "totalActivities": "إجمالي الأنشطة",
+      "leadsWithActivity": "عملاء محتملون لديهم نشاط",
+      "topActions": "الإجراءات الأكثر شيوعاً",
+      "noActivities": "لم يُسجَّل أي نشاط للعملاء المحتملين بعد",
+      "noTopLeads": "لا يوجد عملاء محتملون",
+      "unnamedLead": "عميل محتمل بلا اسم"
     },
     "messageAnalytics": {
       "title": "تحليلات الرسائل",
@@ -3843,7 +4029,18 @@
       "deliveryStatus_pending": "قيد الانتظار",
       "deliveryStatus_failed": "فشل",
       "totalMessages": "إجمالي الرسائل",
-      "trend": "الاتجاه"
+      "trend": "الاتجاه",
+      "subtitle": "حجم الرسائل وزمن الاستجابة واستهلاك التوكنات وحالة التوصيل عبر المنصة",
+      "latencyValue": "{value} مللي ثانية",
+      "avgTokensPerMessage": "متوسط التوكنات / رسالة",
+      "avgTokens": "متوسط التوكنات",
+      "messagesPerDay": "الرسائل يوميًا (آخر 30 يومًا)",
+      "latencyPerDay": "متوسط التأخير يوميًا",
+      "tokensPerDay": "التوكنات يوميًا",
+      "noTrend": "لا توجد رسائل خلال آخر 30 يومًا",
+      "byProvider": "رسائل الذكاء الاصطناعي حسب المزود",
+      "noProviderData": "لا توجد رسائل مولّدة بالذكاء الاصطناعي بعد",
+      "deliveryStatus_read": "تمت القراءة"
     },
     "securityAudit": {
       "title": "تدقيق الأمان",
@@ -3858,7 +4055,19 @@
       "ip": "عنوان IP",
       "userAgent": "وكيل المستخدم",
       "timestamp": "الوقت",
-      "noData": "لا توجد بيانات تدقيق أمان"
+      "noData": "لا توجد بيانات تدقيق أمان",
+      "suspiciousHint": "أكثر من 5 محاولات دخول فاشلة من عنوان IP نفسه خلال آخر 24 ساعة",
+      "attemptsCount": "{count} محاولة فاشلة",
+      "last30Days": "آخر 30 يومًا",
+      "uniqueIPs": "عناوين IP الفريدة",
+      "topFailedIPs": "أكثر عناوين IP في محاولات الدخول الفاشلة",
+      "topFailedIPsHint": "النسبة من إجمالي المحاولات الفاشلة خلال آخر 30 يومًا",
+      "noFailedIPs": "لا توجد محاولات دخول فاشلة خلال آخر 30 يومًا",
+      "location": "الموقع",
+      "reason": "السبب",
+      "reason_INVALID_CREDENTIALS": "بيانات دخول غير صحيحة",
+      "reason_GOOGLE_AUTH_FAILED": "فشل تسجيل الدخول عبر Google",
+      "noFailures": "لا توجد محاولات دخول فاشلة مسجّلة"
     },
     "sentimentAnalysis": {
       "title": "تحليل المشاعر",
@@ -3879,7 +4088,10 @@
       "emotion": "المشاعر",
       "message": "الرسالة",
       "date": "التاريخ",
-      "noData": "لا توجد بيانات مشاعر"
+      "noData": "لا توجد بيانات مشاعر",
+      "subtitle": "مشاعر العملاء المكتشفة في الرسائل، والمحادثات التي تحتاج إلى متابعة",
+      "emotion_urgent": "عاجل",
+      "noNegative": "لا توجد محادثات سلبية — لا شيء يحتاج إلى متابعة"
     },
     "webhookHealth": {
       "totalSent": "إجمالي المُرسل",
@@ -3912,7 +4124,75 @@
     "orgResources": {
       "resources": "الموارد"
     },
-    "userId": "معرف المستخدم"
+    "userId": "معرف المستخدم",
+    "action_FAQ_CREATED": "إنشاء سؤال شائع",
+    "action_FAQ_UPDATED": "تحديث سؤال شائع",
+    "action_FAQ_DELETED": "حذف سؤال شائع",
+    "action_FAQ_REORDERED": "إعادة ترتيب الأسئلة الشائعة",
+    "action_TESTIMONIAL_CREATED": "إنشاء رأي عميل",
+    "action_TESTIMONIAL_UPDATED": "تحديث رأي عميل",
+    "action_TESTIMONIAL_DELETED": "حذف رأي عميل",
+    "action_TESTIMONIAL_REORDERED": "إعادة ترتيب آراء العملاء",
+    "action_LEGAL_CONTENT_UPDATED": "تحديث المحتوى القانوني",
+    "orgDefaults": {
+      "title": "افتراضيات المؤسسات",
+      "subtitle": "القيم الافتراضية المطبّقة على المؤسسات الجديدة",
+      "planAndTrial": "الخطة والفترة التجريبية",
+      "defaultPlan": "الخطة الافتراضية",
+      "trialPeriodDays": "الفترة التجريبية (أيام)",
+      "defaultTimezone": "المنطقة الزمنية الافتراضية",
+      "limits": "الحدود الافتراضية",
+      "defaultMessagesLimit": "الرسائل الشهرية",
+      "defaultAgentsLimit": "وكلاء الذكاء الاصطناعي",
+      "defaultChannelsLimit": "القنوات",
+      "defaultTeamMembersLimit": "أعضاء الفريق",
+      "defaultKbLimit": "قواعد المعرفة",
+      "onboarding": "إعداد المؤسسات الجديدة",
+      "autoCreateWebchatChannel": "إنشاء قناة دردشة الويب تلقائيًا",
+      "autoCreateWebchatChannelDesc": "إنشاء قناة دردشة ويب تلقائيًا لكل مؤسسة جديدة",
+      "requireEmailVerification": "طلب تأكيد البريد الإلكتروني",
+      "requireEmailVerificationDesc": "يجب على المستخدمين الجدد تأكيد بريدهم الإلكتروني قبل استخدام المنصة",
+      "saved": "تم حفظ افتراضيات المؤسسات",
+      "saveAll": "حفظ جميع الإعدادات"
+    },
+    "action_SYSTEM_CONFIG_EXPORTED": "تصدير إعدادات النظام",
+    "action_SYSTEM_CONFIG_IMPORTED": "استيراد إعدادات النظام",
+    "messageDelivery": {
+      "title": "تسليم الرسائل",
+      "subtitle": "تسليم الرسائل الصادرة خلال آخر {days} يوماً",
+      "totalOutbound": "الرسائل الصادرة",
+      "deliveryRate": "معدل التسليم",
+      "readRate": "معدل القراءة",
+      "failureRate": "معدل الفشل",
+      "avgDeliveryTime": "متوسط زمن التسليم",
+      "secondsValue": "{value} ث",
+      "byStatus": "حسب الحالة",
+      "status_QUEUED": "في الانتظار",
+      "status_SENT": "تم الإرسال",
+      "status_DELIVERED": "تم التسليم",
+      "status_READ": "تمت القراءة",
+      "status_FAILED": "فشل",
+      "byChannel": "حسب القناة",
+      "channel": "القناة",
+      "channel_WHATSAPP": "واتساب",
+      "channel_MESSENGER": "ماسنجر",
+      "channel_INSTAGRAM": "انستجرام",
+      "channel_WEBCHAT": "محادثة الويب",
+      "total": "الإجمالي",
+      "delivered": "تم التسليم",
+      "read": "تمت القراءة",
+      "failed": "فشل",
+      "succeeded": "ناجحة",
+      "dailyTrend": "الحجم اليومي (آخر {days} يوماً)",
+      "topFailureReasons": "أبرز أسباب الفشل",
+      "noFailures": "لا توجد رسائل فاشلة في هذه الفترة",
+      "unknownReason": "لم يُسجَّل سبب",
+      "recentFailures": "أحدث حالات الفشل",
+      "reason": "السبب",
+      "organization": "المؤسسة",
+      "time": "الوقت",
+      "noData": "لا توجد رسائل صادرة في هذه الفترة"
+    }
   },
   "mobile": {
     "nav": {
@@ -3934,7 +4214,8 @@
       "filters": "التصفية",
       "noConversations": "لا توجد محادثات",
       "noConversationsHint": "حاول تعديل خيارات التصفية",
-      "endOfList": "لقد وصلت إلى النهاية"
+      "endOfList": "لقد وصلت إلى النهاية",
+      "unknownCustomer": "عميل غير معروف"
     },
     "quickReply": {
       "title": "الرد السريع",
@@ -3963,6 +4244,22 @@
       "subscribeFailed": "فشل تفعيل الإشعارات الفورية",
       "notSupported": "الإشعارات الفورية غير مدعومة في هذا المتصفح",
       "permissionDenied": "تم رفض إذن الإشعارات"
+    },
+    "analytics": {
+      "title": "التحليلات",
+      "period": "آخر 30 يوماً",
+      "refresh": "تحديث",
+      "vsPrevious": "{change} مقارنة بالـ 30 يوماً السابقة",
+      "byStatus": "المحادثات حسب الحالة",
+      "noConversations": "لا توجد محادثات بعد",
+      "metrics": {
+        "totalConversations": "محادثات جديدة",
+        "totalMessages": "الرسائل",
+        "activeConversations": "نشطة الآن",
+        "resolvedConversations": "تم حلها",
+        "avgMessagesPerConversation": "متوسط الرسائل لكل محادثة",
+        "conversationsToday": "محادثات اليوم"
+      }
     }
   }
 }

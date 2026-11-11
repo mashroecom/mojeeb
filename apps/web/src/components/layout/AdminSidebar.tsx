@@ -109,6 +109,11 @@ const allItems: Record<string, SidebarItem> = {
   adminInvoices: { key: 'adminInvoices', href: '/admin/invoices', icon: Receipt },
   adminWebhooks: { key: 'adminWebhooks', href: '/admin/webhooks', icon: Webhook },
   adminTags: { key: 'adminTags', href: '/admin/tags', icon: Tag },
+  messageTemplates: {
+    key: 'messageTemplates',
+    href: '/admin/message-templates',
+    icon: FileText,
+  },
   // Analytics & Insights
   analytics: { key: 'analytics', href: '/admin/analytics', icon: BarChart3 },
   tokenUsage: { key: 'tokenUsage', href: '/admin/token-usage', icon: Zap },
@@ -122,6 +127,7 @@ const allItems: Record<string, SidebarItem> = {
   messageAnalytics: { key: 'messageAnalytics', href: '/admin/message-analytics', icon: BarChart3 },
   leadInsights: { key: 'leadInsights', href: '/admin/lead-insights', icon: TrendingUp },
   apiUsage: { key: 'apiUsage', href: '/admin/api-usage', icon: Key },
+  teamPerformance: { key: 'teamPerformance', href: '/admin/team-performance', icon: Users },
   reports: { key: 'reports', href: '/admin/reports', icon: FileText },
   // Content & Communications
   announcements: { key: 'announcements', href: '/admin/announcements', icon: Megaphone },
@@ -175,6 +181,42 @@ const sidebarGroups: SidebarGroup[] = [
     collapsible: true,
     items: [allItems.users, allItems.organizations, allItems.subscriptions, allItems.plans],
   },
+  // Platform data across all organizations
+  {
+    key: 'platformData',
+    icon: Database,
+    collapsible: true,
+    items: [
+      allItems.adminAgents,
+      allItems.adminConversations,
+      allItems.adminLeads,
+      allItems.adminKnowledgeBases,
+      allItems.messageTemplates,
+      allItems.adminTags,
+      allItems.adminApiKeys,
+      allItems.adminWebhooks,
+      allItems.adminInvoices,
+      allItems.files,
+    ],
+  },
+  // Analytics & Insights
+  {
+    key: 'analyticsAndInsights',
+    icon: BarChart3,
+    collapsible: true,
+    items: [
+      allItems.analytics,
+      allItems.tokenUsage,
+      allItems.apiUsage,
+      allItems.messageAnalytics,
+      allItems.csatAnalytics,
+      allItems.sentimentAnalysis,
+      allItems.conversationQuality,
+      allItems.leadInsights,
+      allItems.teamPerformance,
+      allItems.reports,
+    ],
+  },
   // Content & Marketing
   {
     key: 'contentAndComms',
@@ -211,11 +253,11 @@ const sidebarGroups: SidebarGroup[] = [
     collapsible: true,
     items: [
       allItems.system,
+      allItems.activityMonitor,
       allItems.errorLogs,
       allItems.webhookLogs,
       allItems.auditLog,
       allItems.loginActivity,
-      allItems.tokenUsage,
       allItems.dlq,
       allItems.systemBackup,
     ],
@@ -225,7 +267,7 @@ const sidebarGroups: SidebarGroup[] = [
     key: 'securityAndAccess',
     icon: Shield,
     collapsible: true,
-    items: [allItems.blockedIPs, allItems.sessions, allItems.featureFlags],
+    items: [allItems.securityAudit, allItems.blockedIPs, allItems.sessions, allItems.featureFlags],
   },
 ];
 

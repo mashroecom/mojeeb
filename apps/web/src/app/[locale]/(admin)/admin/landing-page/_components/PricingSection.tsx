@@ -1,4 +1,5 @@
 import { ExternalLink } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -216,12 +217,12 @@ export function PricingSection({
       </div>
       <div className="rounded-lg border bg-blue-50 dark:bg-blue-950/30 p-4">
         <p className="text-sm text-blue-700 dark:text-blue-300">{t('pricingPlansNote')}</p>
-        <a
+        <Link
           href="/admin/plans"
           className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 mt-2"
         >
           {t('managePlans')} <ExternalLink className="h-3 w-3" />
-        </a>
+        </Link>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex items-center justify-between rounded-lg border bg-muted/20 p-4">

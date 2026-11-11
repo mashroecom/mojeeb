@@ -35,12 +35,6 @@ export function AdminConfirmDialog({
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Generate unique IDs for ARIA attributes
-  const titleId = useRef(`admin-confirm-dialog-title-${Math.random().toString(36).substr(2, 9)}`);
-  const descriptionId = useRef(
-    `admin-confirm-dialog-description-${Math.random().toString(36).substr(2, 9)}`,
-  );
-
   // Auto-focus the appropriate button when dialog opens
   useEffect(() => {
     if (open) {
@@ -62,9 +56,6 @@ export function AdminConfirmDialog({
           )}
         />
         <DialogPrimitive.Content
-          aria-modal="true"
-          aria-labelledby={titleId.current}
-          aria-describedby={descriptionId.current}
           className={cn(
             'fixed inset-x-4 top-[50%] z-[100] mx-auto w-full max-w-md translate-y-[-50%] rounded-xl border bg-card p-6 shadow-xl',
             'focus:outline-none',
@@ -78,7 +69,7 @@ export function AdminConfirmDialog({
               'text-muted-foreground hover:text-foreground hover:bg-muted',
               'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
             )}
-            aria-label="Close"
+            aria-label={t('cancel')}
           >
             <X className="h-4 w-4" />
           </DialogPrimitive.Close>
@@ -90,13 +81,10 @@ export function AdminConfirmDialog({
               </div>
             )}
             <div>
-              <DialogPrimitive.Title id={titleId.current} className="text-lg font-semibold">
+              <DialogPrimitive.Title className="text-lg font-semibold">
                 {title}
               </DialogPrimitive.Title>
-              <DialogPrimitive.Description
-                id={descriptionId.current}
-                className="text-sm text-muted-foreground mt-1"
-              >
+              <DialogPrimitive.Description className="text-sm text-muted-foreground mt-1">
                 {message}
               </DialogPrimitive.Description>
             </div>

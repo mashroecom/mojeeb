@@ -115,7 +115,7 @@ export function useAdminMessageTemplateAnalytics() {
   return useQuery({
     queryKey: adminTemplateKeys.messageTemplateAnalytics,
     queryFn: async () => {
-      const { data } = await api.get('/admin/message-templates/analytics');
+      const { data } = await api.get('/admin/message-templates-admin/analytics');
       return data.data;
     },
   });

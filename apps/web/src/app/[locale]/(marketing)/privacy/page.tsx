@@ -26,13 +26,15 @@ export default function PrivacyPage() {
 
   const content = data ? (isAr ? data.contentAr : data.contentEn) : null;
   const hasContent = content && content.trim().length > 0;
-  const lastUpdated = data?.updatedAt
-    ? new Date(data.updatedAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : null;
+  // Only show the stored date when the stored text is what is being displayed
+  const lastUpdated =
+    hasContent && data?.updatedAt
+      ? new Date(data.updatedAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+      : null;
 
   // Fallback: hardcoded sections from translations (used when no dynamic content in DB)
   const sections = [

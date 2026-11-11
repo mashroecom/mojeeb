@@ -32,3 +32,8 @@ missingAr.forEach(function(k) { console.log('  - ' + k); });
 console.log('Missing in en.json (' + missingEn.length + '):');
 missingEn.forEach(function(k) { console.log('  - ' + k); });
 console.log('Total EN:', enKeys.length, '| Total AR:', arKeys.length);
+
+// Non-zero exit so CI fails when the two locales drift apart
+if (missingAr.length > 0 || missingEn.length > 0) {
+  process.exit(1);
+}

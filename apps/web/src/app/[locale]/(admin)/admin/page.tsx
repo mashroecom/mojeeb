@@ -310,6 +310,7 @@ function SparklineDataProvider({
 
 export default function AdminDashboardPage() {
   const t = useTranslations('admin');
+  const tHeatmap = useTranslations('heatmap');
   const locale = useLocale();
 
   // Data hooks
@@ -322,6 +323,22 @@ export default function AdminDashboardPage() {
   const { data: topUsers, isLoading: loadingTopUsers } = useAdminTopUsersByUsage();
   const { data: heatmapData, isLoading: loadingHeatmap } = useAdminPlatformHeatmap();
   const { data: recentEvents, isLoading: loadingEvents } = useAdminRecentEvents();
+
+  // The API returns sparse { dayOfWeek (0 = Sunday), hour, count } rows; the heatmap
+  // wants a full, ordered day x hour grid.
+  const heatmapGrid = useMemo(() => {
+    const rows = (heatmapData ?? []) as Array<{ dayOfWeek: number; hour: number; count: number }>;
+    if (rows.length === 0) return [];
+    const counts = new Map(rows.map((r) => [`${r.dayOfWeek}-${r.hour}`, r.count]));
+    const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+    return dayKeys.flatMap((dayKey, dayOfWeek) =>
+      Array.from({ length: 24 }, (_, hour) => ({
+        x: hour,
+        y: tHeatmap(`days.${dayKey}`),
+        value: counts.get(`${dayOfWeek}-${hour}`) ?? 0,
+      })),
+    );
+  }, [heatmapData, tHeatmap]);
 
   // Normalize overview stats into structured array
   const stats = useMemo(() => {
@@ -639,7 +656,12 @@ export default function AdminDashboardPage() {
           {loadingHeatmap ? (
             <div className="h-[260px] w-full rounded bg-muted animate-pulse" />
           ) : (
-            <MojeebHeatmapChart data={heatmapData ?? []} height={260} />
+            <MojeebHeatmapChart
+              data={heatmapGrid}
+              height={260}
+              cellSize={24}
+              emptyMessage={t('dashboard.noData')}
+            />
           )}
         </div>
       </div>

@@ -78,6 +78,9 @@ jobs:
       - name: Check Formatting
         run: pnpm exec prettier --check "apps/api/src/**/*.ts" "packages/*/src/**/*.ts"
 
+      - name: Check Translations (en/ar parity)
+        run: node scripts/check-i18n.js
+
       - name: Type Check API
         run: pnpm --filter api exec tsc --noEmit
 
