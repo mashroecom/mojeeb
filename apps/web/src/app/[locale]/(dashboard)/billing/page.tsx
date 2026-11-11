@@ -44,7 +44,12 @@ export default function BillingPage() {
   const locale = useLocale();
   const isAr = locale === 'ar';
   const { data: subscription, isLoading, isError, refetch } = useSubscription();
-  const { data: invoices, isLoading: loadingInvoices, isError: invoicesError, refetch: refetchInvoices } = useInvoices();
+  const {
+    data: invoices,
+    isLoading: loadingInvoices,
+    isError: invoicesError,
+    refetch: refetchInvoices,
+  } = useInvoices();
   const { data: planConfigs } = usePlans();
   const { data: paymentGateways, isLoading: loadingGateways } = usePaymentGateways();
   const orgId = useAuthStore((s) => s.organization?.id);
@@ -386,6 +391,21 @@ export default function BillingPage() {
             {/* Usage Alerts */}
             <UsageAlertsSection subscription={subscription} />
 
+            {/* No payment gateway is set up on this installation: say so instead of
+                leaving upgrade buttons that silently do nothing */}
+            {paymentGateways && paymentGateways.length === 0 && (
+              <div
+                role="status"
+                className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
+              >
+                <CreditCard className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">{t('paymentsUnavailableTitle')}</p>
+                  <p className="mt-0.5">{t('paymentsUnavailableDescription')}</p>
+                </div>
+              </div>
+            )}
+
             {/* Payment Gateway Selector */}
             {paymentGateways && paymentGateways.length > 0 && (
               <div className="rounded-xl border bg-card p-6 shadow-sm mb-6">
@@ -635,7 +655,7 @@ export default function BillingPage() {
                       ) : isUpgrade ? (
                         <button
                           onClick={() => handleUpgrade(plan.key)}
-                          disabled={isLoading || checkoutLoading !== null}
+                          disabled={isLoading || checkoutLoading !== null || !selectedGateway}
                           className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                         >
                           {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -761,7 +781,10 @@ export default function BillingPage() {
                 <EmptyState
                   icon={FileText}
                   title={t('noInvoices') || 'No invoices yet'}
-                  description={t('noInvoicesDesc') || 'Your invoice history will appear here once you have billing activity.'}
+                  description={
+                    t('noInvoicesDesc') ||
+                    'Your invoice history will appear here once you have billing activity.'
+                  }
                 />
               )}
             </div>

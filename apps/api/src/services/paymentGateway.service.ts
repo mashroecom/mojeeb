@@ -2,6 +2,7 @@ import { prisma } from '../config/database';
 import { logger } from '../config/logger';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { PaymentGateway } from '@mojeeb/shared-types';
+import { configService } from './config.service';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -127,6 +128,34 @@ export class PaymentGatewayService {
   }
 
   /**
+   * Gateways that have their credentials set, read the same way the providers
+   * read them (Admin -> Config first, environment as fallback).
+   */
+  async getConfiguredGateways(): Promise<Set<PaymentGateway>> {
+    const has = async (key: string): Promise<boolean> => {
+      try {
+        return Boolean((await configService.get(key))?.trim());
+      } catch {
+        return Boolean(process.env[key]?.trim());
+      }
+    };
+
+    const [stripe, kashierKey, kashierMerchant, paypalId, paypalSecret] = await Promise.all([
+      has('STRIPE_SECRET_KEY'),
+      has('KASHIER_API_KEY'),
+      has('KASHIER_MERCHANT_ID'),
+      has('PAYPAL_CLIENT_ID'),
+      has('PAYPAL_CLIENT_SECRET'),
+    ]);
+
+    const configured = new Set<PaymentGateway>();
+    if (kashierKey && kashierMerchant) configured.add(PaymentGateway.KASHIER);
+    if (stripe) configured.add(PaymentGateway.STRIPE);
+    if (paypalId && paypalSecret) configured.add(PaymentGateway.PAYPAL);
+    return configured;
+  }
+
+  /**
    * Get list of available payment gateways for an organization.
    *
    * @param orgId - Organization ID
@@ -146,7 +175,12 @@ export class PaymentGatewayService {
     const defaultGateway = this.getGatewayForTimezone(org.timezone);
     const isMenaRegion = MENA_TIMEZONES.includes(org.timezone);
 
-    return [
+    // Only offer gateways whose credentials are actually set (Admin -> Config or env).
+    // Offering an unconfigured gateway sends the customer into a checkout that can
+    // only fail.
+    const configured = await this.getConfiguredGateways();
+
+    const all: AvailableGateway[] = [
       {
         gateway: PaymentGateway.KASHIER,
         name: 'Kashier',
@@ -168,14 +202,18 @@ export class PaymentGatewayService {
         supportedCurrencies: ['USD', 'EUR', 'GBP'],
         recommended: false,
       },
-    ].sort((a, b) => {
-      // Sort recommended gateways first, then by gateway name
-      if (a.gateway === defaultGateway) return -1;
-      if (b.gateway === defaultGateway) return 1;
-      if (a.recommended && !b.recommended) return -1;
-      if (!a.recommended && b.recommended) return 1;
-      return a.name.localeCompare(b.name);
-    });
+    ];
+
+    return all
+      .filter((g) => configured.has(g.gateway))
+      .sort((a, b) => {
+        // Sort recommended gateways first, then by gateway name
+        if (a.gateway === defaultGateway) return -1;
+        if (b.gateway === defaultGateway) return 1;
+        if (a.recommended && !b.recommended) return -1;
+        if (!a.recommended && b.recommended) return 1;
+        return a.name.localeCompare(b.name);
+      });
   }
 
   /**

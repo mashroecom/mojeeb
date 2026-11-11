@@ -102,7 +102,25 @@ Write-Host "       Redis is ready (port 6379)" -ForegroundColor Green
 # -------------------------------------------
 Write-Host "[4/5] Running database migrations..." -ForegroundColor Yellow
 Set-Location "D:\mojeeb"
-npx prisma db push --skip-generate --accept-data-loss 2>$null | Out-Null
+# Migrations are the source of truth. `prisma db push` must not be used here: it drops
+# the pgvector index on kb_chunks.embedding, which schema.prisma cannot describe.
+$migrateOutput = (npx prisma migrate deploy 2>&1 | Out-String)
+if ($LASTEXITCODE -ne 0 -and $migrateOutput -match "P3005") {
+    # Database created earlier with `db push`: it already has the tables but no
+    # migration history. Record the baseline as applied once, restore the vector
+    # index that db push removed, then apply anything newer.
+    Write-Host "       Existing database without migration history - baselining..." -ForegroundColor Yellow
+    # One last sync so the tables match the baseline exactly before it is recorded
+    npx prisma db push --skip-generate --accept-data-loss 2>$null | Out-Null
+    npx prisma migrate resolve --applied 20260311000000_baseline 2>$null | Out-Null
+    docker exec postgres psql -U postgres -d mojeeb -c 'CREATE INDEX IF NOT EXISTS "kb_chunks_embedding_idx" ON "kb_chunks" USING hnsw ("embedding" vector_cosine_ops) WITH (m = 16, ef_construction = 64);' 2>$null | Out-Null
+    $migrateOutput = (npx prisma migrate deploy 2>&1 | Out-String)
+}
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "       ERROR: database migration failed:" -ForegroundColor Red
+    Write-Host $migrateOutput
+    exit 1
+}
 npx prisma generate 2>$null | Out-Null
 Write-Host "       Database is up to date" -ForegroundColor Green
 
