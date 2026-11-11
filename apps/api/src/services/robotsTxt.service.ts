@@ -16,35 +16,31 @@ export class RobotsTxtService {
     try {
       const url = new URL(baseUrl);
       const robotsUrl = `${url.protocol}//${url.host}/robots.txt`;
-      const cacheKey = `robots:${url.host}`;
+      const cacheKey = `robots:txt:${url.host}`;
 
-      // Try to get from cache first
-      return await cache.getOrSet(cacheKey, this.CACHE_TTL, async () => {
+      // Cache the robots.txt *text*, not the parser: the cache serialises values
+      // as JSON, and a parser object comes back from it without its methods.
+      const robotsTxt = await cache.getOrSet<string>(cacheKey, this.CACHE_TTL, async () => {
         try {
           const response = await safeFetch(robotsUrl, {
             headers: { 'User-Agent': this.USER_AGENT },
             signal: AbortSignal.timeout(10000),
           });
 
-          let robotsTxt = '';
-          if (response.ok) {
-            robotsTxt = await response.text();
-          } else if (response.status === 404) {
-            // No robots.txt means everything is allowed
-            robotsTxt = '';
-          } else {
+          if (response.ok) return await response.text();
+          if (response.status !== 404) {
             logger.warn({ robotsUrl, status: response.status }, 'Failed to fetch robots.txt');
-            robotsTxt = '';
           }
-
-          // Parse robots.txt using robots-parser
-          return robotsParser(robotsUrl, robotsTxt);
+          // No (readable) robots.txt means everything is allowed
+          return '';
         } catch (err) {
           logger.error({ err, robotsUrl }, 'Error fetching robots.txt');
-          // On error, return permissive parser (allows everything)
-          return robotsParser(robotsUrl, '');
+          // On error, be permissive (allows everything)
+          return '';
         }
       });
+
+      return robotsParser(robotsUrl, typeof robotsTxt === 'string' ? robotsTxt : '');
     } catch (err) {
       logger.error({ err, baseUrl }, 'Invalid URL for robots.txt fetch');
       throw new BadRequestError('Invalid URL provided');
