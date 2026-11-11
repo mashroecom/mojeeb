@@ -31,11 +31,15 @@ import {
   ShieldCheck,
   Webhook,
   FileText,
+  Contact,
+  Target,
 } from 'lucide-react';
 
 const mainItems = [
   { key: 'overview', href: '/dashboard', icon: LayoutDashboard },
   { key: 'conversations', href: '/conversations', icon: MessageSquare },
+  { key: 'customers', href: '/customers', icon: Contact },
+  { key: 'leads', href: '/leads', icon: Target },
   { key: 'agents', href: '/agents', icon: Bot },
   { key: 'knowledgeBase', href: '/knowledge-base', icon: BookOpen },
   { key: 'messageTemplates', href: '/message-templates', icon: FileText },

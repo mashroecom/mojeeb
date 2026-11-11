@@ -13,6 +13,7 @@ import { Link } from '@/i18n/navigation';
 const PAGE_TITLE_KEYS: Record<string, string> = {
   dashboard: 'overview',
   conversations: 'conversations',
+  customers: 'customers',
   agents: 'agents',
   'knowledge-base': 'knowledgeBase',
   'message-templates': 'messageTemplates',
@@ -59,6 +60,9 @@ export function DashboardTopbar() {
   // Build breadcrumb items
   const breadcrumbs = pageSegments
     .map((segment, index) => {
+      // The customer profile segment is an opaque key, not something to show; the page
+      // renders its own breadcrumb with the customer's name.
+      if (pageSegments[0] === 'customers' && index > 0) return { label: '', href: '' };
       const translationKey = PAGE_TITLE_KEYS[segment];
       const label = translationKey
         ? (() => {
