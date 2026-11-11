@@ -37,8 +37,14 @@ export function MaintenanceNotice({ cms }: MaintenanceNoticeProps) {
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <Wrench className="h-8 w-8" aria-hidden="true" />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
-        <p className="mt-4 whitespace-pre-line text-lg leading-relaxed text-muted-foreground">
+        {/* dir="auto": the text may be in the other language (single-language Site Settings message) */}
+        <h1 dir="auto" className="text-3xl font-bold tracking-tight sm:text-4xl">
+          {title}
+        </h1>
+        <p
+          dir="auto"
+          className="mt-4 whitespace-pre-line text-lg leading-relaxed text-muted-foreground"
+        >
           {message}
         </p>
         <Link

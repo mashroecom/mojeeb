@@ -1,6 +1,7 @@
 'use client';
 
 import { Plus, X, Upload } from 'lucide-react';
+import { resolveCmsImageUrl } from '@/components/landing/cms';
 import { SectionHeader } from './shared';
 import { inputCls } from './styles';
 import type { TrustedByLogo } from './types';
@@ -132,7 +133,7 @@ export function TrustedBySection({
               </button>
             </div>
             {logo.image ? (
-              <img src={logo.image} alt={logo.name} className="h-12 object-contain" />
+              <img src={resolveCmsImageUrl(logo.image) ?? undefined} alt={logo.name} className="h-12 object-contain" />
             ) : (
               <label className="flex items-center justify-center h-12 rounded-lg border-2 border-dashed cursor-pointer hover:bg-muted/50 transition-colors">
                 <Upload className="h-4 w-4 text-muted-foreground" />

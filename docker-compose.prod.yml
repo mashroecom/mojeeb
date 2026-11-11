@@ -35,6 +35,10 @@ services:
       - DATABASE_URL=postgresql://mojeeb:${POSTGRES_PASSWORD}@postgres:5432/mojeeb?schema=public
       - READ_REPLICA_URL=postgresql://mojeeb:${POSTGRES_PASSWORD}@postgres-replica:5432/mojeeb?schema=public
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+    # Uploaded files must outlive the container (they were lost on every redeploy)
+    volumes:
+      - api_uploads:/app/apps/api/uploads
+      - api_public_uploads:/app/apps/api/public/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,6 +73,10 @@ services:
       - DATABASE_URL=postgresql://mojeeb:${POSTGRES_PASSWORD}@postgres:5432/mojeeb?schema=public
       - READ_REPLICA_URL=postgresql://mojeeb:${POSTGRES_PASSWORD}@postgres-replica:5432/mojeeb?schema=public
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+    # Uploaded files must outlive the container (they were lost on every redeploy)
+    volumes:
+      - api_uploads:/app/apps/api/uploads
+      - api_public_uploads:/app/apps/api/public/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -124,6 +132,8 @@ services:
     restart: unless-stopped
 
 volumes:
+  api_uploads:
+  api_public_uploads:
   postgres_data:
   postgres_replica_data:
   redis_data:

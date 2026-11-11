@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { Upload, X } from 'lucide-react';
+import { resolveCmsImageUrl } from '@/components/landing/cms';
 
 // ---------------------------------------------------------------------------
 // Toggle Switch
@@ -296,7 +297,7 @@ export function HeroSection({
             {heroImage && (
               <div className="relative">
                 <img
-                  src={heroImage}
+                  src={resolveCmsImageUrl(heroImage) ?? undefined}
                   alt=""
                   className="h-16 w-16 rounded-lg object-cover border"
                 />

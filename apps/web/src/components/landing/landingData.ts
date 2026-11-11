@@ -13,6 +13,8 @@ import type {
   PublicTestimonial,
 } from '@/hooks/useLandingPage';
 
+import { PUBLIC_CONTENT_TAG } from '@/lib/publicContent';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
 /** Same window as the locale layout's CMS fetch and the API's Cache-Control (5 min). */
@@ -29,7 +31,7 @@ export interface LandingPageData {
 async function fetchPublic<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${API_BASE}${path}`, {
-      next: { revalidate: REVALIDATE_SECONDS },
+      next: { revalidate: REVALIDATE_SECONDS, tags: [PUBLIC_CONTENT_TAG] },
     });
     if (!res.ok) return null;
     const json = (await res.json()) as { data?: T };

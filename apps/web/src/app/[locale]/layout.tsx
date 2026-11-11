@@ -8,6 +8,7 @@ import { getDirection } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { fontEnglish, fontArabic } from '@/styles/fonts';
 import { Providers } from '@/components/providers/Providers';
+import { PUBLIC_CONTENT_TAG } from '@/lib/publicContent';
 import '../globals.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://mojeeb.app';
@@ -41,7 +42,7 @@ interface LandingCmsSeo {
 async function getSiteSettings(): Promise<SiteSettings | null> {
   try {
     const res = await fetch(`${API_BASE}/public/site-settings`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 300, tags: [PUBLIC_CONTENT_TAG] },
     });
     if (!res.ok) return null;
     const json = await res.json();
@@ -54,7 +55,7 @@ async function getSiteSettings(): Promise<SiteSettings | null> {
 async function getLandingCms(): Promise<LandingCmsSeo | null> {
   try {
     const res = await fetch(`${API_BASE}/public/landing-page`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 300, tags: [PUBLIC_CONTENT_TAG] },
     });
     if (!res.ok) return null;
     const json = await res.json();

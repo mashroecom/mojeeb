@@ -28,6 +28,7 @@
 
 import axios from 'axios';
 import { clearAuthCookie, setAuthCookie } from './auth-cookies';
+import { affectsPublicContent, revalidatePublicContent } from './publicContent';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -141,7 +142,17 @@ api.interceptors.request.use((config) => {
  * @returns Promise resolving to response or rejecting with error
  */
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Saving CMS-managed content in the admin panel should show up on the public
+    // site right away, so drop the web server's cached copy (fire-and-forget).
+    if (
+      typeof window !== 'undefined' &&
+      affectsPublicContent(response.config.method, response.config.url)
+    ) {
+      void revalidatePublicContent(localStorage.getItem('accessToken'));
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
     const errorData = error.response?.data as ApiErrorResponse | undefined;

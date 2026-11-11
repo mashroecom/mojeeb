@@ -62,5 +62,6 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/(ar|en)/:path*', '/((?!api/|_next|_vercel|.*\\..*).*)'],
+  // web-api/ holds this app's own route handlers (no locale prefix, no auth gate here)
+  matcher: ['/', '/(ar|en)/:path*', '/((?!api/|web-api/|_next|_vercel|.*\\..*).*)'],
 };

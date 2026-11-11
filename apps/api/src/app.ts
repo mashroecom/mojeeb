@@ -154,6 +154,29 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));
 
+// Publicly readable uploads (landing-page images uploaded in the admin panel), stored
+// under apps/api/public/uploads. Note: this is NOT apps/api/uploads, which holds
+// access-controlled conversation files served through /api/v1/files.
+app.use(
+  '/uploads',
+  express.static(path.resolve(__dirname, '../public/uploads'), {
+    index: false,
+    dotfiles: 'ignore',
+    maxAge: '30d',
+    setHeaders: (res) => {
+      // SVG uploads are allowed: never let one run script if opened as a document
+      res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+      );
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    },
+  }),
+  (_req, res) => {
+    res.status(404).json({ success: false, error: 'File not found', code: 'NOT_FOUND' });
+  },
+);
+
 // Request ID tracing
 app.use(requestId);
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Upload, X } from 'lucide-react';
+import { resolveCmsImageUrl } from '@/components/landing/cms';
 import { SectionHeader, LangTabs } from './shared';
 import { inputCls, textareaCls } from './styles';
 
@@ -120,7 +121,7 @@ export function SEOSection({
             {seoOgImage && (
               <div className="relative">
                 <img
-                  src={seoOgImage}
+                  src={resolveCmsImageUrl(seoOgImage) ?? undefined}
                   alt=""
                   className="h-16 w-24 rounded-lg object-cover border"
                 />
@@ -153,7 +154,7 @@ export function SEOSection({
             {seoFavicon && (
               <div className="relative">
                 <img
-                  src={seoFavicon}
+                  src={resolveCmsImageUrl(seoFavicon) ?? undefined}
                   alt=""
                   className="h-8 w-8 rounded object-cover border"
                 />
