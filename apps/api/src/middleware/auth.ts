@@ -4,6 +4,8 @@ import { config } from '../config';
 import { prisma } from '../config/database';
 import { tokenBlacklistService } from '../services/tokenBlacklist.service';
 import { UnauthorizedError, ForbiddenError } from '../utils/errors';
+import { apiKeyRole, authenticateApiKey, extractApiKey } from './apiKeyAuth';
+import { apiKeyLimiter } from './rateLimiter';
 
 export interface JwtPayload {
   userId: string;
@@ -23,7 +25,22 @@ declare global {
   }
 }
 
-export async function authenticate(req: Request, _res: Response, next: NextFunction) {
+export async function authenticate(req: Request, res: Response, next: NextFunction) {
+  // Organization API keys ("mj_...") are accepted wherever a session token is, but
+  // only for their own organization's resources — see apiKeyAuth.ts for the rules.
+  const apiKey = extractApiKey(req);
+  if (apiKey) {
+    try {
+      const context = await authenticateApiKey(req, apiKey);
+      req.apiKey = context;
+      req.user = { userId: context.userId, email: '' };
+      // Programmatic access gets its own, per-key rate limit
+      return apiKeyLimiter(req, res, next);
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return next(new UnauthorizedError('Missing or invalid authorization header'));
@@ -71,7 +88,11 @@ export async function orgContext(req: Request, _res: Response, next: NextFunctio
       return next(new ForbiddenError('Not a member of this organization'));
     }
 
-    req.org = { id: orgId, role: membership.role };
+    // An API key acts with (at most) the permissions of the member who created it,
+    // narrowed by the key's scopes
+    const role = req.apiKey ? apiKeyRole(membership.role, req.apiKey.scopes) : membership.role;
+
+    req.org = { id: orgId, role };
     next();
   } catch (err) {
     next(err);

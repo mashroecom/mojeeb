@@ -1,73 +1,157 @@
 import crypto from 'crypto';
-import type { Request, Response, NextFunction } from 'express';
+import type { Request } from 'express';
 import { prisma } from '../config/database';
+import { planConfigService } from '../services/planConfig.service';
 import { UnauthorizedError, ForbiddenError } from '../utils/errors';
+import type { SubscriptionPlan } from '@mojeeb/shared-types';
 
 /**
- * Authenticate requests using an API key passed via X-API-Key header.
- * Sets req.org and req.user (minimal) on success.
+ * API-key authentication.
+ *
+ * Organizations create keys under Dashboard -> API Keys and send them exactly like
+ * a session token: `Authorization: Bearer mj_...` (or `X-API-Key: mj_...`).
+ * A key is a much narrower credential than a signed-in user:
+ *
+ *   - it works only on its own organization's resources (/organizations/<orgId>/...);
+ *     never on account, admin, billing-independent or other organizations' routes;
+ *   - it cannot manage API keys;
+ *   - its scopes decide what it may do: without `write`/`admin`/`*` it is read-only,
+ *     and it gets admin-level organization permissions only with `admin`/`*`
+ *     (never owner-level: ownership actions need a signed-in owner);
+ *   - the organization's plan must include API access.
  */
-export async function apiKeyAuth(req: Request, _res: Response, next: NextFunction) {
-  const apiKey = req.headers['x-api-key'] as string | undefined;
-  if (!apiKey) {
-    return next(new UnauthorizedError('Missing X-API-Key header'));
-  }
 
-  try {
-    const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
+export const API_KEY_PREFIX = 'mj_';
 
-    const record = await prisma.apiKey.findFirst({
-      where: { keyHash, revokedAt: null },
-      include: { org: { select: { id: true } } },
-    });
+export interface ApiKeyContext {
+  id: string;
+  orgId: string;
+  userId: string;
+  scopes: string[];
+}
 
-    if (!record) {
-      return next(new UnauthorizedError('Invalid API key'));
+declare global {
+  namespace Express {
+    interface Request {
+      apiKey?: ApiKeyContext;
     }
-
-    if (!record.userId) {
-      return next(new UnauthorizedError('Invalid API key record'));
-    }
-
-    if (record.expiresAt && record.expiresAt < new Date()) {
-      return next(new UnauthorizedError('API key has expired'));
-    }
-
-    // Set org context
-    req.org = { id: record.orgId, role: 'API_KEY' };
-    req.user = { userId: record.userId, email: '' };
-
-    // Update last used timestamp (fire-and-forget)
-    prisma.apiKey
-      .update({ where: { id: record.id }, data: { lastUsedAt: new Date() } })
-      .catch(() => {});
-
-    // Store scopes on request for downstream checks
-    (req as any).apiKeyScopes = record.scopes;
-
-    next();
-  } catch (err) {
-    next(err);
   }
 }
 
+/** The raw API key carried by a request, if any. */
+export function extractApiKey(req: Request): string | null {
+  const header = req.headers.authorization;
+  if (header?.startsWith('Bearer ')) {
+    const token = header.substring(7).trim();
+    if (token.startsWith(API_KEY_PREFIX)) return token;
+  }
+  const xApiKey = req.headers['x-api-key'];
+  if (typeof xApiKey === 'string' && xApiKey.startsWith(API_KEY_PREFIX)) return xApiKey.trim();
+  return null;
+}
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+export function hasWriteScope(scopes: string[]): boolean {
+  return scopes.includes('*') || scopes.includes('write') || scopes.includes('admin');
+}
+
+export function hasAdminScope(scopes: string[]): boolean {
+  return scopes.includes('*') || scopes.includes('admin');
+}
+
 /**
- * Middleware to enforce API key scopes.
- * Use after apiKeyAuth. Allows wildcard '*' scope.
- *
- * @param requiredScope - The scope needed for this route (e.g. 'read', 'write', 'admin')
+ * Organization role an API key acts with: the role of the member who created it,
+ * capped at ADMIN, and reduced to MEMBER unless the key has the admin scope.
  */
-export function requireScope(requiredScope: string) {
-  return (req: Request, _res: Response, next: NextFunction) => {
-    const scopes: string[] = (req as any).apiKeyScopes;
+export function apiKeyRole(memberRole: string, scopes: string[]): string {
+  if (!hasAdminScope(scopes)) return 'MEMBER';
+  return memberRole === 'OWNER' ? 'ADMIN' : memberRole;
+}
 
-    // If authenticated via JWT (no scopes), allow all
-    if (!scopes) return next();
+/**
+ * Why an API key may not make this request, or null when it may.
+ * `path` is the request path without the query string.
+ */
+export function apiKeyRequestDenial(
+  key: Pick<ApiKeyContext, 'orgId' | 'scopes'>,
+  method: string,
+  path: string,
+): string | null {
+  const match = /^\/api\/v1\/organizations\/([^/]+)(\/.*)?$/.exec(path);
+  if (!match || decodeURIComponent(match[1]!) !== key.orgId) {
+    return "API keys can only access their own organization's resources";
+  }
 
-    if (scopes.includes('*') || scopes.includes(requiredScope)) {
-      return next();
-    }
+  const rest = match[2] ?? '';
+  if (rest === '/api-keys' || rest.startsWith('/api-keys/')) {
+    return 'API keys cannot be managed with an API key';
+  }
 
-    return next(new ForbiddenError(`API key missing required scope: ${requiredScope}`));
+  if (!SAFE_METHODS.has(method.toUpperCase()) && !hasWriteScope(key.scopes)) {
+    return 'This API key is read-only';
+  }
+
+  return null;
+}
+
+/**
+ * Authenticate a request by API key. Resolves to the key's context, or throws
+ * Unauthorized (bad/revoked/expired key) or Forbidden (key not allowed here).
+ */
+export async function authenticateApiKey(req: Request, rawKey: string): Promise<ApiKeyContext> {
+  const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+
+  const record = await prisma.apiKey.findFirst({
+    where: { keyHash, revokedAt: null },
+    select: {
+      id: true,
+      orgId: true,
+      userId: true,
+      scopes: true,
+      expiresAt: true,
+      lastUsedAt: true,
+      org: {
+        select: { suspendedAt: true, subscription: { select: { plan: true, status: true } } },
+      },
+    },
+  });
+
+  // One message for unknown, revoked and expired keys: nothing to probe
+  if (!record || (record.expiresAt && record.expiresAt < new Date())) {
+    throw new UnauthorizedError('Invalid API key');
+  }
+
+  if (record.org.suspendedAt) {
+    throw new ForbiddenError('Organization is suspended');
+  }
+
+  const context: ApiKeyContext = {
+    id: record.id,
+    orgId: record.orgId,
+    userId: record.userId,
+    scopes: record.scopes,
   };
+
+  const path = (req.originalUrl || req.url).split('?')[0]!;
+  const denial = apiKeyRequestDenial(context, req.method, path);
+  if (denial) throw new ForbiddenError(denial);
+
+  const plan = (record.org.subscription?.plan ?? 'FREE') as SubscriptionPlan;
+  const limits = await planConfigService.getLimits(plan);
+  if (!limits.apiAccess) {
+    throw new ForbiddenError(
+      'API access is not included in your current plan',
+      'API_ACCESS_NOT_IN_PLAN',
+    );
+  }
+
+  // Record usage at most once a minute per key (fire-and-forget)
+  if (!record.lastUsedAt || Date.now() - record.lastUsedAt.getTime() > 60_000) {
+    prisma.apiKey
+      .update({ where: { id: record.id }, data: { lastUsedAt: new Date() } })
+      .catch(() => {});
+  }
+
+  return context;
 }

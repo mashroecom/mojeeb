@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { fmtDate } from '@/lib/dateFormat';
-import { useApiKeys, useCreateApiKey, useRevokeApiKey } from '@/hooks/useApiKeys';
+import { useApiAccess, useApiKeys, useCreateApiKey, useRevokeApiKey } from '@/hooks/useApiKeys';
 import { ConfirmDialog, useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import type { ApiKeyCreated } from '@/hooks/useApiKeys';
 import { useAuthStore } from '@/stores/authStore';
@@ -40,6 +41,8 @@ export default function ApiKeysPage() {
 
   const { data: apiKeys, isLoading: apiKeysLoading, isError, refetch } = useApiKeys();
   const createApiKey = useCreateApiKey();
+  const { data: apiAccess } = useApiAccess();
+  const apiAccessBlocked = apiAccess?.apiAccess === false;
   const revokeApiKey = useRevokeApiKey();
   const { confirmProps, confirm } = useConfirmDialog();
 
@@ -114,6 +117,23 @@ export default function ApiKeysPage() {
         </div>
 
         <div className="mx-auto max-w-4xl space-y-6">
+          {/* Keys only work on plans that include API access: say so up front */}
+          {apiAccessBlocked && (
+            <div
+              role="status"
+              className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
+            >
+              <p className="font-medium">{t('planNoApiAccessTitle')}</p>
+              <p className="mt-0.5">{t('planNoApiAccessDescription')}</p>
+              <Link
+                href="/billing"
+                className="mt-2 inline-block font-medium underline underline-offset-2"
+              >
+                {t('planNoApiAccessCta')}
+              </Link>
+            </div>
+          )}
+
           {/* Organization ID Section */}
           {orgId && (
             <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-6 shadow-sm">
@@ -213,7 +233,7 @@ export default function ApiKeysPage() {
                 <button
                   type="button"
                   onClick={handleCreateApiKey}
-                  disabled={createApiKey.isPending || !newKeyName.trim()}
+                  disabled={createApiKey.isPending || !newKeyName.trim() || apiAccessBlocked}
                   className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
                   {createApiKey.isPending ? (
@@ -257,7 +277,10 @@ export default function ApiKeysPage() {
             ) : isError ? (
               <ErrorState
                 title={t('errorLoadingKeys') || 'Failed to load API keys'}
-                description={t('errorLoadingKeysDesc') || 'There was a problem loading your API keys. Please try again.'}
+                description={
+                  t('errorLoadingKeysDesc') ||
+                  'There was a problem loading your API keys. Please try again.'
+                }
                 retryLabel={t('retry') || 'Retry'}
                 onRetry={() => refetch()}
               />
@@ -304,7 +327,9 @@ export default function ApiKeysPage() {
               <EmptyState
                 icon={Key}
                 title={t('noKeys') || 'No API keys yet'}
-                description={t('noKeysDesc') || 'Create your first API key to start using the Mojeeb API.'}
+                description={
+                  t('noKeysDesc') || 'Create your first API key to start using the Mojeeb API.'
+                }
                 action={{
                   label: t('create') || 'Create API Key',
                   onClick: () => setShowNewKeyDialog(true),

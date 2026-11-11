@@ -41,6 +41,25 @@ export function useApiKeys() {
   });
 }
 
+/**
+ * Whether the organization's plan includes API access. Keys can only be created
+ * and used when it does.
+ */
+export function useApiAccess() {
+  const { organization } = useAuthStore();
+  const orgId = organization?.id;
+
+  return useQuery({
+    queryKey: ['organizations', orgId, 'api-keys', 'access'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<{ apiAccess: boolean; plan: string }>>(
+        `/organizations/${orgId}/api-keys/access`,
+      );
+      return data.data;
+    },
+    enabled: !!orgId,
+  });
+}
 export function useCreateApiKey() {
   const { organization } = useAuthStore();
   const orgId = organization?.id;

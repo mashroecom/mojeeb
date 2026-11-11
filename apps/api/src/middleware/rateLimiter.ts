@@ -71,9 +71,9 @@ export const apiKeyLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    // Use the API key hash as the rate limit key (set by apiKeyAuth middleware)
-    const apiKey = req.headers['x-api-key'] as string | undefined;
-    if (apiKey) return `apikey:${apiKey.slice(0, 8)}`; // Use prefix for privacy
+    // One bucket per API key (its database id; set by the authenticate middleware)
+    const apiKeyId = (req as { apiKey?: { id: string } }).apiKey?.id;
+    if (apiKeyId) return `apikey:${apiKeyId}`;
     return getClientKey(req);
   },
   message: {
