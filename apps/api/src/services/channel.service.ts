@@ -287,6 +287,16 @@ export class ChannelService {
   ]);
 
   /**
+   * Plaintext credentials for a channel row loaded straight from the database (tokens are
+   * stored encrypted). Use this wherever credentials are handed to a channel adapter or
+   * used to verify a webhook. Never log the result.
+   */
+  decryptChannelCredentials(credentials: unknown): Record<string, string> {
+    if (!credentials || typeof credentials !== 'object' || Array.isArray(credentials)) return {};
+    return this.decryptCredentials(credentials as Record<string, string>);
+  }
+
+  /**
    * Encrypt sensitive values in a credentials object before persisting.
    */
   private encryptCredentials(credentials: Record<string, string>): Record<string, string> {

@@ -194,8 +194,8 @@ export class KnowledgeBaseService {
   /**
    * The crawl configuration of a knowledge base. There is exactly one per
    * knowledge base (the oldest, should older data hold several): it remembers
-   * the depth and URL filter of the latest website crawl and carries the
-   * auto-sync schedule.
+   * the depth and URL filter of the latest completed website crawl and carries
+   * the auto-sync schedule.
    */
   private async getCrawlConfig(kbId: string) {
     return prisma.crawlConfig.findFirst({
@@ -205,9 +205,8 @@ export class KnowledgeBaseService {
   }
 
   /**
-   * Start a multi-page crawl: remember its settings on the knowledge base's
-   * crawl config, create the job row linked to that config and enqueue it for
-   * the crawler worker.
+   * Start a multi-page crawl: create the job row, linked to the knowledge
+   * base's crawl config, and enqueue it for the crawler worker.
    */
   async startCrawlJob(
     kbId: string,
@@ -248,12 +247,15 @@ export class KnowledgeBaseService {
     const urlPatterns = parseUrlPatterns(data.urlPatterns ?? data.urlPattern);
     const maxDepth = data.maxDepth ?? 1;
 
-    // Remember what was crawled and how: auto-sync repeats exactly this.
-    const existingConfig = await this.getCrawlConfig(kbId);
-    const settings = { maxDepth, urlPattern: serializeUrlPatterns(urlPatterns) };
-    const config = existingConfig
-      ? await prisma.crawlConfig.update({ where: { id: existingConfig.id }, data: settings })
-      : await prisma.crawlConfig.create({ data: { knowledgeBaseId: kbId, ...settings } });
+    // Every crawl is linked to the knowledge base's one crawl config. The
+    // worker copies this crawl's depth and URL filter onto it when the crawl
+    // completes, so auto-sync always repeats the last *completed* crawl (site
+    // and settings together) and a cancelled or failed attempt changes nothing.
+    const config =
+      (await this.getCrawlConfig(kbId)) ??
+      (await prisma.crawlConfig.create({
+        data: { knowledgeBaseId: kbId, maxDepth, urlPattern: serializeUrlPatterns(urlPatterns) },
+      }));
 
     const crawlJob = await prisma.crawlJob.create({
       data: {
@@ -493,8 +495,8 @@ export class KnowledgeBaseService {
 
   /**
    * Switch auto-sync on/off or change its frequency. Auto-sync repeats the
-   * knowledge base's latest website crawl (same start URL, depth and URL
-   * filter), so there must be one before it can be enabled.
+   * knowledge base's latest completed website crawl (same start URL, depth and
+   * URL filter), so there must be one before it can be enabled.
    */
   async updateCrawlSchedule(
     kbId: string,

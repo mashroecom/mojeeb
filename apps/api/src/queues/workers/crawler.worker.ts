@@ -5,7 +5,7 @@ import { logger } from '../../config/logger';
 import { moveToDeadLetterQueue } from '../dlq';
 import { crawlerService } from '../../services/crawler.service';
 import { crawlerQueue } from '../index';
-import { parseUrlPatterns } from '../../utils/urlPatterns';
+import { parseUrlPatterns, serializeUrlPatterns } from '../../utils/urlPatterns';
 import {
   CRAWL_SCHEDULER_PREFIX,
   CRAWL_SCHEDULE_TIMEZONE,
@@ -210,13 +210,14 @@ export async function initializeRepeatableCrawls(): Promise<{
 
 /**
  * The site auto-sync re-crawls for a knowledge base: the start URL of its most
- * recent crawl that was not cancelled and did not fail (a scheduled run creates
- * such a job itself, so the schedule keeps following the same site until the
- * user crawls another one).
+ * recent *completed* crawl. The depth and URL filter of that same crawl are on
+ * the CrawlConfig (written when it completed), and a scheduled run completes
+ * as such a job itself, so the schedule keeps following one site until the
+ * user successfully crawls another.
  */
 export async function findScheduledCrawlTarget(kbId: string): Promise<string | null> {
   const job = await prisma.crawlJob.findFirst({
-    where: { knowledgeBaseId: kbId, status: { in: ['COMPLETED', 'RUNNING', 'PENDING'] } },
+    where: { knowledgeBaseId: kbId, status: 'COMPLETED' },
     orderBy: { createdAt: 'desc' },
     select: { startUrl: true },
   });
@@ -485,9 +486,10 @@ export const crawlerWorker = new Worker(
         logger.info({ jobId, pagesCrawled, totalPages: seen.size }, 'Crawl job completed');
       }
 
-      // Keep the knowledge base's sync info truthful: when it was last crawled
-      // (completed crawls only) and, for an enabled schedule, when the next
-      // scheduled run is due.
+      // Keep the knowledge base's crawl config truthful. A completed crawl
+      // becomes what auto-sync repeats (its start URL is found through the job,
+      // its depth and URL filter are stored here) and sets "last crawled"; for
+      // an enabled schedule, record when the next scheduled run is due.
       const crawlJob = await prisma.crawlJob.findUnique({
         where: { id: jobId },
         select: { config: true },
@@ -497,7 +499,13 @@ export const crawlerWorker = new Worker(
         await prisma.crawlConfig.update({
           where: { id: config.id },
           data: {
-            ...(startUrlError ? {} : { lastCrawledAt: new Date() }),
+            ...(startUrlError
+              ? {}
+              : {
+                  lastCrawledAt: new Date(),
+                  maxDepth,
+                  urlPattern: serializeUrlPatterns(urlPatterns),
+                }),
             nextCrawlAt:
               config.scheduleEnabled && isCrawlFrequency(config.scheduleFrequency)
                 ? computeNextCrawlAt(config.scheduleFrequency)

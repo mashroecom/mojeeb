@@ -9,6 +9,12 @@ import { inboundQueue } from '../../queues';
 import { getChannelAdapter } from '../../channels';
 import { webhookLimiter } from '../../middleware/rateLimiter';
 import { messageDeliveryService } from '../../services/messageDelivery.service';
+import { webhookService } from '../../services/webhook.service';
+import {
+  isValidVisitorId,
+  visitorConversationWhere,
+  visitorIdFromQuery,
+} from '../../services/webchatAccess';
 
 const router: Router = Router({ mergeParams: true });
 
@@ -100,6 +106,41 @@ function generateSignedFileUrl(filename: string, visitorId: string): string {
 }
 
 /**
+ * Fire the customer `conversation.created` webhook for a conversation this router just
+ * created (same payload as the inbound worker sends for provider channels, which never
+ * sees web chat conversations as new). Never blocks or fails the visitor's request.
+ */
+function notifyConversationCreated(conversation: {
+  id: string;
+  orgId: string;
+  channelId: string;
+  customerId: string;
+  customerName: string | null;
+  customerPhone: string | null;
+  status: string;
+  createdAt: Date;
+}) {
+  void Promise.resolve()
+    .then(() =>
+      webhookService.dispatch(conversation.orgId, 'conversation.created', {
+        conversationId: conversation.id,
+        channelId: conversation.channelId,
+        customerId: conversation.customerId,
+        customerName: conversation.customerName,
+        customerPhone: conversation.customerPhone,
+        status: conversation.status,
+        createdAt: conversation.createdAt,
+      }),
+    )
+    .catch((err) => {
+      logger.warn(
+        { err, conversationId: conversation.id },
+        'Failed to dispatch conversation.created webhook',
+      );
+    });
+}
+
+/**
  * Middleware: Validate that the channelId exists, is active, and is a WEBCHAT channel.
  * Attaches the channel to req for downstream handlers.
  */
@@ -186,7 +227,7 @@ router.post('/:channelId/conversations', async (req: Request, res: Response) => 
     const channel = (req as any).channel;
     const { visitorId, visitorName, message, forceNew } = req.body;
 
-    if (!visitorId || typeof visitorId !== 'string') {
+    if (!isValidVisitorId(visitorId)) {
       return res.status(400).json({ success: false, error: 'visitorId is required' });
     }
 
@@ -201,6 +242,7 @@ router.post('/:channelId/conversations', async (req: Request, res: Response) => 
     }
 
     // Find or create conversation in a transaction to avoid race conditions
+    let createdConversation = false;
     const conversation = await prisma.$transaction(async (tx) => {
       let conv = null;
 
@@ -227,9 +269,11 @@ router.post('/:channelId/conversations', async (req: Request, res: Response) => 
             status: 'ACTIVE',
           },
         });
+        createdConversation = true;
       }
       return conv;
     });
+    if (createdConversation) notifyConversationCreated(conversation);
 
     // Parse the message through the webchat adapter
     const adapter = getChannelAdapter('WEBCHAT');
@@ -270,7 +314,7 @@ router.post('/:channelId/conversations', async (req: Request, res: Response) => 
 // ──────────────────────────────────────────────────────────
 // GET /api/v1/webchat/:channelId/conversations/:conversationId/messages
 // Get paginated messages for a conversation
-// Query: { limit?, cursor? }
+// Query: { visitorId, limit?, cursor? }
 // ──────────────────────────────────────────────────────────
 router.get(
   '/:channelId/conversations/:conversationId/messages',
@@ -281,15 +325,16 @@ router.get(
       const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 100);
       const cursor = req.query.cursor as string | undefined;
 
-      // Verify the conversation belongs to this channel.
-      // Note: no visitor ownership check here — the channel match is sufficient
-      // since conversation IDs are unguessable CUIDs and this is a read-only endpoint.
-      const conversation = await prisma.conversation.findFirst({
-        where: {
-          id: conversationId,
-          channelId: channel.id,
-        },
-      });
+      // The conversation must be on this channel AND belong to the visitor asking for it.
+      // A wrong or missing visitor id gets the same 404 as an unknown conversation.
+      const where = visitorConversationWhere(
+        channel.id,
+        conversationId,
+        visitorIdFromQuery(req.query.visitorId),
+      );
+      const conversation = where
+        ? await prisma.conversation.findFirst({ where, select: { id: true } })
+        : null;
 
       if (!conversation) {
         return res.status(404).json({ success: false, error: 'Conversation not found' });
@@ -362,7 +407,7 @@ router.post(
       const conversationId = req.params.conversationId as string;
       const { visitorId, status, messageIds } = req.body ?? {};
 
-      if (!visitorId || typeof visitorId !== 'string') {
+      if (!isValidVisitorId(visitorId)) {
         return res.status(400).json({ success: false, error: 'visitorId is required' });
       }
 
@@ -389,10 +434,10 @@ router.post(
       }
 
       // A visitor may only acknowledge messages of their own conversation on this channel.
-      const conversation = await prisma.conversation.findFirst({
-        where: { id: conversationId, channelId: channel.id, customerId: visitorId },
-        select: { id: true },
-      });
+      const where = visitorConversationWhere(channel.id, conversationId, visitorId);
+      const conversation = where
+        ? await prisma.conversation.findFirst({ where, select: { id: true } })
+        : null;
       if (!conversation) {
         return res.status(404).json({ success: false, error: 'Conversation not found' });
       }
@@ -420,6 +465,9 @@ router.get(
     try {
       const channel = (req as any).channel;
       const visitorId = req.params.visitorId as string;
+      if (!isValidVisitorId(visitorId)) {
+        return res.status(400).json({ success: false, error: 'visitorId is required' });
+      }
 
       const conversations = await prisma.conversation.findMany({
         where: {
@@ -484,6 +532,9 @@ router.get(
     try {
       const channel = (req as any).channel;
       const visitorId = req.params.visitorId as string;
+      if (!isValidVisitorId(visitorId)) {
+        return res.status(400).json({ success: false, error: 'visitorId is required' });
+      }
 
       const conversation = await prisma.conversation.findFirst({
         where: {
@@ -586,7 +637,7 @@ router.post('/:channelId/upload', upload.single('file'), async (req: Request, re
       return res.status(400).json({ success: false, error: 'No file uploaded' });
     }
 
-    if (!visitorId || typeof visitorId !== 'string') {
+    if (!isValidVisitorId(visitorId)) {
       return res.status(400).json({ success: false, error: 'visitorId is required' });
     }
 
@@ -600,6 +651,7 @@ router.post('/:channelId/upload', upload.single('file'), async (req: Request, re
     const signedFileUrl = generateSignedFileUrl(file.filename, visitorId);
 
     // Find or create conversation (wrapped in transaction to prevent race condition duplicates)
+    let createdConversation = false;
     const conversation = await prisma.$transaction(
       async (tx) => {
         let conv = await tx.conversation.findFirst({
@@ -622,12 +674,14 @@ router.post('/:channelId/upload', upload.single('file'), async (req: Request, re
               status: 'ACTIVE',
             },
           });
+          createdConversation = true;
         }
 
         return conv;
       },
       { isolationLevel: 'ReadCommitted' },
     );
+    if (createdConversation) notifyConversationCreated(conversation);
 
     // Queue the file message for processing (pass conversationId to avoid duplicate creation in worker)
     await inboundQueue.add('process-message', {

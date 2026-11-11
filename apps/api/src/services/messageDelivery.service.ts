@@ -92,10 +92,14 @@ export class MessageDeliveryService {
 
   /**
    * Apply WhatsApp delivery receipts. A receipt is only applied to a message that was sent
-   * through a WhatsApp channel registered for the receipt's own phone number id, so a
-   * receipt can never touch another organization's (or another number's) message.
+   * through the WhatsApp channel the webhook was authenticated for (`channelId`) and that is
+   * registered for the receipt's own phone number id, so a receipt can never touch another
+   * organization's (or another number's) message.
    */
-  async applyWhatsAppStatuses(updates: WhatsAppStatusUpdate[]): Promise<AppliedDeliveryUpdate[]> {
+  async applyWhatsAppStatuses(
+    updates: WhatsAppStatusUpdate[],
+    channelId?: string,
+  ): Promise<AppliedDeliveryUpdate[]> {
     const applied: AppliedDeliveryUpdate[] = [];
 
     for (const update of updates) {
@@ -103,7 +107,10 @@ export class MessageDeliveryService {
         const result = await this.applyUpdate(
           {
             externalId: update.externalMessageId,
-            conversation: { channel: { type: 'WHATSAPP', externalId: update.phoneNumberId } },
+            conversation: {
+              ...(channelId ? { channelId } : {}),
+              channel: { type: 'WHATSAPP', externalId: update.phoneNumberId },
+            },
           },
           { status: update.status, at: update.timestamp, failureReason: update.failureReason },
         );

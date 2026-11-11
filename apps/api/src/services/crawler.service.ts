@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { logger } from '../config/logger';
-import { BadRequestError } from '../utils/errors';
+import { AppError, BadRequestError } from '../utils/errors';
 import { robotsTxtService } from './robotsTxt.service';
 import { assertPublicUrl, safeFetch } from '../utils/safeFetch';
 import { matchesUrlPatterns } from '../utils/urlPatterns';
@@ -21,8 +21,16 @@ export const CRAWL_ERROR_CODES = {
   emptyContent: 'CRAWL_EMPTY_CONTENT',
 } as const;
 
+/**
+ * AppError's constructor resets the prototype to AppError, so `instanceof
+ * BadRequestError` is never true — recognise a 400 by its status instead.
+ */
+function isBadRequest(err: unknown): err is AppError {
+  return err instanceof AppError && err.statusCode === 400;
+}
+
 /** Give the URL-safety errors thrown by safeFetch a specific code (they all use BAD_REQUEST). */
-function withCrawlCode(err: BadRequestError): BadRequestError {
+function withCrawlCode(err: AppError): AppError {
   if (err.code !== 'BAD_REQUEST') return err;
   if (/private or internal/i.test(err.message)) {
     return new BadRequestError(err.message, CRAWL_ERROR_CODES.privateUrl);
@@ -71,7 +79,7 @@ export class CrawlerService {
     try {
       await assertPublicUrl(url);
     } catch (err) {
-      if (err instanceof BadRequestError) throw withCrawlCode(err);
+      if (isBadRequest(err)) throw withCrawlCode(err);
       throw err;
     }
   }
@@ -130,7 +138,7 @@ export class CrawlerService {
 
       return { text, links, metadata };
     } catch (err: any) {
-      if (err instanceof BadRequestError) {
+      if (isBadRequest(err)) {
         throw withCrawlCode(err);
       }
       logger.error({ err, url }, 'URL crawling failed');

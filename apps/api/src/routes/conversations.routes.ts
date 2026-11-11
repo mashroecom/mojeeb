@@ -11,6 +11,8 @@ import { emitToOrg, emitToConversation } from '../websocket';
 import { prisma } from '../config/database';
 import { logger } from '../config/logger';
 import { config } from '../config';
+import { outboundDispatchService } from '../services/outboundDispatch.service';
+import { initialDeliveryStatus } from '../services/outboundDispatch';
 
 const uploadStorage = multer.diskStorage({
   destination: path.resolve(__dirname, '../../uploads'),
@@ -342,7 +344,7 @@ router.post('/:convId/upload', dashboardUpload.single('file'), async (req, res, 
     // Verify conversation belongs to this organization
     const existingConv = await prisma.conversation.findFirst({
       where: { id: convId, orgId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, channel: { select: { id: true, type: true } } },
     });
     if (!existingConv)
       return res.status(404).json({ success: false, error: 'Conversation not found' });
@@ -364,8 +366,11 @@ router.post('/:convId/upload', dashboardUpload.single('file'), async (req, res, 
         content: fileUrl,
         contentType,
         humanAgentId: req.user!.userId,
+        deliveryStatus: initialDeliveryStatus(existingConv.channel.type),
       },
     });
+    // Provider channels (WhatsApp): the upload has to be sent, not just stored
+    await outboundDispatchService.dispatch(message, existingConv.channel);
 
     // Keep HANDED_OFF status — only "Return to AI" button should change it back
     const convUpdateData: Record<string, unknown> = {

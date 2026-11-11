@@ -3,6 +3,8 @@ import { ConversationStatus } from '@prisma/client';
 import { NotFoundError } from '../utils/errors';
 import { webhookService } from './webhook.service';
 import { pushNotificationService } from './pushNotification.service';
+import { outboundDispatchService } from './outboundDispatch.service';
+import { initialDeliveryStatus } from './outboundDispatch';
 
 export class ConversationService {
   async list(
@@ -136,9 +138,12 @@ export class ConversationService {
   async sendHumanMessage(conversationId: string, userId: string, content: string) {
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
+      include: { channel: { select: { id: true, type: true } } },
     });
     if (!conversation) throw new NotFoundError('Conversation not found');
 
+    // On provider channels (WhatsApp) the reply only leaves the platform through the
+    // outbound worker, so it starts QUEUED; on web chat storing it is the send.
     const message = await prisma.message.create({
       data: {
         conversationId,
@@ -146,8 +151,10 @@ export class ConversationService {
         content,
         contentType: 'TEXT',
         humanAgentId: userId,
+        deliveryStatus: initialDeliveryStatus(conversation.channel.type),
       },
     });
+    await outboundDispatchService.dispatch(message, conversation.channel);
 
     // Keep HANDED_OFF status — only "Return to AI" button should change it back
     const updateData: Record<string, unknown> = {

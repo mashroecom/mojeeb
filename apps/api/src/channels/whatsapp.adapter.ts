@@ -1,40 +1,38 @@
-import crypto from 'crypto';
 import type { Request, Response } from 'express';
 import type { InboundMessage, OutboundMessage, SendResult } from '@mojeeb/shared-types';
 import { ChannelAdapter } from './base.adapter';
 import { config } from '../config';
 import { logger } from '../config/logger';
+import { matchesVerifyToken, verifyMetaSignature } from './whatsapp.routing';
+
+// Overridable so tests can point sends at a local stand-in; production uses the default.
+const GRAPH_API_BASE_URL = (
+  process.env.WHATSAPP_GRAPH_API_URL || 'https://graph.facebook.com/v21.0'
+).replace(/\/+$/, '');
 
 export class WhatsAppAdapter extends ChannelAdapter {
   readonly channelType = 'WHATSAPP';
 
+  /** Platform-level check (env META_APP_SECRET). Per-channel secrets: see the webhook route. */
   verifyWebhook(req: Request): boolean {
-    const signature = req.headers['x-hub-signature-256'] as string;
-    if (!signature || !config.meta.appSecret) return false;
-
     // Use the raw body preserved by express.json verify callback for accurate signature verification.
     // Falling back to JSON.stringify can produce different byte output than the original payload.
-    const body = (req as any).rawBody
+    const body: Buffer = (req as any).rawBody
       ? (req as any).rawBody
       : Buffer.from(JSON.stringify(req.body));
 
-    const expectedSignature =
-      'sha256=' + crypto.createHmac('sha256', config.meta.appSecret).update(body).digest('hex');
-
-    // Use timing-safe comparison to prevent timing attacks
-    try {
-      return crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature));
-    } catch {
-      return false;
-    }
+    return verifyMetaSignature(body, req.headers['x-hub-signature-256'], config.meta.appSecret);
   }
 
   handleVerificationChallenge(req: Request, res: Response): void {
     const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
-    if (mode === 'subscribe' && token === config.meta.verifyToken) {
+    // matchesVerifyToken rejects an empty token, so an unset META_VERIFY_TOKEN matches nothing
+    if (
+      mode === 'subscribe' &&
+      matchesVerifyToken(req.query['hub.verify_token'], [config.meta.verifyToken])
+    ) {
       res.status(200).send(challenge);
     } else {
       res.sendStatus(403);
@@ -90,10 +88,19 @@ export class WhatsAppAdapter extends ChannelAdapter {
         };
       }
 
+      // Only text is implemented. Fail visibly instead of sending a file path as text.
+      if (message.contentType !== 'TEXT') {
+        return {
+          externalId: '',
+          success: false,
+          error: `WhatsApp sending supports text only (got ${message.contentType})`,
+        };
+      }
+
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      const response = await fetch(`${GRAPH_API_BASE_URL}/${phoneNumberId}/messages`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,

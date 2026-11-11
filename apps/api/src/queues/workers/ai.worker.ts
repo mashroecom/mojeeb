@@ -11,6 +11,7 @@ import { tokenUsageService } from '../../services/tokenUsage.service';
 import { notificationService } from '../../services/notification.service';
 import { webhookService } from '../../services/webhook.service';
 import { pushNotificationService } from '../../services/pushNotification.service';
+import { outboundDispatchService } from '../../services/outboundDispatch.service';
 import { mergeLead } from '../../utils/leadMerge';
 
 interface AIJobData {
@@ -166,6 +167,11 @@ export const aiWorker = new Worker(
         };
         emitToOrg(data.orgId, 'message:new', customerWsPayload);
         emitToConversation(data.conversationId, 'message:new', customerWsPayload);
+        // Web chat gets it over the socket; provider channels (WhatsApp) need a real send
+        await outboundDispatchService.dispatch(customerMsg, {
+          id: data.channelId,
+          type: data.channelType,
+        });
 
         // Emit internal message to dashboard only (NOT to webchat/widget)
         const internalWsPayload = {
@@ -554,6 +560,11 @@ export const aiWorker = new Worker(
           };
           emitToConversation(data.conversationId, 'message:new', wsPayload);
           emitToOrg(data.orgId, 'message:new', wsPayload);
+          // Web chat gets it over the socket; provider channels (WhatsApp) need a real send
+          await outboundDispatchService.dispatch(fallbackMsg, {
+            id: data.channelId,
+            type: data.channelType,
+          });
         }
       } catch (fbErr) {
         logger.warn({ err: fbErr }, 'Fallback message failed');

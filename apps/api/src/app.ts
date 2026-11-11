@@ -198,6 +198,15 @@ app.use(settingsMiddleware);
 // API routes
 app.use('/api/v1', routes);
 
+// Unknown routes: answer in the API's JSON envelope instead of Express's HTML page
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: `Route not found: ${req.method} ${req.path}`,
+    code: 'NOT_FOUND',
+  });
+});
+
 // Error handling
 app.use(errorHandler);
 

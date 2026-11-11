@@ -1372,7 +1372,7 @@
   }
 
   function apiGetMessages(conversationId) {
-    return fetch(apiUrl('/conversations/' + conversationId + '/messages?limit=50'))
+    return fetch(apiUrl('/conversations/' + conversationId + '/messages?limit=50&visitorId=' + encodeURIComponent(state.visitorId)))
       .then(function(res) {
         if (!res.ok) throw new Error('Messages fetch failed: ' + res.status);
         return res.json();
