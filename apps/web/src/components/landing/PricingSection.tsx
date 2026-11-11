@@ -7,26 +7,10 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useState } from 'react';
+import type { PublicPlan } from '@/hooks/useLandingPage';
+import { CmsLink } from './CmsLink';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
-
-interface PlanData {
-  plan: string;
-  displayName: string;
-  displayNameAr: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  currency: string;
-  messagesPerMonth: number;
-  maxAgents: number;
-  maxChannels: number;
-  maxKnowledgeBases: number;
-  maxTeamMembers: number;
-  apiAccess: boolean;
-  isPopular: boolean;
-  features: string;
-  featuresAr: string;
-}
 
 interface PricingSectionProps {
   title?: string;
@@ -35,6 +19,12 @@ interface PricingSectionProps {
   yearlyDiscount?: number;
   enterpriseCtaText?: string;
   enterpriseCtaLink?: string;
+  /**
+   * Plans already loaded on the server. When given, the section renders them
+   * straight away (they are part of the server HTML) and does not query the
+   * API itself, so server and client always render the same thing.
+   */
+  initialPlans?: PublicPlan[];
 }
 
 export function PricingSection({
@@ -44,6 +34,7 @@ export function PricingSection({
   yearlyDiscount = 20,
   enterpriseCtaText,
   enterpriseCtaLink,
+  initialPlans,
 }: PricingSectionProps) {
   const t = useTranslations('landing.pricing');
   const locale = useLocale();
@@ -52,14 +43,18 @@ export function PricingSection({
 
   const [isYearly, setIsYearly] = useState(false);
 
-  const { data: plans, isLoading } = useQuery({
+  const hasInitialPlans = initialPlans !== undefined;
+  const { data: fetchedPlans, isLoading: isFetching } = useQuery({
     queryKey: ['public', 'plans'],
     queryFn: async () => {
       const { data } = await axios.get(`${API_BASE}/public/plans`);
-      return data.data as PlanData[];
+      return data.data as PublicPlan[];
     },
     staleTime: 5 * 60 * 1000,
+    enabled: !hasInitialPlans,
   });
+  const plans = hasInitialPlans ? initialPlans : fetchedPlans;
+  const isLoading = !hasInitialPlans && isFetching;
 
   // Show skeleton while loading — NO hardcoded fallback
   if (isLoading) {
@@ -124,7 +119,10 @@ export function PricingSection({
               >
                 {t('yearly')}
                 {yearlyDiscount > 0 && (
-                  <span className="ms-1.5 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  <span
+                    dir="ltr"
+                    className="ms-1.5 inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                  >
                     -{yearlyDiscount}%
                   </span>
                 )}
@@ -135,8 +133,10 @@ export function PricingSection({
 
         <div
           className={cn(
-            'mx-auto grid max-w-5xl grid-cols-1 gap-8',
-            plans.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-4',
+            'mx-auto grid grid-cols-1 gap-8',
+            plans.length === 3
+              ? 'max-w-5xl md:grid-cols-3'
+              : 'max-w-6xl sm:grid-cols-2 lg:grid-cols-4',
           )}
         >
           {plans.map((plan) => {
@@ -161,7 +161,7 @@ export function PricingSection({
                 )}
               >
                 {plan.isPopular && (
-                  <div className="absolute -top-3 start-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-medium text-primary-foreground">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-4 py-1 text-xs font-medium text-primary-foreground">
                     {t('popular')}
                   </div>
                 )}
@@ -212,13 +212,14 @@ export function PricingSection({
         {enterpriseCtaText && (
           <div className="mt-12 text-center">
             <p className="text-muted-foreground mb-4">{t('enterpriseCta')}</p>
-            <a
-              href={enterpriseCtaLink || '/contact'}
+            <CmsLink
+              href={enterpriseCtaLink}
+              fallbackHref="/contact"
               className="inline-flex items-center gap-2 rounded-lg border border-primary px-6 py-3 text-sm font-medium text-primary hover:bg-primary/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {enterpriseCtaText}
               <Arrow className="h-4 w-4" />
-            </a>
+            </CmsLink>
           </div>
         )}
       </div>

@@ -21,7 +21,61 @@ export interface TrustedByLogo {
   name: string;
 }
 
+/** A row of GET /public/testimonials */
+export interface PublicTestimonial {
+  id: string;
+  name: string;
+  nameAr: string;
+  role: string;
+  roleAr: string;
+  content: string;
+  contentAr: string;
+  photoUrl: string | null;
+  company: string | null;
+  rating: number;
+  sortOrder: number;
+}
+
+/** A row of GET /public/faq */
+export interface PublicFaq {
+  id: string;
+  question: string;
+  questionAr: string;
+  answer: string;
+  answerAr: string;
+  sortOrder: number;
+}
+
+/** A row of GET /public/plans (`features` / `featuresAr` are JSON-encoded string arrays) */
+export interface PublicPlan {
+  plan: string;
+  displayName: string;
+  displayNameAr: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  currency: string;
+  messagesPerMonth: number;
+  maxAgents: number;
+  maxChannels: number;
+  maxKnowledgeBases: number;
+  maxTeamMembers: number;
+  apiAccess: boolean;
+  isPopular: boolean;
+  features: string;
+  featuresAr: string;
+}
+
+/**
+ * Payload of GET /public/landing-page.
+ *
+ * While maintenance mode is on (CMS `maintenanceEnabled` or SiteSettings
+ * `maintenanceMode`) the endpoint returns ONLY the five `maintenance*` fields,
+ * so consumers must treat every other field as possibly missing.
+ */
 export interface LandingPageContent {
+  id: string;
+  updatedAt: string;
+
   // Hero
   heroEnabled: boolean;
   heroTitle: string;
@@ -77,6 +131,9 @@ export interface LandingPageContent {
   testimonialsSubtitle: string;
   testimonialsSubtitleAr: string;
   testimonialsMaxDisplay: number;
+  /** Legacy JSON columns — testimonials are served by GET /public/testimonials */
+  testimonials: unknown[] | string;
+  testimonialsAr: unknown[] | string;
 
   // FAQ
   faqEnabled: boolean;
@@ -132,7 +189,7 @@ export interface LandingPageContent {
   sectionOrder: string[] | string;
 }
 
-export function useLandingPageContent() {
+export function useLandingPageContent(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['public', 'landing-page'],
     queryFn: async () => {
@@ -140,6 +197,7 @@ export function useLandingPageContent() {
       return data.data as LandingPageContent;
     },
     staleTime: 5 * 60 * 1000, // 5 min (matches server cache)
+    enabled: options.enabled ?? true,
   });
 }
 

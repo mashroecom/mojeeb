@@ -1,29 +1,32 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { ArrowLeft, ArrowRight, Phone, Sparkles } from 'lucide-react';
-import { useLocale } from 'next-intl';
-import { useLandingPageContent } from '@/hooks/useLandingPage';
+import { CmsLink } from './CmsLink';
+import { localized, resolveCmsImageUrl, type LandingCms } from './cms';
 
-export function HeroSection() {
+interface HeroSectionProps {
+  /** Landing-page CMS content, loaded on the server by the page */
+  cms: LandingCms;
+}
+
+export function HeroSection({ cms }: HeroSectionProps) {
   const t = useTranslations('landing.hero');
   const locale = useLocale();
   const isAr = locale === 'ar';
   const Arrow = isAr ? ArrowLeft : ArrowRight;
 
-  const { data: cms } = useLandingPageContent();
-
-  // CMS overrides with translation fallbacks
-  const title = (isAr ? cms?.heroTitleAr : cms?.heroTitle) || t('title');
-  const subtitle = (isAr ? cms?.heroSubtitleAr : cms?.heroSubtitle) || t('subtitle');
-  const ctaText = (isAr ? cms?.heroCtaAr : cms?.heroCta) || t('cta');
-  const ctaLink = cms?.heroCtaLink || '/register';
-  const badgeText = (isAr ? cms?.badgeTextAr : cms?.badgeText) || t('badge');
+  // CMS text (Arabic → English → translation default)
+  const title = localized(isAr, cms?.heroTitle, cms?.heroTitleAr, t('title'));
+  const subtitle = localized(isAr, cms?.heroSubtitle, cms?.heroSubtitleAr, t('subtitle'));
+  const ctaText = localized(isAr, cms?.heroCta, cms?.heroCtaAr, t('cta'));
+  const badgeText = localized(isAr, cms?.badgeText, cms?.badgeTextAr, t('badge'));
   const showNoCreditCard = cms?.showNoCreditCard !== false;
+  const heroImage = resolveCmsImageUrl(cms?.heroImage);
 
   return (
-    <section className="relative overflow-hidden py-20 sm:py-32">
+    <section id="hero" className="relative overflow-hidden py-20 sm:py-32">
       {/* Background gradient */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 via-background to-background" />
 
@@ -45,13 +48,14 @@ export function HeroSection() {
 
           {/* CTAs */}
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href={ctaLink}
+            <CmsLink
+              href={cms?.heroCtaLink}
+              fallbackHref="/register"
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-lg hover:bg-primary/90 transition-all hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {ctaText}
               <Arrow className="h-4 w-4" />
-            </Link>
+            </CmsLink>
             <Link
               href="/request-demo"
               className="inline-flex items-center gap-2 rounded-lg border px-6 py-3 text-sm font-medium hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -67,17 +71,9 @@ export function HeroSection() {
           )}
 
           {/* Hero image or chat demo preview */}
-          {cms?.heroImage ? (
+          {heroImage ? (
             <div className="mt-16 rounded-xl border bg-card p-2 sm:p-4 shadow-2xl">
-              <img
-                src={
-                  cms.heroImage.startsWith('/')
-                    ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${cms.heroImage}`
-                    : cms.heroImage
-                }
-                alt="Hero"
-                className="rounded-lg w-full object-cover"
-              />
+              <img src={heroImage} alt="" className="rounded-lg w-full object-cover" />
             </div>
           ) : (
             <div className="mt-16 rounded-xl border bg-card p-2 sm:p-4 shadow-2xl">

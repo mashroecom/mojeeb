@@ -2,12 +2,9 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import { MessageSquare, Heart, GitBranch, UserCheck, BarChart3, Clock } from 'lucide-react';
-import {
-  useLandingPageContent,
-  parseLandingFeatures,
-  type LandingFeature,
-} from '@/hooks/useLandingPage';
+import { parseLandingFeatures } from '@/hooks/useLandingPage';
 import { ICON_MAP } from '@/components/admin/IconPicker';
+import { localized, type LandingCms } from './cms';
 
 const featureIcons: Record<string, typeof MessageSquare> = {
   ...ICON_MAP,
@@ -29,20 +26,44 @@ const DEFAULT_FEATURE_KEYS = [
   'availability',
 ] as const;
 
-export function FeaturesSection() {
+interface FeaturesSectionProps {
+  /** Landing-page CMS content, loaded on the server by the page */
+  cms: LandingCms;
+}
+
+export function FeaturesSection({ cms }: FeaturesSectionProps) {
   const t = useTranslations('landing.features');
   const locale = useLocale();
   const isAr = locale === 'ar';
 
-  const { data: cms } = useLandingPageContent();
+  // Features are stored as a single bilingual array (each item has title + titleAr, etc.).
+  // Items the admin added but left empty are skipped.
+  const cmsFeatures = parseLandingFeatures(cms?.features)
+    .filter((feature) => feature && typeof feature === 'object')
+    .map((feature) => ({
+      icon: feature.icon,
+      title: localized(isAr, feature.title, feature.titleAr),
+      description: localized(isAr, feature.description, feature.descriptionAr),
+    }))
+    .filter((feature) => feature.title || feature.description);
 
-  // Features are stored as a single bilingual array (each item has title + titleAr, etc.)
-  const cmsFeatures = parseLandingFeatures(cms?.features);
-  const hasCmsFeatures = cmsFeatures.length > 0;
+  // Nothing in the CMS yet → the six built-in features from the translations
+  const features =
+    cmsFeatures.length > 0
+      ? cmsFeatures
+      : DEFAULT_FEATURE_KEYS.map((key) => ({
+          icon: key as string,
+          title: t(`${key}.title`),
+          description: t(`${key}.description`),
+        }));
 
-  // CMS override for title/subtitle, fallback to translation
-  const sectionTitle = (isAr ? cms?.featuresTitleAr : cms?.featuresTitle) || t('title');
-  const sectionSubtitle = (isAr ? cms?.featuresSubtitleAr : cms?.featuresSubtitle) || t('subtitle');
+  const sectionTitle = localized(isAr, cms?.featuresTitle, cms?.featuresTitleAr, t('title'));
+  const sectionSubtitle = localized(
+    isAr,
+    cms?.featuresSubtitle,
+    cms?.featuresSubtitleAr,
+    t('subtitle'),
+  );
 
   return (
     <section id="features" className="py-20 bg-muted/30 scroll-mt-16">
@@ -53,43 +74,23 @@ export function FeaturesSection() {
         </div>
 
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {hasCmsFeatures
-            ? cmsFeatures.map((feature, i) => {
-                const Icon = featureIcons[feature.icon] || MessageSquare;
-                return (
-                  <div
-                    key={i}
-                    className="group rounded-xl border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/20"
-                  >
-                    <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">
-                      {(isAr ? feature.titleAr : feature.title) || feature.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {(isAr ? feature.descriptionAr : feature.description) || feature.description}
-                    </p>
-                  </div>
-                );
-              })
-            : DEFAULT_FEATURE_KEYS.map((key) => {
-                const Icon = featureIcons[key];
-                return (
-                  <div
-                    key={key}
-                    className="group rounded-xl border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/20"
-                  >
-                    <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{t(`${key}.title`)}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t(`${key}.description`)}
-                    </p>
-                  </div>
-                );
-              })}
+          {features.map((feature, i) => {
+            const Icon = featureIcons[feature.icon] || MessageSquare;
+            return (
+              <div
+                key={i}
+                className="group rounded-xl border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-primary/20"
+              >
+                <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <Icon className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
