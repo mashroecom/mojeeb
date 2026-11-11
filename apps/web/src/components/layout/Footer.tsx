@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useLandingPageContent, parseJsonArray, type FooterLink } from '@/hooks/useLandingPage';
 import { resolveCmsImageUrl } from '@/components/landing/cms';
+import { LogoMark, brandName } from '@/components/brand/Logo';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
@@ -26,9 +27,8 @@ export function Footer() {
 
   const { data: cms } = useLandingPageContent();
 
-  const siteName = settings?.siteName || 'Mojeeb';
+  const siteName = brandName(settings?.siteName, locale);
   const logoUrl = resolveCmsImageUrl(settings?.logoUrl);
-  const initial = siteName.charAt(0).toUpperCase();
 
   // CMS footer fields with fallbacks
   const copyrightText = (isAr ? cms?.footerCopyrightTextAr : cms?.footerCopyrightText) || undefined;
@@ -57,9 +57,7 @@ export function Footer() {
               {logoUrl ? (
                 <img src={logoUrl} alt={siteName} className="h-8 w-8 rounded-lg object-contain" />
               ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
-                  {initial}
-                </div>
+                <LogoMark />
               )}
               <span className="text-xl font-bold">{siteName}</span>
             </div>

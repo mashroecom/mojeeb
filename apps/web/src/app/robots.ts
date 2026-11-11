@@ -1,22 +1,16 @@
 import type { MetadataRoute } from 'next';
-
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://mojeeb.app';
+import { PRIVATE_PREFIXES, SITE_URL } from '@/lib/seo';
 
 export default function robots(): MetadataRoute.Robots {
+  // Arabic is served without a prefix, English under /en.
+  const disallow = ['/api/', '/web-api/'];
+  for (const prefix of PRIVATE_PREFIXES) {
+    disallow.push(prefix, `/en${prefix}`);
+  }
+
   return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: [
-          '/api/',
-          '/en/agents/',
-          '/ar/agents/',
-          '/en/conversations/',
-          '/ar/conversations/',
-        ],
-      },
-    ],
+    rules: [{ userAgent: '*', allow: '/', disallow }],
     sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { resolveCmsImageUrl } from '@/components/landing/cms';
+import { LogoMark, brandName } from '@/components/brand/Logo';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
@@ -21,6 +22,7 @@ interface SiteSettings {
 
 export function Header() {
   const t = useTranslations('nav');
+  const locale = useLocale();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -33,9 +35,8 @@ export function Header() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const siteName = settings?.siteName || 'Mojeeb';
+  const siteName = brandName(settings?.siteName, locale);
   const logoUrl = resolveCmsImageUrl(settings?.logoUrl);
-  const initial = siteName.charAt(0).toUpperCase();
 
   const navItems = [
     { href: '/', label: t('home') },
@@ -52,11 +53,9 @@ export function Header() {
           {logoUrl ? (
             <img src={logoUrl} alt={siteName} className="h-8 w-8 rounded-lg object-contain" />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
-              {initial}
-            </div>
+            <LogoMark />
           )}
-          <span className="text-xl font-bold">{siteName}</span>
+          <span className="text-xl font-bold tracking-tight">{siteName}</span>
         </Link>
 
         {/* Desktop Nav */}

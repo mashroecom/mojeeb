@@ -5,10 +5,25 @@ import { Link } from '@/i18n/navigation';
 import { ArrowLeft, ArrowRight, Phone, Sparkles } from 'lucide-react';
 import { CmsLink } from './CmsLink';
 import { localized, resolveCmsImageUrl, type LandingCms } from './cms';
+import { LogoMark } from '@/components/brand/Logo';
 
 interface HeroSectionProps {
   /** Landing-page CMS content, loaded on the server by the page */
   cms: LandingCms;
+}
+
+/** Column defaults of the landing-page CMS row: placeholders, not copy an admin wrote. */
+const STOCK_HERO_TEXT = new Set([
+  'AI-Powered Customer Support',
+  'دعم العملاء بالذكاء الاصطناعي',
+  'Automate your customer support with intelligent AI agents',
+  'أتمت دعم العملاء مع وكلاء ذكاء اصطناعي',
+  'Powered by AI',
+  'مدعوم بالذكاء الاصطناعي',
+]);
+
+function custom(value: unknown): unknown {
+  return typeof value === 'string' && STOCK_HERO_TEXT.has(value.trim()) ? undefined : value;
 }
 
 export function HeroSection({ cms }: HeroSectionProps) {
@@ -18,28 +33,40 @@ export function HeroSection({ cms }: HeroSectionProps) {
   const Arrow = isAr ? ArrowLeft : ArrowRight;
 
   // CMS text (Arabic → English → translation default)
-  const title = localized(isAr, cms?.heroTitle, cms?.heroTitleAr, t('title'));
-  const subtitle = localized(isAr, cms?.heroSubtitle, cms?.heroSubtitleAr, t('subtitle'));
+  // (the CMS row's stock placeholders count as "not set", so the real copy shows)
+  const title = localized(isAr, custom(cms?.heroTitle), custom(cms?.heroTitleAr), t('title'));
+  const subtitle = localized(
+    isAr,
+    custom(cms?.heroSubtitle),
+    custom(cms?.heroSubtitleAr),
+    t('subtitle'),
+  );
   const ctaText = localized(isAr, cms?.heroCta, cms?.heroCtaAr, t('cta'));
-  const badgeText = localized(isAr, cms?.badgeText, cms?.badgeTextAr, t('badge'));
+  const badgeText = localized(isAr, custom(cms?.badgeText), custom(cms?.badgeTextAr), t('badge'));
   const showNoCreditCard = cms?.showNoCreditCard !== false;
   const heroImage = resolveCmsImageUrl(cms?.heroImage);
 
   return (
     <section id="hero" className="relative overflow-hidden py-20 sm:py-32">
       {/* Background gradient */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 via-background to-background" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-secondary via-background to-background" />
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 -z-10 h-[520px] opacity-60 [background-image:radial-gradient(hsl(var(--primary)/0.14)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent)]"
+      />
 
       <div className="container">
         <div className="mx-auto max-w-3xl text-center">
           {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5 text-sm text-muted-foreground">
-            <Sparkles className="h-4 w-4 text-primary" />
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background px-4 py-1.5 text-sm font-medium text-foreground shadow-sm">
+            <Sparkles className="h-4 w-4 text-highlight" />
             <span>{badgeText}</span>
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">{title}</h1>
+          <h1 className="text-balance text-4xl font-bold leading-tight tracking-tight sm:text-5xl sm:leading-tight lg:text-6xl lg:leading-[1.15]">
+            {title}
+          </h1>
 
           {/* Subtitle */}
           <p className="mt-6 text-lg text-muted-foreground sm:text-xl leading-relaxed">
@@ -78,6 +105,16 @@ export function HeroSection({ cms }: HeroSectionProps) {
           ) : (
             <div className="mt-16 rounded-xl border bg-card p-2 sm:p-4 shadow-2xl">
               <div className="rounded-lg bg-muted/50 p-3 sm:p-6">
+                <div className="mb-4 flex items-center gap-3 border-b pb-3 text-start">
+                  <LogoMark className="h-9 w-9" />
+                  <div>
+                    <p className="text-sm font-semibold">{isAr ? 'مجيب' : 'Mojeeb'}</p>
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      {isAr ? 'متصل الآن' : 'Online now'}
+                    </p>
+                  </div>
+                </div>
                 <div className="space-y-4">
                   {/* Customer message */}
                   <div className="flex justify-start">

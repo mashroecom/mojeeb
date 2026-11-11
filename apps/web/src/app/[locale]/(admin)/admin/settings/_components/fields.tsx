@@ -321,7 +321,7 @@ export function NotEnforcedNote({ badge, reason }: { badge: string; reason: stri
     <span data-not-enforced className="block">
       <span className="me-1.5 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
         {badge}
-      </span>
+      </span>{' '}
       {reason}
     </span>
   );

@@ -4,6 +4,9 @@ import { SidebarProvider } from '@/components/layout/SidebarContext';
 import { AdminGuard } from '@/components/auth/AdminGuard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ToastProvider } from '@/components/ui/Toast';
+import { NO_INDEX } from '@/lib/seo';
+
+export const metadata = NO_INDEX;
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

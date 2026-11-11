@@ -107,14 +107,14 @@
   },
   "landing": {
     "hero": {
-      "title": "AI Customer Support That Understands Your Customers",
-      "subtitle": "Automate conversations across WhatsApp, Messenger, and Instagram with emotion-aware AI that speaks Arabic and English.",
-      "cta": "Start Free Trial",
+      "title": "Your customer asks. Mojeeb answers.",
+      "subtitle": "An AI support agent that replies in Arabic and English on WhatsApp and your website, using your own business knowledge, and hands over to your team when it matters.",
+      "cta": "Start free",
       "ctaSecondary": "Request Free Demo",
-      "badge": "AI-Powered Support",
+      "badge": "Arabic-first AI support",
       "noCreditCard": "No credit card required",
-      "demoChatMessage": "Hi, I want to ask about pricing",
-      "demoChatAIResponse": "Welcome! Happy to help. We have three plans starting from free. Would you like to know the details?",
+      "demoChatMessage": "Hi, do you deliver to Alexandria?",
+      "demoChatAIResponse": "Yes! Delivery to Alexandria takes 2 to 3 days. Would you like me to place the order for you?",
       "login": "Log In"
     },
     "features": {

@@ -1,5 +1,6 @@
 'use client';
 
+import { LogoMark } from '@/components/brand/Logo';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
@@ -153,9 +154,7 @@ export function DashboardSidebar() {
         {/* Logo + mobile close */}
         <div className="flex h-16 items-center justify-between border-b px-6">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
-              M
-            </div>
+            <LogoMark />
             <span className="text-lg font-bold">Mojeeb</span>
           </div>
           <button

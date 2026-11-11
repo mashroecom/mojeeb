@@ -2,6 +2,9 @@ import { MobileNav } from '@/components/mobile/MobileNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ToastProvider } from '@/components/ui/Toast';
+import { NO_INDEX } from '@/lib/seo';
+
+export const metadata = NO_INDEX;
 
 export default function MobileLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 
 export async function generateMetadata({
   params,
@@ -7,12 +8,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const isAr = locale === 'ar';
-  return {
-    title: isAr ? 'عن موجيب' : 'About Mojeeb',
-    description: isAr
-      ? 'تعرف على موجيب - منصة دعم العملاء بالذكاء الاصطناعي. مهمتنا ورؤيتنا وفريقنا.'
-      : 'Learn about Mojeeb - the AI customer support platform. Our mission, vision, and team.',
-  };
+  return pageMetadata({
+    locale,
+    path: '/about',
+    title: isAr ? 'عن مجيب' : 'About Mojeeb',
+    description: isAr ? 'تعرّف على مجيب: منصة خدمة عملاء بالذكاء الاصطناعي مبنية للعربية أولاً. مهمتنا ورؤيتنا وفريقنا.' : 'Meet Mojeeb, the Arabic-first AI customer support platform. Our mission, vision and team.',
+  });
 }
 
 export default function AboutLayout({ children }: { children: React.ReactNode }) {

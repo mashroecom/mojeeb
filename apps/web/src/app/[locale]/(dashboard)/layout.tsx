@@ -5,6 +5,9 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AnnouncementBanner } from '@/components/layout/AnnouncementBanner';
 import { ToastProvider } from '@/components/ui/Toast';
+import { NO_INDEX } from '@/lib/seo';
+
+export const metadata = NO_INDEX;
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -9,9 +9,10 @@ import { cn } from '@/lib/utils';
 import { fontEnglish, fontArabic } from '@/styles/fonts';
 import { Providers } from '@/components/providers/Providers';
 import { PUBLIC_CONTENT_TAG } from '@/lib/publicContent';
+import { DEFAULT_OG_IMAGE, SITE_URL, localePath } from '@/lib/seo';
+import { brandName } from '@/components/brand/Logo';
 import '../globals.css';
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://mojeeb.app';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
 interface SiteSettings {
@@ -65,6 +66,27 @@ async function getLandingCms(): Promise<LandingCmsSeo | null> {
   }
 }
 
+/** Column defaults of the landing-page CMS row: placeholders, not text an admin chose. */
+const STOCK_SEO_TEXT = new Set([
+  'Mojeeb - AI-Powered Customer Support',
+  'موجيب - دعم العملاء بالذكاء الاصطناعي',
+  'مجيب - دعم العملاء بالذكاء الاصطناعي',
+  'Automate your customer support with intelligent AI agents',
+  'أتمت دعم العملاء مع وكلاء ذكاء اصطناعي',
+]);
+
+function customSeoText(value: string | null | undefined): string | undefined {
+  const text = value?.trim();
+  return text && !STOCK_SEO_TEXT.has(text) ? text : undefined;
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#0A7A63' },
+    { media: '(prefers-color-scheme: dark)', color: '#09150F' },
+  ],
+};
+
 export async function generateMetadata({
   params,
 }: {
@@ -74,34 +96,45 @@ export async function generateMetadata({
   const isAr = locale === 'ar';
   const [settings, cms] = await Promise.all([getSiteSettings(), getLandingCms()]);
 
-  const siteName = settings?.siteName || 'Mojeeb';
+  const siteName = brandName(settings?.siteName, locale);
   const siteDescription = settings?.description || '';
 
   // CMS SEO fields override site-settings defaults
-  const seoTitle = isAr ? cms?.seoMetaTitleAr : cms?.seoMetaTitle;
-  const seoDescription = isAr ? cms?.seoMetaDescriptionAr : cms?.seoMetaDescription;
+  // (the database's stock placeholder values count as "not set")
+  const seoTitle = customSeoText(isAr ? cms?.seoMetaTitleAr : cms?.seoMetaTitle);
+  const seoDescription = customSeoText(
+    isAr ? cms?.seoMetaDescriptionAr : cms?.seoMetaDescription,
+  );
 
   const title =
     seoTitle ||
-    (isAr ? `${siteName} - دعم العملاء بالذكاء الاصطناعي` : `${siteName} - AI Customer Support`);
+    (isAr
+      ? `${siteName} | موظف خدمة عملاء بالذكاء الاصطناعي على واتساب`
+      : `${siteName} | AI customer support agent for WhatsApp and web`);
   const description =
     seoDescription ||
     siteDescription ||
     (isAr
-      ? 'منصة دعم العملاء بالذكاء الاصطناعي للشرق الأوسط. أتمتة المحادثات عبر واتساب وماسنجر وإنستغرام.'
-      : 'AI-powered customer support platform for the Middle East. Automate conversations across WhatsApp, Messenger, and Instagram.');
+      ? 'مجيب يرد على عملائك بالعربي وبلهجتهم على واتساب وموقعك، من معلومات نشاطك نفسها، ويحوّل المحادثة لفريقك وقت الحاجة. جرّبه مجاناً.'
+      : 'Mojeeb answers your customers in Arabic and English on WhatsApp and your website, using your own business knowledge, and hands over to your team when needed. Try it free.');
 
   const keywordsStr = settings?.keywords || '';
   const keywords = keywordsStr
     ? keywordsStr.split(',').map((k) => k.trim())
     : isAr
-      ? ['دعم العملاء', 'ذكاء اصطناعي', 'شات بوت', 'واتساب', 'ماسنجر', 'خدمة عملاء', siteName]
+      ? [
+          'خدمة عملاء بالذكاء الاصطناعي',
+          'شات بوت واتساب',
+          'شات بوت عربي',
+          'رد آلي واتساب',
+          'دعم العملاء',
+          siteName,
+        ]
       : [
-          'customer support',
-          'AI chatbot',
-          'WhatsApp',
-          'Messenger',
-          'Instagram',
+          'AI customer support',
+          'Arabic chatbot',
+          'WhatsApp chatbot',
+          'AI agent',
           'help desk',
           siteName,
         ];
@@ -114,7 +147,7 @@ export async function generateMetadata({
     ? cms.seoOgImage.startsWith('http')
       ? cms.seoOgImage
       : `${SITE_URL}${cms.seoOgImage}`
-    : undefined;
+    : DEFAULT_OG_IMAGE;
 
   return {
     title: {
@@ -126,31 +159,34 @@ export async function generateMetadata({
     authors: [{ name: siteName }],
     creator: siteName,
     metadataBase: new URL(SITE_URL),
-    alternates: {
-      canonical: `/${locale}`,
-      languages: { en: '/en', ar: '/ar' },
-    },
+    applicationName: siteName,
+    manifest: '/manifest.json',
     openGraph: {
       type: 'website',
       locale: isAr ? 'ar_EG' : 'en_US',
-      url: SITE_URL,
+      alternateLocale: isAr ? 'en_US' : 'ar_EG',
+      url: localePath(locale),
       siteName,
       title,
       description,
-      ...(ogImage && { images: [{ url: ogImage, width: 1200, height: 630 }] }),
+      images: [{ url: ogImage, width: 1200, height: 630, alt: siteName }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      ...(ogImage && { images: [ogImage] }),
+      images: [ogImage],
     },
     robots: {
       index: true,
       follow: true,
     },
     icons: {
-      icon: faviconUrl || '/icons/icon-192.png',
+      icon: faviconUrl || [
+        { url: '/icon.svg', type: 'image/svg+xml' },
+        { url: '/icons/icon-192.png', type: 'image/png', sizes: '192x192' },
+      ],
+      apple: '/icons/apple-touch-icon.png',
     },
   };
 }

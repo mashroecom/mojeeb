@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 
 export async function generateMetadata({
   params,
@@ -7,12 +8,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const isAr = locale === 'ar';
-  return {
-    title: isAr ? 'تواصل معنا' : 'Contact Us',
-    description: isAr
-      ? 'تواصل مع فريق موجيب. نحن هنا لمساعدتك في أي استفسار حول منصة دعم العملاء بالذكاء الاصطناعي.'
-      : 'Get in touch with the Mojeeb team. We are here to help with any questions about our AI customer support platform.',
-  };
+  return pageMetadata({
+    locale,
+    path: '/contact',
+    title: isAr ? 'تواصل معنا' : 'Contact us',
+    description: isAr ? 'تواصل مع فريق مجيب. نرد على أي استفسار عن منصة خدمة العملاء بالذكاء الاصطناعي.' : 'Get in touch with the Mojeeb team about our AI customer support platform.',
+  });
 }
 
 export default function ContactLayout({ children }: { children: React.ReactNode }) {

@@ -83,9 +83,9 @@ export function CrawlProgressView({ kbId, job }: CrawlProgressViewProps) {
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <Globe className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
-            {/* URLs are always left-to-right; keep them at the start edge in RTL too */}
-            <p className="truncate text-sm font-medium text-start" dir="ltr" title={job.startUrl}>
-              <bdi>{job.startUrl}</bdi>
+            {/* The URL itself reads left-to-right, but stays at the start edge in RTL */}
+            <p className="truncate text-sm font-medium" title={job.startUrl}>
+              <bdi dir="ltr">{job.startUrl}</bdi>
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {job.completedAt

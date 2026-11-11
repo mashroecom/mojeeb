@@ -1,5 +1,8 @@
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { ToastProvider } from '@/components/ui/Toast';
+import { NO_INDEX } from '@/lib/seo';
+
+export const metadata = NO_INDEX;
 
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   return (

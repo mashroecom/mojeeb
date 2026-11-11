@@ -450,8 +450,8 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
             {schedule?.startUrl && (
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-1">{tSync('site')}</p>
-                <p className="text-sm truncate text-start" dir="ltr" title={schedule.startUrl}>
-                  <bdi>{schedule.startUrl}</bdi>
+                <p className="text-sm truncate" title={schedule.startUrl}>
+                  <bdi dir="ltr">{schedule.startUrl}</bdi>
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {schedule.urlPattern
@@ -708,7 +708,9 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
                               )}
                             />
                             <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="truncate max-w-[200px]">{doc.title}</span>
+                            <span className="truncate max-w-[200px]" dir="auto" title={doc.title}>
+                              {doc.title}
+                            </span>
                           </div>
                         </td>
                         <td className="px-4 py-3">

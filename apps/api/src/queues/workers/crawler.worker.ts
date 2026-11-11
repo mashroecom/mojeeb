@@ -323,6 +323,10 @@ export const crawlerWorker = new Worker(
         const prepared = await prepareScheduledCrawl(data);
         if (!prepared) return;
         ({ jobId, startUrl, maxDepth, urlPatterns } = prepared);
+        // Remember the row on the queue job: if this process dies mid-crawl and
+        // BullMQ hands the job to another worker, it must resume this row
+        // instead of finding it "in progress" and skipping the run.
+        await job.updateData({ ...data, jobId, startUrl, config: { maxDepth, urlPatterns } });
       }
       if (!startUrl) {
         throw new Error('Crawl job has no start URL');
@@ -335,8 +339,19 @@ export const crawlerWorker = new Worker(
         data: { status: 'RUNNING', startedAt: new Date() },
       });
       if (started.count === 0) {
-        logger.info({ jobId }, 'Crawl job is no longer pending (cancelled?), skipping');
-        return;
+        // Still RUNNING means the worker that had this job died (restart,
+        // deploy) and BullMQ re-delivered it — a queue job is only ever active
+        // in one worker. Crawl again from the start: pages already imported are
+        // refreshed in place, not duplicated.
+        const resumed = await prisma.crawlJob.updateMany({
+          where: { id: jobId, status: 'RUNNING' },
+          data: { pagesCrawled: 0, pagesTotal: 0 },
+        });
+        if (resumed.count === 0) {
+          logger.info({ jobId }, 'Crawl job is no longer pending (cancelled?), skipping');
+          return;
+        }
+        logger.warn({ jobId }, 'Resuming a crawl job that was interrupted');
       }
 
       // BFS queue for crawling. `seen` holds every URL ever queued, so a page
@@ -541,6 +556,24 @@ export const crawlerWorker = new Worker(
 crawlerWorker.on('failed', (job, err) => {
   logger.error({ jobId: job?.id, err }, 'Crawler job processing failed');
   moveToDeadLetterQueue('crawler', job, err, 3);
+
+  // A job BullMQ gave up on without the processor running to its end (stalled
+  // too often after worker crashes) would otherwise stay RUNNING forever.
+  const crawlJobId = (job?.data as CrawlJobData | undefined)?.jobId;
+  if (crawlJobId) {
+    prisma.crawlJob
+      .updateMany({
+        where: { id: crawlJobId, status: { in: ['PENDING', 'RUNNING'] } },
+        data: {
+          status: 'FAILED',
+          errorMessage: 'CRAWL_INTERRUPTED: The crawl was interrupted before it finished',
+          completedAt: new Date(),
+        },
+      })
+      .catch((updateErr) => {
+        logger.error({ err: updateErr, crawlJobId }, 'Failed to mark crawl job as failed');
+      });
+  }
 });
 
 crawlerWorker.on('error', (err) => {
