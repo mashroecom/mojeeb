@@ -111,142 +111,140 @@ export function KBListView({
       {/* KB Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {knowledgeBases.map((kb) => (
-            <div
-              key={kb.id}
-              className="group relative rounded-xl border bg-card p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => onSelect(kb.id)}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0 flex-1">
-                  <div className="rounded-lg bg-primary/10 p-2 shrink-0">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold truncate">{kb.name}</h3>
-                    {kb.description && (
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                        {kb.description}
-                      </p>
-                    )}
-                  </div>
+          <div
+            key={kb.id}
+            className="group relative rounded-xl border bg-card p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => onSelect(kb.id)}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                <div className="rounded-lg bg-primary/10 p-2 shrink-0">
+                  <BookOpen className="h-5 w-5 text-primary" />
                 </div>
-
-                {/* Edit & Delete buttons */}
-                <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startEditing(kb);
-                    }}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                    aria-label={tc('edit')}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmDeleteId(kb.id);
-                    }}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                    aria-label={tc('delete')}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                <div className="min-w-0">
+                  <h3 className="font-semibold truncate">{kb.name}</h3>
+                  {kb.description && (
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                      {kb.description}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <FileText className="h-3.5 w-3.5" />
-                  {kb._count?.documents ?? 0} {t('documents')}
-                </span>
-                <span>{fmtDate(kb.createdAt, locale)}</span>
+              {/* Edit & Delete buttons */}
+              <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startEditing(kb);
+                  }}
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  aria-label={tc('edit')}
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDeleteId(kb.id);
+                  }}
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  aria-label={tc('delete')}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
-
-              {/* Delete confirm dialog */}
-              {confirmDeleteId === kb.id && (
-                <div
-                  className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/95 backdrop-blur-sm p-4"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="text-center">
-                    <p className="text-sm font-medium mb-3">{t('deleteKbConfirm')}</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => handleDelete(kb.id)}
-                        disabled={deleteMutation.isPending}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
-                      >
-                        {deleteMutation.isPending && (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        )}
-                        {tc('delete')}
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeleteId(null)}
-                        className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
-                      >
-                        {tc('cancel')}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Edit overlay */}
-              {editingKbId === kb.id && (
-                <div
-                  className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/95 backdrop-blur-sm p-4"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <form onSubmit={handleSaveEdit} className="w-full space-y-3">
-                    <div>
-                      <input
-                        type="text"
-                        required
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        placeholder={t('namePlaceholder')}
-                        className="w-full rounded-md border bg-background px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
-                        autoFocus
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="text"
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                        placeholder={t('descriptionPlaceholder')}
-                        className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        type="submit"
-                        disabled={updateMutation.isPending || !editName.trim()}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-                      >
-                        {updateMutation.isPending ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Save className="h-3.5 w-3.5" />
-                        )}
-                        {tc('save')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelEditing}
-                        className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
-                      >
-                        {tc('cancel')}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
             </div>
-          ))}
+
+            <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <FileText className="h-3.5 w-3.5" />
+                {kb._count?.documents ?? 0} {t('documents')}
+              </span>
+              <span>{fmtDate(kb.createdAt, locale)}</span>
+            </div>
+
+            {/* Delete confirm dialog */}
+            {confirmDeleteId === kb.id && (
+              <div
+                className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/95 backdrop-blur-sm p-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center">
+                  <p className="text-sm font-medium mb-3">{t('deleteKbConfirm')}</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => handleDelete(kb.id)}
+                      disabled={deleteMutation.isPending}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                    >
+                      {deleteMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      {tc('delete')}
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
+                    >
+                      {tc('cancel')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Edit overlay */}
+            {editingKbId === kb.id && (
+              <div
+                className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/95 backdrop-blur-sm p-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <form onSubmit={handleSaveEdit} className="w-full space-y-3">
+                  <div>
+                    <input
+                      type="text"
+                      required
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder={t('namePlaceholder')}
+                      className="w-full rounded-md border bg-background px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      placeholder={t('descriptionPlaceholder')}
+                      className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="submit"
+                      disabled={updateMutation.isPending || !editName.trim()}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                    >
+                      {updateMutation.isPending ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Save className="h-3.5 w-3.5" />
+                      )}
+                      {tc('save')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEditing}
+                      className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
+                    >
+                      {tc('cancel')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -3,6 +3,35 @@ import { logger } from '../config/logger';
 import { BadRequestError } from '../utils/errors';
 import { robotsTxtService } from './robotsTxt.service';
 import { assertPublicUrl, safeFetch } from '../utils/safeFetch';
+import { matchesUrlPatterns } from '../utils/urlPatterns';
+
+/**
+ * Machine-readable reasons a URL could not be imported. The dashboard maps
+ * these to translated messages; `error` stays a readable English fallback.
+ */
+export const CRAWL_ERROR_CODES = {
+  urlNotAllowed: 'CRAWL_URL_NOT_ALLOWED',
+  privateUrl: 'CRAWL_PRIVATE_URL',
+  hostUnresolved: 'CRAWL_HOST_UNRESOLVED',
+  robotsDisallowed: 'CRAWL_ROBOTS_DISALLOWED',
+  notHtml: 'CRAWL_NOT_HTML',
+  httpError: 'CRAWL_HTTP_ERROR',
+  timeout: 'CRAWL_TIMEOUT',
+  fetchFailed: 'CRAWL_FETCH_FAILED',
+  emptyContent: 'CRAWL_EMPTY_CONTENT',
+} as const;
+
+/** Give the URL-safety errors thrown by safeFetch a specific code (they all use BAD_REQUEST). */
+function withCrawlCode(err: BadRequestError): BadRequestError {
+  if (err.code !== 'BAD_REQUEST') return err;
+  if (/private or internal/i.test(err.message)) {
+    return new BadRequestError(err.message, CRAWL_ERROR_CODES.privateUrl);
+  }
+  if (/resolve/i.test(err.message)) {
+    return new BadRequestError(err.message, CRAWL_ERROR_CODES.hostUnresolved);
+  }
+  return new BadRequestError(err.message, CRAWL_ERROR_CODES.urlNotAllowed);
+}
 
 export interface CrawlConfig {
   maxDepth?: number;
@@ -34,6 +63,19 @@ export class CrawlerService {
    * @param config - Crawl configuration options
    * @returns Crawl result containing text, links, and metadata
    */
+  /**
+   * Reject a URL we would refuse to fetch anyway (not http(s), private/internal
+   * address, unresolvable host) before a crawl job is created for it.
+   */
+  async assertCrawlableUrl(url: string): Promise<void> {
+    try {
+      await assertPublicUrl(url);
+    } catch (err) {
+      if (err instanceof BadRequestError) throw withCrawlCode(err);
+      throw err;
+    }
+  }
+
   async crawlUrl(url: string, config: CrawlConfig = {}): Promise<CrawlResult> {
     try {
       // Validate URL. Customer-supplied, so it must not point into our own network
@@ -47,7 +89,10 @@ export class CrawlerService {
           config.userAgent || this.USER_AGENT,
         );
         if (!isAllowed) {
-          throw new BadRequestError('URL is disallowed by robots.txt');
+          throw new BadRequestError(
+            'URL is disallowed by robots.txt',
+            CRAWL_ERROR_CODES.robotsDisallowed,
+          );
         }
       }
 
@@ -63,13 +108,16 @@ export class CrawlerService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new BadRequestError(
+          `The page answered with HTTP ${response.status}`,
+          CRAWL_ERROR_CODES.httpError,
+        );
       }
 
       // Get content type and check if it's HTML
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('text/html') && !contentType.includes('application/xhtml')) {
-        throw new BadRequestError('URL does not return HTML content');
+        throw new BadRequestError('URL does not return HTML content', CRAWL_ERROR_CODES.notHtml);
       }
 
       // Get the HTML content with proper encoding
@@ -83,10 +131,16 @@ export class CrawlerService {
       return { text, links, metadata };
     } catch (err: any) {
       if (err instanceof BadRequestError) {
-        throw err;
+        throw withCrawlCode(err);
       }
       logger.error({ err, url }, 'URL crawling failed');
-      throw new BadRequestError(`Failed to crawl URL: ${err.message}`);
+      if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
+        throw new BadRequestError('The page took too long to respond', CRAWL_ERROR_CODES.timeout);
+      }
+      throw new BadRequestError(
+        `Failed to crawl URL: ${err.message}`,
+        CRAWL_ERROR_CODES.fetchFailed,
+      );
     }
   }
 
@@ -162,7 +216,7 @@ export class CrawlerService {
       return textContent;
     } catch (err) {
       logger.error({ err }, 'HTML content cleaning failed');
-      throw new BadRequestError('Failed to parse HTML content');
+      throw new BadRequestError('Failed to parse HTML content', CRAWL_ERROR_CODES.fetchFailed);
     }
   }
 
@@ -291,25 +345,11 @@ export class CrawlerService {
   }
 
   /**
-   * Check if a URL matches any of the configured URL patterns.
-   * @param url - The URL to check
-   * @param patterns - Array of regex patterns
-   * @returns true if URL matches any pattern, false otherwise
+   * Check if a URL passes the crawl's URL filters (plain-text / `*` wildcard
+   * filters, see utils/urlPatterns). No filters means every URL is allowed.
    */
   matchesUrlPatterns(url: string, patterns: string[]): boolean {
-    if (!patterns || patterns.length === 0) {
-      return true; // No patterns means all URLs are allowed
-    }
-
-    try {
-      return patterns.some((pattern) => {
-        const regex = new RegExp(pattern);
-        return regex.test(url);
-      });
-    } catch (err) {
-      logger.error({ err, patterns }, 'Invalid URL pattern');
-      return false;
-    }
+    return matchesUrlPatterns(url, patterns);
   }
 }
 

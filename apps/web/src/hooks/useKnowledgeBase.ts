@@ -80,27 +80,34 @@ interface BulkImportInput {
   documents: Array<{ title: string; content: string; contentType?: 'TEXT' | 'FAQ' }>;
 }
 
-// Crawl Schedule
+// Crawl Schedule (auto-sync)
+export type CrawlFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+
 export interface CrawlSchedule {
-  id: string;
-  knowledgeBaseId: string;
+  /** null until the knowledge base has a crawl configuration */
+  id: string | null;
+  knowledgeBaseId: string | null;
+  /** Depth and URL filter (comma-separated) of the latest website crawl */
   maxDepth: number;
   urlPattern: string | null;
   scheduleEnabled: boolean;
-  scheduleFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | null;
+  scheduleFrequency: CrawlFrequency | null;
   lastCrawledAt: string | null;
+  /** Next scheduled run (ISO, derived from the cron pattern); null when disabled */
   nextCrawlAt: string | null;
-  createdAt: string;
-  updatedAt: string;
+  cronPattern: string | null;
+  /** Time zone the schedule runs in (UTC) */
+  timezone: string;
+  /** Website auto-sync re-crawls; null until a website has been crawled */
+  startUrl: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 interface UpdateCrawlScheduleInput {
   kbId: string;
   enabled: boolean;
-  frequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
-  maxDepth?: number;
-  urlPattern?: string;
-  startUrl?: string;
+  frequency?: CrawlFrequency;
 }
 
 // Crawl Jobs
@@ -117,15 +124,18 @@ export interface CrawlJob {
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  config?: CrawlSchedule;
+}
+
+export function isCrawlJobActive(job: Pick<CrawlJob, 'status'>): boolean {
+  return job.status === 'PENDING' || job.status === 'RUNNING';
 }
 
 interface StartCrawlInput {
   kbId: string;
   startUrl: string;
   maxDepth?: number;
-  urlPattern?: string;
-  configId?: string;
+  /** Only links whose address matches one of these filters are followed */
+  urlPatterns?: string[];
 }
 
 interface CancelCrawlJobInput {
@@ -174,8 +184,12 @@ export function useKnowledgeBases() {
 /**
  * Fetch a single knowledge base by ID.
  */
-export function useKnowledgeBase(kbId: string | undefined) {
+export function useKnowledgeBase(
+  kbId: string | undefined,
+  options: { crawlActive?: boolean } = {},
+) {
   const orgId = useAuthStore((s) => s.organization?.id);
+  const { crawlActive = false } = options;
 
   return useQuery({
     queryKey: knowledgeBaseKeys.detail(orgId!, kbId!),
@@ -188,7 +202,9 @@ export function useKnowledgeBase(kbId: string | undefined) {
     enabled: !!orgId && !!kbId,
     // Embedding runs in the background: keep polling while any document is still
     // being processed so its status and chunk count update without a manual reload.
+    // A running website crawl keeps adding documents, so poll during it as well.
     refetchInterval: (query) =>
+      crawlActive ||
       query.state.data?.documents?.some(
         (doc) => doc.embeddingStatus === 'PENDING' || doc.embeddingStatus === 'PROCESSING',
       )
@@ -426,8 +442,9 @@ export function useUpdateCrawlSchedule() {
       );
       return data.data;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
       if (orgId) {
+        queryClient.setQueryData(knowledgeBaseKeys.schedule(orgId, variables.kbId), data);
         queryClient.invalidateQueries({
           queryKey: knowledgeBaseKeys.schedule(orgId, variables.kbId),
         });
@@ -457,13 +474,20 @@ export function useStartCrawl() {
         queryClient.invalidateQueries({
           queryKey: knowledgeBaseKeys.crawlJobs(orgId, variables.kbId),
         });
+        // The crawl settings (and the site auto-sync follows) just changed
+        queryClient.invalidateQueries({
+          queryKey: knowledgeBaseKeys.schedule(orgId, variables.kbId),
+        });
       }
     },
   });
 }
 
 /**
- * List all crawl jobs for a knowledge base.
+ * List the most recent crawl jobs of a knowledge base (newest first). Polls
+ * quickly while a crawl is queued or running so its progress is live, and
+ * slowly otherwise so a crawl started elsewhere (auto-sync, another tab)
+ * still shows up.
  */
 export function useCrawlJobs(kbId: string | undefined) {
   const orgId = useAuthStore((s) => s.organization?.id);
@@ -477,6 +501,7 @@ export function useCrawlJobs(kbId: string | undefined) {
       return data.data;
     },
     enabled: !!orgId && !!kbId,
+    refetchInterval: (query) => (query.state.data?.some(isCrawlJobActive) ? 2000 : 30000),
   });
 }
 
@@ -508,12 +533,13 @@ export function useCancelCrawlJob() {
 
   return useMutation({
     mutationFn: async ({ kbId, jobId }: CancelCrawlJobInput) => {
-      const { data } = await api.delete<ApiResponse<void>>(
+      const { data } = await api.delete<ApiResponse<Pick<CrawlJob, 'id' | 'status'>>>(
         `/organizations/${orgId}/knowledge-bases/${kbId}/crawl/${jobId}`,
       );
       return data.data;
     },
-    onSuccess: (_data, variables) => {
+    // Also on error: a 409 means the job finished in the meantime
+    onSettled: (_data, _error, variables) => {
       if (orgId) {
         queryClient.invalidateQueries({
           queryKey: knowledgeBaseKeys.crawlJob(orgId, variables.kbId, variables.jobId),

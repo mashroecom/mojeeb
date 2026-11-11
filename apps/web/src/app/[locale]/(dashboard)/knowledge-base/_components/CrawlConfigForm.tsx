@@ -2,11 +2,17 @@
 
 import React, { useState, FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2, ChevronDown, Globe, Filter } from 'lucide-react';
+import { Loader2, ChevronDown, Globe, Filter, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/stores/authStore';
+import { useAddDocument, useStartCrawl } from '@/hooks/useKnowledgeBase';
 import { toast } from '@/hooks/useToast';
+import { useCrawlErrorMessage } from './crawlErrors';
+
+/** Title for a single imported page: "example.com/returns" (the API caps titles at 200). */
+function pageTitleFromUrl(url: URL): string {
+  const path = url.pathname.replace(/\/$/, '');
+  return `${url.hostname}${path}`.slice(0, 200);
+}
 
 interface CrawlConfigFormProps {
   kbId: string;
@@ -17,76 +23,89 @@ interface CrawlConfigFormProps {
 export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormProps) {
   const t = useTranslations('dashboard.knowledgeBase');
   const tc = useTranslations('common');
-  const orgId = useAuthStore((s) => s.organization?.id);
+  const crawlError = useCrawlErrorMessage();
+  const addDocumentMutation = useAddDocument();
+  const startCrawlMutation = useStartCrawl();
 
   const [startUrl, setStartUrl] = useState('');
   const [crawlType, setCrawlType] = useState<'single' | 'multi'>('single');
   const [maxDepth, setMaxDepth] = useState(2);
   const [urlPatterns, setUrlPatterns] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Why the last attempt was refused (robots.txt, not a web page, ...): shown
+  // next to the field so it stays visible after the toast is gone
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  async function handleSubmit(e: FormEvent) {
+  const isSubmitting = addDocumentMutation.isPending || startCrawlMutation.isPending;
+
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setSubmitError(null);
 
-    if (!startUrl.trim()) {
-      toast.error(t('urlValidation'));
-      return;
-    }
-
-    // Basic URL validation
+    let parsedUrl: URL;
     try {
-      new URL(startUrl);
+      parsedUrl = new URL(startUrl.trim());
+      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') throw new Error();
     } catch {
+      setSubmitError(t('urlValidation'));
       toast.error(t('urlValidation'));
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      if (crawlType === 'single') {
-        // For single page, add as a regular URL document
-        await api.post(`/organizations/${orgId}/knowledge-bases/${kbId}/documents`, {
-          title: new URL(startUrl).hostname,
-          contentType: 'URL',
-          sourceUrl: startUrl,
-        });
-        toast.success(t('documentAdded'));
-      } else {
-        // For multi-page, create a crawl job
-        const payload: any = {
-          startUrl,
-          maxDepth: maxDepth,
-        };
-
-        if (urlPatterns.trim()) {
-          payload.urlPatterns = urlPatterns
-            .split(',')
-            .map((p) => p.trim())
-            .filter(Boolean);
-        }
-
-        await api.post(`/organizations/${orgId}/knowledge-bases/${kbId}/crawl`, payload);
-        toast.success(t('crawlJobStarted'));
-      }
-
-      // Reset form
+    const onDone = () => {
       setStartUrl('');
       setCrawlType('single');
       setMaxDepth(2);
       setUrlPatterns('');
       setShowAdvanced(false);
+      onSuccess?.();
+    };
+    const onFailed = (fallback: string) => (error: unknown) => {
+      const message = crawlError.fromApiError(error, fallback);
+      setSubmitError(message);
+      toast.error(message);
+    };
 
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error: any) {
-      console.error('Crawl config error:', error);
-      toast.error(error.response?.data?.message || t('crawlStartFailed'));
-    } finally {
-      setIsSubmitting(false);
+    if (crawlType === 'single') {
+      // A single page is added as a regular URL document
+      addDocumentMutation.mutate(
+        {
+          kbId,
+          title: pageTitleFromUrl(parsedUrl),
+          contentType: 'URL',
+          sourceUrl: parsedUrl.href,
+        },
+        {
+          onSuccess: () => {
+            toast.success(t('pageAdded'));
+            onDone();
+          },
+          onError: onFailed(t('pageAddFailed')),
+        },
+      );
+      return;
     }
+
+    // Multi-page: start a crawl job; its progress shows in the crawls list
+    const filters = urlPatterns
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    startCrawlMutation.mutate(
+      {
+        kbId,
+        startUrl: parsedUrl.href,
+        maxDepth,
+        urlPatterns: filters.length > 0 ? filters : undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success(t('crawlStarted'));
+          onDone();
+        },
+        onError: onFailed(t('crawlStartFailed')),
+      },
+    );
   }
 
   return (
@@ -101,13 +120,33 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
           id="startUrl"
           type="url"
           value={startUrl}
-          onChange={(e) => setStartUrl(e.target.value)}
+          onChange={(e) => {
+            setStartUrl(e.target.value);
+            setSubmitError(null);
+          }}
           placeholder="https://example.com"
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          dir="ltr"
+          aria-invalid={submitError ? true : undefined}
+          aria-describedby={submitError ? 'startUrl-error' : undefined}
+          className={cn(
+            'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring',
+            submitError && 'border-destructive focus:ring-destructive/40',
+          )}
           disabled={isSubmitting}
           required
         />
-        <p className="text-xs text-muted-foreground mt-1.5">{t('urlHint')}</p>
+        {submitError ? (
+          <p
+            id="startUrl-error"
+            role="alert"
+            className="mt-1.5 flex items-start gap-1.5 text-xs text-destructive"
+          >
+            <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" />
+            {submitError}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground mt-1.5">{t('urlHint')}</p>
+        )}
       </div>
 
       {/* Crawl Type */}
@@ -175,7 +214,9 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
                   min="1"
                   max="5"
                   value={maxDepth}
-                  onChange={(e) => setMaxDepth(parseInt(e.target.value) || 1)}
+                  onChange={(e) =>
+                    setMaxDepth(Math.min(5, Math.max(1, parseInt(e.target.value, 10) || 1)))
+                  }
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   disabled={isSubmitting}
                 />
@@ -193,10 +234,12 @@ export function CrawlConfigForm({ kbId, onSuccess, onCancel }: CrawlConfigFormPr
                   value={urlPatterns}
                   onChange={(e) => setUrlPatterns(e.target.value)}
                   placeholder="/docs/, /help/, /faq/"
+                  dir="ltr"
+                  maxLength={1000}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   disabled={isSubmitting}
                 />
-                <p className="text-xs text-muted-foreground mt-1.5">{t('urlPatternHint')}</p>
+                <p className="text-xs text-muted-foreground mt-1.5">{t('urlFilterHint')}</p>
               </div>
             </div>
           )}

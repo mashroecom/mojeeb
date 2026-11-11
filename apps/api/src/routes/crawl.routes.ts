@@ -3,6 +3,7 @@ import { knowledgeBaseService } from '../services/knowledgeBase.service';
 import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { z } from 'zod';
+import { MAX_URL_PATTERNS, MAX_URL_PATTERN_LENGTH } from '../utils/urlPatterns';
 
 interface CrawlParams {
   orgId: string;
@@ -25,10 +26,12 @@ router.post(
   '/',
   validate({
     body: z.object({
-      startUrl: z.string().url(),
-      maxDepth: z.number().min(1).max(5).optional(),
-      urlPattern: z.string().optional(),
-      configId: z.string().optional(),
+      startUrl: z.string().url().max(2000),
+      maxDepth: z.number().int().min(1).max(5).optional(),
+      // URL filters: only links matching one of them are followed (see utils/urlPatterns)
+      urlPatterns: z.array(z.string().max(MAX_URL_PATTERN_LENGTH)).max(MAX_URL_PATTERNS).optional(),
+      // Comma-separated form of the same thing, accepted for older clients
+      urlPattern: z.string().max(2000).optional(),
     }),
   }),
   async (req, res, next) => {
@@ -65,11 +68,10 @@ router.post(
   '/schedule',
   validate({
     body: z.object({
+      // What gets re-crawled (site, depth, URL filter) is taken from the
+      // knowledge base's latest crawl, not from this request.
       frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).optional(),
       enabled: z.boolean(),
-      maxDepth: z.number().min(1).max(5).optional(),
-      urlPattern: z.string().optional(),
-      startUrl: z.string().url().optional(),
     }),
   }),
   async (req, res, next) => {

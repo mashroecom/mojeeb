@@ -6,6 +6,7 @@ import { cache } from '../config/cache';
 import { configService } from './config.service';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { planConfigService } from './planConfig.service';
+import { adminNotificationService } from './adminNotification.service';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -459,6 +460,9 @@ export class StripeService {
       { orgId: subscription.orgId, invoiceId: stripeInvoice.id },
       'Invoice payment failed',
     );
+    adminNotificationService
+      .notifyFailedPayment({ gateway: 'Stripe', orgId: subscription.orgId })
+      .catch(() => {});
   }
 
   /**

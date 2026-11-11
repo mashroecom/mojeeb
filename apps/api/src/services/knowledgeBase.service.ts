@@ -5,9 +5,21 @@ import { getAIProvider } from '../ai/index';
 import { logger } from '../config/logger';
 import { cache } from '../config/cache';
 import pdfParse from 'pdf-parse';
-import { crawlerService } from './crawler.service';
+import { crawlerService, CRAWL_ERROR_CODES } from './crawler.service';
 import { crawlerQueue } from '../queues/index';
-import { scheduleRepeatableCrawl, cancelRepeatableCrawl } from '../queues/workers/crawler.worker';
+import {
+  scheduleRepeatableCrawl,
+  cancelRepeatableCrawl,
+  findScheduledCrawlTarget,
+  failStaleCrawlJobs,
+} from '../queues/workers/crawler.worker';
+import {
+  CRAWL_SCHEDULE_TIMEZONE,
+  computeNextCrawlAt,
+  frequencyToCronPattern,
+  isCrawlFrequency,
+} from '../queues/crawlSchedule';
+import { parseUrlPatterns, serializeUrlPatterns } from '../utils/urlPatterns';
 
 export class KnowledgeBaseService {
   async create(orgId: string, data: { name: string; description?: string }) {
@@ -73,6 +85,12 @@ export class KnowledgeBaseService {
     // Handle URL: crawl the webpage and extract text
     if (contentType === 'URL' && data.sourceUrl) {
       textContent = await this.crawlURL(data.sourceUrl);
+      if (!textContent.trim()) {
+        throw new BadRequestError(
+          'No readable text was found on this page',
+          CRAWL_ERROR_CODES.emptyContent,
+        );
+      }
     }
 
     if (!textContent.trim()) {
@@ -118,17 +136,11 @@ export class KnowledgeBaseService {
   }
 
   private async crawlURL(url: string): Promise<string> {
-    try {
-      // Use the new crawler service with cheerio-based extraction
-      const result = await crawlerService.crawlUrl(url, {
-        respectRobotsTxt: true,
-      });
-
-      return result.text;
-    } catch (err) {
-      logger.error({ err, url }, 'URL crawling failed');
-      throw new BadRequestError('Failed to crawl URL');
-    }
+    // crawlUrl only throws BadRequestErrors that say why the page was refused
+    // (robots.txt, not HTML, private address, ...) with a CRAWL_* code the
+    // dashboard translates — let them through instead of a generic failure.
+    const result = await crawlerService.crawlUrl(url, { respectRobotsTxt: true });
+    return result.text;
   }
 
   async semanticSearch(kbId: string, query: string, limit: number = 5) {
@@ -179,53 +191,32 @@ export class KnowledgeBaseService {
     return prisma.kBDocument.delete({ where: { id: docId } });
   }
 
-  async createCrawlJob(
-    kbId: string,
-    data: {
-      startUrl: string;
-      maxDepth?: number;
-      urlPattern?: string;
-      configId?: string;
-    },
-  ) {
-    // Validate knowledge base exists
-    const kb = await prisma.knowledgeBase.findUnique({
-      where: { id: kbId },
+  /**
+   * The crawl configuration of a knowledge base. There is exactly one per
+   * knowledge base (the oldest, should older data hold several): it remembers
+   * the depth and URL filter of the latest website crawl and carries the
+   * auto-sync schedule.
+   */
+  private async getCrawlConfig(kbId: string) {
+    return prisma.crawlConfig.findFirst({
+      where: { knowledgeBaseId: kbId },
+      orderBy: { createdAt: 'asc' },
     });
-    if (!kb) throw new NotFoundError('Knowledge base not found');
-
-    // Validate URL
-    try {
-      new URL(data.startUrl);
-    } catch (err) {
-      throw new BadRequestError('Invalid URL format');
-    }
-
-    // Create crawl job
-    const crawlJob = await prisma.crawlJob.create({
-      data: {
-        knowledgeBaseId: kbId,
-        startUrl: data.startUrl,
-        configId: data.configId,
-        status: 'PENDING',
-        pagesTotal: 0,
-        pagesCrawled: 0,
-      },
-      include: {
-        config: true,
-      },
-    });
-
-    return crawlJob;
   }
 
+  /**
+   * Start a multi-page crawl: remember its settings on the knowledge base's
+   * crawl config, create the job row linked to that config and enqueue it for
+   * the crawler worker.
+   */
   async startCrawlJob(
     kbId: string,
     data: {
       startUrl: string;
       maxDepth?: number;
+      urlPatterns?: string[];
+      /** Comma-separated form, kept for older clients. */
       urlPattern?: string;
-      configId?: string;
     },
   ) {
     // Validate knowledge base exists
@@ -235,28 +226,40 @@ export class KnowledgeBaseService {
     });
     if (!kb) throw new NotFoundError('Knowledge base not found');
 
-    // Validate URL
-    try {
-      new URL(data.startUrl);
-    } catch (err) {
-      throw new BadRequestError('Invalid URL format');
+    // Refuse URLs the crawler would refuse anyway (not http(s), private or
+    // unresolvable host) now, with a clear error, instead of in a failed job.
+    await crawlerService.assertCrawlableUrl(data.startUrl);
+
+    // Two crawls writing the same pages into one knowledge base would race and
+    // duplicate documents: one at a time. Jobs abandoned by a dead process do
+    // not count.
+    await failStaleCrawlJobs(kbId);
+    const active = await prisma.crawlJob.findFirst({
+      where: { knowledgeBaseId: kbId, status: { in: ['PENDING', 'RUNNING'] } },
+      select: { id: true },
+    });
+    if (active) {
+      throw new ConflictError(
+        'A crawl is already in progress for this knowledge base',
+        'CRAWL_ALREADY_RUNNING',
+      );
     }
 
-    // Parse URL patterns if provided
-    let urlPatterns: string[] = [];
-    if (data.urlPattern) {
-      urlPatterns = data.urlPattern
-        .split(',')
-        .map((p) => p.trim())
-        .filter(Boolean);
-    }
+    const urlPatterns = parseUrlPatterns(data.urlPatterns ?? data.urlPattern);
+    const maxDepth = data.maxDepth ?? 1;
 
-    // Create crawl job in database
+    // Remember what was crawled and how: auto-sync repeats exactly this.
+    const existingConfig = await this.getCrawlConfig(kbId);
+    const settings = { maxDepth, urlPattern: serializeUrlPatterns(urlPatterns) };
+    const config = existingConfig
+      ? await prisma.crawlConfig.update({ where: { id: existingConfig.id }, data: settings })
+      : await prisma.crawlConfig.create({ data: { knowledgeBaseId: kbId, ...settings } });
+
     const crawlJob = await prisma.crawlJob.create({
       data: {
         knowledgeBaseId: kbId,
         startUrl: data.startUrl,
-        configId: data.configId,
+        configId: config.id,
         status: 'PENDING',
         pagesTotal: 0,
         pagesCrawled: 0,
@@ -266,28 +269,33 @@ export class KnowledgeBaseService {
       },
     });
 
-    // Get URL patterns from config if not provided directly
-    let configUrlPatterns = urlPatterns;
-    if (configUrlPatterns.length === 0 && crawlJob.config?.urlPattern) {
-      configUrlPatterns = crawlJob.config.urlPattern
-        .split(',')
-        .map((p) => p.trim())
-        .filter(Boolean);
+    // Enqueue crawl job to BullMQ
+    try {
+      await crawlerQueue.add('crawl', {
+        jobId: crawlJob.id,
+        kbId: kb.id,
+        orgId: kb.orgId,
+        startUrl: data.startUrl,
+        configId: config.id,
+        config: { maxDepth, urlPatterns },
+      });
+    } catch (err) {
+      // Never leave a job row that no worker will ever pick up
+      await prisma.crawlJob.update({
+        where: { id: crawlJob.id },
+        data: {
+          status: 'FAILED',
+          errorMessage: 'Could not queue the crawl',
+          completedAt: new Date(),
+        },
+      });
+      throw err;
     }
 
-    // Enqueue crawl job to BullMQ
-    await crawlerQueue.add('crawl', {
-      jobId: crawlJob.id,
-      kbId: kb.id,
-      orgId: kb.orgId,
-      startUrl: data.startUrl,
-      config: {
-        maxDepth: data.maxDepth || crawlJob.config?.maxDepth || 1,
-        urlPatterns: configUrlPatterns,
-      },
-    });
-
-    logger.info({ jobId: crawlJob.id, kbId, startUrl: data.startUrl }, 'Crawl job enqueued');
+    logger.info(
+      { jobId: crawlJob.id, kbId, startUrl: data.startUrl, maxDepth, urlPatterns },
+      'Crawl job enqueued',
+    );
 
     return crawlJob;
   }
@@ -347,12 +355,11 @@ export class KnowledgeBaseService {
   }
 
   async listCrawlJobs(kbId: string) {
+    // Most recent first; the dashboard shows the latest handful
     return prisma.crawlJob.findMany({
       where: { knowledgeBaseId: kbId },
       orderBy: { createdAt: 'desc' },
-      include: {
-        config: true,
-      },
+      take: 20,
     });
   }
 
@@ -452,20 +459,54 @@ export class KnowledgeBaseService {
     return chunks;
   }
 
+  /**
+   * What the dashboard needs to show about auto-sync: the stored config plus
+   * the site that will be re-crawled and a next-run time derived from the cron
+   * pattern actually scheduled (never a stale stored value).
+   */
+  private describeCrawlSchedule(
+    config: Awaited<ReturnType<KnowledgeBaseService['getCrawlConfig']>>,
+    startUrl: string | null,
+  ) {
+    const frequency =
+      config?.scheduleEnabled && isCrawlFrequency(config.scheduleFrequency)
+        ? config.scheduleFrequency
+        : null;
+
+    return {
+      id: config?.id ?? null,
+      knowledgeBaseId: config?.knowledgeBaseId ?? null,
+      maxDepth: config?.maxDepth ?? 1,
+      urlPattern: config?.urlPattern ?? null,
+      scheduleEnabled: frequency !== null,
+      scheduleFrequency: frequency,
+      lastCrawledAt: config?.lastCrawledAt ?? null,
+      nextCrawlAt: frequency ? computeNextCrawlAt(frequency) : null,
+      cronPattern: frequency ? frequencyToCronPattern(frequency) : null,
+      timezone: CRAWL_SCHEDULE_TIMEZONE,
+      /** Site auto-sync re-crawls; null until a website has been crawled. */
+      startUrl,
+      createdAt: config?.createdAt ?? null,
+      updatedAt: config?.updatedAt ?? null,
+    };
+  }
+
+  /**
+   * Switch auto-sync on/off or change its frequency. Auto-sync repeats the
+   * knowledge base's latest website crawl (same start URL, depth and URL
+   * filter), so there must be one before it can be enabled.
+   */
   async updateCrawlSchedule(
     kbId: string,
     data: {
       frequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
       enabled: boolean;
-      maxDepth?: number;
-      urlPattern?: string;
-      startUrl?: string;
     },
   ) {
     // Validate knowledge base exists
     const kb = await prisma.knowledgeBase.findUnique({
       where: { id: kbId },
-      include: { crawlConfigs: true },
+      select: { id: true },
     });
     if (!kb) throw new NotFoundError('Knowledge base not found');
 
@@ -474,39 +515,29 @@ export class KnowledgeBaseService {
       throw new BadRequestError('Frequency is required when enabling schedule');
     }
 
-    // Find existing config or create new one
-    let config = kb.crawlConfigs[0]; // For now, support one config per KB
-
-    if (config) {
-      // Update existing config
-      config = await prisma.crawlConfig.update({
-        where: { id: config.id },
-        data: {
-          scheduleEnabled: data.enabled,
-          scheduleFrequency: data.enabled ? data.frequency : null,
-          maxDepth: data.maxDepth ?? config.maxDepth,
-          urlPattern: data.urlPattern ?? config.urlPattern,
-          updatedAt: new Date(),
-        },
-      });
-    } else {
-      // Create new config
-      if (data.enabled && !data.startUrl) {
-        throw new BadRequestError('Start URL is required for new crawl configuration');
-      }
-
-      config = await prisma.crawlConfig.create({
-        data: {
-          knowledgeBaseId: kbId,
-          scheduleEnabled: data.enabled,
-          scheduleFrequency: data.enabled ? data.frequency : null,
-          maxDepth: data.maxDepth ?? 1,
-          urlPattern: data.urlPattern,
-        },
-      });
+    const startUrl = await findScheduledCrawlTarget(kbId);
+    if (data.enabled && !startUrl) {
+      throw new BadRequestError(
+        'Crawl a website into this knowledge base first: auto-sync re-crawls the last crawled website',
+        'CRAWL_SCHEDULE_NO_SITE',
+      );
     }
 
-    // Schedule or cancel repeatable crawl job
+    let config = await this.getCrawlConfig(kbId);
+    if (!config && !data.enabled) {
+      // Nothing was ever scheduled: disabling is a no-op
+      return this.describeCrawlSchedule(null, startUrl);
+    }
+
+    const scheduleData = {
+      scheduleEnabled: data.enabled,
+      scheduleFrequency: data.enabled ? data.frequency : null,
+    };
+    config = config
+      ? await prisma.crawlConfig.update({ where: { id: config.id }, data: scheduleData })
+      : await prisma.crawlConfig.create({ data: { knowledgeBaseId: kbId, ...scheduleData } });
+
+    // Schedule (replacing any previous frequency) or cancel the repeatable job
     if (data.enabled) {
       await scheduleRepeatableCrawl(config.id);
     } else {
@@ -518,24 +549,15 @@ export class KnowledgeBaseService {
       'Crawl schedule updated',
     );
 
-    return config;
+    return this.describeCrawlSchedule(await this.getCrawlConfig(kbId), startUrl);
   }
 
   async getCrawlSchedule(kbId: string) {
-    // Validate knowledge base exists
-    const kb = await prisma.knowledgeBase.findUnique({
-      where: { id: kbId },
-      include: { crawlConfigs: true },
-    });
-    if (!kb) throw new NotFoundError('Knowledge base not found');
-
-    // Return first config (for now, support one config per KB)
-    const config = kb.crawlConfigs[0];
-    if (!config) {
-      return null;
-    }
-
-    return config;
+    const [config, startUrl] = await Promise.all([
+      this.getCrawlConfig(kbId),
+      findScheduledCrawlTarget(kbId),
+    ]);
+    return this.describeCrawlSchedule(config, startUrl);
   }
 }
 

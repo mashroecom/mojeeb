@@ -46,6 +46,15 @@ export function useSocket() {
       });
     });
 
+    // Delivery receipt for an outgoing message (sent → delivered → read / failed):
+    // refetch that conversation's messages so the status ticks update.
+    socket.on('message:status', (data) => {
+      if (!data?.conversationId) return;
+      queryClient.invalidateQueries({
+        queryKey: [...conversationKeys.detail(organization.id, data.conversationId), 'messages'],
+      });
+    });
+
     socket.on('conversation:updated', (data) => {
       useChatStore.getState().updateConversation(data.conversationId, data);
       // Refresh conversations list on status/emotion/summary changes
@@ -65,6 +74,7 @@ export function useSocket() {
     return () => {
       socket.off('connect');
       socket.off('message:new');
+      socket.off('message:status');
       socket.off('conversation:updated');
       socket.off('typing:start');
       socket.off('typing:stop');

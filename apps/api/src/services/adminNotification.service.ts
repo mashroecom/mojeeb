@@ -1,7 +1,98 @@
 import { prisma } from '../config/database';
 import { logger } from '../config/logger';
+import { systemSettings, type AdminAlertEvent } from './systemSettings.service';
+
+interface AdminAlert {
+  type: string;
+  title: string;
+  body: string;
+  metadata?: Record<string, unknown>;
+}
 
 export class AdminNotificationService {
+  /**
+   * Raise an admin alert for a platform event, honouring the admin notification settings
+   * (Settings → Notifications):
+   *  - the event's NOTIFY_* toggle decides whether anything is sent at all;
+   *  - when ENABLE_EMAIL_NOTIFICATIONS is on and ADMIN_ALERT_EMAIL is set, the alert is
+   *    also emailed to that address.
+   * Returns whether the alert was sent. Callers treat this as fire-and-forget.
+   */
+  async notifyEvent(event: AdminAlertEvent, alert: AdminAlert): Promise<boolean> {
+    const settings = await systemSettings.notifications();
+    if (!settings.events[event]) return false;
+
+    await this.create(alert);
+
+    if (settings.alertEmail) {
+      try {
+        const { emailQueue } = await import('../queues');
+        await emailQueue.add('custom', {
+          type: 'custom',
+          to: settings.alertEmail,
+          subject: `[Mojeeb Admin] ${alert.title}`,
+          body: alert.body,
+        });
+      } catch (err) {
+        logger.warn({ err, event }, 'Failed to queue admin alert email');
+      }
+    }
+    return true;
+  }
+
+  /**
+   * A registration creates a user and an organization. The usual alert covers both; when
+   * the "new user" alert is switched off but the "new organization" one is on, an
+   * organization-only alert is sent instead.
+   */
+  async notifyRegistration(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    organizationName: string;
+  }): Promise<void> {
+    const sent = await this.notifyEvent('NEW_USER_SIGNUP', {
+      type: 'NEW_USER',
+      title: 'New User Registration',
+      body: `${data.firstName} ${data.lastName} (${data.email}) registered and created organization "${data.organizationName}".`,
+    });
+    if (!sent) {
+      await this.notifyEvent('NEW_ORG_CREATED', {
+        type: 'NEW_ORG',
+        title: 'New Organization',
+        body: `Organization "${data.organizationName}" was created by ${data.email}.`,
+      });
+    }
+  }
+
+  /** Alert admins that a payment failed (honours the NOTIFY_FAILED_PAYMENT setting). */
+  async notifyFailedPayment(info: { gateway: string; orgId?: string; invoiceId?: string }) {
+    const subject = info.orgId ? ` for organization ${info.orgId}` : '';
+    const invoice = info.invoiceId ? ` (invoice ${info.invoiceId})` : '';
+    await this.notifyEvent('FAILED_PAYMENT', {
+      type: 'PAYMENT_FAILED',
+      title: 'Payment Failed',
+      body: `A ${info.gateway} payment failed${subject}${invoice}.`,
+      metadata: { ...info },
+    });
+  }
+
+  /**
+   * Alert admins about an unhandled server error, at most once every 10 minutes so an
+   * error storm cannot flood the notification list or the alert mailbox.
+   */
+  async notifySystemError(summary: { message: string; method?: string; path?: string }) {
+    const { redis } = await import('../config/redis');
+    const first = await redis.set('admin-alert:system-error:throttle', '1', 'EX', 600, 'NX');
+    if (first !== 'OK') return;
+    const where = summary.method && summary.path ? ` on ${summary.method} ${summary.path}` : '';
+    await this.notifyEvent('SYSTEM_ERRORS', {
+      type: 'SYSTEM_ERROR',
+      title: 'System Error',
+      body: `Unhandled server error${where}: ${summary.message.slice(0, 300)}. See Error Logs for details (further errors in the next 10 minutes are not announced).`,
+    });
+  }
+
   /**
    * Create a notification for all super-admin users.
    * Optionally emits a real-time event via websocket (fire-and-forget).

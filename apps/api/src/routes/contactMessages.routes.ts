@@ -48,7 +48,7 @@ router.post('/', contactLimiter, async (req, res, next) => {
 
     // Notify admins
     adminNotificationService
-      .create({
+      .notifyEvent('NEW_CONTACT_MESSAGE', {
         type: 'SUPPORT_MESSAGE',
         title: 'New Contact Message',
         body: `${name} (${email}) sent a message: "${subject}"`,

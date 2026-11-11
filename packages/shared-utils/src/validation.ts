@@ -9,6 +9,107 @@ export const passwordSchema = z
   .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
   .regex(/[0-9]/, 'Password must contain at least one number');
 
+// ---------------------------------------------------------------------------
+// Configurable password policy
+// ---------------------------------------------------------------------------
+
+/**
+ * The platform password policy. Administrators configure it in the admin panel
+ * (Settings → Security); the API enforces it whenever a password is set or changed.
+ * A lowercase letter is always required — it is not configurable.
+ */
+export interface PasswordPolicy {
+  minLength: number;
+  requireUppercase: boolean;
+  requireNumbers: boolean;
+  requireSpecialChars: boolean;
+}
+
+/** The policy applied when nothing is configured — identical to `passwordSchema`. */
+export const DEFAULT_PASSWORD_POLICY: PasswordPolicy = {
+  minLength: 8,
+  requireUppercase: true,
+  requireNumbers: true,
+  requireSpecialChars: false,
+};
+
+/** Hard upper bound on password length (keeps hashing cost bounded). */
+export const PASSWORD_MAX_LENGTH = 128;
+
+export type PasswordRule =
+  | 'minLength'
+  | 'maxLength'
+  | 'uppercase'
+  | 'lowercase'
+  | 'number'
+  | 'special';
+
+/** Rules a password has to satisfy under `policy`, in display order. */
+export function passwordPolicyRules(
+  policy: PasswordPolicy = DEFAULT_PASSWORD_POLICY,
+): PasswordRule[] {
+  const rules: PasswordRule[] = ['minLength'];
+  if (policy.requireUppercase) rules.push('uppercase');
+  rules.push('lowercase');
+  if (policy.requireNumbers) rules.push('number');
+  if (policy.requireSpecialChars) rules.push('special');
+  return rules;
+}
+
+/** Returns the rules `password` violates under `policy` (empty array = acceptable). */
+export function checkPasswordPolicy(
+  password: string,
+  policy: PasswordPolicy = DEFAULT_PASSWORD_POLICY,
+): PasswordRule[] {
+  const failed: PasswordRule[] = [];
+  if (password.length < policy.minLength) failed.push('minLength');
+  if (password.length > PASSWORD_MAX_LENGTH) failed.push('maxLength');
+  if (policy.requireUppercase && !/[A-Z]/.test(password)) failed.push('uppercase');
+  if (!/[a-z]/.test(password)) failed.push('lowercase');
+  if (policy.requireNumbers && !/[0-9]/.test(password)) failed.push('number');
+  if (policy.requireSpecialChars && !/[^A-Za-z0-9\s]/.test(password)) failed.push('special');
+  return failed;
+}
+
+/** English message for a violated rule (same wording as `passwordSchema`). */
+export function passwordRuleMessage(
+  rule: PasswordRule,
+  policy: PasswordPolicy = DEFAULT_PASSWORD_POLICY,
+): string {
+  switch (rule) {
+    case 'minLength':
+      return `Password must be at least ${policy.minLength} characters`;
+    case 'maxLength':
+      return `Password must be at most ${PASSWORD_MAX_LENGTH} characters`;
+    case 'uppercase':
+      return 'Password must contain at least one uppercase letter';
+    case 'lowercase':
+      return 'Password must contain at least one lowercase letter';
+    case 'number':
+      return 'Password must contain at least one number';
+    case 'special':
+      return 'Password must contain at least one special character';
+  }
+}
+
+/**
+ * Zod schema enforcing `policy`. `messages` lets a UI supply translated texts;
+ * rules without a custom message fall back to the English ones.
+ */
+export function buildPasswordSchema(
+  policy: PasswordPolicy = DEFAULT_PASSWORD_POLICY,
+  messages: Partial<Record<PasswordRule, string>> = {},
+) {
+  return z.string().superRefine((value, ctx) => {
+    for (const rule of checkPasswordPolicy(value, policy)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: messages[rule] ?? passwordRuleMessage(rule, policy),
+      });
+    }
+  });
+}
+
 export const registerSchema = z.object({
   email: emailSchema,
   password: passwordSchema,

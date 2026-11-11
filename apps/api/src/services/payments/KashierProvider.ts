@@ -6,6 +6,7 @@ import { prisma } from '../../config/database';
 import { logger } from '../../config/logger';
 import { cache } from '../../config/cache';
 import { planConfigService } from '../planConfig.service';
+import { adminNotificationService } from '../adminNotification.service';
 import { NotFoundError, BadRequestError } from '../../utils/errors';
 import {
   PaymentProvider,
@@ -421,6 +422,13 @@ export class KashierProvider extends PaymentProvider {
         { orgId: invoice.subscription.orgId, orderId: data.merchantOrderId },
         'Payment failed',
       );
+      adminNotificationService
+        .notifyFailedPayment({
+          gateway: 'Kashier',
+          orgId: invoice.subscription.orgId,
+          invoiceId: invoice.id,
+        })
+        .catch(() => {});
     }
     // PENDING status: do nothing, wait for final status
   }

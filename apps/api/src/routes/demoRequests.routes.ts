@@ -49,7 +49,7 @@ router.post('/', demoLimiter, async (req, res, next) => {
 
     // Notify admins
     adminNotificationService
-      .create({
+      .notifyEvent('NEW_DEMO_REQUEST', {
         type: 'NEW_DEMO_REQUEST',
         title: 'New Demo Request',
         body: `${name} (${email}) submitted a demo request.${company ? ` Company: ${company}` : ''}`,

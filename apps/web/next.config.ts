@@ -1,3 +1,4 @@
+import path from 'path';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 import withPWAInit from '@ducanh2912/next-pwa';
@@ -8,6 +9,9 @@ const withPWA = withPWAInit({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
   register: true,
+  // Push / notificationclick handlers: compiled to public/worker-<hash>.js and
+  // imported by the generated sw.js (never edit public/sw.js by hand)
+  customWorkerSrc: path.join(__dirname, 'worker'),
 });
 
 const nextConfig: NextConfig = {

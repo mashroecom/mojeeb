@@ -293,24 +293,33 @@ router.get('/organizations', async (req: Request, res: Response, next: NextFunct
   }
 });
 
+// GET /push/config - Whether push is available, and the VAPID public key to subscribe with
+router.get('/push/config', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: pushNotificationService.getClientConfig(),
+  });
+});
+
 const subscribeSchema = z.object({
   orgId: z.string().cuid(),
   subscription: z.object({
-    endpoint: z.string().url(),
+    endpoint: z.string().url().max(2048),
     keys: z.object({
-      p256dh: z.string(),
-      auth: z.string(),
+      p256dh: z.string().min(1).max(256),
+      auth: z.string().min(1).max(256),
     }),
   }),
   deviceInfo: z
     .object({
-      userAgent: z.string().optional(),
-      platform: z.string().optional(),
+      userAgent: z.string().max(1024).optional(),
+      platform: z.string().max(255).optional(),
     })
     .optional(),
 });
 
 // POST /push/subscribe - Subscribe to push notifications
+// Answers 503 with code PUSH_NOT_CONFIGURED when the server has no VAPID keys.
 router.post(
   '/push/subscribe',
   validate({ body: subscribeSchema }),
@@ -351,7 +360,7 @@ router.post(
 );
 
 const unsubscribeSchema = z.object({
-  endpoint: z.string().url(),
+  endpoint: z.string().url().max(2048),
 });
 
 // DELETE /push/unsubscribe - Unsubscribe from push notifications
@@ -363,11 +372,11 @@ router.delete(
       const userId = req.user!.userId;
       const { endpoint } = req.body;
 
-      await pushNotificationService.unsubscribe(userId, endpoint);
+      const { removed } = await pushNotificationService.unsubscribe(userId, endpoint);
 
       res.json({
         success: true,
-        data: { unsubscribed: true },
+        data: { unsubscribed: true, removed },
       });
     } catch (err) {
       next(err);

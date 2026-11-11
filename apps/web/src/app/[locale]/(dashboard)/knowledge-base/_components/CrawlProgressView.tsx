@@ -1,221 +1,204 @@
 'use client';
 
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Loader2, CheckCircle, XCircle, Clock, Globe, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/stores/authStore';
+import React, { useState } from 'react';
+import {
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Globe,
+  AlertCircle,
+  Ban,
+  Square,
+} from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
-import { fmtDate } from '@/lib/dateFormat';
-
-interface CrawlJob {
-  id: string;
-  knowledgeBaseId: string;
-  startUrl: string;
-  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-  pagesTotal: number;
-  pagesCrawled: number;
-  errorMessage: string | null;
-  startedAt: string | null;
-  completedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface ApiResponse<T> {
-  success: true;
-  data: T;
-}
+import { cn } from '@/lib/utils';
+import { fmtDateTime } from '@/lib/dateFormat';
+import { type CrawlJob, isCrawlJobActive, useCancelCrawlJob } from '@/hooks/useKnowledgeBase';
+import { toast } from '@/hooks/useToast';
+import { useCrawlErrorMessage } from './crawlErrors';
 
 interface CrawlProgressViewProps {
-  jobId: string;
   kbId: string;
+  job: CrawlJob;
 }
 
-export function CrawlProgressView({ jobId, kbId }: CrawlProgressViewProps) {
-  const orgId = useAuthStore((s) => s.organization?.id);
-  const t = useTranslations('dashboard.knowledgeBase');
+const STATUS_STYLE: Record<CrawlJob['status'], string> = {
+  PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+  RUNNING: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  COMPLETED: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  FAILED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  CANCELLED: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+};
+
+const STATUS_ICON: Record<CrawlJob['status'], React.ReactNode> = {
+  PENDING: <Clock className="h-3 w-3" />,
+  RUNNING: <Loader2 className="h-3 w-3 animate-spin" />,
+  COMPLETED: <CheckCircle className="h-3 w-3" />,
+  FAILED: <XCircle className="h-3 w-3" />,
+  CANCELLED: <Ban className="h-3 w-3" />,
+};
+
+/**
+ * One crawl job: its website, status, live progress while it is queued or
+ * running (the parent's job list polls), a stop button with confirmation, and
+ * the outcome once it is over.
+ */
+export function CrawlProgressView({ kbId, job }: CrawlProgressViewProps) {
+  const t = useTranslations('dashboard.knowledgeBase.crawlJobs');
+  const tc = useTranslations('common');
   const locale = useLocale();
+  const crawlError = useCrawlErrorMessage();
+  const cancelMutation = useCancelCrawlJob();
+  const [confirmingStop, setConfirmingStop] = useState(false);
 
-  // Fetch crawl job status with polling
-  const { data: job, isLoading } = useQuery({
-    queryKey: ['crawl-job', orgId, kbId, jobId],
-    queryFn: async () => {
-      const { data } = await api.get<ApiResponse<CrawlJob>>(
-        `/organizations/${orgId}/knowledge-bases/${kbId}/crawl/${jobId}`,
-      );
-      return data.data;
-    },
-    enabled: !!orgId && !!kbId && !!jobId,
-    refetchInterval: (query) => {
-      // Poll every 2 seconds if job is running or pending
-      const job = query.state.data;
-      return job?.status === 'RUNNING' || job?.status === 'PENDING' ? 2000 : false;
-    },
-  });
-
-  // Status badge configuration
-  const statusConfig = {
-    PENDING: {
-      icon: <Clock className="h-3 w-3" />,
-      label: t('statusPending'),
-      color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    },
-    RUNNING: {
-      icon: <Loader2 className="h-3 w-3 animate-spin" />,
-      label: t('statusProcessing'),
-      color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-    },
-    COMPLETED: {
-      icon: <CheckCircle className="h-3 w-3" />,
-      label: t('statusCompleted'),
-      color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    },
-    FAILED: {
-      icon: <XCircle className="h-3 w-3" />,
-      label: t('statusFailed'),
-      color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    },
-    CANCELLED: {
-      icon: <XCircle className="h-3 w-3" />,
-      label: t('cancelled'),
-      color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
-    },
+  const active = isCrawlJobActive(job);
+  const statusLabels: Record<CrawlJob['status'], string> = {
+    PENDING: t('statusPending'),
+    RUNNING: t('statusRunning'),
+    COMPLETED: t('statusCompleted'),
+    FAILED: t('statusFailed'),
+    CANCELLED: t('statusCancelled'),
   };
 
-  if (isLoading) {
-    return (
-      <div className="rounded-lg border bg-card p-6 shadow-sm">
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
-      </div>
+  // pagesTotal grows while links are being discovered, so this is "so far"
+  const total = Math.max(job.pagesTotal, job.pagesCrawled);
+  const percent = total > 0 ? Math.min(100, Math.round((job.pagesCrawled / total) * 100)) : 0;
+  const notImported = Math.max(0, job.pagesTotal - job.pagesCrawled);
+
+  function handleStop() {
+    cancelMutation.mutate(
+      { kbId, jobId: job.id },
+      {
+        onSuccess: () => toast.success(t('stopped')),
+        onError: () => toast.error(t('stopFailed')),
+        onSettled: () => setConfirmingStop(false),
+      },
     );
   }
-
-  if (!job) {
-    return (
-      <div className="rounded-lg border bg-card p-6 shadow-sm">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <AlertCircle className="h-5 w-5" />
-          <span className="text-sm">{t('crawlJobNotFound')}</span>
-        </div>
-      </div>
-    );
-  }
-
-  const status = statusConfig[job.status];
-  const progress = job.pagesTotal > 0 ? (job.pagesCrawled / job.pagesTotal) * 100 : 0;
-
-  // Calculate estimated completion time (rough estimate)
-  const getEstimatedCompletion = () => {
-    if (job.status !== 'RUNNING' || !job.startedAt || job.pagesCrawled === 0) {
-      return null;
-    }
-
-    const startTime = new Date(job.startedAt).getTime();
-    const now = Date.now();
-    const elapsed = now - startTime;
-    const avgTimePerPage = elapsed / job.pagesCrawled;
-    const remainingPages = job.pagesTotal - job.pagesCrawled;
-    const estimatedTimeLeft = avgTimePerPage * remainingPages;
-    const estimatedCompletion = new Date(now + estimatedTimeLeft);
-
-    return estimatedCompletion;
-  };
-
-  const estimatedCompletion = getEstimatedCompletion();
 
   return (
-    <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <Globe className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm mb-1">{t('crawlProgress')}</h3>
-            <p className="text-xs text-muted-foreground truncate" dir="ltr">
-              {job.startUrl}
+    <li className="px-6 py-4" data-testid="crawl-job" data-status={job.status}>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <Globe className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0 flex-1">
+            {/* URLs are always left-to-right; keep them at the start edge in RTL too */}
+            <p className="truncate text-sm font-medium text-start" dir="ltr" title={job.startUrl}>
+              <bdi>{job.startUrl}</bdi>
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {job.completedAt
+                ? t('finishedAt', { date: fmtDateTime(job.completedAt, locale) })
+                : job.startedAt
+                  ? t('startedAt', { date: fmtDateTime(job.startedAt, locale) })
+                  : t('queuedAt', { date: fmtDateTime(job.createdAt, locale) })}
             </p>
           </div>
         </div>
-        <span
-          className={cn(
-            'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0',
-            status.color,
+
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
+              STATUS_STYLE[job.status],
+            )}
+          >
+            {STATUS_ICON[job.status]}
+            {statusLabels[job.status]}
+          </span>
+
+          {active && !confirmingStop && (
+            <button
+              type="button"
+              onClick={() => setConfirmingStop(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
+            >
+              <Square className="h-3 w-3" />
+              {t('stop')}
+            </button>
           )}
-        >
-          {status.icon}
-          {status.label}
-        </span>
+        </div>
       </div>
 
-      {/* Progress Bar */}
-      {job.status === 'RUNNING' && (
-        <div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-            <span>
-              {job.pagesCrawled} / {job.pagesTotal} {t('pages')}
-            </span>
-            <span>{Math.round(progress)}%</span>
+      {/* Stop confirmation */}
+      {active && confirmingStop && (
+        <div
+          role="alertdialog"
+          aria-label={t('stop')}
+          className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/20 bg-destructive/5 px-3 py-2"
+        >
+          <p className="text-xs">{t('stopConfirm')}</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleStop}
+              disabled={cancelMutation.isPending}
+              className="inline-flex items-center gap-1 rounded-md bg-destructive px-2.5 py-1 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+            >
+              {cancelMutation.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+              {t('stopYes')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingStop(false)}
+              disabled={cancelMutation.isPending}
+              className="rounded-md border bg-background px-2.5 py-1 text-xs font-medium hover:bg-accent disabled:opacity-50 transition-colors"
+            >
+              {tc('cancel')}
+            </button>
           </div>
-          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+        </div>
+      )}
+
+      {/* Live progress */}
+      {active && (
+        <div className="mt-3">
+          <div className="mb-1.5 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>
+              {job.status === 'PENDING' || total === 0
+                ? t('waiting')
+                : t('progress', { crawled: job.pagesCrawled, total })}
+            </span>
+            {total > 0 && <span dir="ltr">{percent}%</span>}
+          </div>
+          <div
+            role="progressbar"
+            aria-label={t('progressLabel')}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={total > 0 ? percent : undefined}
+            className="h-2 w-full overflow-hidden rounded-full bg-muted"
+          >
             <div
-              className="h-full bg-primary transition-all duration-500 ease-out"
-              style={{ width: `${progress}%` }}
+              className={cn(
+                'h-full rounded-full bg-primary transition-all duration-500 ease-out',
+                total === 0 && 'w-full animate-pulse opacity-40',
+              )}
+              style={total > 0 ? { width: `${Math.max(percent, 4)}%` } : undefined}
             />
           </div>
         </div>
       )}
 
-      {/* Completed Stats */}
-      {(job.status === 'COMPLETED' || job.status === 'FAILED' || job.status === 'CANCELLED') && (
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <div>
-            <span className="font-medium">{job.pagesCrawled}</span> {t('pagesCrawled')}
-          </div>
-          {job.pagesTotal > 0 && job.pagesTotal !== job.pagesCrawled && (
-            <div>
-              <span className="font-medium">{job.pagesTotal}</span> {t('pagesDiscovered')}
-            </div>
+      {/* Outcome */}
+      {!active && (
+        <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 ps-7 text-xs text-muted-foreground">
+          <span>{t('pagesImported', { count: job.pagesCrawled })}</span>
+          {job.status === 'COMPLETED' && notImported > 0 && (
+            <span>{t('pagesSkipped', { count: notImported })}</span>
           )}
         </div>
       )}
 
-      {/* Error Message */}
-      {job.status === 'FAILED' && job.errorMessage && (
-        <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-destructive mb-1">{t('error')}</p>
-              <p className="text-xs text-destructive/90 break-words">{job.errorMessage}</p>
-            </div>
-          </div>
+      {job.status === 'FAILED' && (
+        <div className="mt-3 flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 p-3">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <p className="min-w-0 break-words text-xs text-destructive">
+            {crawlError.fromJobError(job.errorMessage, t('failedToast'))}
+          </p>
         </div>
       )}
-
-      {/* Timestamps */}
-      <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground border-t pt-3">
-        {job.startedAt && (
-          <div>
-            <span className="font-medium">{t('started')}</span> {fmtDate(job.startedAt, locale)}
-          </div>
-        )}
-        {job.completedAt && (
-          <div>
-            <span className="font-medium">{t('completed')}:</span>{' '}
-            {fmtDate(job.completedAt, locale)}
-          </div>
-        )}
-        {estimatedCompletion && job.status === 'RUNNING' && (
-          <div>
-            <span className="font-medium">{t('estCompletion')}</span>{' '}
-            {fmtDate(estimatedCompletion.toISOString(), locale)}
-          </div>
-        )}
-      </div>
-    </div>
+    </li>
   );
 }

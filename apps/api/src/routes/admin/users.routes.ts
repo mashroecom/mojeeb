@@ -12,6 +12,8 @@ import { emailQueue } from '../../queues';
 import { NotFoundError } from '../../utils/errors';
 import argon2 from 'argon2';
 
+import { enforcePasswordPolicy } from '../../middleware/passwordPolicy';
+import { loginLockoutService } from '../../services/loginLockout.service';
 const bulkUserIdsSchema = z.object({
   userIds: z.array(z.string().min(1)).min(1).max(100),
 });
@@ -25,7 +27,8 @@ const updateProfileSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
   email: z.string().email().optional(),
-  newPassword: z.string().min(8).max(100).optional(),
+  // Checked against the configured password policy by enforcePasswordPolicy().
+  newPassword: z.string().min(1).optional(),
 });
 
 const router: Router = Router();
@@ -279,6 +282,50 @@ router.post(
 );
 
 // POST /:userId/impersonate - Generate short-lived token for user
+// GET /:userId/lockout - Is this account currently locked after failed logins?
+router.get('/:userId/lockout', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId } = req.params as { userId: string };
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (!user) throw new NotFoundError('User not found');
+
+    res.json({ success: true, data: await loginLockoutService.getState(user.email) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /:userId/unlock - Clear a failed-login lockout
+router.post('/:userId/unlock', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId } = req.params as { userId: string };
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true },
+    });
+    if (!user) throw new NotFoundError('User not found');
+
+    const wasLocked = await loginLockoutService.clear(user.email);
+
+    auditLogService
+      .log({
+        userId: req.user!.userId,
+        action: 'USER_LOCKOUT_CLEARED',
+        targetType: 'User',
+        targetId: userId,
+        metadata: { wasLocked },
+      })
+      .catch(() => {});
+
+    res.json({ success: true, data: { wasLocked } });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/:userId/impersonate', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId } = req.params as { userId: string };
@@ -325,12 +372,16 @@ router.post('/:userId/impersonate', async (req: Request, res: Response, next: Ne
 router.patch(
   '/:userId/profile',
   validate({ body: updateProfileSchema }),
+  enforcePasswordPolicy('newPassword'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params as { userId: string };
       const updates = req.body as z.infer<typeof updateProfileSchema>;
 
-      const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true },
+      });
       if (!user) throw new NotFoundError('User not found');
 
       // If email is being changed, check for duplicates
@@ -356,6 +407,12 @@ router.patch(
         data,
         select: { id: true, firstName: true, lastName: true, email: true },
       });
+
+      // An admin-set password also lifts any login lockout on the account.
+      if (newPassword) {
+        await loginLockoutService.clear(user.email);
+        await loginLockoutService.clear(updated.email);
+      }
 
       auditLogService
         .log({

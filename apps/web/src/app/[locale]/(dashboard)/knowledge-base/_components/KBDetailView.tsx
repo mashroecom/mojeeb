@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react';
+import React, { useEffect, useRef, useState, FormEvent } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations, useLocale } from 'next-intl';
 import { fmtDate } from '@/lib/dateFormat';
 import {
@@ -28,11 +29,34 @@ import {
   useReprocessDocument,
   useCrawlSchedule,
   useUpdateCrawlSchedule,
+  useCrawlJobs,
+  isCrawlJobActive,
+  knowledgeBaseKeys,
+  type CrawlFrequency,
+  type CrawlJob,
 } from '@/hooks/useKnowledgeBase';
+import { useAuthStore } from '@/stores/authStore';
 import { StatusBadge } from './StatusBadge';
 import { ContentTypeBadge } from './ContentTypeBadge';
 import { CrawlConfigForm } from './CrawlConfigForm';
+import { CrawlJobsSection } from './CrawlJobsSection';
+import { useCrawlErrorMessage } from './crawlErrors';
 import { toast } from '@/hooks/useToast';
+
+/**
+ * A schedule time in the viewer's own time zone, with the zone spelled out
+ * (e.g. "Nov 12, 2026, 02:00 AM GMT+2") — the schedule itself runs in UTC.
+ */
+function fmtDateTimeWithZone(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
+}
 
 interface KBDetailViewProps {
   kbId: string;
@@ -44,9 +68,47 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
   const tc = useTranslations('common');
   const locale = useLocale();
 
-  const { data: kb, isLoading } = useKnowledgeBase(kbId);
+  const tJobs = useTranslations('dashboard.knowledgeBase.crawlJobs');
+  const tSync = useTranslations('dashboard.knowledgeBase.autoSync');
+  const crawlError = useCrawlErrorMessage();
+  const queryClient = useQueryClient();
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  // Website crawls: the list polls while one is queued or running, and so does
+  // the knowledge base itself so imported pages appear in the documents table.
+  const { data: crawlJobs, isError: crawlJobsError } = useCrawlJobs(kbId);
+  const crawlActive = crawlJobs?.some(isCrawlJobActive) ?? false;
+
+  const { data: kb, isLoading } = useKnowledgeBase(kbId, { crawlActive });
   const { data: schedule, isLoading: scheduleLoading } = useCrawlSchedule(kbId);
   const updateScheduleMutation = useUpdateCrawlSchedule();
+
+  // When a crawl we saw running reaches its end: load the final documents and
+  // sync info once more, and tell the user how it went.
+  const seenActiveJobs = useRef<Map<string, CrawlJob['status']>>(new Map());
+  useEffect(() => {
+    if (!crawlJobs || !orgId) return;
+    const seen = seenActiveJobs.current;
+    let finished = false;
+    for (const job of crawlJobs) {
+      if (isCrawlJobActive(job)) {
+        seen.set(job.id, job.status);
+      } else if (seen.has(job.id)) {
+        seen.delete(job.id);
+        finished = true;
+        if (job.status === 'COMPLETED') {
+          toast.success(tJobs('finishedToast', { count: job.pagesCrawled }));
+        } else if (job.status === 'FAILED') {
+          toast.error(crawlError.fromJobError(job.errorMessage, tJobs('failedToast')));
+        }
+      }
+    }
+    if (finished) {
+      queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.detail(orgId, kbId) });
+      queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.schedule(orgId, kbId) });
+    }
+    // Deliberately keyed on the job data only: translators change identity per render
+  }, [crawlJobs, orgId, kbId, queryClient]);
 
   // Edit KB state
   const [isEditing, setIsEditing] = useState(false);
@@ -56,9 +118,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
 
   // Schedule state
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
-  const [scheduleFrequency, setScheduleFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>(
-    'WEEKLY',
-  );
+  const [scheduleFrequency, setScheduleFrequency] = useState<CrawlFrequency>('WEEKLY');
 
   // Add document form state
   const [showAddDocForm, setShowAddDocForm] = useState(false);
@@ -194,15 +254,17 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
         onSuccess: () => {
           toast.success(enabled ? t('autoSyncEnabled') : t('autoSyncDisabled'));
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           setScheduleEnabled(!enabled); // Revert on error
-          toast.error(error.response?.data?.message || t('scheduleUpdateFailed'));
+          toast.error(crawlError.fromApiError(error, t('scheduleUpdateFailed')));
         },
       },
     );
   }
 
-  function handleFrequencyChange(frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY') {
+  function handleFrequencyChange(frequency: CrawlFrequency) {
+    if (frequency === scheduleFrequency) return;
+    const previous = scheduleFrequency;
     setScheduleFrequency(frequency);
     if (scheduleEnabled) {
       updateScheduleMutation.mutate(
@@ -215,8 +277,9 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
           onSuccess: () => {
             toast.success(t('frequencyUpdated'));
           },
-          onError: (error: any) => {
-            toast.error(error.response?.data?.message || t('frequencyUpdateFailed'));
+          onError: (error: unknown) => {
+            setScheduleFrequency(previous); // Revert on error
+            toast.error(crawlError.fromApiError(error, t('frequencyUpdateFailed')));
           },
         },
       );
@@ -247,6 +310,8 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
   }
 
   const documents = kb.documents ?? [];
+  // Auto-sync repeats the latest website crawl, so there has to be one
+  const canEnableAutoSync = !!schedule?.startUrl;
 
   return (
     <div>
@@ -343,7 +408,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
       </div>
 
       {/* Auto-Sync Schedule Configuration */}
-      <div className="mb-6 rounded-xl border bg-card p-6 shadow-sm">
+      <div className="mb-6 rounded-xl border bg-card p-6 shadow-sm" data-testid="auto-sync">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-muted-foreground" />
@@ -353,10 +418,17 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           ) : (
             <button
+              type="button"
+              role="switch"
+              aria-checked={scheduleEnabled}
+              aria-label={tSync('toggleLabel')}
+              aria-describedby={canEnableAutoSync ? undefined : 'auto-sync-hint'}
               onClick={() => handleScheduleToggle(!scheduleEnabled)}
-              disabled={updateScheduleMutation.isPending}
+              disabled={
+                updateScheduleMutation.isPending || (!scheduleEnabled && !canEnableAutoSync)
+              }
               className={cn(
-                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50',
+                'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                 scheduleEnabled ? 'bg-primary' : 'bg-muted',
               )}
             >
@@ -365,7 +437,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
                   'inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm',
                   scheduleEnabled
                     ? 'translate-x-6 rtl:-translate-x-6'
-                    : 'translate-x-1 rtl:translate-x-6',
+                    : 'translate-x-1 rtl:-translate-x-1',
                 )}
               />
             </button>
@@ -374,6 +446,24 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
 
         {scheduleEnabled && (
           <div className="space-y-4">
+            {/* What gets re-crawled */}
+            {schedule?.startUrl && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">{tSync('site')}</p>
+                <p className="text-sm truncate text-start" dir="ltr" title={schedule.startUrl}>
+                  <bdi>{schedule.startUrl}</bdi>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {schedule.urlPattern
+                    ? tSync('settingsWithFilter', {
+                        depth: schedule.maxDepth,
+                        filter: schedule.urlPattern,
+                      })
+                    : tSync('settings', { depth: schedule.maxDepth })}
+                </p>
+              </div>
+            )}
+
             {/* Frequency Selector */}
             <div>
               <label className="block text-sm font-medium mb-2">
@@ -385,6 +475,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
                   <button
                     key={freq}
                     type="button"
+                    aria-pressed={scheduleFrequency === freq}
                     onClick={() => handleFrequencyChange(freq)}
                     disabled={updateScheduleMutation.isPending}
                     className={cn(
@@ -398,31 +489,33 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-muted-foreground mt-2" data-testid="auto-sync-rule">
+                {tSync(`runs${scheduleFrequency}`)}
+              </p>
             </div>
 
             {/* Schedule Info */}
             {schedule && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
-                {schedule.lastCrawledAt && (
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">
-                      {t('lastCrawled')}
-                    </p>
-                    <p className="text-sm">{fmtDate(schedule.lastCrawledAt, locale)}</p>
-                  </div>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">
+                    {tSync('lastSync')}
+                  </p>
+                  <p className="text-sm" data-testid="auto-sync-last">
+                    {schedule.lastCrawledAt
+                      ? fmtDateTimeWithZone(schedule.lastCrawledAt, locale)
+                      : tSync('never')}
+                  </p>
+                </div>
                 {schedule.nextCrawlAt && (
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-1">
-                      {t('nextScheduledCrawl')}
+                      {tSync('nextSync')}
                     </p>
-                    <p className="text-sm">{fmtDate(schedule.nextCrawlAt, locale)}</p>
-                  </div>
-                )}
-                {!schedule.lastCrawledAt && !schedule.nextCrawlAt && (
-                  <div className="col-span-2">
-                    <p className="text-sm text-muted-foreground">
-                      {t('scheduleEnabledFirstCrawl')}
+                    <p className="text-sm" data-testid="auto-sync-next">
+                      <time dateTime={schedule.nextCrawlAt}>
+                        {fmtDateTimeWithZone(schedule.nextCrawlAt, locale)}
+                      </time>
                     </p>
                   </div>
                 )}
@@ -432,14 +525,26 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
         )}
 
         {!scheduleEnabled && (
-          <p className="text-sm text-muted-foreground">{t('enableAutoSyncHint')}</p>
+          <p id="auto-sync-hint" className="text-sm text-muted-foreground">
+            {scheduleLoading || canEnableAutoSync ? t('enableAutoSyncHint') : tSync('noSiteHint')}
+          </p>
         )}
       </div>
 
       {/* Add document form / URL crawl config */}
       {showAddDocForm && docContentType === 'URL' ? (
         <div className="mb-6 rounded-xl border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Website Crawl Configuration</h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">{t('crawlConfigTitle')}</h2>
+            <button
+              type="button"
+              onClick={() => setDocContentType('TEXT')}
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+              {t('backToDocumentTypes')}
+            </button>
+          </div>
           <CrawlConfigForm kbId={kbId} onSuccess={resetForm} onCancel={resetForm} />
         </div>
       ) : (
@@ -555,6 +660,9 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
           </form>
         )
       )}
+
+      {/* Website crawls: live progress and recent history */}
+      <CrawlJobsSection kbId={kbId} jobs={crawlJobs} isError={crawlJobsError} />
 
       {/* Empty state */}
       {documents.length === 0 && (

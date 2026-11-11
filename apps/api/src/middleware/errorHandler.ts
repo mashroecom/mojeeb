@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { AppError } from '../utils/errors';
 import { logger } from '../config/logger';
 import { errorLogService } from '../services/errorLog.service';
+import { adminNotificationService } from '../services/adminNotification.service';
 
 export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction) {
   if (err instanceof AppError) {
@@ -75,6 +76,11 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
       userId: (req as any).user?.userId,
       ipAddress: req.ip,
     })
+    .catch(() => {});
+
+  // Alert admins (throttled; honours the NOTIFY_SYSTEM_ERRORS setting). Fire-and-forget.
+  adminNotificationService
+    .notifySystemError({ message: err.message, method: req.method, path: req.path })
     .catch(() => {});
 
   res.status(500).json({

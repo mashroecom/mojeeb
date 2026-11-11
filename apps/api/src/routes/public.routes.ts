@@ -3,8 +3,20 @@ import type { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
 import { featureFlagService } from '../services/featureFlag.service';
 import { landingPageService } from '../services/landingPage.service';
+import { systemSettings } from '../services/systemSettings.service';
 
 const router: Router = Router();
+
+// GET /password-policy - Rules a new password must satisfy (no auth).
+// Exposes only what the sign-up / reset forms need to tell the user up front; lockout
+// thresholds, session settings and everything else stay private.
+router.get('/password-policy', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json({ success: true, data: await systemSettings.passwordPolicy() });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /site-settings - Public site settings (no auth)
 router.get('/site-settings', async (_req: Request, res: Response, next: NextFunction) => {

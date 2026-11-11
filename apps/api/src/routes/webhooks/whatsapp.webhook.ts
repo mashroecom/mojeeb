@@ -4,6 +4,8 @@ import { inboundQueue } from '../../queues';
 import { prisma } from '../../config/database';
 import { logger } from '../../config/logger';
 import { webhookLimiter } from '../../middleware/rateLimiter';
+import { parseWhatsAppStatuses } from '../../channels/whatsapp.statuses';
+import { messageDeliveryService } from '../../services/messageDelivery.service';
 
 const router: Router = Router();
 
@@ -15,7 +17,7 @@ router.get('/', (req, res) => {
   adapter.handleVerificationChallenge(req, res);
 });
 
-// POST /api/v1/webhooks/whatsapp - Incoming messages
+// POST /api/v1/webhooks/whatsapp - Incoming messages and delivery receipts (statuses)
 router.post('/', async (req, res) => {
   // Always respond 200 immediately (Meta requirement)
   res.sendStatus(200);
@@ -25,6 +27,18 @@ router.post('/', async (req, res) => {
   if (!adapter.verifyWebhook(req)) {
     logger.warn('Invalid WhatsApp webhook signature');
     return;
+  }
+
+  // Delivery receipts (sent / delivered / read / failed) arrive on the same, signature-verified
+  // webhook. They are light DB updates, so they are applied inline; a failure here must not
+  // stop the inbound messages below from being queued.
+  try {
+    const statuses = parseWhatsAppStatuses(req.body);
+    if (statuses.length > 0) {
+      await messageDeliveryService.applyWhatsAppStatuses(statuses);
+    }
+  } catch (err) {
+    logger.error({ err }, 'Failed to process WhatsApp delivery receipts');
   }
 
   const messages = adapter.parseInbound(req.body);

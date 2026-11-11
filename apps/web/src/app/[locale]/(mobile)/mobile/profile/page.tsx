@@ -7,6 +7,8 @@ import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { api } from '@/lib/api';
 import { MobileNav } from '@/components/mobile/MobileNav';
+import { PushNotificationToggle } from '@/components/mobile/PushNotificationToggle';
+import { detachPushSubscription } from '@/hooks/usePushNotifications';
 import { cn } from '@/lib/utils';
 
 /**
@@ -27,6 +29,8 @@ export default function MobileProfilePage() {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
+      // Stop pushing this account's notifications to the device (needs the access token)
+      await detachPushSubscription();
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         await api.post('/auth/logout', { refreshToken }).catch(() => {});
@@ -102,6 +106,9 @@ export default function MobileProfilePage() {
 
         {/* Preferences */}
         <section className="rounded-xl border bg-card">
+          <div className="border-b">
+            <PushNotificationToggle />
+          </div>
           <button
             type="button"
             onClick={switchLanguage}

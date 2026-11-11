@@ -241,21 +241,21 @@ const CONFIG_DEFAULTS: Record<
     label: 'Session Timeout',
     description: 'Session timeout in minutes',
     isSecret: false,
-    defaultValue: '60',
+    defaultValue: '10080',
   },
   MAX_LOGIN_ATTEMPTS: {
     category: 'security',
     label: 'Max Login Attempts',
     description: 'Maximum failed login attempts before lockout',
     isSecret: false,
-    defaultValue: '5',
+    defaultValue: '10',
   },
   LOCKOUT_DURATION_MINUTES: {
     category: 'security',
     label: 'Lockout Duration',
     description: 'Account lockout duration in minutes',
     isSecret: false,
-    defaultValue: '15',
+    defaultValue: '30',
   },
 };
 

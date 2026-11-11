@@ -2,13 +2,35 @@ import { prisma } from '../config/database';
 import { redis } from '../config/redis';
 import { logger } from '../config/logger';
 import { loginActivityService } from './loginActivity.service';
+import { systemSettings } from './systemSettings.service';
 
 const BLOCKED_IP_PREFIX = 'blocked:ip:';
 const BLOCKED_IP_TTL = 60; // 60 seconds cache
 
-const AUTO_BLOCK_THRESHOLD = 10; // failures
+const AUTO_BLOCK_THRESHOLD = 10; // failures (built-in minimum)
 const AUTO_BLOCK_WINDOW_MINUTES = 15; // time window
 const AUTO_BLOCK_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Failed logins from one IP (inside the window) that trigger an automatic block.
+ *
+ * An IP block cuts the address off from the whole API for 24 hours, so it must not fire
+ * before the much milder per-account lockout (MAX_LOGIN_ATTEMPTS) has had a chance to:
+ * the threshold follows the admin setting upwards, but never drops below the built-in 10.
+ */
+export function ipAutoBlockThreshold(maxLoginAttempts: number): number {
+  return Math.max(AUTO_BLOCK_THRESHOLD, maxLoginAttempts);
+}
+
+/**
+ * Loopback addresses are never auto-blocked: if the API sits behind a proxy that does not
+ * forward the client address, every request appears to come from loopback and an automatic
+ * block would lock out every user at once.
+ */
+export function isLoopbackAddress(ip: string): boolean {
+  const addr = ip.trim().toLowerCase();
+  return addr === '::1' || addr.startsWith('127.') || addr.startsWith('::ffff:127.');
+}
 
 export class IPBlockService {
   /**
@@ -66,7 +88,7 @@ export class IPBlockService {
   async block(params: {
     ip: string;
     reason: string;
-    blockedBy: string;
+    blockedBy?: string;
     expiresAt?: Date;
     autoBlock?: boolean;
   }) {
@@ -149,26 +171,32 @@ export class IPBlockService {
 
   /**
    * Auto-block check: if an IP has too many failed login attempts, block it.
-   * Threshold: 10 failures in 15 minutes -> auto-block for 24 hours.
+   * Threshold: max(10, MAX_LOGIN_ATTEMPTS) failures in 15 minutes -> auto-block for 24 hours.
+   *
+   * `blockedBy` must be a real user id or omitted (the column is a foreign key to users);
+   * automatic blocks have no blocker.
    */
-  async autoBlockCheck(ip: string, userId: string) {
-    if (!ip) return;
+  async autoBlockCheck(ip: string, blockedBy?: string) {
+    if (!ip || isLoopbackAddress(ip)) return;
 
     try {
       // Check if already blocked
       const alreadyBlocked = await prisma.blockedIP.findUnique({ where: { ip } });
       if (alreadyBlocked) return;
 
+      const { maxLoginAttempts } = await systemSettings.security();
+      const threshold = ipAutoBlockThreshold(maxLoginAttempts);
+
       const failedCount = await loginActivityService.getFailedCountByIP(
         ip,
         AUTO_BLOCK_WINDOW_MINUTES,
       );
 
-      if (failedCount >= AUTO_BLOCK_THRESHOLD) {
+      if (failedCount >= threshold) {
         await this.block({
           ip,
           reason: `Auto-blocked: ${failedCount} failed login attempts in ${AUTO_BLOCK_WINDOW_MINUTES} minutes`,
-          blockedBy: userId,
+          blockedBy,
           expiresAt: new Date(Date.now() + AUTO_BLOCK_DURATION_MS),
           autoBlock: true,
         });

@@ -6,6 +6,7 @@ import { analyticsQueue } from '../index';
 import { moveToDeadLetterQueue } from '../dlq';
 import { getChannelAdapter } from '../../channels';
 import { webhookService } from '../../services/webhook.service';
+import { messageDeliveryService } from '../../services/messageDelivery.service';
 
 interface OutboundJobData {
   conversationId: string;
@@ -64,16 +65,11 @@ export const outboundWorker = new Worker(
       result = { success: false, error: (adapterErr as Error).message };
     }
 
-    // Update message delivery status
+    // Update message delivery status. The provider id is what delivery receipts are matched
+    // on; the status goes through the forward-only state machine because a receipt can
+    // arrive before this write (it must not be reset to SENT).
     try {
-      await prisma.message.update({
-        where: { id: data.messageId },
-        data: {
-          deliveryStatus: result.success ? 'SENT' : 'FAILED',
-          externalId: result.externalId,
-          failureReason: result.error,
-        },
-      });
+      await messageDeliveryService.recordSendResult(data.messageId, result);
     } catch (dbErr) {
       logger.error(
         { err: dbErr, messageId: data.messageId },

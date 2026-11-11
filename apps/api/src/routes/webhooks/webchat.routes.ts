@@ -8,6 +8,7 @@ import { logger } from '../../config/logger';
 import { inboundQueue } from '../../queues';
 import { getChannelAdapter } from '../../channels';
 import { webhookLimiter } from '../../middleware/rateLimiter';
+import { messageDeliveryService } from '../../services/messageDelivery.service';
 
 const router: Router = Router({ mergeParams: true });
 
@@ -309,6 +310,8 @@ router.get(
           contentType: true,
           createdAt: true,
           metadata: true,
+          // Lets the widget skip receipts for messages it already acknowledged
+          deliveryStatus: true,
         },
       });
 
@@ -335,6 +338,73 @@ router.get(
       });
     } catch (err) {
       logger.error({ err }, 'Error fetching webchat messages');
+      res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+  },
+);
+
+// ──────────────────────────────────────────────────────────
+// POST /api/v1/webchat/:channelId/conversations/:conversationId/receipts
+// Delivery receipts from the visitor's widget. Web chat is our own transport, so the
+// widget is the only party that knows an agent/AI message actually reached the visitor.
+// Body: { visitorId, status: 'delivered' | 'read', messageIds: string[] }
+//   delivered — the widget received and rendered the messages (socket push or fetch)
+//   read      — they were rendered while the chat panel was open in a visible tab
+// ──────────────────────────────────────────────────────────
+const RECEIPT_STATUS = { delivered: 'DELIVERED', read: 'READ' } as const;
+const MAX_RECEIPT_MESSAGE_IDS = 100;
+
+router.post(
+  '/:channelId/conversations/:conversationId/receipts',
+  async (req: Request, res: Response) => {
+    try {
+      const channel = (req as any).channel;
+      const conversationId = req.params.conversationId as string;
+      const { visitorId, status, messageIds } = req.body ?? {};
+
+      if (!visitorId || typeof visitorId !== 'string') {
+        return res.status(400).json({ success: false, error: 'visitorId is required' });
+      }
+
+      const deliveryStatus =
+        typeof status === 'string' && Object.hasOwn(RECEIPT_STATUS, status)
+          ? RECEIPT_STATUS[status as keyof typeof RECEIPT_STATUS]
+          : null;
+      if (!deliveryStatus) {
+        return res
+          .status(400)
+          .json({ success: false, error: "status must be 'delivered' or 'read'" });
+      }
+
+      if (
+        !Array.isArray(messageIds) ||
+        messageIds.length === 0 ||
+        messageIds.length > MAX_RECEIPT_MESSAGE_IDS ||
+        !messageIds.every((id) => typeof id === 'string' && id.length > 0 && id.length <= 64)
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: `messageIds must be an array of 1-${MAX_RECEIPT_MESSAGE_IDS} message ids`,
+        });
+      }
+
+      // A visitor may only acknowledge messages of their own conversation on this channel.
+      const conversation = await prisma.conversation.findFirst({
+        where: { id: conversationId, channelId: channel.id, customerId: visitorId },
+        select: { id: true },
+      });
+      if (!conversation) {
+        return res.status(404).json({ success: false, error: 'Conversation not found' });
+      }
+
+      const result = await messageDeliveryService.applyUpdate(
+        { id: { in: messageIds as string[] }, conversationId: conversation.id },
+        { status: deliveryStatus },
+      );
+
+      res.json({ success: true, data: { updated: result.applied.length } });
+    } catch (err) {
+      logger.error({ err }, 'Error recording webchat delivery receipt');
       res.status(500).json({ success: false, error: 'Internal server error' });
     }
   },
@@ -466,9 +536,19 @@ router.post(
         return res.status(400).json({ success: false, error: 'customerId is required' });
       }
 
-      // Verify conversation belongs to this channel
+      if (
+        !Number.isInteger(rating) ||
+        (feedback !== undefined && feedback !== null && typeof feedback !== 'string') ||
+        (typeof feedback === 'string' && feedback.length > 2000)
+      ) {
+        return res.status(400).json({ success: false, error: 'Invalid rating' });
+      }
+
+      // The conversation must belong to this channel AND to the visitor who is rating
+      // it — otherwise anyone who learns a conversation id could add ratings to it.
+      // Same 404 for "not found" and "not yours" so ids cannot be probed.
       const conversation = await prisma.conversation.findFirst({
-        where: { id: conversationId, channelId: channel.id },
+        where: { id: conversationId, channelId: channel.id, customerId: String(customerId) },
         select: { id: true },
       });
       if (!conversation) {

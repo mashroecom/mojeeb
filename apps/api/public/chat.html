@@ -1402,6 +1402,82 @@
       });
   }
 
+  // ─── Delivery Receipts ─────────────────────────────────
+  // Tell the server which agent/AI messages actually reached this widget (delivered) and
+  // which were shown while the chat was open in a visible tab (read). This page only
+  // exists while the widget is open, so "visible tab + conversation on screen" is the
+  // read signal; messages that arrive in a background tab are upgraded when it returns.
+  var receiptQueue = { delivered: {}, read: {} }; // status -> conversationId -> [messageId]
+  var unreadByConversation = {};                  // conversationId -> [messageId]
+  var receiptTimer = null;
+
+  function isConversationVisible() {
+    return document.visibilityState === 'visible' && $convListView.style.display !== 'flex';
+  }
+
+  function queueReceipt(status, conversationId, messageId) {
+    var byConversation = receiptQueue[status];
+    if (!byConversation[conversationId]) byConversation[conversationId] = [];
+    byConversation[conversationId].push(messageId);
+    if (!receiptTimer) receiptTimer = setTimeout(flushReceipts, 250);
+  }
+
+  function sendReceipt(conversationId, status, ids, attempt) {
+    fetch(apiUrl('/conversations/' + conversationId + '/receipts'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({ visitorId: state.visitorId, status: status, messageIds: ids })
+    }).then(function(res) {
+      if (res.status >= 500) throw new Error('Receipt failed: ' + res.status);
+    }).catch(function() {
+      // Best-effort: retry a couple of times, never disturb the chat
+      if (attempt < 2) {
+        setTimeout(function() { sendReceipt(conversationId, status, ids, attempt + 1); }, 4000 * (attempt + 1));
+      }
+    });
+  }
+
+  function flushReceipts() {
+    receiptTimer = null;
+    var queued = receiptQueue;
+    receiptQueue = { delivered: {}, read: {} };
+    ['delivered', 'read'].forEach(function(status) {
+      Object.keys(queued[status]).forEach(function(conversationId) {
+        var ids = queued[status][conversationId];
+        for (var i = 0; i < ids.length; i += 100) {
+          sendReceipt(conversationId, status, ids.slice(i, i + 100), 0);
+        }
+      });
+    });
+  }
+
+  function trackReceipt(msg) {
+    if (msg.role !== 'AI_AGENT' && msg.role !== 'HUMAN_AGENT') return;
+    var conversationId = state.conversationId;
+    if (!conversationId || !msg.id) return;
+    if (msg.deliveryStatus === 'READ' || msg.deliveryStatus === 'FAILED') return;
+
+    if (isConversationVisible()) {
+      queueReceipt('read', conversationId, msg.id);
+      return;
+    }
+    if (msg.deliveryStatus !== 'DELIVERED') queueReceipt('delivered', conversationId, msg.id);
+    if (!unreadByConversation[conversationId]) unreadByConversation[conversationId] = [];
+    unreadByConversation[conversationId].push(msg.id);
+  }
+
+  function markVisibleConversationRead() {
+    var conversationId = state.conversationId;
+    if (!conversationId || !isConversationVisible()) return;
+    var ids = unreadByConversation[conversationId];
+    if (!ids || !ids.length) return;
+    delete unreadByConversation[conversationId];
+    ids.forEach(function(id) { queueReceipt('read', conversationId, id); });
+  }
+
+  document.addEventListener('visibilitychange', markVisibleConversationRead);
+
   // ─── Socket.IO Connection ──────────────────────────────
   function connectSocket() {
     if (typeof io === 'undefined') return; // Socket.IO not loaded
@@ -1644,6 +1720,9 @@
     if (state.knownMessageIds[msg.id]) return;
     state.knownMessageIds[msg.id] = true;
     displayedMessageIds[msg.id] = true;
+
+    // Acknowledge receipt of agent/AI messages (delivered / read)
+    trackReceipt(msg);
 
     // Date separator
     if (msg.createdAt) insertDateSeparator(msg.createdAt);
@@ -2101,6 +2180,7 @@
 
   function hideConversationList() {
     $convListView.style.display = 'none';
+    markVisibleConversationRead();
   }
 
   function startNewConversation() {

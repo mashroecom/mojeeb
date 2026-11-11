@@ -6,6 +6,7 @@ import { prisma } from '../../config/database';
 import { logger } from '../../config/logger';
 import { cache } from '../../config/cache';
 import { planConfigService } from '../planConfig.service';
+import { adminNotificationService } from '../adminNotification.service';
 import { NotFoundError, BadRequestError } from '../../utils/errors';
 import {
   PaymentProvider,
@@ -548,6 +549,9 @@ export class PayPalProvider extends PaymentProvider {
       });
 
       logger.info({ invoiceId: invoice.id }, 'Invoice marked as failed');
+      adminNotificationService
+        .notifyFailedPayment({ gateway: 'PayPal', invoiceId: invoice.id })
+        .catch(() => {});
     }
   }
 

@@ -39,6 +39,7 @@ model User {
   auditLogs               AuditLog[]               @relation("AuditLogs")
   announcements           Announcement[]           @relation("CreatedAnnouncements")
   notificationPreferences NotificationPreference[]
+  pushSubscriptions       PushSubscription[]
   assignedLeads           Lead[]                   @relation("AssignedLeads")
   loginActivities         LoginActivity[]
   blockedIPs              BlockedIP[]              @relation("BlockedIPs")
@@ -102,6 +103,7 @@ model Organization {
   notifications           Notification[]
   webhooks                Webhook[]
   notificationPreferences NotificationPreference[]
+  pushSubscriptions       PushSubscription[]
   messageTemplates        MessageTemplate[]
   tokenUsages             TokenUsage[]
 
@@ -869,6 +871,32 @@ model NotificationPreference {
 
   @@unique([orgId, userId])
   @@map("notification_preferences")
+}
+
+// ========================
+// WEB PUSH SUBSCRIPTIONS
+// ========================
+
+// One row per browser/device push subscription (Web Push, VAPID).
+// `endpoint` is the push service URL and identifies the browser install.
+model PushSubscription {
+  id         String       @id @default(cuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgId      String
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  endpoint   String       @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  platform   String?
+  createdAt  DateTime     @default(now())
+  lastUsedAt DateTime?
+
+  @@index([userId, orgId])
+  @@index([orgId])
+  @@index([lastUsedAt])
+  @@map("push_subscriptions")
 }
 
 // ========================

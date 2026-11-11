@@ -58,6 +58,11 @@ export interface Message {
     visibility?: string;
     reason?: string;
   } | null;
+  /** Only meaningful for outgoing (AI_AGENT / HUMAN_AGENT) messages */
+  deliveryStatus?: 'QUEUED' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED';
+  deliveredAt?: string | null;
+  readAt?: string | null;
+  failureReason?: string | null;
   createdAt: string;
 }
 

@@ -2,7 +2,16 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { FileText, Copy, Check, Hash, ArrowRightLeft } from 'lucide-react';
+import {
+  FileText,
+  Copy,
+  Check,
+  CheckCheck,
+  Clock,
+  AlertCircle,
+  Hash,
+  ArrowRightLeft,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MarkdownMessage } from '@/components/ui/MarkdownMessage';
 import type { Message } from '@/hooks/useConversations';
@@ -12,6 +21,56 @@ interface MessageBubbleProps {
   message: Message;
   copiedMessageId: string | null;
   onCopy: (id: string, content: string, contentType?: string, mediaUrl?: string) => void;
+}
+
+/**
+ * Sent / delivered / read ticks for an outgoing message, or a failure marker with the
+ * provider's reason on hover.
+ */
+function DeliveryIndicator({ message }: { message: Message }) {
+  const t = useTranslations('dashboard.conversations');
+  const status = message.deliveryStatus;
+  if (!status) return null;
+
+  if (status === 'FAILED') {
+    const label = message.failureReason
+      ? t('deliveryFailedReason', { reason: message.failureReason })
+      : t('deliveryFailed');
+    return (
+      <span
+        role="img"
+        title={label}
+        aria-label={label}
+        data-delivery-status={status}
+        className="inline-flex items-center gap-0.5 text-destructive"
+      >
+        <AlertCircle className="h-3.5 w-3.5" />
+        <span aria-hidden="true">{t('deliveryFailed')}</span>
+      </span>
+    );
+  }
+
+  const label =
+    status === 'READ'
+      ? t('deliveryRead')
+      : status === 'DELIVERED'
+        ? t('deliveryDelivered')
+        : status === 'QUEUED'
+          ? t('deliveryQueued')
+          : t('deliverySent');
+  const Icon = status === 'QUEUED' ? Clock : status === 'SENT' ? Check : CheckCheck;
+
+  return (
+    <span
+      role="img"
+      title={label}
+      aria-label={label}
+      data-delivery-status={status}
+      className={cn('inline-flex', status === 'READ' && 'text-sky-500')}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </span>
+  );
 }
 
 export const MessageBubble = React.memo(function MessageBubble({
@@ -145,14 +204,15 @@ export const MessageBubble = React.memo(function MessageBubble({
           )}
         </div>
 
-        {/* Timestamp */}
+        {/* Timestamp + delivery status (outgoing messages only) */}
         <p
           className={cn(
-            'mt-1 text-xs text-muted-foreground',
-            isCustomer ? 'text-start' : 'text-end',
+            'mt-1 flex items-center gap-1 text-xs text-muted-foreground',
+            isCustomer ? 'justify-start' : 'justify-end',
           )}
         >
-          {relativeTime(msg.createdAt, t)}
+          <span>{relativeTime(msg.createdAt, t)}</span>
+          {!isCustomer && <DeliveryIndicator message={msg} />}
         </p>
       </div>
     </div>

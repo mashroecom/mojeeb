@@ -5,13 +5,26 @@ import { logger } from '../../config/logger';
 import { moveToDeadLetterQueue } from '../dlq';
 import { crawlerService } from '../../services/crawler.service';
 import { crawlerQueue } from '../index';
+import { parseUrlPatterns } from '../../utils/urlPatterns';
+import {
+  CRAWL_SCHEDULER_PREFIX,
+  CRAWL_SCHEDULE_TIMEZONE,
+  computeNextCrawlAt,
+  crawlSchedulerId,
+  frequencyToCronPattern,
+  isCrawlFrequency,
+} from '../crawlSchedule';
 
 interface CrawlJobData {
-  jobId?: string; // Optional - will be created for scheduled jobs
+  /** CrawlJob row to run. Absent for scheduled runs: the worker creates the row. */
+  jobId?: string;
   kbId: string;
-  orgId: string;
-  startUrl: string;
-  configId?: string; // For scheduled crawls
+  orgId?: string;
+  /** Absent for scheduled runs: resolved from the knowledge base when the run starts. */
+  startUrl?: string;
+  configId?: string;
+  /** Set by the auto-sync job scheduler. */
+  scheduled?: boolean;
   config?: {
     maxDepth?: number;
     urlPatterns?: string[];
@@ -23,269 +36,295 @@ interface QueuedUrl {
   depth: number;
 }
 
-type CrawlFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+/** Name of the jobs the auto-sync schedulers produce. */
+export const SCHEDULED_CRAWL_JOB_NAME = 'scheduled-crawl';
+/** Repeatables created by older versions were named `scheduled-crawl-<configId>`. */
+const LEGACY_REPEATABLE_PREFIX = 'scheduled-crawl-';
+
+/** Safety net against a runaway crawl of a huge site. */
+const MAX_PAGES_PER_CRAWL = 500;
 
 /**
- * Convert CrawlFrequency to cron pattern
+ * A PENDING/RUNNING job that has not been touched for this long was abandoned
+ * (the process running it died): the worker updates the row after every page.
  */
-function frequencyToCronPattern(frequency: CrawlFrequency): string {
-  switch (frequency) {
-    case 'DAILY':
-      return '0 0 * * *'; // Every day at midnight
-    case 'WEEKLY':
-      return '0 0 * * 0'; // Every Sunday at midnight
-    case 'MONTHLY':
-      return '0 0 1 * *'; // First day of every month at midnight
-    default:
-      throw new Error(`Unknown frequency: ${frequency}`);
+export const STALE_CRAWL_JOB_MS = 30 * 60 * 1000;
+
+// ---------------------------------------------------------------------------
+// Auto-sync scheduling (BullMQ job schedulers)
+// ---------------------------------------------------------------------------
+
+/**
+ * Remove repeatable jobs that older versions created for this config with
+ * `queue.add(name, data, { repeat })`. They were keyed by a hash of name +
+ * pattern, so changing the frequency left the old one behind and the removal
+ * code (which built the key by hand) never deleted anything.
+ */
+async function removeLegacyRepeatables(configId?: string): Promise<number> {
+  const repeatables = await crawlerQueue.getRepeatableJobs();
+  let removed = 0;
+  for (const repeatable of repeatables) {
+    const isLegacy = configId
+      ? repeatable.name === `${LEGACY_REPEATABLE_PREFIX}${configId}`
+      : repeatable.name.startsWith(LEGACY_REPEATABLE_PREFIX);
+    if (!isLegacy) continue;
+    if (await crawlerQueue.removeRepeatableByKey(repeatable.key)) removed++;
   }
+  return removed;
 }
 
 /**
- * Schedule a repeatable crawl job for a CrawlConfig
+ * Create or replace THE job scheduler of a config. upsertJobScheduler is keyed
+ * by our scheduler id, so calling this again (API restart, second instance,
+ * frequency change) always leaves exactly one scheduler per config.
+ *
+ * The job carries no start URL: the worker resolves the site to re-crawl when
+ * the run starts, so it always follows the knowledge base's latest crawl.
  */
-export async function scheduleRepeatableCrawl(configId: string): Promise<void> {
-  try {
-    // Fetch the config from database
-    const config = await prisma.crawlConfig.findUnique({
-      where: { id: configId },
-      include: {
-        knowledgeBase: true,
-        jobs: {
-          where: { status: 'COMPLETED' },
-          orderBy: { completedAt: 'desc' },
-          take: 1,
-        },
-      },
-    });
-
-    if (!config) {
-      logger.error({ configId }, 'CrawlConfig not found, cannot schedule repeatable job');
-      return;
-    }
-
-    if (!config.scheduleEnabled || !config.scheduleFrequency) {
-      logger.warn({ configId }, 'Schedule is not enabled or frequency is missing');
-      return;
-    }
-
-    // Get start URL from the most recent completed job, or skip if no jobs exist
-    const lastJob = config.jobs[0];
-    if (!lastJob || !lastJob.startUrl) {
-      logger.warn({ configId }, 'No previous crawl job found, cannot schedule repeatable job');
-      return;
-    }
-
-    const cronPattern = frequencyToCronPattern(config.scheduleFrequency);
-
-    // Add repeatable job to BullMQ
-    await crawlerQueue.add(
-      `scheduled-crawl-${configId}`,
-      {
-        kbId: config.knowledgeBaseId,
-        orgId: config.knowledgeBase.orgId,
-        startUrl: lastJob.startUrl,
-        configId: config.id,
-        config: {
-          maxDepth: config.maxDepth,
-          urlPatterns: config.urlPattern
-            ? config.urlPattern
-                .split(',')
-                .map((p) => p.trim())
-                .filter(Boolean)
-            : [],
-        },
-      },
-      {
-        repeat: {
-          pattern: cronPattern,
-        },
-        jobId: `scheduled-crawl-${configId}`, // Use configId as jobId for idempotency
-      },
-    );
-
-    logger.info(
-      { configId, kbId: config.knowledgeBaseId, frequency: config.scheduleFrequency, cronPattern },
-      'Repeatable crawl job scheduled',
-    );
-
-    // Update nextCrawlAt in the database
-    const now = new Date();
-    const nextCrawlAt = new Date(now);
-    switch (config.scheduleFrequency) {
-      case 'DAILY':
-        nextCrawlAt.setDate(nextCrawlAt.getDate() + 1);
-        break;
-      case 'WEEKLY':
-        nextCrawlAt.setDate(nextCrawlAt.getDate() + 7);
-        break;
-      case 'MONTHLY':
-        nextCrawlAt.setMonth(nextCrawlAt.getMonth() + 1);
-        break;
-    }
-    nextCrawlAt.setHours(0, 0, 0, 0); // Set to midnight
-
-    await prisma.crawlConfig.update({
-      where: { id: configId },
-      data: { nextCrawlAt },
-    });
-  } catch (err: any) {
-    logger.error({ err, configId }, 'Failed to schedule repeatable crawl job');
-    throw err;
+async function upsertCrawlScheduler(config: {
+  id: string;
+  knowledgeBaseId: string;
+  scheduleFrequency: string | null;
+}): Promise<Date> {
+  if (!isCrawlFrequency(config.scheduleFrequency)) {
+    throw new Error(`Crawl config ${config.id} has no valid schedule frequency`);
   }
+
+  const data: CrawlJobData = {
+    scheduled: true,
+    configId: config.id,
+    kbId: config.knowledgeBaseId,
+  };
+  await crawlerQueue.upsertJobScheduler(
+    crawlSchedulerId(config.id),
+    { pattern: frequencyToCronPattern(config.scheduleFrequency), tz: CRAWL_SCHEDULE_TIMEZONE },
+    { name: SCHEDULED_CRAWL_JOB_NAME, data },
+  );
+  await removeLegacyRepeatables(config.id);
+
+  return computeNextCrawlAt(config.scheduleFrequency);
 }
 
 /**
- * Cancel a repeatable crawl job for a CrawlConfig
+ * Schedule (or re-schedule) the repeatable crawl of a CrawlConfig and record
+ * when it will run next. Returns that time, or null when the config is not
+ * (or no longer) enabled — in which case any scheduler it had is removed.
+ */
+export async function scheduleRepeatableCrawl(configId: string): Promise<Date | null> {
+  const config = await prisma.crawlConfig.findUnique({ where: { id: configId } });
+
+  if (!config || !config.scheduleEnabled || !config.scheduleFrequency) {
+    logger.warn({ configId }, 'Crawl schedule is not enabled, removing any scheduler');
+    await cancelRepeatableCrawl(configId);
+    return null;
+  }
+
+  const nextCrawlAt = await upsertCrawlScheduler(config);
+  await prisma.crawlConfig.update({ where: { id: configId }, data: { nextCrawlAt } });
+
+  logger.info(
+    {
+      configId,
+      kbId: config.knowledgeBaseId,
+      frequency: config.scheduleFrequency,
+      cronPattern: frequencyToCronPattern(config.scheduleFrequency),
+      timezone: CRAWL_SCHEDULE_TIMEZONE,
+      nextCrawlAt,
+    },
+    'Repeatable crawl job scheduled',
+  );
+  return nextCrawlAt;
+}
+
+/**
+ * Remove the repeatable crawl of a CrawlConfig. Safe to call when nothing is
+ * scheduled.
  */
 export async function cancelRepeatableCrawl(configId: string): Promise<void> {
-  try {
-    // Remove repeatable job from BullMQ
-    await crawlerQueue.removeRepeatableByKey(
-      `scheduled-crawl-${configId}:::${await getRepeatableJobKey(configId)}`,
-    );
+  const removed = await crawlerQueue.removeJobScheduler(crawlSchedulerId(configId));
+  const legacyRemoved = await removeLegacyRepeatables(configId);
 
-    logger.info({ configId }, 'Repeatable crawl job cancelled');
+  // updateMany: the config may already be gone
+  await prisma.crawlConfig.updateMany({ where: { id: configId }, data: { nextCrawlAt: null } });
 
-    // Clear nextCrawlAt in the database
-    await prisma.crawlConfig.update({
-      where: { id: configId },
-      data: { nextCrawlAt: null },
-    });
-  } catch (err: any) {
-    // If job doesn't exist, that's fine - it might have already been removed
-    if (err.message?.includes('does not exist')) {
-      logger.debug({ configId }, 'Repeatable job already removed or does not exist');
-      return;
-    }
-    logger.error({ err, configId }, 'Failed to cancel repeatable crawl job');
-    throw err;
-  }
+  logger.info({ configId, removed, legacyRemoved }, 'Repeatable crawl job cancelled');
 }
 
 /**
- * Get the repeatable job key for a config (used for removal)
+ * Bring the job schedulers in Redis in line with the enabled CrawlConfigs.
+ * Runs at process start (API and worker process alike) and is idempotent:
+ * every enabled config ends up with exactly one scheduler, schedulers whose
+ * config was disabled or deleted are removed. One bad config is logged and
+ * skipped; this function never throws.
  */
-async function getRepeatableJobKey(configId: string): Promise<string> {
-  const repeatableJobs = await crawlerQueue.getRepeatableJobs();
-  const job = repeatableJobs.find((j) => j.id === `scheduled-crawl-${configId}`);
-  return job?.key || '';
-}
+export async function initializeRepeatableCrawls(): Promise<{
+  scheduled: number;
+  failed: number;
+  removed: number;
+}> {
+  const summary = { scheduled: 0, failed: 0, removed: 0 };
 
-/**
- * Initialize all enabled repeatable crawl jobs on worker startup
- */
-export async function initializeRepeatableCrawls(): Promise<void> {
   try {
-    logger.info('Initializing repeatable crawl jobs...');
-
-    // Fetch all enabled crawl configs
     const configs = await prisma.crawlConfig.findMany({
-      where: {
-        scheduleEnabled: true,
-        scheduleFrequency: { not: null },
-      },
-      include: {
-        knowledgeBase: true,
-        jobs: {
-          where: { status: 'COMPLETED' },
-          orderBy: { completedAt: 'desc' },
-          take: 1,
-        },
-      },
+      where: { scheduleEnabled: true, scheduleFrequency: { not: null } },
+      select: { id: true, knowledgeBaseId: true, scheduleFrequency: true },
     });
 
-    logger.info({ count: configs.length }, 'Found enabled crawl schedules');
-
-    // Schedule repeatable jobs for each config
+    const enabledSchedulerIds = new Set<string>();
     for (const config of configs) {
-      // Check if config has at least one completed job with a startUrl
-      const lastJob = config.jobs[0];
-      if (!lastJob || !lastJob.startUrl) {
-        logger.warn(
-          { configId: config.id, kbId: config.knowledgeBaseId },
-          'Skipping schedule initialization - no previous crawl job found',
-        );
-        continue;
-      }
-
       try {
-        const cronPattern = frequencyToCronPattern(config.scheduleFrequency as CrawlFrequency);
-
-        await crawlerQueue.add(
-          `scheduled-crawl-${config.id}`,
-          {
-            kbId: config.knowledgeBaseId,
-            orgId: config.knowledgeBase.orgId,
-            startUrl: lastJob.startUrl,
-            configId: config.id,
-            config: {
-              maxDepth: config.maxDepth,
-              urlPatterns: config.urlPattern
-                ? config.urlPattern
-                    .split(',')
-                    .map((p) => p.trim())
-                    .filter(Boolean)
-                : [],
-            },
-          },
-          {
-            repeat: {
-              pattern: cronPattern,
-            },
-            jobId: `scheduled-crawl-${config.id}`,
-          },
-        );
-
-        logger.info(
-          {
-            configId: config.id,
-            kbId: config.knowledgeBaseId,
-            frequency: config.scheduleFrequency,
-            cronPattern,
-          },
-          'Repeatable crawl job initialized',
-        );
-      } catch (err: any) {
+        const nextCrawlAt = await upsertCrawlScheduler(config);
+        await prisma.crawlConfig.update({ where: { id: config.id }, data: { nextCrawlAt } });
+        enabledSchedulerIds.add(crawlSchedulerId(config.id));
+        summary.scheduled++;
+      } catch (err) {
+        summary.failed++;
         logger.error({ err, configId: config.id }, 'Failed to initialize repeatable crawl job');
       }
     }
 
-    logger.info({ count: configs.length }, 'Repeatable crawl jobs initialization complete');
-  } catch (err: any) {
+    // Drop schedulers that no longer belong to an enabled config
+    try {
+      const schedulers = await crawlerQueue.getJobSchedulers();
+      for (const scheduler of schedulers) {
+        const id = scheduler.key;
+        if (!id.startsWith(CRAWL_SCHEDULER_PREFIX) || enabledSchedulerIds.has(id)) continue;
+        if (await crawlerQueue.removeJobScheduler(id)) summary.removed++;
+      }
+      summary.removed += await removeLegacyRepeatables();
+    } catch (err) {
+      logger.error({ err }, 'Failed to clean up stale crawl schedulers');
+    }
+
+    logger.info(summary, 'Repeatable crawl jobs initialized');
+  } catch (err) {
     logger.error({ err }, 'Failed to initialize repeatable crawl jobs');
-    throw err;
   }
+
+  return summary;
+}
+
+// ---------------------------------------------------------------------------
+// Crawl jobs
+// ---------------------------------------------------------------------------
+
+/**
+ * The site auto-sync re-crawls for a knowledge base: the start URL of its most
+ * recent crawl that was not cancelled and did not fail (a scheduled run creates
+ * such a job itself, so the schedule keeps following the same site until the
+ * user crawls another one).
+ */
+export async function findScheduledCrawlTarget(kbId: string): Promise<string | null> {
+  const job = await prisma.crawlJob.findFirst({
+    where: { knowledgeBaseId: kbId, status: { in: ['COMPLETED', 'RUNNING', 'PENDING'] } },
+    orderBy: { createdAt: 'desc' },
+    select: { startUrl: true },
+  });
+  return job?.startUrl ?? null;
+}
+
+/**
+ * Mark crawl jobs that were left PENDING/RUNNING by a dead process as failed,
+ * so they stop blocking new crawls of the knowledge base.
+ */
+export async function failStaleCrawlJobs(kbId: string): Promise<number> {
+  const { count } = await prisma.crawlJob.updateMany({
+    where: {
+      knowledgeBaseId: kbId,
+      status: { in: ['PENDING', 'RUNNING'] },
+      updatedAt: { lt: new Date(Date.now() - STALE_CRAWL_JOB_MS) },
+    },
+    data: {
+      status: 'FAILED',
+      errorMessage: 'CRAWL_INTERRUPTED: The crawl was interrupted before it finished',
+      completedAt: new Date(),
+    },
+  });
+  return count;
+}
+
+/**
+ * Turn a scheduler tick into a concrete crawl: create its CrawlJob row and
+ * work out what to crawl. Returns null when there is nothing to do.
+ */
+async function prepareScheduledCrawl(
+  data: CrawlJobData,
+): Promise<{ jobId: string; startUrl: string; maxDepth: number; urlPatterns: string[] } | null> {
+  const { kbId, configId } = data;
+
+  const config = configId ? await prisma.crawlConfig.findUnique({ where: { id: configId } }) : null;
+
+  if (configId && (!config || !config.scheduleEnabled)) {
+    // The schedule was switched off (or the config deleted) but its scheduler survived
+    logger.warn({ configId, kbId }, 'Scheduled crawl fired for a disabled schedule, removing it');
+    await cancelRepeatableCrawl(configId);
+    return null;
+  }
+
+  await failStaleCrawlJobs(kbId);
+  const active = await prisma.crawlJob.findFirst({
+    where: { knowledgeBaseId: kbId, status: { in: ['PENDING', 'RUNNING'] } },
+    select: { id: true },
+  });
+  if (active) {
+    logger.info(
+      { kbId, configId, activeJobId: active.id },
+      'Skipping scheduled crawl: another crawl of this knowledge base is in progress',
+    );
+    return null;
+  }
+
+  const startUrl = (await findScheduledCrawlTarget(kbId)) ?? data.startUrl ?? null;
+  if (!startUrl) {
+    logger.warn({ kbId, configId }, 'Skipping scheduled crawl: no website has been crawled yet');
+    return null;
+  }
+
+  const crawlJob = await prisma.crawlJob.create({
+    data: {
+      knowledgeBaseId: kbId,
+      startUrl,
+      status: 'PENDING',
+      pagesCrawled: 0,
+      pagesTotal: 0,
+      configId: config?.id ?? null,
+    },
+  });
+  logger.info({ jobId: crawlJob.id, kbId, configId, startUrl }, 'Created scheduled crawl job');
+
+  return {
+    jobId: crawlJob.id,
+    startUrl,
+    maxDepth: config?.maxDepth ?? data.config?.maxDepth ?? 1,
+    urlPatterns: config ? parseUrlPatterns(config.urlPattern) : (data.config?.urlPatterns ?? []),
+  };
+}
+
+/** Text stored in CrawlJob.errorMessage: "<CODE>: <readable message>". */
+function describeCrawlError(err: any): string {
+  const message = err?.message || 'Unknown error';
+  return err?.code && typeof err.code === 'string' ? `${err.code}: ${message}` : message;
 }
 
 export const crawlerWorker = new Worker(
   'crawler',
   async (job) => {
     const data = job.data as CrawlJobData;
-    let { jobId } = data;
-    const { kbId, startUrl, config, configId } = data;
-
-    // BFS queue for crawling
-    const queue: QueuedUrl[] = [{ url: crawlerService.normalizeUrl(startUrl), depth: 0 }];
-    const visited = new Set<string>();
-    const maxDepth = config?.maxDepth || 1;
-    const urlPatterns = config?.urlPatterns || [];
+    const { kbId } = data;
+    let jobId = data.jobId;
+    let startUrl = data.startUrl;
+    let maxDepth = data.config?.maxDepth || 1;
+    let urlPatterns = parseUrlPatterns(data.config?.urlPatterns);
 
     try {
-      // If jobId is not provided (scheduled crawl), create a CrawlJob
+      // No CrawlJob row yet: this is a scheduled (auto-sync) run
       if (!jobId) {
-        const crawlJob = await prisma.crawlJob.create({
-          data: {
-            knowledgeBaseId: kbId,
-            startUrl,
-            status: 'PENDING' as any,
-            pagesCrawled: 0,
-            pagesTotal: 0,
-            configId: configId || null,
-          },
-        });
-        jobId = crawlJob.id;
-        logger.info({ jobId, kbId, configId, startUrl }, 'Created CrawlJob for scheduled crawl');
+        const prepared = await prepareScheduledCrawl(data);
+        if (!prepared) return;
+        ({ jobId, startUrl, maxDepth, urlPatterns } = prepared);
+      }
+      if (!startUrl) {
+        throw new Error('Crawl job has no start URL');
       }
 
       // Move PENDING -> RUNNING. A job cancelled before the worker picked it up
@@ -299,39 +338,28 @@ export const crawlerWorker = new Worker(
         return;
       }
 
+      // BFS queue for crawling. `seen` holds every URL ever queued, so a page
+      // linked from many places is queued (and counted) once.
+      const rootUrl = crawlerService.normalizeUrl(startUrl);
+      const queue: QueuedUrl[] = [{ url: rootUrl, depth: 0 }];
+      const seen = new Set<string>([rootUrl]);
+
       let pagesCrawled = 0;
       let cancelled = false;
+      let startUrlError: any = null;
 
-      // BFS crawl
       while (queue.length > 0) {
         // Cooperative cancellation: stop between pages once the job is cancelled
         const current = await prisma.crawlJob.findUnique({
           where: { id: jobId },
           select: { status: true },
         });
-        if (!current || current.status === 'CANCELLED') {
+        if (!current || current.status !== 'RUNNING') {
           cancelled = true;
           break;
         }
 
         const { url, depth } = queue.shift()!;
-
-        // Skip if already visited
-        if (visited.has(url)) {
-          continue;
-        }
-        visited.add(url);
-
-        // Skip if depth exceeds limit
-        if (depth > maxDepth) {
-          continue;
-        }
-
-        // Skip if URL doesn't match patterns (if patterns are configured)
-        if (urlPatterns.length > 0 && !crawlerService.matchesUrlPatterns(url, urlPatterns)) {
-          logger.debug({ url, urlPatterns }, 'URL does not match patterns, skipping');
-          continue;
-        }
 
         try {
           logger.info({ url, depth, jobId }, 'Crawling URL');
@@ -386,21 +414,20 @@ export const crawlerWorker = new Worker(
 
           pagesCrawled++;
 
-          // Update job progress
-          await prisma.crawlJob.update({
-            where: { id: jobId },
-            data: {
-              pagesCrawled,
-              pagesTotal: visited.size + queue.length,
-            },
-          });
-
-          // Add discovered links to queue for next depth level
+          // Queue the links found on this page for the next depth level. The URL
+          // filter applies to discovered links only: the start page is always
+          // crawled, otherwise a crawl of https://shop.example with the filter
+          // "/help/" would never get anywhere.
           if (depth < maxDepth) {
             for (const link of result.links) {
-              if (!visited.has(link)) {
-                queue.push({ url: link, depth: depth + 1 });
+              if (seen.has(link)) continue;
+              if (seen.size >= MAX_PAGES_PER_CRAWL) {
+                logger.warn({ jobId, limit: MAX_PAGES_PER_CRAWL }, 'Crawl page limit reached');
+                break;
               }
+              if (!crawlerService.matchesUrlPatterns(link, urlPatterns)) continue;
+              seen.add(link);
+              queue.push({ url: link, depth: depth + 1 });
             }
           }
 
@@ -410,40 +437,74 @@ export const crawlerWorker = new Worker(
           );
         } catch (err: any) {
           logger.error({ err, url, jobId }, 'Failed to crawl URL');
-          // Continue with next URL instead of failing entire job
+          // A page that cannot be imported does not fail the crawl — unless it
+          // is the start page: then nothing can be imported at all.
+          if (depth === 0) {
+            startUrlError = err;
+            break;
+          }
         }
-      }
 
-      if (cancelled) {
-        logger.info({ jobId, pagesCrawled }, 'Crawl job cancelled');
-        return;
-      }
-
-      // Mark job as completed (unless it was cancelled during the last page)
-      const completed = await prisma.crawlJob.updateMany({
-        where: { id: jobId, status: 'RUNNING' },
-        data: {
-          status: 'COMPLETED',
-          pagesCrawled,
-          pagesTotal: visited.size,
-          completedAt: new Date(),
-        },
-      });
-      if (completed.count === 0) {
-        logger.info({ jobId, pagesCrawled }, 'Crawl job cancelled');
-        return;
-      }
-
-      // Update lastCrawledAt timestamp for scheduled crawls
-      if (configId) {
-        await prisma.crawlConfig.update({
-          where: { id: configId },
-          data: { lastCrawledAt: new Date() },
+        // Update job progress (also when the page failed: it has been handled)
+        await prisma.crawlJob.updateMany({
+          where: { id: jobId, status: 'RUNNING' },
+          data: { pagesCrawled, pagesTotal: seen.size },
         });
-        logger.info({ configId, jobId }, 'Updated lastCrawledAt for scheduled crawl');
       }
 
-      logger.info({ jobId, pagesCrawled, totalPages: visited.size }, 'Crawl job completed');
+      if (startUrlError) {
+        await prisma.crawlJob.updateMany({
+          where: { id: jobId, status: 'RUNNING' },
+          data: {
+            status: 'FAILED',
+            errorMessage: describeCrawlError(startUrlError),
+            pagesCrawled,
+            pagesTotal: seen.size,
+            completedAt: new Date(),
+          },
+        });
+        logger.warn({ jobId, startUrl }, 'Crawl job failed: the start URL could not be imported');
+      } else if (cancelled) {
+        logger.info({ jobId, pagesCrawled }, 'Crawl job cancelled');
+        return;
+      } else {
+        // Mark job as completed (unless it was cancelled during the last page)
+        const completed = await prisma.crawlJob.updateMany({
+          where: { id: jobId, status: 'RUNNING' },
+          data: {
+            status: 'COMPLETED',
+            pagesCrawled,
+            pagesTotal: seen.size,
+            completedAt: new Date(),
+          },
+        });
+        if (completed.count === 0) {
+          logger.info({ jobId, pagesCrawled }, 'Crawl job cancelled');
+          return;
+        }
+        logger.info({ jobId, pagesCrawled, totalPages: seen.size }, 'Crawl job completed');
+      }
+
+      // Keep the knowledge base's sync info truthful: when it was last crawled
+      // (completed crawls only) and, for an enabled schedule, when the next
+      // scheduled run is due.
+      const crawlJob = await prisma.crawlJob.findUnique({
+        where: { id: jobId },
+        select: { config: true },
+      });
+      const config = crawlJob?.config;
+      if (config) {
+        await prisma.crawlConfig.update({
+          where: { id: config.id },
+          data: {
+            ...(startUrlError ? {} : { lastCrawledAt: new Date() }),
+            nextCrawlAt:
+              config.scheduleEnabled && isCrawlFrequency(config.scheduleFrequency)
+                ? computeNextCrawlAt(config.scheduleFrequency)
+                : null,
+          },
+        });
+      }
     } catch (err: any) {
       logger.error({ err, jobId }, 'Crawl job failed');
 
@@ -454,7 +515,7 @@ export const crawlerWorker = new Worker(
           where: { id: jobId, status: { in: ['PENDING', 'RUNNING'] } },
           data: {
             status: 'FAILED',
-            errorMessage: err.message,
+            errorMessage: describeCrawlError(err),
             completedAt: new Date(),
           },
         });
@@ -478,7 +539,5 @@ crawlerWorker.on('error', (err) => {
   logger.error({ err }, 'Crawler worker error');
 });
 
-// Initialize repeatable crawl jobs on worker startup
-initializeRepeatableCrawls().catch((err) => {
-  logger.error({ err }, 'Failed to initialize repeatable crawl jobs on startup');
-});
+// Re-create the auto-sync schedulers on startup (never throws)
+void initializeRepeatableCrawls();

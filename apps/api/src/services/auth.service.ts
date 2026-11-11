@@ -15,6 +15,11 @@ import { emailQueue } from '../queues';
 import { verificationService } from './verification.service';
 import { adminNotificationService } from './adminNotification.service';
 import { logger } from '../config/logger';
+import { systemSettings, type NewOrgDefaults } from './systemSettings.service';
+import { loginLockoutService } from './loginLockout.service';
+
+/** Message of the error thrown for a wrong email or password (also used for lockout). */
+export const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
 
 // Cached Google OAuth client that is recreated when the client ID changes
 let cachedGoogleClient: OAuth2Client = new OAuth2Client(config.google.clientId);
@@ -49,6 +54,60 @@ function safeLimit(value: number): number {
   return Number.isFinite(value) ? value : 999999;
 }
 
+/** Parse a JWT lifetime such as "15m", "1h" or "900" (seconds). Null when unparseable. */
+export function parseDurationSeconds(value: string): number | null {
+  const match = /^(\d+)\s*(s|m|h|d)?$/.exec(value.trim());
+  if (!match) return null;
+  const unit = { s: 1, m: 60, h: 3600, d: 86400 }[match[2] ?? 's'] ?? 1;
+  return Number(match[1]) * unit;
+}
+
+/**
+ * Create an organization owned by `userId`, with its subscription, applying the admin
+ * "Org defaults" settings (default plan, timezone, message/agent limits).
+ */
+async function createOwnedOrganization(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  organizationName: string,
+  defaults: NewOrgDefaults,
+) {
+  let slug = slugify(organizationName);
+  const existingSlug = await tx.organization.findUnique({ where: { slug } });
+  if (existingSlug) {
+    slug = `${slug}-${crypto.randomBytes(3).toString('hex')}`;
+  }
+
+  const organization = await tx.organization.create({
+    data: {
+      name: organizationName,
+      slug,
+      ...(defaults.timezone ? { timezone: defaults.timezone } : {}),
+    },
+  });
+
+  // Create membership as OWNER
+  await tx.orgMembership.create({
+    data: { userId, orgId: organization.id, role: 'OWNER' },
+  });
+
+  // Create the initial subscription on the default plan
+  const limits = await planConfigService.getLimits(defaults.plan);
+  await tx.subscription.create({
+    data: {
+      orgId: organization.id,
+      plan: defaults.plan,
+      status: 'ACTIVE',
+      messagesLimit: defaults.messagesLimit ?? safeLimit(limits.messagesPerMonth),
+      agentsLimit: defaults.agentsLimit ?? safeLimit(limits.maxAgents),
+      integrationsLimit: safeLimit(limits.maxChannels),
+      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    },
+  });
+
+  return organization;
+}
+
 export class AuthService {
   async register(data: {
     email: string;
@@ -74,6 +133,8 @@ export class AuthService {
         throw new ConflictError('Email already registered');
       }
 
+      const orgDefaults = await systemSettings.newOrgDefaults();
+
       // User was created by invite - let them complete registration.
       // Update their profile and create their own organization,
       // while keeping their existing team memberships.
@@ -90,32 +151,12 @@ export class AuthService {
           },
         });
 
-        let slug = slugify(data.organizationName);
-        const existingSlug = await tx.organization.findUnique({ where: { slug } });
-        if (existingSlug) {
-          slug = `${slug}-${crypto.randomBytes(3).toString('hex')}`;
-        }
-
-        const organization = await tx.organization.create({
-          data: { name: data.organizationName, slug },
-        });
-
-        await tx.orgMembership.create({
-          data: { userId: user.id, orgId: organization.id, role: 'OWNER' },
-        });
-
-        const limits = await planConfigService.getLimits(SubscriptionPlan.FREE);
-        await tx.subscription.create({
-          data: {
-            orgId: organization.id,
-            plan: 'FREE',
-            status: 'ACTIVE',
-            messagesLimit: safeLimit(limits.messagesPerMonth),
-            agentsLimit: safeLimit(limits.maxAgents),
-            integrationsLimit: safeLimit(limits.maxChannels),
-            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          },
-        });
+        const organization = await createOwnedOrganization(
+          tx,
+          user.id,
+          data.organizationName,
+          orgDefaults,
+        );
 
         return { user, organization };
       });
@@ -127,11 +168,7 @@ export class AuthService {
 
       // Notify admins (fire-and-forget)
       adminNotificationService
-        .create({
-          type: 'NEW_USER',
-          title: 'New User Registration',
-          body: `${data.firstName} ${data.lastName} (${data.email}) registered and created organization "${data.organizationName}".`,
-        })
+        .notifyRegistration(data)
         .catch((err) => logger.debug({ err }, 'Admin notification failed'));
 
       const tokens = await this.generateTokens(result.user.id, result.user.email);
@@ -156,6 +193,7 @@ export class AuthService {
 
     // Hash password
     const passwordHash = await argon2.hash(data.password);
+    const orgDefaults = await systemSettings.newOrgDefaults();
 
     // Create user + organization in a transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -168,42 +206,12 @@ export class AuthService {
         },
       });
 
-      // Create organization
-      let slug = slugify(data.organizationName);
-      const existingSlug = await tx.organization.findUnique({ where: { slug } });
-      if (existingSlug) {
-        slug = `${slug}-${crypto.randomBytes(3).toString('hex')}`;
-      }
-
-      const organization = await tx.organization.create({
-        data: {
-          name: data.organizationName,
-          slug,
-        },
-      });
-
-      // Create membership as OWNER
-      await tx.orgMembership.create({
-        data: {
-          userId: user.id,
-          orgId: organization.id,
-          role: 'OWNER',
-        },
-      });
-
-      // Create free subscription
-      const limits = await planConfigService.getLimits(SubscriptionPlan.FREE);
-      await tx.subscription.create({
-        data: {
-          orgId: organization.id,
-          plan: 'FREE',
-          status: 'ACTIVE',
-          messagesLimit: safeLimit(limits.messagesPerMonth),
-          agentsLimit: safeLimit(limits.maxAgents),
-          integrationsLimit: safeLimit(limits.maxChannels),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        },
-      });
+      const organization = await createOwnedOrganization(
+        tx,
+        user.id,
+        data.organizationName,
+        orgDefaults,
+      );
 
       return { user, organization };
     });
@@ -215,11 +223,7 @@ export class AuthService {
 
     // Notify admins (fire-and-forget)
     adminNotificationService
-      .create({
-        type: 'NEW_USER',
-        title: 'New User Registration',
-        body: `${data.firstName} ${data.lastName} (${data.email}) registered and created organization "${data.organizationName}".`,
-      })
+      .notifyRegistration(data)
       .catch((err) => logger.debug({ err }, 'Admin notification failed'));
 
     // Generate tokens
@@ -254,12 +258,12 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedError('Invalid email or password');
+      throw new UnauthorizedError(INVALID_CREDENTIALS_MESSAGE);
     }
 
     const validPassword = await argon2.verify(user.passwordHash, password);
     if (!validPassword) {
-      throw new UnauthorizedError('Invalid email or password');
+      throw new UnauthorizedError(INVALID_CREDENTIALS_MESSAGE);
     }
 
     if (user.suspendedAt) {
@@ -306,7 +310,13 @@ export class AuthService {
       throw new UnauthorizedError('Invalid refresh token');
     }
 
-    if (session.expiresAt < new Date()) {
+    // A session is rotated on every refresh, so its age is the time since it was last
+    // used. Besides its stored expiry it must also satisfy the *current* session timeout,
+    // so lowering SESSION_TIMEOUT_MINUTES takes effect for sessions that already exist.
+    const { sessionTimeoutMinutes } = await systemSettings.security();
+    const idleDeadline = new Date(session.createdAt.getTime() + sessionTimeoutMinutes * 60_000);
+    const now = new Date();
+    if (session.expiresAt < now || idleDeadline < now) {
       await prisma.session.delete({ where: { id: session.id } });
       throw new UnauthorizedError('Refresh token expired');
     }
@@ -358,6 +368,12 @@ export class AuthService {
 
     if (verificationToken) {
       await verificationService.resetPassword(token, newPassword);
+      // Proving control of the mailbox lifts a login lockout.
+      const owner = await prisma.user.findUnique({
+        where: { id: verificationToken.userId },
+        select: { email: true },
+      });
+      if (owner) await loginLockoutService.clear(owner.email);
       return;
     }
 
@@ -388,6 +404,9 @@ export class AuthService {
     await prisma.session.deleteMany({
       where: { userId: user.id },
     });
+
+    // Proving control of the mailbox lifts a login lockout.
+    await loginLockoutService.clear(user.email);
   }
 
   async verifyEmail(token: string) {
@@ -579,6 +598,7 @@ export class AuthService {
     // New user - register with Google (no password needed)
     const randomPassword = crypto.randomBytes(32).toString('hex');
     const passwordHash = await argon2.hash(randomPassword);
+    const orgDefaults = await systemSettings.newOrgDefaults();
 
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -595,41 +615,7 @@ export class AuthService {
 
       // Create organization using the user's name
       const orgName = `${firstName}'s Organization`;
-      let slug = slugify(orgName);
-      const existingSlug = await tx.organization.findUnique({ where: { slug } });
-      if (existingSlug) {
-        slug = `${slug}-${crypto.randomBytes(3).toString('hex')}`;
-      }
-
-      const organization = await tx.organization.create({
-        data: {
-          name: orgName,
-          slug,
-        },
-      });
-
-      // Create membership as OWNER
-      await tx.orgMembership.create({
-        data: {
-          userId: user.id,
-          orgId: organization.id,
-          role: 'OWNER',
-        },
-      });
-
-      // Create free subscription
-      const limits = await planConfigService.getLimits(SubscriptionPlan.FREE);
-      await tx.subscription.create({
-        data: {
-          orgId: organization.id,
-          plan: 'FREE',
-          status: 'ACTIVE',
-          messagesLimit: safeLimit(limits.messagesPerMonth),
-          agentsLimit: safeLimit(limits.maxAgents),
-          integrationsLimit: safeLimit(limits.maxChannels),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
-      });
+      const organization = await createOwnedOrganization(tx, user.id, orgName, orgDefaults);
 
       return { user, organization };
     });
@@ -663,25 +649,49 @@ export class AuthService {
     userId: string,
     email: string,
   ) {
+    const { sessionTimeoutMinutes, maxSessionsPerUser } = await systemSettings.security();
+    const sessionSeconds = sessionTimeoutMinutes * 60;
+
+    // The access token never outlives the session timeout.
+    const configuredAccessSeconds = parseDurationSeconds(config.jwt.accessExpiry);
+    const expiresIn =
+      configuredAccessSeconds !== null && configuredAccessSeconds > sessionSeconds
+        ? `${sessionSeconds}s`
+        : config.jwt.accessExpiry;
+
     const jti = crypto.randomUUID();
     const payload: JwtPayload = { userId, email, jti };
 
     const accessToken = jwt.sign(payload, config.jwt.secret, {
-      expiresIn: config.jwt.accessExpiry,
+      expiresIn,
     } as jwt.SignOptions);
 
     const refreshToken = crypto.randomBytes(40).toString('hex');
 
-    // Store refresh token in session
+    // Store refresh token in session; it lives for SESSION_TIMEOUT_MINUTES and is renewed
+    // on every refresh, so the setting acts as an inactivity timeout.
     await tx.session.create({
       data: {
         userId,
         refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        expiresAt: new Date(Date.now() + sessionSeconds * 1000),
       },
     });
 
-    return { accessToken, refreshToken, expiresIn: config.jwt.accessExpiry };
+    // Enforce MAX_SESSIONS_PER_USER: drop expired sessions, then the oldest ones beyond
+    // the limit (the session just created is the newest and always survives).
+    await tx.session.deleteMany({ where: { userId, expiresAt: { lt: new Date() } } });
+    const surplus = await tx.session.findMany({
+      where: { userId },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      skip: maxSessionsPerUser,
+      select: { id: true },
+    });
+    if (surplus.length > 0) {
+      await tx.session.deleteMany({ where: { id: { in: surplus.map((x) => x.id) } } });
+    }
+
+    return { accessToken, refreshToken, expiresIn };
   }
 }
 

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import argon2 from 'argon2';
-import { authService } from '../services/auth.service';
+import { authService, INVALID_CREDENTIALS_MESSAGE } from '../services/auth.service';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
 import {
@@ -8,23 +8,35 @@ import {
   tokenRefreshLimiter,
   destructiveActionLimiter,
 } from '../middleware/rateLimiter';
-import { registerSchema, loginSchema, passwordSchema } from '@mojeeb/shared-utils';
+import { registerSchema, loginSchema } from '@mojeeb/shared-utils';
 import { z } from 'zod';
 import { prisma } from '../config/database';
-import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
+import { AppError, BadRequestError, NotFoundError, TooManyRequestsError } from '../utils/errors';
 import { verificationService } from '../services/verification.service';
 import { auditLogService } from '../services/auditLog.service';
 import { loginActivityService } from '../services/loginActivity.service';
 import { ipBlockService } from '../services/ipBlock.service';
+import { loginLockoutService } from '../services/loginLockout.service';
+import { enforcePasswordPolicy } from '../middleware/passwordPolicy';
 import { logger } from '../config/logger';
 
 const router: Router = Router();
+
+// AppError's constructor resets the prototype to AppError, so `instanceof UnauthorizedError`
+// is never true for errors thrown by the services; match on the status code instead.
+const isUnauthorized = (err: unknown): err is AppError =>
+  err instanceof AppError && err.statusCode === 401;
+
+// A new password is only checked for presence here: the actual rules are the
+// admin-configured policy, applied by enforcePasswordPolicy() right after validate().
+const newPasswordSchema = z.string().min(1, 'Password is required');
 
 // POST /api/v1/auth/register
 router.post(
   '/register',
   authLimiter,
-  validate({ body: registerSchema }),
+  validate({ body: registerSchema.extend({ password: newPasswordSchema }) }),
+  enforcePasswordPolicy('password'),
   async (req, res, next) => {
     try {
       const result = await authService.register(req.body);
@@ -51,8 +63,36 @@ router.post(
 
 // POST /api/v1/auth/login
 router.post('/login', authLimiter, validate({ body: loginSchema }), async (req, res, next) => {
+  const email: string = req.body.email;
+  // Failed attempts are recorded first, then the IP auto-block check counts them.
+  const logFailure = (failReason: string) =>
+    loginActivityService
+      .log({
+        email,
+        success: false,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        failReason,
+      })
+      .then(() => (req.ip ? ipBlockService.autoBlockCheck(req.ip) : undefined))
+      .catch(() => {});
+
   try {
-    const result = await authService.login(req.body.email, req.body.password);
+    // Account lockout (admin settings MAX_LOGIN_ATTEMPTS / LOCKOUT_DURATION_MINUTES).
+    // Checked before the password and keyed on the submitted email only, so the answer is
+    // the same whether or not the account exists and whether or not the password is right.
+    const lock = await loginLockoutService.getState(email);
+    if (lock.locked) {
+      logFailure('ACCOUNT_LOCKED');
+      res.setHeader('Retry-After', String(lock.retryAfterSeconds));
+      throw new TooManyRequestsError(
+        'Too many failed login attempts. Please try again later.',
+        'ACCOUNT_LOCKED',
+      );
+    }
+
+    const result = await authService.login(email, req.body.password);
+    await loginLockoutService.clear(email);
 
     // Audit log: successful login (fire-and-forget)
     auditLogService
@@ -71,7 +111,7 @@ router.post('/login', authLimiter, validate({ body: loginSchema }), async (req, 
     loginActivityService
       .log({
         userId: result.user.id,
-        email: req.body.email,
+        email,
         success: true,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
@@ -81,17 +121,13 @@ router.post('/login', authLimiter, validate({ body: loginSchema }), async (req, 
     res.json({ success: true, data: result });
   } catch (err) {
     // Log failed login attempt
-    if (err instanceof UnauthorizedError) {
-      loginActivityService
-        .log({
-          email: req.body.email,
-          success: false,
-          ipAddress: req.ip,
-          userAgent: req.headers['user-agent'],
-          failReason: 'INVALID_CREDENTIALS',
-        })
-        .catch(() => {});
-      if (req.ip) ipBlockService.autoBlockCheck(req.ip, 'system').catch(() => {});
+    if (isUnauthorized(err)) {
+      logFailure('INVALID_CREDENTIALS');
+      // Only wrong credentials count towards the lockout (not e.g. a suspended account
+      // whose password was correct).
+      if (err.message === INVALID_CREDENTIALS_MESSAGE) {
+        await loginLockoutService.recordFailure(email);
+      }
     }
     next(err);
   }
@@ -150,9 +186,10 @@ router.post(
   validate({
     body: z.object({
       token: z.string(),
-      password: passwordSchema,
+      password: newPasswordSchema,
     }),
   }),
+  enforcePasswordPolicy('password'),
   async (req, res, next) => {
     try {
       await authService.resetPassword(req.body.token, req.body.password);
@@ -223,7 +260,7 @@ router.post(
       res.json({ success: true, data: result });
     } catch (err) {
       // Log failed Google sign-in attempt
-      if (err instanceof UnauthorizedError) {
+      if (isUnauthorized(err)) {
         loginActivityService
           .log({
             email: req.body.idToken ? 'google-oauth' : 'unknown',
@@ -292,9 +329,10 @@ router.patch(
   validate({
     body: z.object({
       currentPassword: z.string().min(1),
-      newPassword: z.string().min(8).max(128),
+      newPassword: newPasswordSchema,
     }),
   }),
+  enforcePasswordPolicy('newPassword'),
   async (req, res, next) => {
     try {
       const { currentPassword, newPassword } = req.body;

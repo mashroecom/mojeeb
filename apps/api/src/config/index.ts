@@ -69,6 +69,15 @@ export const config = {
   encryption: {
     key: process.env.ENCRYPTION_KEY || '',
   },
+
+  // Web Push (VAPID). Optional: without keys the app runs with push disabled.
+  // Generate a key pair with: npx web-push generate-vapid-keys
+  push: {
+    vapidPublicKey: process.env.VAPID_PUBLIC_KEY || '',
+    vapidPrivateKey: process.env.VAPID_PRIVATE_KEY || '',
+    // Contact for push services: a mailto: address or an https URL
+    vapidSubject: process.env.VAPID_SUBJECT || '',
+  },
 } as const;
 
 export function validateConfig() {
@@ -87,6 +96,14 @@ export function validateConfig() {
       throw new Error('ENCRYPTION_KEY environment variable is required');
     }
     logger.warn('ENCRYPTION_KEY is not set — set it in .env');
+  }
+
+  // Web push is optional, but a half-filled configuration is a mistake worth flagging
+  const vapid = [config.push.vapidPublicKey, config.push.vapidPrivateKey, config.push.vapidSubject];
+  if (vapid.some(Boolean) && !vapid.every(Boolean)) {
+    logger.warn(
+      'Web push is partially configured — set VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT together (push stays disabled)',
+    );
   }
 
   if (isProd) {
