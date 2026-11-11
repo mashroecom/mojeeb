@@ -13,13 +13,16 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:backup": "bash scripts/backup-db.sh",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "pnpm --filter @mojeeb/api exec tsx src/scripts/seed.ts",
     "db:verify": "bash scripts/verify-prisma-client.sh",
     "test:e2e": "tsx test-crawl-e2e.ts && tsx test-crawl-multipage-e2e.ts && tsx test-crawl-scheduled-e2e.ts",
     "clean": "turbo clean && rimraf node_modules",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:root": "eslint ."
+  },
+  "prisma": {
+    "seed": "pnpm db:seed"
   },
   "packageManager": "pnpm@10.29.1",
   "engines": {

@@ -7,6 +7,7 @@ dist/
 .next/
 out/
 build/
+*.tsbuildinfo
 
 # Environment
 .env
@@ -66,3 +67,6 @@ certbot/
 .worktrees/
 .security-key
 logs/security/
+
+# Local Redis snapshot
+dump.rdb
