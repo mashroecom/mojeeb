@@ -41,6 +41,19 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
     });
   }
 
+  // Body-parser errors (malformed JSON, payload too large, ...) are client errors,
+  // not server faults: they carry the HTTP status to answer with.
+  const bodyError = err as Error & { type?: string; status?: number; statusCode?: number };
+  const bodyStatus = bodyError.status ?? bodyError.statusCode;
+  if (typeof bodyError.type === 'string' && bodyStatus && bodyStatus >= 400 && bodyStatus < 500) {
+    const isTooLarge = bodyError.type === 'entity.too.large';
+    return res.status(bodyStatus).json({
+      success: false,
+      error: isTooLarge ? 'Request body is too large' : 'Malformed request body',
+      code: isTooLarge ? 'PAYLOAD_TOO_LARGE' : 'BAD_REQUEST',
+    });
+  }
+
   // Unexpected errors
   logger.error({ err }, 'Unhandled error');
 

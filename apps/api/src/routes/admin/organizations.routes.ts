@@ -96,6 +96,61 @@ router.get('/:orgId/members', async (req: Request, res: Response, next: NextFunc
   }
 });
 
+// GET /:orgId/resources - Resource usage counts for an organization
+router.get('/:orgId/resources', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { orgId } = req.params as { orgId: string };
+
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true },
+    });
+    if (!org) throw new NotFoundError('Organization not found');
+
+    const [
+      messages,
+      conversations,
+      agents,
+      channels,
+      knowledgeBases,
+      documents,
+      members,
+      apiKeys,
+      leads,
+      webhooks,
+    ] = await Promise.all([
+      prisma.message.count({ where: { conversation: { orgId } } }),
+      prisma.conversation.count({ where: { orgId } }),
+      prisma.agent.count({ where: { orgId } }),
+      prisma.channel.count({ where: { orgId } }),
+      prisma.knowledgeBase.count({ where: { orgId } }),
+      prisma.kBDocument.count({ where: { knowledgeBase: { orgId } } }),
+      prisma.orgMembership.count({ where: { orgId } }),
+      prisma.apiKey.count({ where: { orgId } }),
+      prisma.lead.count({ where: { orgId } }),
+      prisma.webhook.count({ where: { orgId } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        messages,
+        conversations,
+        agents,
+        channels,
+        knowledgeBases,
+        documents,
+        members,
+        apiKeys,
+        leads,
+        webhooks,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 const updateOrgSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   slug: z.string().min(1).max(200).optional(),

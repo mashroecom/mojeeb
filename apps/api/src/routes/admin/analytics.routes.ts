@@ -22,13 +22,47 @@ const growthQuerySchema = z.object({
   groupBy: z.enum(['day', 'week', 'month']).optional(),
 });
 
+// Both bounds are optional — the dashboard requests these series without a range
+// and expects the last 30 days.
 const dateRangeSchema = z.object({
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
+// Sparkline metrics. The dashboard asks for a sparkline per overview card using the
+// card's label (totalUsers, monthlyRevenue, ...); the short names are kept as aliases.
+const SPARKLINE_METRIC_ALIASES = {
+  users: 'users',
+  totalUsers: 'users',
+  subscriptions: 'subscriptions',
+  activeSubscriptions: 'subscriptions',
+  revenue: 'revenue',
+  monthlyRevenue: 'revenue',
+  conversations: 'conversations',
+  totalConversations: 'conversations',
+  tokens: 'tokens',
+  totalTokensUsed: 'tokens',
+  cost: 'cost',
+  totalCost: 'cost',
+  activeUsers: 'activeUsers',
+  activeUsersToday: 'activeUsers',
+  messages: 'messages',
+  totalMessages: 'messages',
+} as const;
+
+type SparklineMetricName = keyof typeof SPARKLINE_METRIC_ALIASES;
+type SparklineMetric = (typeof SPARKLINE_METRIC_ALIASES)[SparklineMetricName];
+
 const sparklineSchema = z.object({
-  metric: z.enum(['users', 'subscriptions', 'revenue', 'conversations', 'tokens']),
+  metric: z.enum(
+    Object.keys(SPARKLINE_METRIC_ALIASES) as [SparklineMetricName, ...SparklineMetricName[]],
+  ),
 });
 
 const signupsSchema = z.object({
@@ -277,65 +311,110 @@ router.get('/dashboard-overview', async (_req: Request, res: Response, next: Nex
   }
 });
 
-// GET /sparkline - 7 daily data points for sparkline charts
+/**
+ * Resolve an optional YYYY-MM-DD range to concrete bounds (default: last 30 days).
+ * The end date is inclusive, so it is extended to the end of that day.
+ */
+function resolveDateRange(startDate?: string, endDate?: string): { start: Date; end: Date } {
+  const end = endDate ? new Date(`${endDate}T23:59:59.999Z`) : new Date();
+  const start = startDate
+    ? new Date(`${startDate}T00:00:00.000Z`)
+    : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+  return { start, end };
+}
+
+/** 7 daily data points (oldest first) for a sparkline metric. */
+async function sparklinePoints(metric: SparklineMetric) {
+  const days = Array.from({ length: 7 }, (_, idx) => {
+    const dayStart = new Date();
+    dayStart.setDate(dayStart.getDate() - (6 - idx));
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setHours(23, 59, 59, 999);
+    return { dayStart, dayEnd };
+  });
+
+  return Promise.all(
+    days.map(async ({ dayStart, dayEnd }) => {
+      const range = { gte: dayStart, lte: dayEnd };
+      let value = 0;
+      switch (metric) {
+        case 'users':
+          value = await prisma.user.count({ where: { createdAt: range } });
+          break;
+        case 'subscriptions':
+          value = await prisma.subscription.count({
+            where: { createdAt: range, status: 'ACTIVE', plan: { not: 'FREE' } },
+          });
+          break;
+        case 'revenue': {
+          const rev = await prisma.invoice.aggregate({
+            where: { status: 'PAID', paidAt: range },
+            _sum: { amount: true },
+          });
+          value = rev._sum.amount?.toNumber() || 0;
+          break;
+        }
+        case 'conversations':
+          value = await prisma.conversation.count({ where: { createdAt: range } });
+          break;
+        case 'tokens': {
+          const tok = await prisma.tokenUsage.aggregate({
+            where: { createdAt: range },
+            _sum: { totalTokens: true },
+          });
+          value = tok._sum.totalTokens || 0;
+          break;
+        }
+        case 'cost': {
+          const cost = await prisma.tokenUsage.aggregate({
+            where: { createdAt: range },
+            _sum: { costUsd: true },
+          });
+          value = cost._sum.costUsd?.toNumber() || 0;
+          break;
+        }
+        case 'activeUsers': {
+          // Distinct users with a successful login that day
+          const logins = await prisma.loginActivity.findMany({
+            where: { createdAt: range, success: true, userId: { not: null } },
+            distinct: ['userId'],
+            select: { userId: true },
+          });
+          value = logins.length;
+          break;
+        }
+        case 'messages':
+          value = await prisma.message.count({ where: { createdAt: range } });
+          break;
+      }
+      return { date: dayStart.toISOString().split('T')[0]!, value };
+    }),
+  );
+}
+
+// GET /sparkline?metric=... - 7 daily data points for sparkline charts
 router.get(
   '/sparkline',
   validate({ query: sparklineSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const metric = req.query.metric as string;
-      const points: { date: string; value: number }[] = [];
+      const metric = SPARKLINE_METRIC_ALIASES[req.query.metric as SparklineMetricName];
+      res.json({ success: true, data: await sparklinePoints(metric) });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
-      for (let i = 6; i >= 0; i--) {
-        const dayStart = new Date();
-        dayStart.setDate(dayStart.getDate() - i);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(dayStart);
-        dayEnd.setHours(23, 59, 59, 999);
-        const dateStr = dayStart.toISOString().split('T')[0]!;
-
-        let value = 0;
-        switch (metric) {
-          case 'users':
-            value = await prisma.user.count({
-              where: { createdAt: { gte: dayStart, lte: dayEnd } },
-            });
-            break;
-          case 'subscriptions':
-            value = await prisma.subscription.count({
-              where: {
-                createdAt: { gte: dayStart, lte: dayEnd },
-                status: 'ACTIVE',
-                plan: { not: 'FREE' },
-              },
-            });
-            break;
-          case 'revenue': {
-            const rev = await prisma.invoice.aggregate({
-              where: { status: 'PAID', paidAt: { gte: dayStart, lte: dayEnd } },
-              _sum: { amount: true },
-            });
-            value = rev._sum.amount?.toNumber() || 0;
-            break;
-          }
-          case 'conversations':
-            value = await prisma.conversation.count({
-              where: { createdAt: { gte: dayStart, lte: dayEnd } },
-            });
-            break;
-          case 'tokens': {
-            const tok = await prisma.tokenUsage.aggregate({
-              where: { createdAt: { gte: dayStart, lte: dayEnd } },
-              _sum: { totalTokens: true },
-            });
-            value = tok._sum.totalTokens || 0;
-            break;
-          }
-        }
-        points.push({ date: dateStr, value });
-      }
-
-      res.json({ success: true, data: points });
+// GET /sparkline/:metric - same as above, metric in the path (used by the admin dashboard)
+router.get(
+  '/sparkline/:metric',
+  validate({ params: sparklineSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const metric = SPARKLINE_METRIC_ALIASES[req.params.metric as SparklineMetricName];
+      res.json({ success: true, data: await sparklinePoints(metric) });
     } catch (err) {
       next(err);
     }
@@ -378,8 +457,10 @@ router.get(
   validate({ query: dateRangeSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const start = new Date(req.query.startDate as string);
-      const end = new Date(req.query.endDate as string);
+      const { start, end } = resolveDateRange(
+        req.query.startDate as string | undefined,
+        req.query.endDate as string | undefined,
+      );
 
       const rows = await prisma.$queryRaw<{ date: Date; revenue: number }[]>`
       SELECT date_trunc('day', "paidAt") AS "date",
@@ -418,8 +499,10 @@ router.get(
   validate({ query: dateRangeSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const start = new Date(req.query.startDate as string);
-      const end = new Date(req.query.endDate as string);
+      const { start, end } = resolveDateRange(
+        req.query.startDate as string | undefined,
+        req.query.endDate as string | undefined,
+      );
 
       const rows = await prisma.$queryRaw<
         { date: Date; inputTokens: bigint; outputTokens: bigint; totalTokens: bigint }[]
@@ -504,7 +587,7 @@ router.get('/top-users-by-usage', async (req: Request, res: Response, next: Next
 
 // GET /platform-activity-heatmap - Messages by hour and day of week for last 30 days
 router.get(
-  '/platform-activity-heatmap',
+  ['/platform-activity-heatmap', '/platform-heatmap'],
   async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);

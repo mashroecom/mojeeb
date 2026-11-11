@@ -288,19 +288,32 @@ export const crawlerWorker = new Worker(
         logger.info({ jobId, kbId, configId, startUrl }, 'Created CrawlJob for scheduled crawl');
       }
 
-      // Update job status to RUNNING
-      await prisma.crawlJob.update({
-        where: { id: jobId },
-        data: {
-          status: 'RUNNING' as any,
-          startedAt: new Date(),
-        },
+      // Move PENDING -> RUNNING. A job cancelled before the worker picked it up
+      // (or deleted) is left alone.
+      const started = await prisma.crawlJob.updateMany({
+        where: { id: jobId, status: 'PENDING' },
+        data: { status: 'RUNNING', startedAt: new Date() },
       });
+      if (started.count === 0) {
+        logger.info({ jobId }, 'Crawl job is no longer pending (cancelled?), skipping');
+        return;
+      }
 
       let pagesCrawled = 0;
+      let cancelled = false;
 
       // BFS crawl
       while (queue.length > 0) {
+        // Cooperative cancellation: stop between pages once the job is cancelled
+        const current = await prisma.crawlJob.findUnique({
+          where: { id: jobId },
+          select: { status: true },
+        });
+        if (!current || current.status === 'CANCELLED') {
+          cancelled = true;
+          break;
+        }
+
         const { url, depth } = queue.shift()!;
 
         // Skip if already visited
@@ -371,16 +384,25 @@ export const crawlerWorker = new Worker(
         }
       }
 
-      // Mark job as completed
-      await prisma.crawlJob.update({
-        where: { id: jobId },
+      if (cancelled) {
+        logger.info({ jobId, pagesCrawled }, 'Crawl job cancelled');
+        return;
+      }
+
+      // Mark job as completed (unless it was cancelled during the last page)
+      const completed = await prisma.crawlJob.updateMany({
+        where: { id: jobId, status: 'RUNNING' },
         data: {
-          status: 'COMPLETED' as any,
+          status: 'COMPLETED',
           pagesCrawled,
           pagesTotal: visited.size,
           completedAt: new Date(),
         },
       });
+      if (completed.count === 0) {
+        logger.info({ jobId, pagesCrawled }, 'Crawl job cancelled');
+        return;
+      }
 
       // Update lastCrawledAt timestamp for scheduled crawls
       if (configId) {
@@ -395,15 +417,18 @@ export const crawlerWorker = new Worker(
     } catch (err: any) {
       logger.error({ err, jobId }, 'Crawl job failed');
 
-      // Mark job as failed
-      await prisma.crawlJob.update({
-        where: { id: jobId },
-        data: {
-          status: 'FAILED' as any,
-          errorMessage: err.message,
-          completedAt: new Date(),
-        },
-      });
+      // Mark job as failed (a cancelled job stays cancelled; jobId is unset when
+      // creating the scheduled job itself failed)
+      if (jobId) {
+        await prisma.crawlJob.updateMany({
+          where: { id: jobId, status: { in: ['PENDING', 'RUNNING'] } },
+          data: {
+            status: 'FAILED',
+            errorMessage: err.message,
+            completedAt: new Date(),
+          },
+        });
+      }
 
       throw err;
     }

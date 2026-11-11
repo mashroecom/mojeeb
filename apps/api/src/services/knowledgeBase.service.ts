@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { prisma } from '../config/database';
-import { NotFoundError, BadRequestError } from '../utils/errors';
+import { NotFoundError, BadRequestError, ConflictError } from '../utils/errors';
 import { getAIProvider } from '../ai/index';
 import { logger } from '../config/logger';
 import { cache } from '../config/cache';
@@ -325,6 +325,24 @@ export class KnowledgeBaseService {
       },
     });
     if (!job) throw new NotFoundError('Crawl job not found');
+    return job;
+  }
+
+  /**
+   * Cancel a crawl job that has not finished yet. The crawler worker checks the
+   * job status between pages and stops as soon as it sees CANCELLED; pages that
+   * were already imported are kept.
+   */
+  async cancelCrawlJob(jobId: string) {
+    const { count } = await prisma.crawlJob.updateMany({
+      where: { id: jobId, status: { in: ['PENDING', 'RUNNING'] } },
+      data: { status: 'CANCELLED', completedAt: new Date() },
+    });
+
+    const job = await this.getCrawlJobStatus(jobId);
+    if (count === 0 && job.status !== 'CANCELLED') {
+      throw new ConflictError(`Crawl job already ${job.status.toLowerCase()}`);
+    }
     return job;
   }
 

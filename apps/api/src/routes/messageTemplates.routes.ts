@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../config/database';
 import { authenticate, orgContext } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { encodeTemplateVariables, withDecodedVariables } from '../utils/templateVariables';
 
 interface OrgParams {
   orgId: string;
@@ -39,7 +40,10 @@ const createSchema = z.object({
     .string()
     .max(50)
     .trim()
-    .regex(/^[a-zA-Z0-9_\- ]*$/, 'Shortcut can only contain letters, numbers, underscores, hyphens, and spaces')
+    .regex(
+      /^[a-zA-Z0-9_\- ]*$/,
+      'Shortcut can only contain letters, numbers, underscores, hyphens, and spaces',
+    )
     .optional()
     .nullable(),
   category: z.enum(CATEGORIES).default('general'),
@@ -57,7 +61,10 @@ const updateSchema = z.object({
     .string()
     .max(50)
     .trim()
-    .regex(/^[a-zA-Z0-9_\- ]*$/, 'Shortcut can only contain letters, numbers, underscores, hyphens, and spaces')
+    .regex(
+      /^[a-zA-Z0-9_\- ]*$/,
+      'Shortcut can only contain letters, numbers, underscores, hyphens, and spaces',
+    )
     .optional()
     .nullable(),
   category: z.enum(CATEGORIES).optional(),
@@ -104,7 +111,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       where,
       orderBy: [{ usageCount: 'desc' }, { createdAt: 'desc' }],
     });
-    res.json({ success: true, data: templates });
+    res.json({ success: true, data: templates.map(withDecodedVariables) });
   } catch (err) {
     next(err);
   }
@@ -120,7 +127,7 @@ router.get('/shortcut/:shortcut', async (req: Request, res: Response, next: Next
       where: { orgId, shortcut, isActive: true },
     });
     if (!template) return res.status(404).json({ success: false, error: 'Template not found' });
-    res.json({ success: true, data: template });
+    res.json({ success: true, data: withDecodedVariables(template) });
   } catch (err) {
     next(err);
   }
@@ -134,7 +141,7 @@ router.get('/:templateId', async (req: Request, res: Response, next: NextFunctio
       where: { id: templateId, orgId },
     });
     if (!template) return res.status(404).json({ success: false, error: 'Template not found' });
-    res.json({ success: true, data: template });
+    res.json({ success: true, data: withDecodedVariables(template) });
   } catch (err) {
     next(err);
   }
@@ -177,14 +184,14 @@ router.post(
           contentAr: contentAr || '',
           shortcut: shortcut || null,
           category,
-          variables: variables || [],
+          variables: encodeTemplateVariables(variables || []),
           agentId: agentId || null,
           isActive: isActive !== undefined ? isActive : true,
           autoTrigger: autoTrigger || { enabled: false, keywords: [] },
           createdBy: (req as any).user.userId,
         },
       });
-      res.status(201).json({ success: true, data: template });
+      res.status(201).json({ success: true, data: withDecodedVariables(template) });
     } catch (err) {
       next(err);
     }
@@ -233,13 +240,13 @@ router.put(
           ...(contentAr !== undefined && { contentAr }),
           ...(shortcut !== undefined && { shortcut: shortcut || null }),
           ...(category !== undefined && { category }),
-          ...(variables !== undefined && { variables }),
+          ...(variables !== undefined && { variables: encodeTemplateVariables(variables) }),
           ...(agentId !== undefined && { agentId: agentId || null }),
           ...(isActive !== undefined && { isActive }),
           ...(autoTrigger !== undefined && { autoTrigger }),
         },
       });
-      res.json({ success: true, data: updated });
+      res.json({ success: true, data: withDecodedVariables(updated) });
     } catch (err) {
       next(err);
     }
@@ -287,13 +294,13 @@ router.patch(
           ...(contentAr !== undefined && { contentAr }),
           ...(shortcut !== undefined && { shortcut: shortcut || null }),
           ...(category !== undefined && { category }),
-          ...(variables !== undefined && { variables }),
+          ...(variables !== undefined && { variables: encodeTemplateVariables(variables) }),
           ...(agentId !== undefined && { agentId: agentId || null }),
           ...(isActive !== undefined && { isActive }),
           ...(autoTrigger !== undefined && { autoTrigger }),
         },
       });
-      res.json({ success: true, data: updated });
+      res.json({ success: true, data: withDecodedVariables(updated) });
     } catch (err) {
       next(err);
     }
@@ -354,7 +361,7 @@ router.post('/:templateId/use', async (req: Request, res: Response, next: NextFu
     res.json({
       success: true,
       data: {
-        ...template,
+        ...withDecodedVariables(template),
         usageCount: template.usageCount + 1,
         contentEn,
         contentAr,

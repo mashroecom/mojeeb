@@ -85,10 +85,8 @@ router.delete('/:jobId', async (req, res, next) => {
     if (job.knowledgeBaseId !== kbId) {
       return res.status(404).json({ success: false, error: 'Crawl job not found' });
     }
-    // TODO: Implement job cancellation in worker
-    // For now, just mark as cancelled in DB
-    await knowledgeBaseService.getById(orgId, kbId); // Placeholder for future cancelCrawlJob method
-    res.json({ success: true, message: 'Crawl job cancellation requested' });
+    const cancelled = await knowledgeBaseService.cancelCrawlJob(jobId);
+    res.json({ success: true, data: cancelled });
   } catch (err) {
     next(err);
   }
