@@ -20,6 +20,7 @@ const MIME_TYPES: Record<string, string> = {
   '.gif': 'image/gif',
   '.webp': 'image/webp',
   '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
   // Documents
   '.pdf': 'application/pdf',
   '.doc': 'application/msword',

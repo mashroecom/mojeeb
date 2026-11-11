@@ -58,7 +58,10 @@ router.get('/trends', async (_req: Request, res: Response, next: NextFunction) =
         customerName: true,
         lastEmotion: true,
         lastMessageAt: true,
+        // Preview the customer's own words: lastEmotion is detected on customer
+        // messages, while the newest message is usually the agent's reply.
         messages: {
+          where: { role: 'CUSTOMER' },
           orderBy: { createdAt: 'desc' },
           take: 1,
           select: { content: true },

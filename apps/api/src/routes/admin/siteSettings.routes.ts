@@ -10,12 +10,27 @@ import { clearMaintenanceCache } from '../../middleware/maintenance';
 
 const router: Router = Router();
 
+// Uploaded branding assets are served by GET /api/v1/files/:filename. That route only
+// serves a file to anonymous visitors when its name starts with one of the public
+// prefixes in fileAccess.service (logo-, favicon-, og-image-), so the stored filename
+// must use them — the site logo/favicon/OG image are rendered on public pages.
+const PUBLIC_FILE_PREFIX: Record<string, string> = {
+  logo: 'logo',
+  favicon: 'favicon',
+  ogImage: 'og-image',
+};
+
+function publicFileUrl(filename: string): string {
+  return `/api/v1/files/${filename}`;
+}
+
 // Multer config for logo/favicon uploads
 const storage = multer.diskStorage({
   destination: path.resolve(__dirname, '../../../uploads'),
   filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `site-${file.fieldname}-${Date.now()}${ext}`);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const prefix = PUBLIC_FILE_PREFIX[file.fieldname] ?? file.fieldname;
+    cb(null, `${prefix}-${Date.now()}${ext}`);
   },
 });
 const upload = multer({
@@ -35,6 +50,10 @@ const upload = multer({
 });
 
 const updateSchema = z.object({
+  // Branding assets are set through the upload endpoints; PATCH may only clear them.
+  logoUrl: z.null().optional(),
+  faviconUrl: z.null().optional(),
+  ogImageUrl: z.null().optional(),
   siteName: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
   keywords: z.string().max(500).optional(),
@@ -150,7 +169,7 @@ router.post(
       if (!req.file) {
         return res.status(400).json({ success: false, error: 'No file uploaded' });
       }
-      const logoUrl = `/uploads/${req.file.filename}`;
+      const logoUrl = publicFileUrl(req.file.filename);
       const settings = await prisma.siteSettings.upsert({
         where: { id: 'singleton' },
         update: { logoUrl },
@@ -172,7 +191,7 @@ router.post(
       if (!req.file) {
         return res.status(400).json({ success: false, error: 'No file uploaded' });
       }
-      const faviconUrl = `/uploads/${req.file.filename}`;
+      const faviconUrl = publicFileUrl(req.file.filename);
       const settings = await prisma.siteSettings.upsert({
         where: { id: 'singleton' },
         update: { faviconUrl },
@@ -194,7 +213,7 @@ router.post(
       if (!req.file) {
         return res.status(400).json({ success: false, error: 'No file uploaded' });
       }
-      const ogImageUrl = `/uploads/${req.file.filename}`;
+      const ogImageUrl = publicFileUrl(req.file.filename);
       const settings = await prisma.siteSettings.upsert({
         where: { id: 'singleton' },
         update: { ogImageUrl },
