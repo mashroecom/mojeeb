@@ -1,6 +1,7 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
 
 export const templateKeys = {
   all: ['templates'] as const,
@@ -42,10 +43,13 @@ interface TemplateSuggestion {
 
 // List templates with filtering
 export function useTemplates(params?: { search?: string; category?: string; isShared?: boolean }) {
+  // Scope to the organization currently selected in the dashboard
+  const orgId = useAuthStore((s) => s.organization?.id);
   return useQuery({
-    queryKey: templateKeys.list(params),
+    queryKey: templateKeys.list({ ...params, orgId }),
     queryFn: async () => {
       const searchParams = new URLSearchParams();
+      if (orgId) searchParams.set('orgId', orgId);
       if (params?.search) searchParams.set('search', params.search);
       if (params?.category) searchParams.set('category', params.category);
       if (params?.isShared !== undefined) searchParams.set('isShared', String(params.isShared));
@@ -70,10 +74,11 @@ export function useTemplate(id: string) {
 
 // Get AI-suggested templates based on conversation context
 export function useTemplateSuggestions(conversationId: string, enabled = true) {
+  const orgId = useAuthStore((s) => s.organization?.id);
   return useQuery({
     queryKey: templateKeys.suggestions(conversationId),
     queryFn: async () => {
-      const { data } = await api.post('/templates/suggest', { conversationId });
+      const { data } = await api.post('/templates/suggest', { conversationId, orgId });
       return data.data as { suggestions: TemplateSuggestion[]; conversationId: string };
     },
     enabled: !!conversationId && enabled,

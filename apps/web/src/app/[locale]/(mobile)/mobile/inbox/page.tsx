@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { useAdminConversations } from '@/hooks/useAdmin';
+import { useMobileInbox } from '@/hooks/useMobile';
 import { ConversationCard } from '@/components/mobile/ConversationCard';
 import { cn } from '@/lib/utils';
 import { Search, Filter, X, RefreshCw, MessageCircle } from 'lucide-react';
@@ -40,7 +40,7 @@ export default function MobileInboxPage() {
   }, [status]);
 
   /* ── Data hooks ───────────────────────────────────────── */
-  const { data, isLoading, error, refetch } = useAdminConversations({
+  const { data, isLoading, error, refetch } = useMobileInbox({
     page,
     limit: 20,
     search: debouncedSearch || undefined,

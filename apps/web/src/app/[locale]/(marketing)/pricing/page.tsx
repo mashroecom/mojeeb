@@ -7,7 +7,7 @@ import { useLandingPageContent } from '@/hooks/useLandingPage';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { Zap, HelpCircle, ChevronDown, ChevronUp, ArrowRight, ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { cn } from '@/lib/utils';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
@@ -19,6 +19,22 @@ interface FAQ {
   questionAr: string;
   answer: string;
   answerAr: string;
+}
+
+const subscribeNoop = () => () => {};
+
+/**
+ * False on the server and during hydration, true afterwards. The CMS query can
+ * already be resolved (the layout requests the same data) by the time this page
+ * hydrates, so CMS text must not be used until hydration is done — otherwise the
+ * client's first render differs from the server HTML.
+ */
+function useHydrated(): boolean {
+  return useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
 }
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -46,9 +62,11 @@ export default function PricingPage() {
   const t = useTranslations('pricingPage');
   const locale = useLocale();
   const isAr = locale === 'ar';
-  const { data: cms } = useLandingPageContent();
+  const hydrated = useHydrated();
+  const { data: cmsData } = useLandingPageContent();
+  const cms = hydrated ? cmsData : undefined;
 
-  const { data: faqs } = useQuery({
+  const { data: faqData } = useQuery({
     queryKey: ['public', 'faq'],
     queryFn: async () => {
       const { data } = await axios.get(`${API_BASE}/public/faq`);
@@ -56,6 +74,7 @@ export default function PricingPage() {
     },
     staleTime: 5 * 60 * 1000,
   });
+  const faqs = hydrated ? faqData : undefined;
 
   const pricingTitle = isAr
     ? cms?.pricingTitleAr || cms?.pricingTitle || t('title')

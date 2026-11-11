@@ -1,128 +1,132 @@
 'use client';
 
-import { useState } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
-import { fmtDateShort } from '@/lib/dateFormat';
-import { useAdminOverview, useAdminGrowth, useAdminRevenue } from '@/hooks/useAdmin';
-import { PLAN_COLORS } from '@/lib/admin-constants';
-import { cn } from '@/lib/utils';
+import { useLocale, useTranslations } from 'next-intl';
 import {
-  Users,
-  Building2,
-  MessageSquare,
-  Mail,
-  CreditCard,
-  DollarSign,
-  TrendingUp,
+  Activity,
   BarChart3,
+  CalendarDays,
+  CheckCircle2,
+  Mail,
+  MessageSquare,
+  MessagesSquare,
+  PieChart,
   RefreshCw,
+  type LucideIcon,
 } from 'lucide-react';
+import { useMobileAnalytics, useMobileStats } from '@/hooks/useMobile';
 import { AnalyticsWidget, ChartWidget, EmptyState } from '@/components/mobile/AnalyticsWidget';
 import { MobileNav } from '@/components/mobile/MobileNav';
+import { cn } from '@/lib/utils';
 
-const GROUP_BY_OPTIONS = ['day', 'week', 'month'] as const;
-type GroupBy = (typeof GROUP_BY_OPTIONS)[number];
-
-export default function MobileAnalyticsPage() {
-  const t = useTranslations('admin.analytics');
-  const tOverview = useTranslations('admin.overview');
-  const tCommon = useTranslations('admin.common');
-  const locale = useLocale();
-  const [groupBy, setGroupBy] = useState<GroupBy>('day');
-
-  const {
-    data: overview,
-    isLoading: loadingOverview,
-    error: overviewError,
-    refetch: refetchOverview,
-  } = useAdminOverview();
-  const {
-    data: growth,
-    isLoading: loadingGrowth,
-    refetch: refetchGrowth,
-  } = useAdminGrowth({
-    groupBy,
-  });
-  const { data: revenue, isLoading: loadingRevenue, refetch: refetchRevenue } = useAdminRevenue();
-
-  const handleRefresh = () => {
-    refetchOverview();
-    refetchGrowth();
-    refetchRevenue();
-  };
-
-  // Stat widgets
-  const stats = [
-    {
-      key: 'totalUsers',
-      label: tOverview('totalUsers'),
-      value: overview?.totalUsers ?? 0,
-      icon: Users,
-      color: 'text-blue-600 dark:text-blue-400',
-      bg: 'bg-blue-100 dark:bg-blue-900/30',
-    },
-    {
-      key: 'totalOrgs',
-      label: tOverview('totalOrgs'),
-      value: overview?.totalOrgs ?? 0,
-      icon: Building2,
-      color: 'text-purple-600 dark:text-purple-400',
-      bg: 'bg-purple-100 dark:bg-purple-900/30',
-    },
-    {
-      key: 'totalConversations',
-      label: tOverview('totalConversations'),
-      value: overview?.totalConversations ?? 0,
+/** Presentation for each metric returned by GET /mobile/analytics/dashboard */
+const METRICS: Record<string, { icon: LucideIcon; color: string; bg: string; hasTrend: boolean }> =
+  {
+    totalConversations: {
       icon: MessageSquare,
       color: 'text-green-600 dark:text-green-400',
       bg: 'bg-green-100 dark:bg-green-900/30',
+      hasTrend: true,
     },
-    {
-      key: 'totalMessages',
-      label: tOverview('totalMessages'),
-      value: overview?.totalMessages ?? 0,
+    totalMessages: {
       icon: Mail,
       color: 'text-indigo-600 dark:text-indigo-400',
       bg: 'bg-indigo-100 dark:bg-indigo-900/30',
+      hasTrend: true,
     },
-    {
-      key: 'activeSubscriptions',
-      label: tOverview('activeSubscriptions'),
-      value: overview?.activeSubscriptions ?? 0,
-      icon: CreditCard,
-      color: 'text-orange-600 dark:text-orange-400',
-      bg: 'bg-orange-100 dark:bg-orange-900/30',
+    activeConversations: {
+      icon: Activity,
+      color: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-blue-100 dark:bg-blue-900/30',
+      hasTrend: false,
     },
-    {
-      key: 'totalRevenue',
-      label: tOverview('totalRevenue'),
-      value: overview?.totalRevenue ?? 0,
-      icon: DollarSign,
+    resolvedConversations: {
+      icon: CheckCircle2,
       color: 'text-emerald-600 dark:text-emerald-400',
       bg: 'bg-emerald-100 dark:bg-emerald-900/30',
-      isCurrency: true,
+      hasTrend: false,
     },
-  ];
+    avgMessagesPerConversation: {
+      icon: MessagesSquare,
+      color: 'text-purple-600 dark:text-purple-400',
+      bg: 'bg-purple-100 dark:bg-purple-900/30',
+      hasTrend: true,
+    },
+    conversationsToday: {
+      icon: CalendarDays,
+      color: 'text-orange-600 dark:text-orange-400',
+      bg: 'bg-orange-100 dark:bg-orange-900/30',
+      hasTrend: false,
+    },
+  };
 
-  // Growth chart data
-  const growthData: any[] = growth?.growth ?? growth?.data ?? [];
-  const maxGrowthValue =
-    growthData.length > 0
-      ? Math.max(
-          ...growthData.map((d: any) =>
-            Math.max(d.users ?? 0, d.organizations ?? 0, d.conversations ?? 0),
-          ),
-          1,
-        )
-      : 1;
+const STATUS_ORDER = ['ACTIVE', 'HANDED_OFF', 'WAITING', 'RESOLVED', 'ARCHIVED'] as const;
 
-  // Revenue / plan distribution
-  const planDistribution: any[] = revenue?.planDistribution ?? revenue?.plans ?? [];
+const STATUS_BAR_COLORS: Record<string, string> = {
+  ACTIVE: 'bg-green-500',
+  HANDED_OFF: 'bg-orange-500',
+  WAITING: 'bg-yellow-500',
+  RESOLVED: 'bg-blue-500',
+  ARCHIVED: 'bg-muted-foreground/50',
+};
 
-  if (overviewError) {
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  ACTIVE: 'statusActive',
+  HANDED_OFF: 'statusHandedOff',
+  WAITING: 'statusWaiting',
+  RESOLVED: 'statusResolved',
+  ARCHIVED: 'statusArchived',
+};
+
+export default function MobileAnalyticsPage() {
+  const t = useTranslations('mobile.analytics');
+  const tConv = useTranslations('admin.conversations');
+  const tCommon = useTranslations('admin.common');
+  const locale = useLocale();
+
+  const {
+    data: metrics,
+    isLoading: loadingMetrics,
+    isFetching: fetchingMetrics,
+    error: metricsError,
+    refetch: refetchMetrics,
+  } = useMobileAnalytics();
+  const {
+    data: stats,
+    isLoading: loadingStats,
+    isFetching: fetchingStats,
+    refetch: refetchStats,
+  } = useMobileStats();
+
+  const refreshing = fetchingMetrics || fetchingStats;
+  const handleRefresh = () => {
+    refetchMetrics();
+    refetchStats();
+  };
+
+  const formatValue = (value: number) =>
+    value.toLocaleString(locale, { maximumFractionDigits: 1 });
+
+  const formatTrend = (changePercent: number) => {
+    const sign = changePercent > 0 ? '+' : '';
+    return t('vsPrevious', {
+      change: `${sign}${changePercent.toLocaleString(locale, { maximumFractionDigits: 1 })}%`,
+    });
+  };
+
+  // Keep a stable card order even if the API adds or reorders metrics
+  const cards = Object.keys(METRICS).map((key) => ({
+    key,
+    ...METRICS[key]!,
+    metric: metrics?.find((m) => m.label === key),
+  }));
+
+  const statusCounts = new Map((stats?.byStatus ?? []).map((row) => [row.status, row._count]));
+  const statusTotal = stats?.total ?? 0;
+
+  if (metricsError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen px-4 pb-20">
-        <p className="text-destructive font-medium mb-2">{tCommon('error')}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 pb-20">
+        <p className="mb-2 font-medium text-destructive">{tCommon('error')}</p>
         <button onClick={handleRefresh} className="text-sm text-primary hover:underline">
           {tCommon('retry')}
         </button>
@@ -134,182 +138,74 @@ export default function MobileAnalyticsPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b px-4 py-3">
+      <div className="sticky top-0 z-10 border-b bg-background px-4 py-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">{t('title')}</h1>
+          <div>
+            <h1 className="text-xl font-bold">{t('title')}</h1>
+            <p className="text-xs text-muted-foreground">{t('period')}</p>
+          </div>
           <button
             onClick={handleRefresh}
-            disabled={loadingOverview || loadingGrowth || loadingRevenue}
-            className="flex items-center justify-center h-10 w-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:opacity-50 transition-colors"
-            aria-label="Refresh"
+            disabled={refreshing}
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:opacity-50"
+            aria-label={t('refresh')}
           >
-            <RefreshCw
-              className={cn(
-                'h-5 w-5',
-                (loadingOverview || loadingGrowth || loadingRevenue) && 'animate-spin',
-              )}
-            />
+            <RefreshCw className={cn('h-5 w-5', refreshing && 'animate-spin')} />
           </button>
         </div>
       </div>
 
-      <div className="px-4 py-4 space-y-4">
-        {/* Stat Widgets */}
+      <div className="space-y-4 px-4 py-4">
+        {/* Key metrics */}
         <div className="grid grid-cols-2 gap-3">
-          {stats.map((stat) => (
+          {cards.map(({ key, icon, color, bg, hasTrend, metric }) => (
             <AnalyticsWidget
-              key={stat.key}
-              title={stat.label}
-              value={
-                stat.isCurrency
-                  ? `${t('currencySymbol')}${Number(stat.value).toLocaleString(locale)}`
-                  : Number(stat.value).toLocaleString(locale)
-              }
-              icon={stat.icon}
-              color={stat.color}
-              bg={stat.bg}
-              isLoading={loadingOverview}
+              key={key}
+              title={t(`metrics.${key}`)}
+              value={formatValue(metric?.value ?? 0)}
+              subtitle={hasTrend && metric ? formatTrend(metric.changePercent) : undefined}
+              icon={icon}
+              color={color}
+              bg={bg}
+              isLoading={loadingMetrics}
             />
           ))}
         </div>
 
-        {/* Growth Chart */}
-        <ChartWidget title={t('growth')} icon={TrendingUp} isLoading={loadingGrowth}>
-          {/* Group By Toggle */}
-          <div className="flex justify-center mb-4">
-            <div className="inline-flex rounded-lg border bg-muted/50 overflow-hidden">
-              {GROUP_BY_OPTIONS.map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => setGroupBy(opt)}
-                  className={cn(
-                    'px-4 py-2 text-xs font-medium transition-colors',
-                    groupBy === opt
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground active:text-foreground active:bg-muted',
-                  )}
-                >
-                  {t(opt)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {growthData.length === 0 ? (
-            <EmptyState icon={BarChart3} message={tCommon('noData')} />
+        {/* Conversations by status */}
+        <ChartWidget title={t('byStatus')} icon={PieChart} isLoading={loadingStats}>
+          {statusTotal === 0 ? (
+            <EmptyState icon={BarChart3} message={t('noConversations')} />
           ) : (
-            <>
-              {/* Legend */}
-              <div className="flex flex-wrap items-center justify-center gap-3 mb-4 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <div className="h-3 w-3 rounded-sm bg-blue-500" />
-                  <span className="text-muted-foreground">{t('newUsers')}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-3 w-3 rounded-sm bg-purple-500" />
-                  <span className="text-muted-foreground">{t('newOrgs')}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-3 w-3 rounded-sm bg-green-500" />
-                  <span className="text-muted-foreground">{t('newConversations')}</span>
-                </div>
-              </div>
-
-              {/* Chart */}
-              <div className="flex items-end gap-1 h-40 overflow-x-auto pb-2">
-                {growthData.map((point: any, index: number) => {
-                  const usersHeight = ((point.users ?? 0) / maxGrowthValue) * 100;
-                  const orgsHeight = ((point.organizations ?? 0) / maxGrowthValue) * 100;
-                  const convsHeight = ((point.conversations ?? 0) / maxGrowthValue) * 100;
-
-                  return (
-                    <div
-                      key={point.date ?? index}
-                      className="flex flex-col items-center flex-1 min-w-[40px]"
-                    >
-                      <div className="relative w-full flex justify-center items-end gap-0.5 flex-1">
-                        {/* Users bar */}
-                        <div
-                          className="w-1/4 max-w-[10px] rounded-t bg-blue-500 dark:bg-blue-400 active:opacity-80 transition-opacity"
-                          style={{ height: `${Math.max(usersHeight, 2)}%` }}
-                        />
-                        {/* Orgs bar */}
-                        <div
-                          className="w-1/4 max-w-[10px] rounded-t bg-purple-500 dark:bg-purple-400 active:opacity-80 transition-opacity"
-                          style={{ height: `${Math.max(orgsHeight, 2)}%` }}
-                        />
-                        {/* Conversations bar */}
-                        <div
-                          className="w-1/4 max-w-[10px] rounded-t bg-green-500 dark:bg-green-400 active:opacity-80 transition-opacity"
-                          style={{ height: `${Math.max(convsHeight, 2)}%` }}
-                        />
-                      </div>
-                      <span className="text-[9px] text-muted-foreground mt-1.5 truncate w-full text-center">
-                        {point.date ? fmtDateShort(point.date, locale) : ''}
+            <ul className="space-y-3">
+              {STATUS_ORDER.map((status) => {
+                const count = statusCounts.get(status) ?? 0;
+                const percent = statusTotal > 0 ? (count / statusTotal) * 100 : 0;
+                return (
+                  <li key={status}>
+                    <div className="mb-1 flex items-center justify-between text-sm">
+                      <span>{tConv(STATUS_LABEL_KEYS[status]!)}</span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {count.toLocaleString(locale)}
                       </span>
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* Mobile-friendly data summary */}
-              <div className="mt-4 pt-4 border-t">
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {growthData
-                        .reduce((sum: number, d: any) => sum + (d.users ?? 0), 0)
-                        .toLocaleString(locale)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">{t('newUsers')}</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                      {growthData
-                        .reduce((sum: number, d: any) => sum + (d.organizations ?? 0), 0)
-                        .toLocaleString(locale)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">{t('newOrgs')}</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {growthData
-                        .reduce((sum: number, d: any) => sum + (d.conversations ?? 0), 0)
-                        .toLocaleString(locale)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">{t('newConversations')}</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </ChartWidget>
-
-        {/* Plan Distribution */}
-        <ChartWidget title={t('planDistribution')} icon={BarChart3} isLoading={loadingRevenue}>
-          {planDistribution.length === 0 ? (
-            <EmptyState icon={CreditCard} message={tCommon('noData')} />
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {planDistribution.map((plan: any) => {
-                const planName = (plan.plan ?? plan.name ?? 'FREE').toUpperCase();
-                const count = plan.count ?? plan._count ?? 0;
-                return (
-                  <div key={planName} className="rounded-lg border bg-card/50 p-4 text-center">
-                    <span
-                      className={cn(
-                        'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold mb-3',
-                        PLAN_COLORS[planName] ?? PLAN_COLORS.FREE,
-                      )}
+                    <div
+                      className="h-2 overflow-hidden rounded-full bg-muted"
+                      role="progressbar"
+                      aria-valuenow={Math.round(percent)}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={tConv(STATUS_LABEL_KEYS[status]!)}
                     >
-                      {t(`plan_${planName}`)}
-                    </span>
-                    <p className="text-2xl font-bold">{Number(count).toLocaleString(locale)}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{t('subscriptions')}</p>
-                  </div>
+                      <div
+                        className={cn('h-full rounded-full', STATUS_BAR_COLORS[status])}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           )}
         </ChartWidget>
       </div>

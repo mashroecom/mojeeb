@@ -1,7 +1,7 @@
 'use client';
 
 import { Link } from '@/i18n/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { fmtDateTime, fmtTime } from '@/lib/dateFormat';
 import { cn } from '@/lib/utils';
 import { MessageCircle, User, Clock } from 'lucide-react';
@@ -21,7 +21,7 @@ interface ConversationCardProps {
     customerName?: string | null;
     customerEmail?: string | null;
     status: string;
-    lastMessageAt: string;
+    lastMessageAt: string | null;
     lastEmotion?: string | null;
     leads?: Array<{ name?: string; email?: string }>;
     channel?: { name?: string; type?: string } | null;
@@ -32,14 +32,16 @@ interface ConversationCardProps {
 
 export function ConversationCard({ conversation, statusLabel }: ConversationCardProps) {
   const locale = useLocale();
+  const t = useTranslations('mobile.inbox');
 
-  const customerName = conversation.customerName ?? conversation.leads?.[0]?.name ?? 'Unknown';
+  const customerName =
+    conversation.customerName ?? conversation.leads?.[0]?.name ?? t('unknownCustomer');
   const customerEmail = conversation.customerEmail ?? conversation.leads?.[0]?.email ?? '';
   const messageCount = conversation._count?.messages ?? 0;
 
   return (
     <Link
-      href={`/admin/conversations/${conversation.id}`}
+      href={`/conversations?id=${conversation.id}`}
       className="block rounded-xl border bg-card p-4 transition-colors active:bg-muted/50 hover:bg-muted/30"
     >
       <div className="flex items-start gap-3">
@@ -54,7 +56,7 @@ export function ConversationCard({ conversation, statusLabel }: ConversationCard
           <div className="flex items-start justify-between gap-2 mb-1">
             <p className="font-semibold truncate">{customerName}</p>
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {fmtTime(conversation.lastMessageAt, locale)}
+              {conversation.lastMessageAt ? fmtTime(conversation.lastMessageAt, locale) : ''}
             </span>
           </div>
 
