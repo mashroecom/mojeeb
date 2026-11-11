@@ -1,4 +1,4 @@
-import { getAIProvider } from '../index';
+import { getAuxiliaryProvider } from '../index';
 import type { ConversationMessage, EnhancedSummary } from '@mojeeb/shared-types';
 import { logger } from '../../config/logger';
 
@@ -27,7 +27,7 @@ export class SummaryPipeline {
     if (messages.length === 0) return null;
 
     try {
-      const provider = getAIProvider('OPENAI');
+      const provider = await getAuxiliaryProvider();
 
       const result = await provider.generateJSON<EnhancedSummary>({
         systemPrompt: ENHANCED_SUMMARY_PROMPT,

@@ -1,14 +1,24 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Lightbulb, Brain, MessageSquare } from 'lucide-react';
+import { Lightbulb, Brain, MessageSquare, Cpu } from 'lucide-react';
+import { AI_MODELS } from '@mojeeb/shared-utils';
 import { cn } from '@/lib/utils';
+
+/** Which provider serves a model id (the provider is implied by the model). */
+export function providerForModel(modelId: string): 'OPENAI' | 'ANTHROPIC' {
+  return AI_MODELS.ANTHROPIC.some((m) => m.id === modelId) || modelId.startsWith('claude-')
+    ? 'ANTHROPIC'
+    : 'OPENAI';
+}
 
 interface BehaviorSectionProps {
   tone: string;
   setTone: (tone: string) => void;
   temperature: number;
   setTemperature: (temperature: number) => void;
+  aiModel: string;
+  setAiModel: (model: string) => void;
   responseLength: string;
   setResponseLength: (length: string) => void;
 }
@@ -18,6 +28,8 @@ export function BehaviorSection({
   setTone,
   temperature,
   setTemperature,
+  aiModel,
+  setAiModel,
   responseLength,
   setResponseLength,
 }: BehaviorSectionProps) {
@@ -102,6 +114,46 @@ export function BehaviorSection({
               {temperature.toFixed(1)}
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* AI model */}
+      <div className="rounded-xl border bg-card shadow-sm">
+        <div className="flex items-center gap-3 border-b px-6 py-4">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <Cpu className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">{t('aiModelLabel')}</h2>
+            <p className="text-sm text-muted-foreground">{t('aiModelHint')}</p>
+          </div>
+        </div>
+        <div className="p-6">
+          <select
+            value={aiModel}
+            onChange={(e) => setAiModel(e.target.value)}
+            aria-label={t('aiModelLabel')}
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <optgroup label="Anthropic">
+              {AI_MODELS.ANTHROPIC.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="OpenAI">
+              {AI_MODELS.OPENAI.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </optgroup>
+            {/* A model saved earlier that is no longer in the list stays selectable */}
+            {![...AI_MODELS.ANTHROPIC, ...AI_MODELS.OPENAI].some((m) => m.id === aiModel) && (
+              <option value={aiModel}>{aiModel}</option>
+            )}
+          </select>
         </div>
       </div>
 

@@ -36,7 +36,7 @@ import { FormSkeleton } from './_components/FormSkeleton';
 import { KnowledgeBaseSection } from './_components/KnowledgeBaseSection';
 import { ChannelsSection } from './_components/ChannelsSection';
 import { TestAgentSection } from './_components/TestAgentSection';
-import { BehaviorSection } from './_components/BehaviorSection';
+import { BehaviorSection, providerForModel } from './_components/BehaviorSection';
 import { DataCollectionSection } from './_components/DataCollectionSection';
 import { EscalationSection } from './_components/EscalationSection';
 
@@ -99,6 +99,7 @@ export default function EditAgentPage() {
   // AI Behavior state
   const [tone, setTone] = useState('friendly');
   const [temperature, setTemperature] = useState(0.7);
+  const [aiModel, setAiModel] = useState('gpt-4o');
   const [responseLength, setResponseLength] = useState('medium');
 
   // Data Collection state
@@ -125,6 +126,7 @@ export default function EditAgentPage() {
       form.values.enableLeadExtraction !== agent.enableLeadExtraction ||
       tone !== (agent.tone || 'friendly') ||
       temperature !== (agent.temperature ?? 0.7) ||
+      aiModel !== (agent.aiModel || 'gpt-4o') ||
       responseLength !== (agent.responseLength || 'medium') ||
       sentimentEscalation !== (agent.sentimentEscalation ?? false) ||
       escalationMessageCount !== (agent.escalationMessageCount ?? 5) ||
@@ -144,6 +146,7 @@ export default function EditAgentPage() {
     form.values,
     tone,
     temperature,
+    aiModel,
     responseLength,
     sentimentEscalation,
     escalationMessageCount,
@@ -174,6 +177,7 @@ export default function EditAgentPage() {
       });
       setTone(agent.tone || 'friendly');
       setTemperature(agent.temperature ?? 0.7);
+      setAiModel(agent.aiModel || 'gpt-4o');
       setResponseLength(agent.responseLength || 'medium');
       if (agent.dataCollectionConfig) {
         setDataCollectionConfig(agent.dataCollectionConfig);
@@ -203,6 +207,8 @@ export default function EditAgentPage() {
         enableLeadExtraction: form.values.enableLeadExtraction,
         tone,
         temperature,
+        aiProvider: providerForModel(aiModel),
+        aiModel,
         responseLength,
         dataCollectionConfig,
         sentimentEscalation,
@@ -533,6 +539,8 @@ export default function EditAgentPage() {
               setTone={setTone}
               temperature={temperature}
               setTemperature={setTemperature}
+              aiModel={aiModel}
+              setAiModel={setAiModel}
               responseLength={responseLength}
               setResponseLength={setResponseLength}
             />

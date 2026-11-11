@@ -268,7 +268,8 @@
       "invalidCredentials": "Invalid email or password",
       "accountSuspended": "Account has been suspended",
       "googleSignInFailed": "Google sign-in failed",
-      "googleSignInUnavailable": "Google Sign-In is not available. Please try again later."
+      "googleSignInUnavailable": "Google Sign-In is not available. Please try again later.",
+      "accountLocked": "Too many failed sign-in attempts. Please wait a few minutes and try again, or reset your password."
     },
     "register": {
       "title": "Create Your Account",
@@ -317,6 +318,17 @@
       "resendButton": "Resend Verification Email",
       "resendSuccess": "A new verification email has been sent. Please check your inbox.",
       "resendError": "Failed to resend verification email. Please try again or log in first."
+    },
+    "passwordPolicy": {
+      "hint": "Password must include: {rules}.",
+      "error": "Password must include {rule}.",
+      "separator": ", ",
+      "minLength": "at least {count} characters",
+      "maxLength": "no more than {count} characters",
+      "uppercase": "an uppercase letter",
+      "lowercase": "a lowercase letter",
+      "number": "a number",
+      "special": "a special character"
     }
   },
   "dashboard": {
@@ -509,7 +521,9 @@
         "generalAssistant": "General Assistant",
         "generalAssistantDesc": "A versatile AI helper for various tasks and questions."
       },
-      "testAgentError": "Failed to get response"
+      "testAgentError": "Failed to get response",
+      "aiModelLabel": "AI model",
+      "aiModelHint": "The model that writes this agent's replies. More capable models answer better and cost more per message."
     },
     "customers": {
       "title": "Customers",
@@ -2693,7 +2707,13 @@
       "confirmVerifyEmail": "Mark this user's email as verified?",
       "confirmUnverifyEmail": "Mark this user's email as unverified?",
       "emailVerifiedSuccess": "Email marked as verified",
-      "emailUnverified": "Email marked as unverified"
+      "emailUnverified": "Email marked as unverified",
+      "lockedTitle": "Sign-in locked",
+      "lockedDescription": "Too many failed sign-in attempts. Unlocks automatically in about {minutes} min.",
+      "unlock": "Unlock now",
+      "unlockSuccess": "Account unlocked",
+      "unlockFailed": "Failed to unlock the account",
+      "passwordPolicyRejected": "The new password does not meet the password policy."
     },
     "siteSettings": {
       "title": "Site Settings",
@@ -2855,7 +2875,14 @@
       "enable2FA": "Enable 2FA",
       "enforce2FAForAdmins": "Enforce 2FA for Admins",
       "saved": "Security settings saved",
-      "saveAll": "Save All Settings"
+      "saveAll": "Save All Settings",
+      "minPasswordLengthHint": "Checked when a password is set or changed. Existing passwords keep working.",
+      "sessionTimeoutHint": "Users are signed out after this much inactivity (10080 = 7 days).",
+      "maxSessionsHint": "When a user exceeds this, their oldest session is signed out.",
+      "maxLoginAttemptsHint": "Failed sign-ins before an account is locked. An IP address is blocked for 24 hours after this many failures in 15 minutes (never fewer than 10).",
+      "lockoutDurationHint": "The account unlocks by itself after this time. You can unlock it earlier from the user's page.",
+      "passwordExpiryNotEnforced": "The platform does not record when a password was last changed, so expiry cannot be applied.",
+      "twoFactorNotEnforced": "Two-factor authentication is not available on the platform yet."
     },
     "notificationSettings": {
       "title": "Notification Settings",
@@ -2880,7 +2907,12 @@
       "saved": "Notification settings saved",
       "saveAll": "Save All Settings",
       "adminAlertEmailHint": "Leave empty to disable admin alerts",
-      "testEmailNeedsAddress": "Save an admin alert email first to send a test"
+      "testEmailNeedsAddress": "Save an admin alert email first to send a test",
+      "enableEmailNotificationsHint": "Also email every enabled alert below to the admin alert address.",
+      "eventTriggersHint": "Switching an event off stops both the in-app admin notification and the alert email.",
+      "notifySystemErrorsHint": "At most one alert every 10 minutes.",
+      "dailySummaryNotEnforced": "No daily summary is sent: the platform has no scheduled summary job yet.",
+      "errorDigestNotEnforced": "No error digest is sent: the platform has no scheduled digest job yet."
     },
     "landingPage": {
       "title": "Landing Page Editor",
@@ -3768,7 +3800,9 @@
         "removed": "Image removed",
         "empty": "No image uploaded yet",
         "uploading": "Uploading..."
-      }
+      },
+      "notEnforcedBadge": "Not enforced yet",
+      "notEnforcedGeneric": "This setting is saved but the platform does not act on it yet."
     },
     "faq": {
       "title": "FAQ Management",
@@ -4250,7 +4284,14 @@
       "requireEmailVerification": "Require email verification",
       "requireEmailVerificationDesc": "New users must verify their email address before using the platform",
       "saved": "Organization defaults saved",
-      "saveAll": "Save All Settings"
+      "saveAll": "Save All Settings",
+      "defaultPlanHint": "Every newly registered organization starts on this plan, without payment.",
+      "defaultLimitHint": "Applies to new organizations only. A later plan change replaces it with the plan's limit.",
+      "trialNotEnforced": "The platform has no trial period: nothing expires or downgrades when it ends.",
+      "channelsLimitNotEnforced": "The number of channels is not limited anywhere on the platform.",
+      "planLimitNotEnforced": "This limit always comes from the organization's plan (Plans page).",
+      "autoWebchatNotEnforced": "Channels are created in the onboarding wizard; nothing is created automatically.",
+      "emailVerificationNotEnforced": "Unverified users are not blocked from using the platform."
     },
     "action_SYSTEM_CONFIG_EXPORTED": "System Config Exported",
     "action_SYSTEM_CONFIG_IMPORTED": "System Config Imported",

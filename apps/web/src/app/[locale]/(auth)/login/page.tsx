@@ -64,7 +64,8 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       const msg = err.response?.data?.error || '';
-      if (msg.includes('Invalid email or password')) setError(t('invalidCredentials'));
+      if (err.response?.data?.code === 'ACCOUNT_LOCKED') setError(t('accountLocked'));
+      else if (msg.includes('Invalid email or password')) setError(t('invalidCredentials'));
       else if (msg.includes('suspended')) setError(t('accountSuspended'));
       else setError(t('loginFailed'));
     } finally {

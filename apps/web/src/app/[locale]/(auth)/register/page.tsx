@@ -2,14 +2,15 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import { useRouter } from '@/i18n/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { setAuthCookie, setOnboardingCookie } from '@/lib/auth-cookies';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { useZodForm } from '@/hooks/useZodForm';
-import { registerSchema } from '@mojeeb/shared-utils';
+import { buildPasswordSchema, registerSchema } from '@mojeeb/shared-utils';
+import { usePasswordPolicy } from '@/hooks/usePasswordPolicy';
 
 export default function RegisterPage() {
   const t = useTranslations('auth.register');
@@ -19,8 +20,18 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // The password rules are configured by the platform admins; validate against them.
+  const passwordPolicy = usePasswordPolicy();
+  const schema = useMemo(
+    () =>
+      registerSchema.extend({
+        password: buildPasswordSchema(passwordPolicy.policy, passwordPolicy.messages),
+      }),
+    [passwordPolicy.policy, passwordPolicy.messages],
+  );
+
   const form = useZodForm({
-    schema: registerSchema,
+    schema,
     initialValues: {
       firstName: '',
       lastName: '',
@@ -61,8 +72,12 @@ export default function RegisterPage() {
       const data = err.response?.data;
       if (data?.details?.body?.fieldErrors) {
         const fieldErrors = data.details.body.fieldErrors as Record<string, string[]>;
+        // A password the server rejected: explain it in the user's language.
+        const policyError = fieldErrors.password
+          ? passwordPolicy.validate(form.values.password || '')
+          : null;
         const msgs = Object.values(fieldErrors).flat();
-        setError(msgs.join(', '));
+        setError(policyError ?? msgs.join(', '));
       } else {
         const msg = data?.error || '';
         if (msg.includes('already registered')) setError(t('emailAlreadyRegistered'));
@@ -207,8 +222,13 @@ export default function RegisterPage() {
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             dir="ltr"
             aria-invalid={form.errors.password ? true : undefined}
-            aria-describedby={form.errors.password ? 'reg-password-error' : undefined}
+            aria-describedby={form.errors.password ? 'reg-password-error' : 'reg-password-hint'}
           />
+          {!form.errors.password && (
+            <p id="reg-password-hint" className="mt-1 text-xs text-muted-foreground">
+              {passwordPolicy.hint}
+            </p>
+          )}
           {form.errors.password && (
             <p
               id="reg-password-error"

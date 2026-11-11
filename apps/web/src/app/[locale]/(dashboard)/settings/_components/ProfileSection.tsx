@@ -49,6 +49,10 @@ interface ProfileSectionProps {
   handleChangePassword: (e: React.FormEvent) => void;
   changePasswordIsPending: boolean;
   passwordStatus: 'idle' | 'success' | 'error' | 'mismatch' | 'tooShort';
+  /** What the configured password policy requires (shown under the new-password field). */
+  passwordHint?: string;
+  /** Why the typed new password violates the policy, if it does. */
+  passwordPolicyError?: string | null;
   // Verification
   resendVerificationIsPending: boolean;
   resendVerificationStatus: 'idle' | 'success' | 'error';
@@ -76,6 +80,8 @@ export function ProfileSection({
   handleChangePassword,
   changePasswordIsPending,
   passwordStatus,
+  passwordHint,
+  passwordPolicyError,
   resendVerificationIsPending,
   resendVerificationStatus,
   onResendVerification,
@@ -287,6 +293,9 @@ export function ProfileSection({
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {passwordHint && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">{passwordHint}</p>
+                )}
               </div>
 
               <div>
@@ -363,7 +372,7 @@ export function ProfileSection({
                 {passwordStatus === 'tooShort' && (
                   <span className="inline-flex items-center gap-1 text-sm text-red-600 dark:text-red-400">
                     <AlertTriangle className="h-4 w-4" />
-                    {t('profile.passwordTooShort')}
+                    {passwordPolicyError ?? t('profile.passwordTooShort')}
                   </span>
                 )}
               </div>

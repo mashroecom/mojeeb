@@ -545,7 +545,7 @@ async function testAi(): Promise<CategoryTestResult> {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-3-haiku-20240307',
+          model: 'claude-haiku-5-5',
           max_tokens: 1,
           messages: [{ role: 'user', content: 'hi' }],
         }),

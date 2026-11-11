@@ -22,6 +22,7 @@ import { ProfileSection } from './_components/ProfileSection';
 import { OrganizationSection } from './_components/OrganizationSection';
 import { NotificationsSection } from './_components/NotificationsSection';
 import { DangerZoneSection } from './_components/DangerZoneSection';
+import { usePasswordPolicy } from '@/hooks/usePasswordPolicy';
 
 export default function SettingsPage() {
   const t = useTranslations('dashboard.settings');
@@ -38,6 +39,7 @@ export default function SettingsPage() {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
+  const passwordPolicy = usePasswordPolicy();
   const resendVerification = useResendVerification();
   const [resendVerificationStatus, setResendVerificationStatus] = useState<
     'idle' | 'success' | 'error'
@@ -95,7 +97,8 @@ export default function SettingsPage() {
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword.length < 8) {
+    // The password rules come from the platform's configured policy.
+    if (passwordPolicy.validate(newPassword)) {
       setPasswordStatus('tooShort');
       setTimeout(() => setPasswordStatus('idle'), 3000);
       return;
@@ -201,6 +204,8 @@ export default function SettingsPage() {
             handleChangePassword={handleChangePassword}
             changePasswordIsPending={changePassword.isPending}
             passwordStatus={passwordStatus}
+            passwordHint={passwordPolicy.hint}
+            passwordPolicyError={passwordPolicy.validate(newPassword)}
             resendVerificationIsPending={resendVerification.isPending}
             resendVerificationStatus={resendVerificationStatus}
             onResendVerification={handleResendVerification}

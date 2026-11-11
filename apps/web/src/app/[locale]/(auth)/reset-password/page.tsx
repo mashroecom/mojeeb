@@ -5,11 +5,13 @@ import { Link } from '@/i18n/navigation';
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
+import { usePasswordPolicy } from '@/hooks/usePasswordPolicy';
 
 export default function ResetPasswordPage() {
   const t = useTranslations('auth.resetPassword');
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const passwordPolicy = usePasswordPolicy();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,13 +33,25 @@ export default function ResetPasswordPage() {
       return;
     }
 
+    const policyError = passwordPolicy.validate(password);
+    if (policyError) {
+      setError(policyError);
+      return;
+    }
+
     setLoading(true);
 
     try {
       await api.post('/auth/reset-password', { token, password });
       setSuccess(true);
     } catch (err: any) {
-      setError(t('invalidToken'));
+      // A rejected password is not a bad link: say what the password needs.
+      const rejectedPassword = err.response?.data?.details?.body?.fieldErrors?.password;
+      setError(
+        rejectedPassword
+          ? (passwordPolicy.validate(password) ?? String(rejectedPassword[0] ?? ''))
+          : t('invalidToken'),
+      );
     } finally {
       setLoading(false);
     }
@@ -90,9 +104,12 @@ export default function ResetPasswordPage() {
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
             dir="ltr"
             aria-invalid={error ? true : undefined}
-            aria-describedby={error ? 'reset-password-error' : undefined}
+            aria-describedby={error ? 'reset-password-error' : 'reset-password-hint'}
             aria-required={true}
           />
+          <p id="reset-password-hint" className="mt-1 text-xs text-muted-foreground">
+            {passwordPolicy.hint}
+          </p>
         </div>
 
         <div>

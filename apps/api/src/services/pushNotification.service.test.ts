@@ -102,6 +102,16 @@ describe('PushNotificationService', () => {
       });
     });
 
+    it('cleans up stale subscriptions at most once a day, without failing the request', async () => {
+      mocks.prisma.pushSubscription.deleteMany.mockRejectedValue(new Error('db hiccup'));
+
+      await service.subscribe({ userId: 'u1', orgId: 'o1', subscription: browserSubscription() });
+      await service.subscribe({ userId: 'u1', orgId: 'o1', subscription: browserSubscription() });
+
+      expect(mocks.prisma.pushSubscription.deleteMany).toHaveBeenCalledTimes(1);
+      expect(mocks.prisma.pushSubscription.deleteMany.mock.calls[0]![0].where).toHaveProperty('OR');
+    });
+
     it('re-assigns an existing endpoint to the user who subscribes now', async () => {
       await service.subscribe({ userId: 'u2', orgId: 'o2', subscription: browserSubscription() });
 

@@ -1,4 +1,4 @@
-import { getAIProvider } from '../index';
+import { getAuxiliaryProvider } from '../index';
 import { ROUTING_DECISION_PROMPT } from '../prompts/routing';
 import type { RoutingDecision, ConversationMessage, EmotionResult } from '@mojeeb/shared-types';
 import { logger } from '../../config/logger';
@@ -57,7 +57,7 @@ export class RoutingPipeline {
 
     // AI-based routing for ambiguous cases
     try {
-      const provider = getAIProvider('OPENAI');
+      const provider = await getAuxiliaryProvider();
       const result = await provider.generateJSON<{
         handoff: boolean;
         reason: string;

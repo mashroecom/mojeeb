@@ -70,3 +70,7 @@ logs/security/
 
 # Local Redis snapshot
 dump.rdb
+
+# next-pwa custom worker build output (referenced by the generated sw.js)
+apps/web/public/worker-*.js
+apps/web/public/worker-*.js.map

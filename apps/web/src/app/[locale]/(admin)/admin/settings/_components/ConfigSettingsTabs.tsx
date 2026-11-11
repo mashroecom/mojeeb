@@ -29,13 +29,24 @@ import {
   useUpdateSecuritySettings,
 } from '@/hooks/useAdmin';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { SaveBar, SelectField, SettingsCard, TextField, ToggleRow } from './fields';
+import {
+  NotEnforcedNote,
+  SaveBar,
+  SelectField,
+  SettingsCard,
+  TextField,
+  ToggleRow,
+} from './fields';
 
 /**
  * Security / notification / organization-default settings are all stored as
  * SystemConfig rows ({ key, value: string }) and saved in bulk with
  * PATCH { settings: { KEY: "value" } }. This file renders them from a declarative
  * field list; only keys listed here are shown, because the API ignores any other key.
+ *
+ * Each row carries `enforced`: whether the backend actually acts on the setting. Settings
+ * that are stored but not acted on are rendered disabled with a "Not enforced yet" note
+ * (`notEnforced` gives the reason) instead of looking like working controls.
  */
 
 // ---------------------------------------------------------------------------
@@ -45,23 +56,29 @@ import { SaveBar, SelectField, SettingsCard, TextField, ToggleRow } from './fiel
 interface ConfigRow {
   key: string;
   value: string;
+  /** False when no backend code acts on this setting. Absent on older API versions. */
+  enforced?: boolean;
 }
 
-type FieldDef =
-  | { key: string; type: 'boolean'; label: string; hint?: string }
-  | { key: string; type: 'number'; label: string; hint?: string; min: number; max: number }
-  | { key: string; type: 'email'; label: string; hint?: string; placeholder?: string }
-  | {
-      key: string;
-      type: 'select';
-      label: string;
-      hint?: string;
-      options: { value: string; label: string }[];
-      ltr?: boolean;
-    };
+/** Shared by every field: an optional hint and the reason shown when it is not enforced. */
+interface FieldBase {
+  key: string;
+  label: string;
+  hint?: string;
+  notEnforced?: string;
+}
+
+type FieldDef = FieldBase &
+  (
+    | { type: 'boolean' }
+    | { type: 'number'; min: number; max: number }
+    | { type: 'email'; placeholder?: string }
+    | { type: 'select'; options: { value: string; label: string }[]; ltr?: boolean }
+  );
 
 interface SectionDef {
   title: string;
+  description?: string;
   icon: LucideIcon;
   fields: FieldDef[];
 }
@@ -100,6 +117,23 @@ function ConfigSettingsForm({
     for (const row of query.data ?? []) map[row.key] = row.value;
     return map;
   }, [query.data]);
+
+  const unenforced = useMemo(() => {
+    const keys = new Set<string>();
+    for (const row of query.data ?? []) if (row.enforced === false) keys.add(row.key);
+    return keys;
+  }, [query.data]);
+
+  /** Hint for a field: the "not enforced" note when the backend ignores it, else its hint. */
+  const hintFor = (field: FieldDef): ReactNode =>
+    unenforced.has(field.key) ? (
+      <NotEnforcedNote
+        badge={t('notEnforcedBadge')}
+        reason={field.notEnforced ?? t('notEnforcedGeneric')}
+      />
+    ) : (
+      field.hint
+    );
 
   const value = (key: string) => overrides[key] ?? saved[key] ?? '';
   const setValue = (key: string, next: string) => {
@@ -188,7 +222,12 @@ function ConfigSettingsForm({
           const toggles = fields.filter((f) => f.type === 'boolean');
           const inputs = fields.filter((f) => f.type !== 'boolean');
           return (
-            <SettingsCard key={section.title} title={section.title} icon={section.icon}>
+            <SettingsCard
+              key={section.title}
+              title={section.title}
+              description={section.description}
+              icon={section.icon}
+            >
               {inputs.length > 0 && (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {inputs.map((field) => {
@@ -202,7 +241,8 @@ function ConfigSettingsForm({
                           key={field.key}
                           name={field.key}
                           label={field.label}
-                          hint={field.hint}
+                          hint={hintFor(field)}
+                          disabled={unenforced.has(field.key)}
                           value={current}
                           onChange={(v) => setValue(field.key, v)}
                           options={options}
@@ -217,7 +257,8 @@ function ConfigSettingsForm({
                           name={field.key}
                           type="number"
                           label={field.label}
-                          hint={field.hint}
+                          hint={hintFor(field)}
+                          disabled={unenforced.has(field.key)}
                           value={value(field.key)}
                           onChange={(v) => setValue(field.key, v)}
                           min={field.min}
@@ -232,7 +273,8 @@ function ConfigSettingsForm({
                         name={field.key}
                         type="email"
                         label={field.label}
-                        hint={field.hint}
+                        hint={hintFor(field)}
+                        disabled={unenforced.has(field.key)}
                         placeholder={field.type === 'email' ? field.placeholder : undefined}
                         value={value(field.key)}
                         onChange={(v) => setValue(field.key, v)}
@@ -248,7 +290,8 @@ function ConfigSettingsForm({
                   key={field.key}
                   name={field.key}
                   label={field.label}
-                  description={field.hint}
+                  description={hintFor(field)}
+                  disabled={unenforced.has(field.key)}
                   checked={value(field.key) === 'true'}
                   onChange={(checked) => setValue(field.key, checked ? 'true' : 'false')}
                 />
@@ -295,14 +338,16 @@ export function SecurityTab() {
           key: 'MIN_PASSWORD_LENGTH',
           type: 'number',
           label: t('minPasswordLength'),
-          min: 6,
-          max: 128,
+          hint: t('minPasswordLengthHint'),
+          min: 8,
+          max: 64,
         },
         {
           key: 'PASSWORD_EXPIRY_DAYS',
           type: 'number',
           label: t('passwordExpiryDays'),
           hint: t('passwordExpiryDesc'),
+          notEnforced: t('passwordExpiryNotEnforced'),
           min: 0,
           max: 3650,
         },
@@ -319,6 +364,7 @@ export function SecurityTab() {
           key: 'SESSION_TIMEOUT_MINUTES',
           type: 'number',
           label: t('sessionTimeoutMinutes'),
+          hint: t('sessionTimeoutHint'),
           min: 5,
           max: 43200,
         },
@@ -326,6 +372,7 @@ export function SecurityTab() {
           key: 'MAX_SESSIONS_PER_USER',
           type: 'number',
           label: t('maxSessionsPerUser'),
+          hint: t('maxSessionsHint'),
           min: 1,
           max: 100,
         },
@@ -339,13 +386,15 @@ export function SecurityTab() {
           key: 'MAX_LOGIN_ATTEMPTS',
           type: 'number',
           label: t('maxLoginAttempts'),
-          min: 1,
+          hint: t('maxLoginAttemptsHint'),
+          min: 3,
           max: 100,
         },
         {
           key: 'LOCKOUT_DURATION_MINUTES',
           type: 'number',
           label: t('lockoutDurationMinutes'),
+          hint: t('lockoutDurationHint'),
           min: 1,
           max: 1440,
         },
@@ -355,8 +404,18 @@ export function SecurityTab() {
       title: t('twoFactorAuth'),
       icon: ShieldCheck,
       fields: [
-        { key: 'ENABLE_2FA', type: 'boolean', label: t('enable2FA') },
-        { key: 'ENFORCE_2FA_FOR_ADMINS', type: 'boolean', label: t('enforce2FAForAdmins') },
+        {
+          key: 'ENABLE_2FA',
+          type: 'boolean',
+          label: t('enable2FA'),
+          notEnforced: t('twoFactorNotEnforced'),
+        },
+        {
+          key: 'ENFORCE_2FA_FOR_ADMINS',
+          type: 'boolean',
+          label: t('enforce2FAForAdmins'),
+          notEnforced: t('twoFactorNotEnforced'),
+        },
       ],
     },
   ];
@@ -399,18 +458,30 @@ export function NotificationsTab() {
           key: 'ENABLE_EMAIL_NOTIFICATIONS',
           type: 'boolean',
           label: t('enableEmailNotifications'),
+          hint: t('enableEmailNotificationsHint'),
         },
-        { key: 'DAILY_SUMMARY_EMAIL', type: 'boolean', label: t('dailySummaryEmail') },
+        {
+          key: 'DAILY_SUMMARY_EMAIL',
+          type: 'boolean',
+          label: t('dailySummaryEmail'),
+          notEnforced: t('dailySummaryNotEnforced'),
+        },
       ],
     },
     {
       title: t('eventTriggers'),
+      description: t('eventTriggersHint'),
       icon: Zap,
       fields: [
         { key: 'NOTIFY_NEW_USER_SIGNUP', type: 'boolean', label: t('notifyNewUserSignup') },
         { key: 'NOTIFY_NEW_ORG_CREATED', type: 'boolean', label: t('notifyNewOrgCreated') },
         { key: 'NOTIFY_FAILED_PAYMENT', type: 'boolean', label: t('notifyFailedPayment') },
-        { key: 'NOTIFY_SYSTEM_ERRORS', type: 'boolean', label: t('notifySystemErrors') },
+        {
+          key: 'NOTIFY_SYSTEM_ERRORS',
+          type: 'boolean',
+          label: t('notifySystemErrors'),
+          hint: t('notifySystemErrorsHint'),
+        },
         { key: 'NOTIFY_NEW_CONTACT_MESSAGE', type: 'boolean', label: t('notifyNewContactMessage') },
         { key: 'NOTIFY_NEW_DEMO_REQUEST', type: 'boolean', label: t('notifyNewDemoRequest') },
       ],
@@ -423,6 +494,7 @@ export function NotificationsTab() {
           key: 'ERROR_DIGEST_INTERVAL_HOURS',
           type: 'number',
           label: t('errorDigestIntervalHours'),
+          notEnforced: t('errorDigestNotEnforced'),
           min: 1,
           max: 168,
         },
@@ -494,10 +566,15 @@ export function OrgDefaultsTab() {
   const query = useAdminOrgDefaults();
   const mutation = useUpdateOrgDefaults();
 
-  const limit = (key: string, label: string): FieldDef => ({
+  const limit = (
+    key: string,
+    label: string,
+    notes: { hint?: string; notEnforced?: string },
+  ): FieldDef => ({
     key,
     type: 'number',
     label,
+    ...notes,
     min: 0,
     max: 1_000_000,
   });
@@ -511,6 +588,7 @@ export function OrgDefaultsTab() {
           key: 'DEFAULT_PLAN',
           type: 'select',
           label: t('defaultPlan'),
+          hint: t('defaultPlanHint'),
           options: (['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'] as const).map((plan) => ({
             value: plan,
             label: ta(`plan_${plan}`),
@@ -520,6 +598,7 @@ export function OrgDefaultsTab() {
           key: 'TRIAL_PERIOD_DAYS',
           type: 'number',
           label: t('trialPeriodDays'),
+          notEnforced: t('trialNotEnforced'),
           min: 0,
           max: 365,
         },
@@ -536,11 +615,19 @@ export function OrgDefaultsTab() {
       title: t('limits'),
       icon: Gauge,
       fields: [
-        limit('DEFAULT_MESSAGES_LIMIT', t('defaultMessagesLimit')),
-        limit('DEFAULT_AGENTS_LIMIT', t('defaultAgentsLimit')),
-        limit('DEFAULT_CHANNELS_LIMIT', t('defaultChannelsLimit')),
-        limit('DEFAULT_TEAM_MEMBERS_LIMIT', t('defaultTeamMembersLimit')),
-        limit('DEFAULT_KB_LIMIT', t('defaultKbLimit')),
+        limit('DEFAULT_MESSAGES_LIMIT', t('defaultMessagesLimit'), {
+          hint: t('defaultLimitHint'),
+        }),
+        limit('DEFAULT_AGENTS_LIMIT', t('defaultAgentsLimit'), { hint: t('defaultLimitHint') }),
+        limit('DEFAULT_CHANNELS_LIMIT', t('defaultChannelsLimit'), {
+          notEnforced: t('channelsLimitNotEnforced'),
+        }),
+        limit('DEFAULT_TEAM_MEMBERS_LIMIT', t('defaultTeamMembersLimit'), {
+          notEnforced: t('planLimitNotEnforced'),
+        }),
+        limit('DEFAULT_KB_LIMIT', t('defaultKbLimit'), {
+          notEnforced: t('planLimitNotEnforced'),
+        }),
       ],
     },
     {
@@ -552,12 +639,14 @@ export function OrgDefaultsTab() {
           type: 'boolean',
           label: t('autoCreateWebchatChannel'),
           hint: t('autoCreateWebchatChannelDesc'),
+          notEnforced: t('autoWebchatNotEnforced'),
         },
         {
           key: 'REQUIRE_EMAIL_VERIFICATION',
           type: 'boolean',
           label: t('requireEmailVerification'),
           hint: t('requireEmailVerificationDesc'),
+          notEnforced: t('emailVerificationNotEnforced'),
         },
       ],
     },

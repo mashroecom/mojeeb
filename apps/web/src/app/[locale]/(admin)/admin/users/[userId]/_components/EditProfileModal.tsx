@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useUpdateUserProfile } from '@/hooks/useAdmin';
 import { useToastStore } from '@/hooks/useToast';
+import { usePasswordPolicy } from '@/hooks/usePasswordPolicy';
 import { X, Loader2 } from 'lucide-react';
 
 interface EditProfileModalProps {
@@ -21,6 +22,7 @@ export function EditProfileModal({ isOpen, onClose, userId, user }: EditProfileM
   const t = useTranslations('admin');
   const addToast = useToastStore((s) => s.addToast);
   const updateProfile = useUpdateUserProfile();
+  const passwordPolicy = usePasswordPolicy();
 
   const [editFirstName, setEditFirstName] = useState('');
   const [editLastName, setEditLastName] = useState('');
@@ -65,7 +67,17 @@ export function EditProfileModal({ isOpen, onClose, userId, user }: EditProfileM
           addToast('success', t('userActions.profileUpdated'));
           handleClose();
         },
-        onError: () => addToast('error', t('userActions.profileUpdateFailed')),
+        onError: (err: unknown) => {
+          const rejectedPassword = (
+            err as { response?: { data?: { details?: { body?: { fieldErrors?: any } } } } }
+          ).response?.data?.details?.body?.fieldErrors?.newPassword;
+          addToast(
+            'error',
+            rejectedPassword
+              ? (passwordPolicy.validate(editPassword) ?? t('userActions.passwordPolicyRejected'))
+              : t('userActions.profileUpdateFailed'),
+          );
+        },
       },
     );
   };
@@ -116,6 +128,7 @@ export function EditProfileModal({ isOpen, onClose, userId, user }: EditProfileM
               placeholder={t('userActions.newPasswordPlaceholder')}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
+            <p className="mt-1 text-xs text-muted-foreground">{passwordPolicy.hint}</p>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button

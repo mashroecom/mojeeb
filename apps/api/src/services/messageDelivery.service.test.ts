@@ -4,6 +4,7 @@ interface Row {
   id: string;
   conversationId: string;
   orgId: string;
+  channelId: string;
   channelType: string;
   channelExternalId: string | null;
   role: string;
@@ -32,6 +33,8 @@ const { rows, emitToOrg, prismaMock } = vi.hoisted(() => {
       return false;
     if (where.role && !where.role.in.includes(row.role)) return false;
     if (where.deliveryStatus && !where.deliveryStatus.in.includes(row.deliveryStatus)) return false;
+    if (where.conversation?.channelId && row.channelId !== where.conversation.channelId)
+      return false;
     const channel = where.conversation?.channel;
     if (channel) {
       if (row.channelType !== channel.type || row.channelExternalId !== channel.externalId)
@@ -77,6 +80,7 @@ function seed(overrides: Partial<Row> = {}): Row {
     id: `msg_${rows.length + 1}`,
     conversationId: 'conv_1',
     orgId: 'org_1',
+    channelId: 'ch_1',
     channelType: 'WHATSAPP',
     channelExternalId: 'PHONE_1',
     role: 'AI_AGENT',
@@ -174,6 +178,19 @@ describe('applyWhatsAppStatuses', () => {
 
     expect(applied).toEqual([]);
     expect(other).toMatchObject({ deliveryStatus: 'SENT', readAt: null });
+  });
+
+  it('with a channel id, ignores another channel that claims the same phone number', async () => {
+    const mine = seed({ externalId: 'wamid.mine' });
+    const squatter = seed({ channelId: 'ch_2', orgId: 'org_2', conversationId: 'conv_2' });
+
+    await messageDeliveryService.applyWhatsAppStatuses(
+      [receipt('READ', 5), receipt('READ', 5, { externalMessageId: 'wamid.mine' })],
+      'ch_1',
+    );
+
+    expect(mine.deliveryStatus).toBe('READ');
+    expect(squatter.deliveryStatus).toBe('SENT');
   });
 
   it('only matches WhatsApp channels and outbound messages', async () => {

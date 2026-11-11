@@ -1,4 +1,4 @@
-import { getAIProvider } from '../index';
+import { getAuxiliaryProvider } from '../index';
 import { buildAnalysisPrompt } from '../prompts/analysis';
 import type {
   EmotionResult,
@@ -163,7 +163,7 @@ export class AnalysisPipeline {
     }
 
     try {
-      const provider = getAIProvider('OPENAI');
+      const provider = await getAuxiliaryProvider();
 
       // Use only last 5 messages for analysis (saves tokens)
       const trimmedHistory = history.slice(-5);

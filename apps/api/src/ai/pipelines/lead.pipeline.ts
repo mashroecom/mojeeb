@@ -1,4 +1,4 @@
-import { getAIProvider } from '../index';
+import { getAuxiliaryProvider } from '../index';
 import { LEAD_EXTRACTION_PROMPT } from '../prompts/lead';
 import type { LeadResult, ConversationMessage } from '@mojeeb/shared-types';
 import { logger } from '../../config/logger';
@@ -6,7 +6,7 @@ import { logger } from '../../config/logger';
 export class LeadPipeline {
   async extract(message: string, history: ConversationMessage[]): Promise<LeadResult | null> {
     try {
-      const provider = getAIProvider('OPENAI');
+      const provider = await getAuxiliaryProvider();
 
       const result = await provider.generateJSON<{
         isLead: boolean;

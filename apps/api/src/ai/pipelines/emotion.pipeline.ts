@@ -1,4 +1,4 @@
-import { getAIProvider } from '../index';
+import { getAuxiliaryProvider } from '../index';
 import { EMOTION_DETECTION_PROMPT } from '../prompts/emotion';
 import type { EmotionResult, ConversationMessage } from '@mojeeb/shared-types';
 import { logger } from '../../config/logger';
@@ -9,7 +9,7 @@ export class EmotionPipeline {
     conversationHistory: ConversationMessage[],
   ): Promise<EmotionResult> {
     try {
-      const provider = getAIProvider('OPENAI');
+      const provider = await getAuxiliaryProvider();
 
       const result = await provider.generateJSON<EmotionResult>({
         systemPrompt: EMOTION_DETECTION_PROMPT,

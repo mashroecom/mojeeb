@@ -17,6 +17,7 @@ import {
   useAdminUserActions,
 } from '@/hooks/useAdmin';
 import { Loader2 } from 'lucide-react';
+import { LoginLockoutBanner } from './_components/LoginLockoutBanner';
 import { UserProfileCard } from './_components/UserProfileCard';
 import { UserActionsBar } from './_components/UserActionsBar';
 import { UserDetailHeader } from './_components/UserDetailHeader';
@@ -121,6 +122,8 @@ export default function AdminUserDetailPage() {
         {/* Left column: Profile Card */}
         <div className="lg:col-span-1 space-y-6">
           <UserProfileCard user={user} isSuspended={isSuspended} />
+
+          <LoginLockoutBanner userId={userId} />
 
           <UserActionsBar
             user={user}

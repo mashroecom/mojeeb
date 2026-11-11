@@ -10,8 +10,9 @@ export const AI_MODELS = {
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini', maxTokens: 4096 },
   ],
   ANTHROPIC: [
-    { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', maxTokens: 4096 },
-    { id: 'claude-haiku-4-20250514', name: 'Claude Haiku 4', maxTokens: 4096 },
+    { id: 'claude-opus-5-5', name: 'Claude Opus 5.5', maxTokens: 4096 },
+    { id: 'claude-sonnet-5-5', name: 'Claude Sonnet 5.5', maxTokens: 4096 },
+    { id: 'claude-haiku-5-5', name: 'Claude Haiku 5.5', maxTokens: 4096 },
   ],
 } as const;
 

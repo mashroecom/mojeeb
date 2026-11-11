@@ -1382,7 +1382,7 @@
   }
 
   function apiGetConversationByVisitor() {
-    return fetch(apiUrl('/conversations/by-visitor/' + state.visitorId))
+    return fetch(apiUrl('/conversations/by-visitor/' + encodeURIComponent(state.visitorId)))
       .then(function(res) {
         if (res.status === 404) return null;
         if (!res.ok) throw new Error('Conversation fetch failed: ' + res.status);
@@ -1393,7 +1393,7 @@
   }
 
   function apiGetConversationList() {
-    return fetch(apiUrl('/conversations/visitor/' + state.visitorId + '/list'))
+    return fetch(apiUrl('/conversations/visitor/' + encodeURIComponent(state.visitorId) + '/list'))
       .then(function(res) {
         if (!res.ok) throw new Error('Conversation list fetch failed: ' + res.status);
         return res.json();

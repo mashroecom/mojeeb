@@ -56,7 +56,7 @@ export function Field({
 }: {
   id: string;
   label: string;
-  hint?: string;
+  hint?: ReactNode;
   error?: string;
   children: ReactNode;
 }) {
@@ -71,7 +71,7 @@ export function Field({
           {error}
         </p>
       ) : (
-        hint && <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>
+        hint && <div className="mt-1.5 text-xs text-muted-foreground">{hint}</div>
       )}
     </div>
   );
@@ -87,11 +87,12 @@ interface TextFieldProps {
   onChange: (value: string) => void;
   type?: 'text' | 'email' | 'url' | 'tel' | 'number';
   placeholder?: string;
-  hint?: string;
+  hint?: ReactNode;
   error?: string;
   maxLength?: number;
   min?: number;
   max?: number;
+  disabled?: boolean;
   /** Force LTR for values that are always Latin (URLs, emails, IDs). */
   ltr?: boolean;
   name?: string;
@@ -110,6 +111,7 @@ export function TextField({
   max,
   ltr,
   name,
+  disabled,
 }: TextFieldProps) {
   const id = useId();
   return (
@@ -124,6 +126,7 @@ export function TextField({
         maxLength={maxLength}
         min={min}
         max={max}
+        disabled={disabled}
         inputMode={type === 'number' ? 'numeric' : undefined}
         dir={ltr || type === 'number' ? 'ltr' : undefined}
         aria-invalid={error ? true : undefined}
@@ -193,14 +196,16 @@ export function SelectField({
   hint,
   ltr,
   name,
+  disabled,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
-  hint?: string;
+  hint?: ReactNode;
   ltr?: boolean;
   name?: string;
+  disabled?: boolean;
 }) {
   const id = useId();
   return (
@@ -210,6 +215,7 @@ export function SelectField({
         name={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
         dir={ltr ? 'ltr' : undefined}
         className={cn(inputClass, ltr && 'rtl:text-right')}
       >
@@ -306,6 +312,21 @@ export function Toggle({
   );
 }
 
+/**
+ * Marks a setting that is stored but that the backend does not act on yet, so it is
+ * never mistaken for a working control. Rendered in place of the field hint.
+ */
+export function NotEnforcedNote({ badge, reason }: { badge: string; reason: string }) {
+  return (
+    <span data-not-enforced className="block">
+      <span className="me-1.5 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+        {badge}
+      </span>
+      {reason}
+    </span>
+  );
+}
+
 /** A label + description on one side and a switch on the other. */
 export function ToggleRow({
   label,
@@ -316,7 +337,7 @@ export function ToggleRow({
   name,
 }: {
   label: string;
-  description?: string;
+  description?: ReactNode;
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
@@ -325,8 +346,8 @@ export function ToggleRow({
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-sm font-medium">{label}</p>
-        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+        <p className={cn('text-sm font-medium', disabled && 'text-muted-foreground')}>{label}</p>
+        {description && <div className="mt-0.5 text-xs text-muted-foreground">{description}</div>}
       </div>
       <Toggle checked={checked} onChange={onChange} label={label} disabled={disabled} name={name} />
     </div>

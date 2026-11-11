@@ -1,4 +1,4 @@
-import { getAIProvider } from '../index';
+import { getAuxiliaryProvider } from '../index';
 import { prisma } from '../../config/database';
 import { logger } from '../../config/logger';
 import type { ConversationMessage } from '@mojeeb/shared-types';
@@ -105,7 +105,7 @@ export class TemplateSuggestionPipeline {
       }));
 
       // 4. Use AI to rank templates
-      const provider = getAIProvider('OPENAI');
+      const provider = await getAuxiliaryProvider();
 
       const prompt = `Recent conversation:
 ${contextMessages.map((m) => `${m.role}: ${m.content}`).join('\n')}

@@ -81,6 +81,7 @@ const MAX_COMMENT_PREVIEW_LENGTH = 50;
 const MAX_DEVICE_INFO_LENGTH = 255;
 /** Subscriptions neither refreshed by the app nor successfully pushed to for this long are dropped. */
 const DEFAULT_STALE_AFTER_DAYS = 90;
+const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 function decodedLength(base64url: string): number {
   if (!/^[A-Za-z0-9_-]+={0,2}$/.test(base64url)) return -1;
@@ -144,6 +145,7 @@ const TEXT = {
 
 export class PushNotificationService {
   private warnedNotConfigured = false;
+  private lastCleanupAt = 0;
 
   /** True when VAPID keys are present and well-formed. */
   isConfigured(): boolean {
@@ -209,6 +211,8 @@ export class PushNotificationService {
       update: { ...fields, lastUsedAt: new Date() },
       select: { id: true, createdAt: true },
     });
+
+    this.cleanupOccasionally();
 
     return { subscribed: true, id: saved.id, createdAt: saved.createdAt };
   }
@@ -383,6 +387,19 @@ export class PushNotificationService {
   // ---------------------------------------------------------------------------
   // Internals
   // ---------------------------------------------------------------------------
+
+  /**
+   * Housekeeping without a scheduler: at most once a day per process, a new
+   * subscription also triggers the stale-subscription cleanup in the background.
+   */
+  private cleanupOccasionally(): void {
+    const now = Date.now();
+    if (now - this.lastCleanupAt < CLEANUP_INTERVAL_MS) return;
+    this.lastCleanupAt = now;
+    this.cleanupExpiredSubscriptions().catch((err) => {
+      logger.warn({ err }, 'Failed to clean up stale push subscriptions');
+    });
+  }
 
   private conversationUrl(conversationId: string): string {
     return `/conversations?id=${encodeURIComponent(conversationId)}`;
