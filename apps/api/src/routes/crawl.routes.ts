@@ -58,41 +58,8 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// GET /api/v1/organizations/:orgId/knowledge-bases/:kbId/crawl/:jobId
-router.get('/:jobId', async (req, res, next) => {
-  try {
-    const { orgId, kbId, jobId } = req.params as JobParams;
-    // Verify KB belongs to org
-    await knowledgeBaseService.getById(orgId, kbId);
-    const job = await knowledgeBaseService.getCrawlJob(jobId);
-    // Verify job belongs to this KB
-    if (job.knowledgeBaseId !== kbId) {
-      return res.status(404).json({ success: false, error: 'Crawl job not found' });
-    }
-    res.json({ success: true, data: job });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// DELETE /api/v1/organizations/:orgId/knowledge-bases/:kbId/crawl/:jobId
-router.delete('/:jobId', async (req, res, next) => {
-  try {
-    const { orgId, kbId, jobId } = req.params as JobParams;
-    // Verify KB belongs to org
-    await knowledgeBaseService.getById(orgId, kbId);
-    const job = await knowledgeBaseService.getCrawlJob(jobId);
-    // Verify job belongs to this KB
-    if (job.knowledgeBaseId !== kbId) {
-      return res.status(404).json({ success: false, error: 'Crawl job not found' });
-    }
-    const cancelled = await knowledgeBaseService.cancelCrawlJob(jobId);
-    res.json({ success: true, data: cancelled });
-  } catch (err) {
-    next(err);
-  }
-});
-
+// NOTE: the /schedule routes must stay above /:jobId, otherwise "schedule" is
+// matched as a job id and every schedule request answers "Crawl job not found".
 // POST /api/v1/organizations/:orgId/knowledge-bases/:kbId/crawl/schedule
 router.post(
   '/schedule',
@@ -126,6 +93,41 @@ router.get('/schedule', async (req, res, next) => {
     await knowledgeBaseService.getById(orgId, kbId);
     const config = await knowledgeBaseService.getCrawlSchedule(kbId);
     res.json({ success: true, data: config });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/v1/organizations/:orgId/knowledge-bases/:kbId/crawl/:jobId
+router.get('/:jobId', async (req, res, next) => {
+  try {
+    const { orgId, kbId, jobId } = req.params as JobParams;
+    // Verify KB belongs to org
+    await knowledgeBaseService.getById(orgId, kbId);
+    const job = await knowledgeBaseService.getCrawlJob(jobId);
+    // Verify job belongs to this KB
+    if (job.knowledgeBaseId !== kbId) {
+      return res.status(404).json({ success: false, error: 'Crawl job not found' });
+    }
+    res.json({ success: true, data: job });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/v1/organizations/:orgId/knowledge-bases/:kbId/crawl/:jobId
+router.delete('/:jobId', async (req, res, next) => {
+  try {
+    const { orgId, kbId, jobId } = req.params as JobParams;
+    // Verify KB belongs to org
+    await knowledgeBaseService.getById(orgId, kbId);
+    const job = await knowledgeBaseService.getCrawlJob(jobId);
+    // Verify job belongs to this KB
+    if (job.knowledgeBaseId !== kbId) {
+      return res.status(404).json({ success: false, error: 'Crawl job not found' });
+    }
+    const cancelled = await knowledgeBaseService.cancelCrawlJob(jobId);
+    res.json({ success: true, data: cancelled });
   } catch (err) {
     next(err);
   }

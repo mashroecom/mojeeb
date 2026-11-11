@@ -186,6 +186,14 @@ export function useKnowledgeBase(kbId: string | undefined) {
       return data.data;
     },
     enabled: !!orgId && !!kbId,
+    // Embedding runs in the background: keep polling while any document is still
+    // being processed so its status and chunk count update without a manual reload.
+    refetchInterval: (query) =>
+      query.state.data?.documents?.some(
+        (doc) => doc.embeddingStatus === 'PENDING' || doc.embeddingStatus === 'PROCESSING',
+      )
+        ? 3000
+        : false,
   });
 }
 
@@ -312,6 +320,31 @@ export function useDeleteDocument() {
           queryKey: knowledgeBaseKeys.detail(orgId, variables.kbId),
         });
         queryClient.invalidateQueries({ queryKey: knowledgeBaseKeys.all(orgId) });
+      }
+    },
+  });
+}
+
+/**
+ * Retry embedding for a document that failed (or never finished) processing.
+ * The work runs in the background; the detail query polls until it settles.
+ */
+export function useReprocessDocument() {
+  const queryClient = useQueryClient();
+  const orgId = useAuthStore((s) => s.organization?.id);
+
+  return useMutation({
+    mutationFn: async ({ kbId, docId }: DeleteDocumentInput) => {
+      const { data } = await api.post<ApiResponse<KBDocument>>(
+        `/organizations/${orgId}/knowledge-bases/${kbId}/documents/${docId}/reprocess`,
+      );
+      return data.data;
+    },
+    onSuccess: (_data, variables) => {
+      if (orgId) {
+        queryClient.invalidateQueries({
+          queryKey: knowledgeBaseKeys.detail(orgId, variables.kbId),
+        });
       }
     },
   });

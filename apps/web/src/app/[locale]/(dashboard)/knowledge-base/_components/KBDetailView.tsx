@@ -17,6 +17,7 @@ import {
   Trash2,
   Clock,
   Calendar,
+  RotateCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -24,6 +25,7 @@ import {
   useUpdateKnowledgeBase,
   useAddDocument,
   useDeleteDocument,
+  useReprocessDocument,
   useCrawlSchedule,
   useUpdateCrawlSchedule,
 } from '@/hooks/useKnowledgeBase';
@@ -83,6 +85,7 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
 
   const addDocMutation = useAddDocument();
   const deleteDocMutation = useDeleteDocument();
+  const reprocessDocMutation = useReprocessDocument();
 
   // Sync schedule state with fetched data
   React.useEffect(() => {
@@ -641,13 +644,38 @@ export function KBDetailView({ kbId, onBack }: KBDetailViewProps) {
                                 </button>
                               </div>
                             ) : (
-                              <button
-                                onClick={() => setConfirmDeleteDocId(doc.id)}
-                                className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                                aria-label={tc('delete')}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                              <>
+                                {doc.embeddingStatus === 'FAILED' && (
+                                  <button
+                                    onClick={() =>
+                                      reprocessDocMutation.mutate(
+                                        { kbId, docId: doc.id },
+                                        { onError: () => toast.error(t('retryProcessingFailed')) },
+                                      )
+                                    }
+                                    disabled={reprocessDocMutation.isPending}
+                                    className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50 transition-colors"
+                                    aria-label={t('retryProcessing')}
+                                    title={t('retryProcessing')}
+                                  >
+                                    <RotateCw
+                                      className={cn(
+                                        'h-4 w-4',
+                                        reprocessDocMutation.isPending &&
+                                          reprocessDocMutation.variables?.docId === doc.id &&
+                                          'animate-spin',
+                                      )}
+                                    />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => setConfirmDeleteDocId(doc.id)}
+                                  className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                  aria-label={tc('delete')}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </>
                             )}
                           </div>
                         </td>
