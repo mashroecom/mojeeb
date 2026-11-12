@@ -51,6 +51,11 @@ for port in 80 443; do
 done
 say "Web server mode: $MODE"
 
+# The images and build cache need room; a full disk would also break the other sites
+# and services on this server, so stop early instead.
+free_gb=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')
+[ "${free_gb:-0}" -ge 12 ] || die "only ${free_gb} GB free on /. Free at least 12 GB first (e.g. 'docker image prune -a' removes unused images)."
+
 if ! command -v docker >/dev/null 2>&1; then
   say "Installing Docker"
   curl -fsSL https://get.docker.com | sh
@@ -58,9 +63,10 @@ fi
 docker compose version >/dev/null 2>&1 || die "docker compose plugin is missing"
 command -v git >/dev/null 2>&1 || { apt-get update -y && apt-get install -y git; }
 
-mem_mb=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+# Judge by memory that is actually free: other services may already use most of it
+avail_mb=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
 swap_mb=$(awk '/SwapTotal/ {print int($2/1024)}' /proc/meminfo)
-if [ "$mem_mb" -lt 6000 ] && [ "$swap_mb" -lt 2000 ] && [ ! -f /swapfile ]; then
+if [ "$avail_mb" -lt 4000 ] && [ "$swap_mb" -lt 2000 ] && [ ! -f /swapfile ]; then
   say "Adding 4 GB swap (the web build needs more memory than this server has)"
   fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null && swapon /swapfile
   grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
@@ -128,6 +134,8 @@ fi
 # --- 4. build and start ----------------------------------------------------------
 say "Building and starting (the first build takes 10-20 minutes)"
 "${COMPOSE[@]}" up -d --build --remove-orphans
+# Build cache is only needed while building; give the space back to the server
+docker builder prune -f >/dev/null 2>&1 || true
 
 if [ "$MODE" = nginx ]; then
   say "Adding an nginx site for $DOMAIN (other sites are not touched)"
