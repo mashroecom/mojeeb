@@ -1,0 +1,120 @@
+# Single-server deployment on one (sub)domain, with automatic HTTPS from Caddy.
+#
+#   https://<DOMAIN>/            -> web (Next.js)
+#   https://<DOMAIN>/api/...     -> api (also /socket.io, /uploads, /widget.js, /chat)
+#
+# On a server that already runs nginx on ports 80/443, Caddy is left out (profile
+# "caddy") and nginx proxies the domain to 127.0.0.1:3100 (web) and :4100 (api).
+#
+# Used by scripts/deploy-server.sh, which writes deploy/.env and runs:
+#   docker compose -f deploy/docker-compose.single.yml --env-file deploy/.env up -d --build
+
+name: mojeeb
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    profiles: ['caddy']
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - web
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://mojeeb:${POSTGRES_PASSWORD}@postgres:5432/mojeeb?schema=public
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+    ports:
+      - '127.0.0.1:4100:4000'
+    volumes:
+      - api_uploads:/app/apps/api/uploads
+      - api_public_uploads:/app/apps/api/public/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile.worker
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://mojeeb:${POSTGRES_PASSWORD}@postgres:5432/mojeeb?schema=public
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+    volumes:
+      - api_uploads:/app/apps/api/uploads
+      - api_public_uploads:/app/apps/api/public/uploads
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api/v1
+        - NEXT_PUBLIC_APP_URL=https://${DOMAIN}
+        - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+    environment:
+      - NODE_ENV=production
+    ports:
+      - '127.0.0.1:3100:3000'
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: mojeeb
+      POSTGRES_USER: mojeeb
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mojeeb']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
+  api_uploads:
+  api_public_uploads:
+  postgres_data:
+  redis_data:

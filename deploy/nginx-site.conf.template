@@ -1,0 +1,39 @@
+# Mojeeb on __DOMAIN__ — written by scripts/deploy-server.sh (nginx mode).
+# certbot adds the HTTPS server block and the redirect to this file.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __DOMAIN__;
+    client_max_body_size 25m;
+
+    # API, real-time updates and public uploads
+    location ~ ^/(api|socket\.io|uploads)/ {
+        proxy_pass http://127.0.0.1:4100;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300s;
+    }
+
+    # Chat widget files and health checks, also served by the API
+    location ~ ^/(widget\.js|chat|health|ready)$ {
+        proxy_pass http://127.0.0.1:4100;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Everything else: the web app
+    location / {
+        proxy_pass http://127.0.0.1:3100;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

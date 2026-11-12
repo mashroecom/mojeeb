@@ -1,0 +1,12 @@
+{$DOMAIN} {
+	encode zstd gzip
+
+	@api path /api/* /socket.io/* /uploads/* /widget.js /chat /health /ready
+	handle @api {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}
